@@ -7,6 +7,6 @@
 // Local dev:
 //   window.RUNTIME_CONFIG.socketServerUrl = 'http://localhost:3000';
 window.RUNTIME_CONFIG = window.RUNTIME_CONFIG || {
-    socketServerUrl: 'https://vegas-metropoly-backend.onrender.com'
+    socketServerUrl: 'https://current-metropoly-game.onrender.com'
 };
 
