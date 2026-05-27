@@ -7,7 +7,16 @@ const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const allowedOrigins = (process.env.CLIENT_ORIGINS || 'https://vegas-metropoly.vercel.app,http://localhost:3000,http://127.0.0.1:3000')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+const io = socketIo(server, {
+    cors: {
+        origin: allowedOrigins,
+        methods: ['GET', 'POST']
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0'; // Listen on all network interfaces
@@ -19,10 +28,32 @@ const DISABLE_AI_PROPERTY_PURCHASES = true;
 function getLocalIPAddresses() {
     const interfaces = os.networkInterfaces();
     const addresses = [];
+
+    function isLanIPv4(address) {
+        if (!address || typeof address !== 'string') return false;
+        const octets = address.split('.').map(Number);
+        if (octets.length !== 4 || octets.some(n => Number.isNaN(n) || n < 0 || n > 255)) {
+            return false;
+        }
+
+        const [a, b] = octets;
+
+        // Exclude unusable/virtual ranges for sharing with friends.
+        if (a === 169 && b === 254) return false; // APIPA link-local
+        if (a === 127) return false; // loopback
+        if (a === 0) return false; // invalid network
+
+        // Prefer private LAN ranges that are routable on home/school networks.
+        return (
+            a === 10 ||
+            (a === 172 && b >= 16 && b <= 31) ||
+            (a === 192 && b === 168)
+        );
+    }
     
     for (const name of Object.keys(interfaces)) {
         for (const interface of interfaces[name]) {
-            if (interface.family === 'IPv4' && !interface.internal) {
+            if (interface.family === 'IPv4' && !interface.internal && isLanIPv4(interface.address)) {
                 addresses.push(interface.address);
             }
         }
@@ -2462,6 +2493,10 @@ app.get('/game/:gameId', (req, res) => {
 
 // Route to get server info for external connections
 app.get('/server-info', (req, res) => {
+    const requestOrigin = req.headers.origin;
+    if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+        res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+    }
     const localIPs = getLocalIPAddresses();
     res.json({
         port: PORT,

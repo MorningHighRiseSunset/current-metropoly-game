@@ -1,5 +1,20 @@
 // Game state
-const socket = io();
+function getConfiguredSocketServerUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const urlParamServer = params.get('server');
+    const runtimeUrl = window.RUNTIME_CONFIG && window.RUNTIME_CONFIG.socketServerUrl;
+    const storedUrl = localStorage.getItem('metropoly_socket_server_url');
+    const configuredUrl = urlParamServer || runtimeUrl || storedUrl || window.location.origin;
+    if (urlParamServer) {
+        localStorage.setItem('metropoly_socket_server_url', urlParamServer);
+    }
+    return configuredUrl.replace(/\/$/, '');
+}
+
+const SOCKET_SERVER_URL = getConfiguredSocketServerUrl();
+const socket = io(SOCKET_SERVER_URL, {
+    transports: ['websocket', 'polling']
+});
 let gameState = null;
 let myPlayerId = null;
 let players = [];

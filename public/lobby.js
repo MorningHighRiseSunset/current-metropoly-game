@@ -1,4 +1,19 @@
-const socket = io();
+function getConfiguredSocketServerUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const urlParamServer = params.get('server');
+    const runtimeUrl = window.RUNTIME_CONFIG && window.RUNTIME_CONFIG.socketServerUrl;
+    const storedUrl = localStorage.getItem('metropoly_socket_server_url');
+    const configuredUrl = urlParamServer || runtimeUrl || storedUrl || window.location.origin;
+    if (urlParamServer) {
+        localStorage.setItem('metropoly_socket_server_url', urlParamServer);
+    }
+    return configuredUrl.replace(/\/$/, '');
+}
+
+const SOCKET_SERVER_URL = getConfiguredSocketServerUrl();
+const socket = io(SOCKET_SERVER_URL, {
+    transports: ['websocket', 'polling']
+});
 
 // DOM Elements
 const createGameBtn = document.getElementById('createGameBtn');
@@ -22,6 +37,40 @@ const modalMessage = document.getElementById('modalMessage');
 
 let currentGameId = null;
 let isHost = false;
+const PUBLIC_SHARE_ORIGIN = 'https://vegas-metropoly.vercel.app';
+
+function buildJoinLink(gameId) {
+    const baseOrigin = PUBLIC_SHARE_ORIGIN || `${window.location.protocol}//${window.location.host}`;
+    return `${baseOrigin}/?gameId=${encodeURIComponent(gameId)}`;
+}
+
+function saveLastPlayerName() {
+    const createName = document.getElementById('playerName').value.trim();
+    const joinName = document.getElementById('joinPlayerName').value.trim();
+    const preferred = joinName || createName;
+    if (preferred) {
+        localStorage.setItem('metropoly_player_name', preferred);
+    }
+}
+
+function autoJoinFromUrlIfPresent() {
+    const params = new URLSearchParams(window.location.search);
+    const gameIdFromUrl = (params.get('gameId') || '').trim().toUpperCase();
+    if (!gameIdFromUrl) return;
+
+    const gameIdInput = document.getElementById('gameId');
+    const joinNameInput = document.getElementById('joinPlayerName');
+    const savedName = localStorage.getItem('metropoly_player_name') || '';
+    const nameFromUrl = (params.get('name') || '').trim();
+
+    gameIdInput.value = gameIdFromUrl;
+    if (!joinNameInput.value) {
+        // Make the invite link truly one-click even when the user didn't provide a name.
+        joinNameInput.value = nameFromUrl || savedName || 'Player';
+    }
+
+    joinGameBtn.click();
+}
 
 // Theme toggle functionality
 function initThemeToggle() {
@@ -123,7 +172,7 @@ createGameBtn.addEventListener('click', () => {
         showModal('Please enter your name');
         return;
     }
-    
+    saveLastPlayerName();
     currentGameId = generateGameId();
     
     socket.emit('createLobby', {
@@ -141,7 +190,7 @@ joinGameBtn.addEventListener('click', () => {
         showModal('Please enter both game ID and your name');
         return;
     }
-    
+    saveLastPlayerName();
     currentGameId = gameId;
     
     socket.emit('joinLobby', {
@@ -179,17 +228,35 @@ copyIdBtn.addEventListener('click', () => {
 
 // Load server info and display connection URLs
 function loadServerInfo() {
-    fetch('/server-info')
+    const connectionUrlsDiv = document.getElementById('connectionUrls');
+    connectionUrlsDiv.innerHTML = '';
+
+    // Primary share URL for online players.
+    if (PUBLIC_SHARE_ORIGIN) {
+        connectionUrlsDiv.appendChild(createUrlItem('Online', PUBLIC_SHARE_ORIGIN));
+    }
+
+    // One-click invite URL for online players.
+    if (currentGameId) {
+        connectionUrlsDiv.appendChild(createUrlItem('Join Link', buildJoinLink(currentGameId)));
+    }
+
+    // Keep current URL for convenience when host is not on the deployed domain.
+    const currentUrl = `${window.location.protocol}//${window.location.host}`;
+    if (!PUBLIC_SHARE_ORIGIN || PUBLIC_SHARE_ORIGIN !== currentUrl) {
+        connectionUrlsDiv.appendChild(createUrlItem('Current', currentUrl));
+    }
+
+    fetch(`${SOCKET_SERVER_URL}/server-info`)
         .then(response => response.json())
         .then(data => {
-            const connectionUrlsDiv = document.getElementById('connectionUrls');
-            connectionUrlsDiv.innerHTML = '';
-            
-            // Add only primary network URL
+            // Add primary network URL if server reported one.
             if (data.externalIPs.length > 0) {
                 const primaryUrl = data.externalIPs[0];
-                const urlItem = createUrlItem('Network', primaryUrl);
-                connectionUrlsDiv.appendChild(urlItem);
+                if (primaryUrl !== currentUrl && primaryUrl !== PUBLIC_SHARE_ORIGIN) {
+                    const urlItem = createUrlItem('Network', primaryUrl);
+                    connectionUrlsDiv.appendChild(urlItem);
+                }
             }
         })
         .catch(error => {
@@ -473,3 +540,5 @@ socket.on('connect_error', () => {
 socket.on('disconnect', () => {
     showModal('Disconnected from server. Please refresh the page.');
 });
+
+autoJoinFromUrlIfPresent();
