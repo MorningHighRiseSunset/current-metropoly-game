@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dice GLB Test — Metropoly</title>
+    <link rel="stylesheet" href="dice-test.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+    <div class="page">
+        <header class="header">
+            <h1>Dice model test</h1>
+            <p>Uses <code>Models/Dice/dice.glb</code> × 2. Verify faces (e.g. 3 + 3) before using in the game.</p>
+            <p class="serve-hint"><strong>How to open:</strong> run <code>npm start</code> then go to <code>/dice-test/</code> — or use Live Server with the <code>public</code> folder as the root (not only this subfolder).</p>
+            <a href="../game.html" class="back-link">← Back to game</a>
+        </header>
+
+        <div class="layout">
+            <div class="viewport-wrap">
+                <div id="viewport"></div>
+                <div id="loadStatus" class="load-status">Loading dice model…</div>
+            </div>
+
+            <aside class="controls">
+                <section class="panel">
+                    <h2>Roll</h2>
+                    <div class="row">
+                        <label>Die 1</label>
+                        <input type="number" id="die1Input" min="1" max="6" value="3">
+                    </div>
+                    <div class="row">
+                        <label>Die 2</label>
+                        <input type="number" id="die2Input" min="1" max="6" value="3">
+                    </div>
+                    <button id="snapBtn" class="btn secondary">Show faces (no roll)</button>
+                    <button id="rollBtn" class="btn primary">Roll animation</button>
+                    <button id="randomBtn" class="btn secondary">Random roll</button>
+                </section>
+
+                <section class="panel result-panel">
+                    <h2>Result</h2>
+                    <div class="result-grid">
+                        <div><span class="label">Target</span><span id="targetResult">—</span></div>
+                        <div><span class="label">Detected</span><span id="detectedResult">—</span></div>
+                        <div><span class="label">Match</span><span id="matchResult">—</span></div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <h2>Calibrate one die</h2>
+                    <p class="hint">Rotate die 1 with sliders until the desired face points toward you, then assign that number.</p>
+                    <div class="row">
+                        <label>Rot X</label>
+                        <input type="range" id="rotX" min="-180" max="180" value="0">
+                        <span id="rotXVal">0°</span>
+                    </div>
+                    <div class="row">
+                        <label>Rot Y</label>
+                        <input type="range" id="rotY" min="-180" max="180" value="0">
+                        <span id="rotYVal">0°</span>
+                    </div>
+                    <div class="row">
+                        <label>Rot Z</label>
+                        <input type="range" id="rotZ" min="-180" max="180" value="0">
+                        <span id="rotZVal">0°</span>
+                    </div>
+                    <div class="assign-row">
+                        <span>Assign to face:</span>
+                        <button type="button" class="btn tiny assign-btn" data-v="1">1</button>
+                        <button type="button" class="btn tiny assign-btn" data-v="2">2</button>
+                        <button type="button" class="btn tiny assign-btn" data-v="3">3</button>
+                        <button type="button" class="btn tiny assign-btn" data-v="4">4</button>
+                        <button type="button" class="btn tiny assign-btn" data-v="5">5</button>
+                        <button type="button" class="btn tiny assign-btn" data-v="6">6</button>
+                    </div>
+                    <button id="exportConfigBtn" class="btn secondary">Copy config for game.js</button>
+                    <pre id="configExport" class="config-export"></pre>
+                </section>
+            </aside>
+        </div>
+    </div>
+
+    <script src="dice-glb-config.js"></script>
+    <script src="dice-test.js"></script>
+</body>
+</html>

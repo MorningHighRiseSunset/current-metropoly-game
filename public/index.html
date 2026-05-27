@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vegas Metropoly</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ Vegas Metropoly</h1>
+            <p>Online Multiplayer Monopoly</p>
+        </header>
+        
+        <!-- Settings Button -->
+        <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
+        
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h2>Settings</h2>
+                <div class="settings-section">
+                    <h3>Theme</h3>
+                    <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
+                </div>
+            </div>
+        </div>
+
+        <main>
+            <div class="game-menu">
+                <div class="menu-section">
+                    <h2>Create New Game</h2>
+                    <div class="form-group">
+                        <label for="playerName">Your Name:</label>
+                        <input type="text" id="playerName" maxlength="20" placeholder="Enter your name">
+                    </div>
+                    <button id="createGameBtn" class="btn btn-primary">Create Game</button>
+                </div>
+
+                <div class="menu-section">
+                    <h2>Join Existing Game</h2>
+                    <div class="form-group">
+                        <label for="gameId">Game ID:</label>
+                        <input type="text" id="gameId" maxlength="8" placeholder="Enter game ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="joinPlayerName">Your Name:</label>
+                        <input type="text" id="joinPlayerName" maxlength="20" placeholder="Enter your name">
+                    </div>
+                    <button id="joinGameBtn" class="btn btn-secondary">Join Game</button>
+                </div>
+            </div>
+
+            <div id="gameCreatedSection" class="hidden">
+                <div class="game-info">
+                    <h2>Game Created!</h2>
+                    <div class="game-id-display">
+                        <p>Share this Game ID with friends:</p>
+                        <div class="game-id-box">
+                            <span id="generatedGameId"></span>
+                            <button id="copyIdBtn" class="btn btn-small">Copy</button>
+                        </div>
+                    </div>
+                    <div class="connection-info">
+                        <h3>Connection URLs for Friends</h3>
+                        <div id="connectionUrls" class="urls-list"></div>
+                        <p class="connection-note">Friends on the same network can use any Network URL above</p>
+                    </div>
+                    <div class="waiting-room">
+                        <h3>Waiting for players...</h3>
+                        <div id="playersList" class="players-list"></div>
+                        <div class="ai-controls">
+                            <h3>Add AI Players</h3>
+                            <div class="ai-buttons">
+                                <button id="addAiBtn" class="btn btn-secondary">+ Add AI Player</button>
+                                <button id="removeAiBtn" class="btn btn-secondary">- Remove AI</button>
+                            </div>
+                            <p class="ai-info">AI players will automatically play against you</p>
+                        </div>
+                        <button id="startGameBtn" class="btn btn-success hidden">Start Game</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="lobbySection" class="hidden">
+                <div class="lobby-info">
+                    <h2>Game Lobby</h2>
+                    <div class="game-details">
+                        <p><strong>Game ID:</strong> <span id="lobbyGameId"></span></p>
+                    </div>
+                    <div class="players-section">
+                        <h3>Players in Lobby:</h3>
+                        <div id="lobbyPlayersList" class="players-list"></div>
+                    </div>
+                    <div class="lobby-status">
+                        <p id="lobbyStatus">Waiting for host to start the game...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="messageModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <p id="modalMessage"></p>
+                <button id="modalOkBtn" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('HTML loaded successfully!');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - All elements should be available');
+        });
+    </script>
+    <script src="lobby.js"></script>
+</body>
+</html>
