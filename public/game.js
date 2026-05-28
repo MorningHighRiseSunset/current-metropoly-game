@@ -4,7 +4,10 @@ function getConfiguredSocketServerUrl() {
     const urlParamServer = params.get('server');
     const runtimeUrl = window.RUNTIME_CONFIG && window.RUNTIME_CONFIG.socketServerUrl;
     const storedUrl = localStorage.getItem('metropoly_socket_server_url');
-    const configuredUrl = urlParamServer || runtimeUrl || storedUrl || window.location.origin;
+    // If runtime-config.js fails to load on the frontend host (e.g. Vercel rewrite -> HTML),
+    // we still want a working default Socket.IO backend.
+    const defaultBackendUrl = 'https://current-metropoly-game.onrender.com';
+    const configuredUrl = urlParamServer || runtimeUrl || storedUrl || defaultBackendUrl || window.location.origin;
     if (urlParamServer) {
         localStorage.setItem('metropoly_socket_server_url', urlParamServer);
     }
