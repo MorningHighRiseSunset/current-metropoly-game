@@ -134,6 +134,27 @@ const games = {};
 const players = {};
 const disconnectTimers = {};
 
+function countGamePlayers(game) {
+    return game.players.filter(p => p !== null).length;
+}
+
+/** After lobby → game page redirect, socket id changes; keep the same logical player. */
+function relinkPlayerSocket(game, existingPlayer, newSocketId) {
+    const oldSocketId = existingPlayer.id;
+    if (oldSocketId === newSocketId) return existingPlayer;
+
+    game.players = game.players.map((p) => {
+        if (p && p.id === oldSocketId) return { ...p, id: newSocketId };
+        return p;
+    });
+    if (game.host === oldSocketId) game.host = newSocketId;
+    if (game.originalHost === oldSocketId) game.originalHost = newSocketId;
+    if (game.gameState && game.gameState.currentPlayer === oldSocketId) {
+        game.gameState.currentPlayer = newSocketId;
+    }
+    return game.players.find((p) => p && p.id === newSocketId);
+}
+
 // Populated inside io.on('connection') so top-level AI helpers can call game logic
 const gameRuntime = {
     checkRentPayment: null,
@@ -582,6 +603,7 @@ io.on('connection', (socket) => {
         
         const player = {
             id: socket.id,
+            uid: uuidv4(),
             name: playerName,
             money: 1500,
             position: 0,
@@ -597,10 +619,10 @@ io.on('connection', (socket) => {
             game.players.push(null); // Index 0 dummy
         }
         game.players.push(player);
-        players[socket.id] = { gameId, playerName };
+        players[socket.id] = { gameId, playerName, playerUid: player.uid };
         socket.join(gameId);
         
-        socket.emit('gameCreated', { gameId, players: game.players });
+        socket.emit('gameCreated', { gameId, players: game.players, playerUid: player.uid });
         
         console.log(`Game ${gameId} created by ${playerName}`);
     });
@@ -617,13 +639,22 @@ io.on('connection', (socket) => {
 
         const game = games[gameId];
 
-        if (game.players.length >= 4) {
+        if (countGamePlayers(game) >= 4) {
             socket.emit('lobbyError', 'Game is full');
+            return;
+        }
+
+        const nameTaken = game.players.some(
+            (p) => p && !p.isAI && p.name.toLowerCase() === playerName.toLowerCase()
+        );
+        if (nameTaken) {
+            socket.emit('lobbyError', 'That name is already taken in this game. Choose a different name.');
             return;
         }
 
         const player = {
             id: socket.id,
+            uid: uuidv4(),
             name: playerName,
             money: 1500,
             position: 0,
@@ -639,7 +670,7 @@ io.on('connection', (socket) => {
             game.players.push(null); // Index 0 dummy
         }
         game.players.push(player);
-        players[socket.id] = { gameId, playerName, player };
+        players[socket.id] = { gameId, playerName, playerUid: player.uid, player };
 
         if (!game.host) {
             game.host = socket.id;
@@ -654,6 +685,7 @@ io.on('connection', (socket) => {
         socket.emit('lobbyJoined', {
             gameId,
             playerId: socket.id,
+            playerUid: player.uid,
             isHost: game.host === socket.id,
             players: game.players
         });
@@ -674,7 +706,7 @@ io.on('connection', (socket) => {
         const game = games[gameId];
 
         // Check if game is full (max 4 players)
-        if (game.players.length >= 4) {
+        if (countGamePlayers(game) >= 4) {
             socket.emit('gameError', 'Game is full (max 4 players)');
             return;
         }
@@ -683,6 +715,7 @@ io.on('connection', (socket) => {
         const aiPlayerCount = game.players.filter(p => p && p.isAI).length + 1;
         const aiPlayer = {
             id: `ai-${gameId}-${Date.now()}`,
+            uid: uuidv4(),
             name: `AI Player ${aiPlayerCount}`,
             money: 1500,
             position: 0,
@@ -846,17 +879,17 @@ io.on('connection', (socket) => {
         
         // Update game status for all players in the room
         const game = games[playerData.gameId];
-        if (game && game.players.length >= 2) {
+        if (game && countGamePlayers(game) >= 2) {
             io.to(playerData.gameId).emit('updateGameStatus', {
                 status: 'Players Connected',
-                playerCount: game.players.length
+                playerCount: countGamePlayers(game)
             });
         }
     });
 
     // Join existing game (for game page)
     socket.on('joinGame', (data) => {
-        const { gameId } = data;
+        const { gameId, playerUid } = data;
         
         if (!games[gameId]) {
             socket.emit('gameError', 'Game not found');
@@ -868,113 +901,36 @@ io.on('connection', (socket) => {
         // Allow players to join regardless of game status
         // They need to be in the room to receive gameStarted event
 
-        // Check if game is already full (excluding dummy null at index 0)
-        const actualPlayerCount = game.players.filter(p => p !== null).length;
-        if (actualPlayerCount >= 2) {
-            console.log(`Game ${gameId} is full with ${actualPlayerCount} players, checking if this is a reconnection...`);
-        }
-        
-        // Find the player in this game - they should already exist from lobby
-        // We need to match by persistent data, not socket ID which changes on redirect
-        let player = game.players.find(p => p && p.id === socket.id);
-        
-        if (!player) {
-            // Player has new socket ID after redirect, find by name or create new entry
-            // This happens when players redirect from lobby to game page
-            console.log(`Player with socket ID ${socket.id} not found, checking for existing players...`);
-            console.log(`Current game.players:`, game.players.filter(p => p).map(p => ({ id: p.id, name: p.name, isHost: p.isHost })));
-            console.log(`Current game.host:`, game.host);
-            console.log(`Current game.originalHost:`, game.originalHost);
-            console.log(`Current game.hostName:`, game.hostName);
-            
-            // CRITICAL FIX: Check if this is a reconnection by looking at the players mapping
-            // The players mapping should contain the original player data
-            let foundPlayer = null;
-            let originalSocketId = null;
-            
-            // Look through all existing player mappings to find a match
-            // Check if this new socket ID matches any player who should be reconnecting
-            console.log(`RECONNECT: Checking mappings for game ${gameId}. Current players mapping:`, Object.keys(players));
-            console.log(`RECONNECT: Game players:`, game.players.filter(p => p).map(p => ({ name: p.name, id: p.id })));
-            console.log(`RECONNECT: New socket ID: ${socket.id}`);
-            
-            // First, check if this socket ID matches any existing player (no reconnection needed)
-            const directMatch = game.players.find(p => p && p.id === socket.id);
-            if (directMatch) {
-                console.log(`RECONNECT: ✓ Direct match found! Player ${directMatch.name} already connected with socket ${socket.id}`);
-                player = directMatch;
-            } else {
-                // Look for players who have disconnected but are in the mapping
-                for (const [mappedSocketId, playerData] of Object.entries(players)) {
-                    console.log(`RECONNECT: Checking mapping - Socket: ${mappedSocketId}, Game: ${playerData.gameId}, Name: ${playerData.playerName}`);
-                    if (playerData.gameId === gameId && playerData.playerName) {
-                        // Check if this player name exists in the current game but has a different socket ID
-                        const existingPlayer = game.players.find(p => p && p.name === playerData.playerName);
-                        if (existingPlayer && existingPlayer.id !== socket.id) {
-                            console.log(`RECONNECT: ✓ Found reconnection! ${playerData.playerName} was ${mappedSocketId}, now ${socket.id}`);
-                            foundPlayer = existingPlayer;
-                            originalSocketId = mappedSocketId;
-                            break;
-                        } else if (existingPlayer) {
-                            console.log(`RECONNECT: ✗ Player ${existingPlayer.name} already connected with different socket`);
-                        } else {
-                            console.log(`RECONNECT: ✗ Player ${playerData.playerName} not found in current game`);
-                        }
-                    }
-                }
-            }
-            
-            if (foundPlayer) {
-                console.log(`Updating player ${foundPlayer.name} socket ID from ${foundPlayer.id} to ${socket.id}`);
-                const previousPlayerId = foundPlayer.id;
-                
-                // Update the player's socket ID in the players array
-                const updatedPlayers = game.players.map(p => {
-                    if (p && p.id === foundPlayer.id) {
-                        return { ...p, id: socket.id };
-                    }
-                    return p;
-                });
-                
-                // Update the game state
-                game.players = updatedPlayers;
-                
-                // Update host if this was the host
-                if (game.host === foundPlayer.id) {
-                    game.host = socket.id;
-                }
+        let player = game.players.find((p) => p && p.id === socket.id);
 
-                // Critical: keep turn ownership valid after reconnect.
-                // If current turn belonged to the old socket ID, transfer it to the new one.
-                if (game.gameState && game.gameState.currentPlayer === previousPlayerId) {
-                    game.gameState.currentPlayer = socket.id;
-                    console.log(`RECONNECT: Updated currentPlayer from ${previousPlayerId} to ${socket.id}`);
+        if (!player && playerUid) {
+            const byUid = game.players.find((p) => p && p.uid === playerUid);
+            if (byUid) {
+                const oldSocketId = byUid.id;
+                player = relinkPlayerSocket(game, byUid, socket.id);
+                if (oldSocketId !== socket.id) {
+                    delete players[oldSocketId];
                 }
-                
-                console.log('Updated players array:', updatedPlayers.filter(p => p).map(p => ({ id: p.id, name: p.name, isHost: p.isHost })));
-                
-                // Set the player variable to the updated player
-                player = game.players.find(p => p && p.id === socket.id);
-                
-                // Clean up old player mapping
-                delete players[originalSocketId];
-            } else {
-                console.log(`No matching player found for reconnection, rejecting connection`);
-                socket.emit('error', 'Game is full or you are not a reconnected player');
-                socket.disconnect();
-                return;
+                console.log(`RECONNECT: ${player.name} (${playerUid}) relinked ${oldSocketId} → ${socket.id}`);
             }
         }
 
-        // Final check: if we still don't have a valid player, reject the connection
         if (!player) {
-            console.log(`SERVER: No valid player found for socket ${socket.id}, rejecting connection`);
-            socket.emit('error', 'Invalid connection - no matching player found');
-            socket.disconnect();
+            console.log(`JOIN GAME: No player for socket ${socket.id}, uid=${playerUid || 'none'}`);
+            socket.emit('gameError', 'You are not in this game. Join from the lobby with the same game ID first.');
             return;
         }
 
-        players[socket.id] = { gameId, playerName: player ? player.name : 'Unknown', player };
+        if (!player.uid) {
+            player.uid = uuidv4();
+        }
+
+        players[socket.id] = {
+            gameId,
+            playerName: player.name,
+            playerUid: player.uid,
+            player
+        };
         socket.join(gameId);
         // If this player had a pending disconnect timeout, cancel it (reconnected quickly).
         if (disconnectTimers[socket.id]) {
@@ -1035,6 +991,7 @@ io.on('connection', (socket) => {
         socket.emit('gameJoined', {
             gameId,
             playerId: correctPlayerId,
+            playerUid: player.uid,
             players: game.players,
             gameState: game.gameState
         });
@@ -1147,11 +1104,6 @@ io.on('connection', (socket) => {
         });
         
         updateGameState(game);
-        
-        cancelScheduledTurnEnd(game, player.id);
-        setTimeout(() => {
-            advanceTurn(game);
-        }, 100);
     });
 
     // Pass on property
@@ -1180,11 +1132,6 @@ io.on('connection', (socket) => {
         });
         
         addChatMessage(game.id, 'System', `${player.name} passed on ${property.name}`);
-        
-        cancelScheduledTurnEnd(game, player.id);
-        setTimeout(() => {
-            advanceTurn(game);
-        }, 100);
     });
 
     // Decline property (start auction)
@@ -1501,6 +1448,13 @@ io.on('connection', (socket) => {
                     scheduleAutoAdvanceTurn(game, socket.id, 600);
                 } else if (landedSpace.position === 30) {
                     sendToJail(game, currentPlayer);
+                } else if (
+                    landedSpace.type === 'property' ||
+                    landedSpace.type === 'railroad' ||
+                    landedSpace.type === 'utility'
+                ) {
+                    // Unowned: client shows buy modal. Owned: rent handled above.
+                    // Turn ends only when the player clicks End Turn (or buy/pass then End Turn).
                 } else {
                     scheduleAutoAdvanceTurn(game, socket.id, 600);
                 }

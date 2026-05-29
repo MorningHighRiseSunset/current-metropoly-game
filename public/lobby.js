@@ -47,6 +47,15 @@ function buildJoinLink(gameId) {
     return `${baseOrigin}/?gameId=${encodeURIComponent(gameId)}`;
 }
 
+function persistLobbyIdentity(gameId, playerUid) {
+    if (gameId) {
+        sessionStorage.setItem('metropoly_game_id', gameId);
+    }
+    if (playerUid) {
+        sessionStorage.setItem('metropoly_player_uid', playerUid);
+    }
+}
+
 function saveLastPlayerName() {
     const createName = document.getElementById('playerName').value.trim();
     const joinName = document.getElementById('joinPlayerName').value.trim();
@@ -229,42 +238,18 @@ copyIdBtn.addEventListener('click', () => {
     });
 });
 
-// Load server info and display connection URLs
+// Online build: only share the public invite link (no LAN / local network URLs).
 function loadServerInfo() {
     const connectionUrlsDiv = document.getElementById('connectionUrls');
     connectionUrlsDiv.innerHTML = '';
 
-    // Primary share URL for online players.
     if (PUBLIC_SHARE_ORIGIN) {
         connectionUrlsDiv.appendChild(createUrlItem('Online', PUBLIC_SHARE_ORIGIN));
     }
 
-    // One-click invite URL for online players.
     if (currentGameId) {
         connectionUrlsDiv.appendChild(createUrlItem('Join Link', buildJoinLink(currentGameId)));
     }
-
-    // Keep current URL for convenience when host is not on the deployed domain.
-    const currentUrl = `${window.location.protocol}//${window.location.host}`;
-    if (!PUBLIC_SHARE_ORIGIN || PUBLIC_SHARE_ORIGIN !== currentUrl) {
-        connectionUrlsDiv.appendChild(createUrlItem('Current', currentUrl));
-    }
-
-    fetch(`${SOCKET_SERVER_URL}/server-info`)
-        .then(response => response.json())
-        .then(data => {
-            // Add primary network URL if server reported one.
-            if (data.externalIPs.length > 0) {
-                const primaryUrl = data.externalIPs[0];
-                if (primaryUrl !== currentUrl && primaryUrl !== PUBLIC_SHARE_ORIGIN) {
-                    const urlItem = createUrlItem('Network', primaryUrl);
-                    connectionUrlsDiv.appendChild(urlItem);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Failed to load server info:', error);
-        });
 }
 
 function createUrlItem(label, url) {
@@ -326,12 +311,6 @@ startGameBtn.addEventListener('click', () => {
     startGameBtn.textContent = 'Starting...';
 
     socket.emit('startGame');
-
-    // Force immediate redirect without waiting for gameStarted
-    console.log('LOBBY: Forcing immediate redirect to game page');
-    setTimeout(() => {
-        window.location.href = `/game/${currentGameId}`;
-    }, 500);
 });
 
 // Add AI player
@@ -370,10 +349,11 @@ modalOkBtn.addEventListener('click', hideModal);
 
 // Socket event handlers
 socket.on('gameCreated', (data) => {
-    const { gameId, players } = data;
+    const { gameId, players, playerUid } = data;
     
     isHost = true;
     currentGameId = gameId;
+    persistLobbyIdentity(gameId, playerUid);
     
     // Hide menu and lobby, show game created section
     gameMenu.classList.add('hidden');
@@ -394,10 +374,11 @@ socket.on('gameCreated', (data) => {
 });
 
 socket.on('lobbyJoined', (data) => {
-    const { gameId, playerId, isHost: hostStatus, players } = data;
+    const { gameId, playerId, playerUid, isHost: hostStatus, players } = data;
     
     isHost = hostStatus;
     currentGameId = gameId;
+    persistLobbyIdentity(gameId, playerUid);
     
     // Hide menu
     gameMenu.classList.add('hidden');

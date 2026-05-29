@@ -662,8 +662,47 @@ function clearPropertyDecisionTimer() {
     propertyDecisionEndsAt = null;
 }
 
+function getStoredPlayerUid() {
+    return sessionStorage.getItem('metropoly_player_uid');
+}
+
+function persistPlayerIdentity(gameId, playerUid) {
+    if (gameId) sessionStorage.setItem('metropoly_game_id', gameId);
+    if (playerUid) sessionStorage.setItem('metropoly_player_uid', playerUid);
+}
+
+/** Match this browser tab to a row in the server players array (survives socket reconnect). */
+function resolveLocalPlayer(playersList) {
+    if (!playersList || !Array.isArray(playersList)) return null;
+    const uid = getStoredPlayerUid();
+    if (uid) {
+        const byUid = playersList.find((p) => p && p.uid === uid);
+        if (byUid) return byUid;
+    }
+    if (myPlayerId) {
+        const byId = playersList.find((p) => p && p.id === myPlayerId);
+        if (byId) return byId;
+    }
+    return playersList.find((p) => p && p.id === socket.id) || null;
+}
+
 function endTurnNow() {
     socket.emit('endTurn');
+}
+
+function canEndTurnNow() {
+    if (!gameState || !myPlayerId) return false;
+    if (gameState.currentPlayer !== myPlayerId) return false;
+    if (!gameState.diceRolled) return false;
+    if (waitingForBuyResult) return false;
+    return true;
+}
+
+function dismissPropertyDecisionUI() {
+    clearPropertyDecisionTimer();
+    activePropertyDecision = null;
+    waitingForBuyResult = false;
+    if (buyModal) buyModal.classList.add('hidden');
 }
 
 let clientAutoEndTurnTimer = null;
@@ -677,6 +716,10 @@ function cancelClientAutoEndTurn() {
 
 // Backup: end turn after roll when property/buy UI is not active
 function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
+    // Testing-mode behavior: previously we auto-ended turns client-side.
+    // For full gameplay (trading/building/etc.), turns should only end when the
+    // player explicitly clicks "End Turn" (or the server advances the turn).
+    return;
     if (playerId !== myPlayerId) return;
     cancelClientAutoEndTurn();
 
@@ -706,7 +749,7 @@ function updateBuyModalContent() {
         <p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>
         <p>Rent: <strong>$${activePropertyDecision.spaceData.rent ? activePropertyDecision.spaceData.rent[0] : 0}</strong></p>
         <p>Decision timer: <strong>${secondsLeft}s</strong></p>
-        <p>${canAfford ? 'Choose Buy or Pass.' : 'Not enough money - will auto end turn.'}</p>
+        <p>${canAfford ? 'Buy this property, Pass, or click End Turn when you are done.' : 'Not enough money to buy. Pass or click End Turn.'}</p>
     `;
 }
 
@@ -719,6 +762,7 @@ function startPropertyDecision(spaceData, position) {
     propertyDecisionEndsAt = Date.now() + 15000;
     updateBuyModalContent();
     buyModal.classList.remove('hidden');
+    updateUI();
 
     propertyDecisionTimer = setInterval(() => {
         updateBuyModalContent();
@@ -726,17 +770,9 @@ function startPropertyDecision(spaceData, position) {
 
         clearPropertyDecisionTimer();
         buyModal.classList.add('hidden');
-
-        const canAfford = currentPlayer && currentPlayer.money >= spaceData.price;
-        if (canAfford) {
-            waitingForBuyResult = true;
-            socket.emit('buyProperty', { position });
-            addLogEntry(`Auto-bought ${spaceData.name} (timer expired)`, 'system');
-        } else {
-            addLogEntry(`Timer expired: cannot afford ${spaceData.name}, ending turn`, 'system');
-            activePropertyDecision = null;
-            endTurnNow();
-        }
+        activePropertyDecision = null;
+        updateUI();
+        addLogEntry(`Decision time expired for ${spaceData.name}. Use End Turn when ready.`, 'system');
     }, 250);
 }
 
@@ -1318,6 +1354,11 @@ function updateUI() {
         if (rollDiceBtn) {
             rollDiceBtn.disabled = !canRollDice;
         }
+
+        const endTurnBtn = document.getElementById('endTurnBtn');
+        if (endTurnBtn) {
+            endTurnBtn.disabled = !canEndTurnNow();
+        }
     } else {
         canRollDice = false;
         const diceContainer = document.getElementById('dice3DContainer');
@@ -1327,6 +1368,11 @@ function updateUI() {
         const rollDiceBtn = document.getElementById('rollDiceBtn');
         if (rollDiceBtn) {
             rollDiceBtn.disabled = true;
+        }
+
+        const endTurnBtn = document.getElementById('endTurnBtn');
+        if (endTurnBtn) {
+            endTurnBtn.disabled = true;
         }
     }
 
@@ -1348,22 +1394,18 @@ function updateUI() {
 // Socket event handlers
 socket.on('connect', () => {
     console.log('Connected to server');
-    // Clear any stale data from previous sessions
-    localStorage.removeItem('playerName');
-    
-    // Get game ID from URL
+
     const urlParts = window.location.pathname.split('/');
     const gameId = urlParts[urlParts.length - 1];
     currentGameId = gameId;
+    const playerUid = getStoredPlayerUid();
 
-    // Update game code display immediately
     if (gameId && gameCodeEl) {
         gameCodeEl.textContent = gameId;
     }
-    
+
     if (gameId) {
-        socket.emit('joinGame', { gameId });
-        gameCodeEl.textContent = gameId;
+        socket.emit('joinGame', { gameId, playerUid });
     }
 });
 
@@ -1377,35 +1419,13 @@ socket.on('gameJoined', (data) => {
     console.log('GAME: Players array:', data.players);
     console.log('GAME: Available player IDs:', data.players.filter(p => p).map(p => ({ id: p.id, name: p.name })));
     
-    // IMPORTANT: Use the playerId sent by the server - this should match the updated socket ID
-    myPlayerId = data.playerId;
+    if (data.playerUid) {
+        persistPlayerIdentity(data.gameId, data.playerUid);
+    }
     players = data.players;
-    
-    // CRITICAL FIX:// Find current player using the server-provided playerId
-    currentPlayer = players.find(p => p && p.id === myPlayerId);
-    
-    // If not found, the server sent wrong playerId - use socket.id instead
-    if (!currentPlayer) {
-        console.log('GAME: Server playerId wrong, using socket.id instead');
-        myPlayerId = socket.id;
-        currentPlayer = players.find(p => p && p.id === socket.id);
-    }
-    
-    // If still not found, there's a serious mismatch - force update
-    if (!currentPlayer) {
-        console.log('GAME: CRITICAL - Cannot find current player, forcing update');
-        // Update the first non-null player to match current socket (this is a fallback)
-        const firstPlayer = players.find(p => p !== null);
-        if (firstPlayer) {
-            firstPlayer.id = socket.id;
-            myPlayerId = socket.id;
-            currentPlayer = firstPlayer;
-            console.log('GAME: Forced player to have socket ID:', socket.id);
-        } else {
-            console.log('GAME: No players available to force update');
-        }
-    }
-    
+    currentPlayer = resolveLocalPlayer(players);
+    myPlayerId = currentPlayer ? currentPlayer.id : data.playerId;
+
     gameState = data.gameState;
     
     console.log('GAME: Current player found:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
@@ -1454,10 +1474,13 @@ socket.on('gameJoined', (data) => {
 socket.on('tokenSelected', (data) => {
     const { playerId, tokenIndex, players: serverPlayers } = data;
 
-    // Update players array from server
     if (serverPlayers) {
         players = serverPlayers;
+    }
 
+    currentPlayer = resolveLocalPlayer(players);
+    if (currentPlayer) {
+        myPlayerId = currentPlayer.id;
     }
 
     const player = players.find(p => p && p.id === playerId);
@@ -1496,15 +1519,9 @@ socket.on('gameStarted', (data) => {
     gameState = data.gameState;
     players = data.players;
 
-    // Find current player - try multiple methods to ensure we find it
-    currentPlayer = players.find(p => p && p.id === myPlayerId);
-
-    // If not found by myPlayerId, try socket.id
-    if (!currentPlayer && socket.id) {
-        currentPlayer = players.find(p => p && p.id === socket.id);
-        if (currentPlayer) {
-            myPlayerId = socket.id;
-        }
+    currentPlayer = resolveLocalPlayer(players);
+    if (currentPlayer) {
+        myPlayerId = currentPlayer.id;
     }
 
     // Acknowledge receipt to server
@@ -1556,7 +1573,10 @@ socket.on('updateGameStatus', (data) => {
     console.log('Game status updated:', data);
     const gameCodeEl = document.getElementById('gameCode');
     if (gameCodeEl) {
-        gameCodeEl.textContent = `${data.status} (${data.playerCount} players)`;
+        const count = data.playerCount != null
+            ? data.playerCount
+            : players.filter((p) => p).length;
+        gameCodeEl.textContent = `${data.status} (${count} players)`;
     }
 });
 
@@ -1583,7 +1603,7 @@ socket.on('propertyPurchased', (data) => {
             activePropertyDecision = null;
             clearPropertyDecisionTimer();
             if (buyModal) buyModal.classList.add('hidden');
-            endTurnNow();
+            updateUI();
         }
     }
 });
@@ -1600,7 +1620,7 @@ socket.on('propertyPassed', (data) => {
         activePropertyDecision = null;
         clearPropertyDecisionTimer();
         if (buyModal) buyModal.classList.add('hidden');
-        endTurnNow();
+        updateUI();
     }
 });
 
@@ -1618,31 +1638,10 @@ socket.on('playersUpdated', (data) => {
     if (data.gameState) {
         gameState = data.gameState;
     }
-    
-    // CRITICAL FIX: Always try to find current player by socket.id first
-    // This handles reconnection scenarios where the socket ID changed
-    currentPlayer = players.find(p => p && p.id === socket.id);
-    
+
+    currentPlayer = resolveLocalPlayer(players);
     if (currentPlayer) {
-        // Update myPlayerId to match the current socket
-        myPlayerId = socket.id;
-        console.log('PLAYERS: Found current player by socket.id:', currentPlayer.name);
-        console.log('PLAYERS: Updated myPlayerId to:', myPlayerId);
-    } else {
-        // Fallback: try the old myPlayerId
-        currentPlayer = players.find(p => p && p.id === myPlayerId);
-        if (currentPlayer) {
-            console.log('PLAYERS: Found current player by old myPlayerId:', currentPlayer.name);
-        } else {
-            console.log('PLAYERS: Current player not found after playersUpdated');
-            console.log('PLAYERS: Available player IDs:', players.filter(p => p).map(p => p.id));
-            console.log('PLAYERS: My socket ID:', socket.id);
-            console.log('PLAYERS: My old myPlayerId:', myPlayerId);
-            
-            // Don't use name fallback - it causes wrong player identification
-            // Wait for the next event to properly identify the player
-            console.log('PLAYERS: Waiting for next event to identify player...');
-        }
+        myPlayerId = currentPlayer.id;
     }
     
     console.log('PLAYERS: Updated players array:', players);
@@ -1970,7 +1969,6 @@ socket.on('gameError', (error) => {
         activePropertyDecision = null;
         clearPropertyDecisionTimer();
         if (buyModal) buyModal.classList.add('hidden');
-        endTurnNow();
     }
 });
 
@@ -2079,9 +2077,9 @@ if (confirmBuyBtn) {
             waitingForBuyResult = true;
             socket.emit('buyProperty', { position });
         } else {
-            addLogEntry(`Cannot afford ${spaceData.name}. Ending turn.`, 'system');
+            socket.emit('passProperty', { position });
+            addLogEntry(`Cannot afford ${spaceData.name}. Passing.`, 'system');
             activePropertyDecision = null;
-            endTurnNow();
         }
     });
 }
@@ -2121,6 +2119,19 @@ if (rollDiceBtn) {
         if (canRollDice) {
             socket.emit('rollDice');
         }
+    });
+}
+
+// End turn button (manual)
+const endTurnBtn = document.getElementById('endTurnBtn');
+if (endTurnBtn) {
+    endTurnBtn.addEventListener('click', () => {
+        if (!canEndTurnNow()) return;
+        if (activePropertyDecision) {
+            dismissPropertyDecisionUI();
+        }
+        cancelClientAutoEndTurn();
+        endTurnNow();
     });
 }
 
