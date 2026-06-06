@@ -469,9 +469,16 @@ socket.on('gameStarted', (data) => {
     console.log('LOBBY: Current game ID:', currentGameId);
     console.log('LOBBY: Socket ID:', socket.id);
     
-    // This event is now handled by the game page, not the lobby
-    // The lobby redirects immediately after clicking start
-    console.log('LOBBY: gameStarted received in lobby (should be handled by game page)');
+    // Non-host players need to redirect when they receive gameStarted
+    // The host already redirected when clicking the start button
+    if (!isHost) {
+        console.log('LOBBY: Non-host player redirecting to game page...');
+        setTimeout(() => {
+            window.location.href = `/game/${currentGameId}`;
+        }, 500);
+    } else {
+        console.log('LOBBY: Host already redirected, ignoring gameStarted in lobby');
+    }
 });
 
 socket.on('lobbyError', (error) => {
