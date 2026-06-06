@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0'; // Listen on all network interfaces
 
 /** While testing turns / Chance / Community Chest — AI passes on purchasable spaces. */
-const DISABLE_AI_PROPERTY_PURCHASES = true;
+const DISABLE_AI_PROPERTY_PURCHASES = false;
 
 // Get local IP addresses for external access
 function getLocalIPAddresses() {
