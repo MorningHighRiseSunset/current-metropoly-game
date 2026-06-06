@@ -311,6 +311,13 @@ startGameBtn.addEventListener('click', () => {
     startGameBtn.textContent = 'Starting...';
 
     socket.emit('startGame');
+
+    // Redirect immediately to game page
+    // Server will send gameStarted event once we join the game page
+    setTimeout(() => {
+        console.log('LOBBY: Redirecting to game page...');
+        window.location.href = `/game/${currentGameId}`;
+    }, 500);
 });
 
 // Add AI player
@@ -462,15 +469,9 @@ socket.on('gameStarted', (data) => {
     console.log('LOBBY: Current game ID:', currentGameId);
     console.log('LOBBY: Socket ID:', socket.id);
     
-    // Acknowledge receipt to server
-    socket.emit('gameStartedAck');
-    console.log('LOBBY: Sent gameStartedAck');
-    
-    // Add small delay to allow acknowledgment to be processed before redirect
-    setTimeout(() => {
-        console.log('LOBBY: Redirecting to game page...');
-        window.location.href = `/game/${currentGameId}`;
-    }, 500);
+    // This event is now handled by the game page, not the lobby
+    // The lobby redirects immediately after clicking start
+    console.log('LOBBY: gameStarted received in lobby (should be handled by game page)');
 });
 
 socket.on('lobbyError', (error) => {
