@@ -1033,7 +1033,7 @@ io.on('connection', (socket) => {
 
             // Assign tokens to AI players now that humans have selected
             const takenTokens = humanPlayers.map(p => p.tokenIndex);
-            const availableTokens = [0, 1, 2, 3].filter(token => !takenTokens.includes(token));
+            const availableTokens = [0, 1, 2].filter(token => !takenTokens.includes(token));
             let tokenIndex = 0;
 
             game.players.forEach(player => {

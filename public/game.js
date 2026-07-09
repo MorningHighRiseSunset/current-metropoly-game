@@ -34,9 +34,10 @@ let waitingForBuyResult = false;
 // Token data
 const tokenData = [
     { name: 'Burger', model: '/Models/Cheeseburger/cheeseburger.glb', image: '/images/burger%20image.png', scale: 0.42 },
-    { name: 'Rolls Royce', model: '/Models/RollsRoyce/rollsRoyceCarAnim.glb', image: '/images/rolls%20royce%20image.png', scale: 0.14, facingOffset: -Math.PI / 2 },
+    // { name: 'Rolls Royce', model: '/Models/RollsRoyce/rollsRoyceCarAnim.glb', image: '/images/rolls%20royce%20image.png', scale: 0.14, facingOffset: -Math.PI / 2 },
     { name: 'Top Hat', model: '/Models/TopHat/tophat.glb', image: '/images/top%20hat%20image.png', scale: 0.22 },
-    { name: 'Vegas Model', model: '/Models/WhiteGirlIdle/Standing Idle.fbx', image: '/images/woman%20model%20image.png', scale: 0.1 }
+    // { name: 'Vegas Model', model: '/Models/WhiteGirlIdle/Standing Idle.fbx', image: '/images/woman%20model%20image.png', scale: 0.1 },
+    { name: 'Coffee Cup', model: '/Models/CoffeeCup/coffee.gltf', image: '/images/coffee%20cup%20image.png', scale: 0.25 }
 ];
 
 // Initialize 3D dice scene
@@ -654,6 +655,44 @@ function getUnownedPurchasableSpace(position) {
     return owner ? null : spaceData;
 }
 
+function tileHasLandingMedia(position) {
+    if (typeof tileMedia === 'undefined' || !tileMedia[position]) return false;
+    const media = tileMedia[position];
+    return media.videos.length > 0 || media.images.length > 0;
+}
+
+function handlePlayerLanding(playerId, newPosition) {
+    console.log('handlePlayerLanding called:', { playerId, newPosition, myPlayerId, isCurrentPlayer: playerId === myPlayerId });
+    
+    // Show property info modal for current player when landing on property
+    // This includes the embedded media, so we don't need the separate hover preview
+    if (playerId === myPlayerId && boardConfig[newPosition]) {
+        const spaceData = boardConfig[newPosition];
+        console.log('Space data:', spaceData);
+        if (spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility') {
+            console.log('Calling showPropertyInfo for:', spaceData.name);
+            showPropertyInfo(spaceData);
+        }
+    }
+    
+    // Only show tile hover preview for non-property spaces (chance, community chest, etc.)
+    // Don't show it for properties since property modal already has embedded media
+    if (playerId === myPlayerId && boardConfig[newPosition]) {
+        const spaceData = boardConfig[newPosition];
+        if (spaceData.type !== 'property' && spaceData.type !== 'railroad' && spaceData.type !== 'utility') {
+            if (tileHasLandingMedia(newPosition) && typeof showTileHover === 'function') {
+                showTileHover(newPosition);
+            }
+        }
+    }
+    
+    // Show buy modal for unowned properties (this will show after property modal)
+    if (playerId === myPlayerId) {
+        const spaceData = getUnownedPurchasableSpace(newPosition);
+        if (spaceData) startPropertyDecision(spaceData, newPosition);
+    }
+}
+
 function clearPropertyDecisionTimer() {
     if (propertyDecisionTimer) {
         clearInterval(propertyDecisionTimer);
@@ -744,13 +783,35 @@ function updateBuyModalContent() {
     const secondsLeft = Math.max(0, Math.ceil((propertyDecisionEndsAt - now) / 1000));
     const canAfford = currentPlayer && currentPlayer.money >= activePropertyDecision.spaceData.price;
 
-    buyContent.innerHTML = `
-        <p><strong>${activePropertyDecision.spaceData.name}</strong></p>
-        <p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>
-        <p>Rent: <strong>$${activePropertyDecision.spaceData.rent ? activePropertyDecision.spaceData.rent[0] : 0}</strong></p>
-        <p>Decision timer: <strong>${secondsLeft}s</strong></p>
-        <p>${canAfford ? 'Buy this property, Pass, or click End Turn when you are done.' : 'Not enough money to buy. Pass or click End Turn.'}</p>
-    `;
+    let html = `<div class="buy-modal-layout">`;
+    
+    // Add media section on the left
+    html += `<div class="buy-modal-media-section">`;
+    if (typeof tileMedia !== 'undefined' && tileMedia[activePropertyDecision.spaceData.position]) {
+        const media = tileMedia[activePropertyDecision.spaceData.position];
+        
+        // Prefer video if available
+        if (media.videos && media.videos.length > 0) {
+            const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
+            html += `<video src="${randomVideo}" autoplay muted loop playsinline controls style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;"></video>`;
+        } else if (media.images && media.images.length > 0) {
+            const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+            html += `<img src="${randomImage}" alt="${activePropertyDecision.spaceData.name}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;">`;
+        }
+    }
+    html += `</div>`;
+    
+    // Add info section on the right
+    html += `<div class="buy-modal-info-section">`;
+    html += `<p><strong>${activePropertyDecision.spaceData.name}</strong></p>`;
+    html += `<p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>`;
+    html += `<p>Rent: <strong>$${activePropertyDecision.spaceData.rent ? activePropertyDecision.spaceData.rent[0] : 0}</strong></p>`;
+    html += `<p>Decision timer: <strong>${secondsLeft}s</strong></p>`;
+    html += `<p>${canAfford ? 'Buy this property, Pass, or click End Turn when you are done.' : 'Not enough money to buy. Pass or click End Turn.'}</p>`;
+    html += `</div>`;
+    html += `</div>`; // Close buy-modal-layout
+    
+    buyContent.innerHTML = html;
 }
 
 function startPropertyDecision(spaceData, position) {
@@ -761,6 +822,17 @@ function startPropertyDecision(spaceData, position) {
     activePropertyDecision = { spaceData, position };
     propertyDecisionEndsAt = Date.now() + 15000;
     updateBuyModalContent();
+    
+    // Hide tile hover preview when buy modal opens
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
+    
+    // Also hide property modal since buy modal will show
+    if (propertyModal) {
+        propertyModal.classList.add('hidden');
+    }
+    
     buyModal.classList.remove('hidden');
     updateUI();
 
@@ -1122,13 +1194,46 @@ function updateTokens() {
 
 // Show property information
 function showPropertyInfo(spaceData) {
+    console.log('showPropertyInfo called for:', spaceData.name, 'position:', spaceData.position);
     const modal = propertyModal;
     const title = document.getElementById('propertyTitle');
     const content = document.getElementById('propertyContent');
     
+    console.log('Modal elements:', { modal: !!modal, title: !!title, content: !!content });
+    
+    if (!modal || !title || !content) {
+        console.error('Modal elements not found!');
+        return;
+    }
+    
     title.textContent = spaceData.name;
     
-    let html = `<p><strong>Type:</strong> ${spaceData.type}</p>`;
+    let html = `<div class="property-modal-layout">`;
+    
+    // Add media section on the left
+    html += `<div class="property-modal-media-section">`;
+    console.log('tileMedia available:', typeof tileMedia !== 'undefined');
+    if (typeof tileMedia !== 'undefined' && tileMedia[spaceData.position]) {
+        const media = tileMedia[spaceData.position];
+        console.log('Media found:', media);
+        
+        // Prefer video if available
+        if (media.videos && media.videos.length > 0) {
+            const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
+            html += `<video src="${randomVideo}" autoplay muted loop playsinline controls style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px;"></video>`;
+        } else if (media.images && media.images.length > 0) {
+            const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+            html += `<img src="${randomImage}" alt="${spaceData.name}" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px;">`;
+        }
+    } else {
+        console.log('No media available for position:', spaceData.position);
+        html += `<div style="color: #888; font-size: 0.9rem; padding: 20px; text-align: center; border: 1px solid #333; border-radius: 8px;">No media available</div>`;
+    }
+    html += `</div>`;
+    
+    // Add info section on the right
+    html += `<div class="property-modal-info-section">`;
+    html += `<p><strong>Type:</strong> ${spaceData.type}</p>`;
     
     if (spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility') {
         html += `<p><strong>Price:</strong> $${spaceData.price}</p>`;
@@ -1138,7 +1243,7 @@ function showPropertyInfo(spaceData) {
         }
 
         if (spaceData.position !== undefined && spaceData.position !== null) {
-            const owner = players.find(p => p.properties && p.properties.includes(spaceData.position));
+            const owner = players.find(p => p && p.properties && p.properties.includes(spaceData.position));
             if (owner) {
                 html += `<p><strong>Owner:</strong> ${owner.name}</p>`;
             } else {
@@ -1148,8 +1253,17 @@ function showPropertyInfo(spaceData) {
     } else if (spaceData.type === 'tax') {
         html += `<p><strong>Tax Amount:</strong> $${spaceData.amount}</p>`;
     }
+    html += `</div>`;
+    html += `</div>`; // Close property-modal-layout
     
     content.innerHTML = html;
+    
+    // Hide tile hover preview when property modal opens
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
+    
+    console.log('Removing hidden class from modal');
     modal.classList.remove('hidden');
 }
 
@@ -1688,12 +1802,15 @@ socket.on('playerMoved', (data) => {
         if (player.tokenIndex !== undefined && !tokenModels[playerId]) {
             loadTokenModel(player.tokenIndex, player);
         }
+        const afterMove = () => handlePlayerLanding(playerId, newPosition);
+
         if (oldPosition !== newPosition) {
             player.position = oldPosition;
-            animateTokenMove(playerId, oldPosition, newPosition, undefined, direction);
+            animateTokenMove(playerId, oldPosition, newPosition, afterMove, direction);
         } else {
             player.position = newPosition;
             update3DTokenPositions();
+            afterMove();
         }
 
         updateTokens();
@@ -1703,14 +1820,6 @@ socket.on('playerMoved', (data) => {
 
         if (message) {
             addChatMessage('System', message);
-        }
-
-        if (playerId === myPlayerId) {
-            const moveSteps = getMoveStepCount(oldPosition, newPosition, direction);
-            setTimeout(() => {
-                const spaceData = getUnownedPurchasableSpace(newPosition);
-                if (spaceData) startPropertyDecision(spaceData, newPosition);
-            }, moveSteps * TOKEN_STEP_DURATION_MS + 100);
         }
     }
 });
@@ -1760,8 +1869,6 @@ socket.on('diceRolled', (data) => {
         }
     }
 
-    const totalMoveTime = moveSteps * TOKEN_STEP_DURATION_MS;
-
     markPendingRollTokenMove(playerId);
 
     roll3DDice(serverDice1 || 1, serverDice2 || 1, {
@@ -1773,21 +1880,27 @@ socket.on('diceRolled', (data) => {
             addLogEntry(message, 'system');
             updateUI();
 
-            if (player && moveSteps > 0) {
-                animateTokenMove(playerId, oldPosition, newPosition);
-            } else if (player) {
-                player.position = newPosition;
-                update3DTokenPositions();
-            }
-
-            setTimeout(() => {
+            const afterMove = () => {
+                if (!isDoublesRoll(data)) {
+                    handlePlayerLanding(playerId, newPosition);
+                }
                 if (playerId === myPlayerId) {
                     updateUI();
                     if (!isDoublesRoll(data)) {
                         scheduleClientAutoEndTurn(playerId, oldPosition, newPosition);
                     }
                 }
-            }, totalMoveTime + 200);
+            };
+
+            if (player && moveSteps > 0) {
+                animateTokenMove(playerId, oldPosition, newPosition, afterMove);
+            } else if (player) {
+                player.position = newPosition;
+                update3DTokenPositions();
+                afterMove();
+            } else {
+                afterMove();
+            }
         }
     });
 });

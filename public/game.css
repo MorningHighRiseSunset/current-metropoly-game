@@ -909,7 +909,8 @@ body {
 .token-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    background: transparent;
 }
 
 .token-option:hover .token-image {
@@ -1511,6 +1512,40 @@ body {
     display: none !important;
 }
 
+/* Property Modal Layout */
+.property-modal-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.property-modal-media-section {
+    flex: 0 0 300px;
+    min-width: 300px;
+}
+
+.property-modal-info-section {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Buy Modal Layout */
+.buy-modal-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.buy-modal-media-section {
+    flex: 0 0 250px;
+    min-width: 250px;
+}
+
+.buy-modal-info-section {
+    flex: 1;
+    min-width: 200px;
+}
+
 /* Modals */
 .modal {
     position: fixed;
@@ -1522,7 +1557,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 2000;
 }
 
 .modal-content {

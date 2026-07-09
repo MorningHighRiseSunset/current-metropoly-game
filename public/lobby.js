@@ -214,29 +214,74 @@ joinGameBtn.addEventListener('click', () => {
 // Copy game ID
 copyIdBtn.addEventListener('click', () => {
     const gameIdText = document.getElementById('generatedGameId').textContent;
-    navigator.clipboard.writeText(gameIdText).then(() => {
-        // Visual feedback - change button text temporarily
-        const originalText = copyIdBtn.textContent;
-        copyIdBtn.textContent = 'Copied!';
-        copyIdBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-        
-        setTimeout(() => {
-            copyIdBtn.textContent = originalText;
-            copyIdBtn.style.background = '';
-        }, 2000);
-    }).catch(err => {
-        console.error('Failed to copy:', err);
-        // Show error state
-        const originalText = copyIdBtn.textContent;
-        copyIdBtn.textContent = 'Failed!';
-        copyIdBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-        
-        setTimeout(() => {
-            copyIdBtn.textContent = originalText;
-            copyIdBtn.style.background = '';
-        }, 2000);
-    });
+    copyToClipboard(gameIdText, copyIdBtn);
 });
+
+// Fallback copy function for browsers without clipboard API
+function copyToClipboard(text, button) {
+    // Try modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showCopySuccess(button);
+        }).catch(err => {
+            console.error('Clipboard API failed, trying fallback:', err);
+            fallbackCopy(text, button);
+        });
+    } else {
+        // Use fallback method
+        fallbackCopy(text, button);
+    }
+}
+
+function fallbackCopy(text, button) {
+    // Create a temporary textarea to copy from
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-999999px';
+    textarea.style.top = '-999999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showCopySuccess(button);
+        } else {
+            showCopyError(button);
+        }
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+        showCopyError(button);
+    }
+    
+    document.body.removeChild(textarea);
+}
+
+function showCopySuccess(button) {
+    const originalText = button.textContent;
+    const originalBackground = button.style.background;
+    button.textContent = 'Copied!';
+    button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+    
+    setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = originalBackground;
+    }, 2000);
+}
+
+function showCopyError(button) {
+    const originalText = button.textContent;
+    const originalBackground = button.style.background;
+    button.textContent = 'Failed!';
+    button.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+    
+    setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = originalBackground;
+    }, 2000);
+}
 
 // Online build: only share the public invite link (no LAN / local network URLs).
 function loadServerInfo() {
@@ -276,10 +321,22 @@ function createUrlItem(label, url) {
     const copyBtn = document.createElement('button');
     copyBtn.className = 'copy-url-btn';
     copyBtn.textContent = 'Copy';
-    copyBtn.addEventListener('click', () => {
+    copyBtn.type = 'button'; // Ensure it's treated as a button
+    copyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Copy button clicked for URL:', url);
         navigator.clipboard.writeText(url).then(() => {
             copyBtn.textContent = 'Copied!';
             copyBtn.style.backgroundColor = '#28a745';
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy';
+                copyBtn.style.backgroundColor = '';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy URL:', err);
+            copyBtn.textContent = 'Failed!';
+            copyBtn.style.backgroundColor = '#dc2626';
             setTimeout(() => {
                 copyBtn.textContent = 'Copy';
                 copyBtn.style.backgroundColor = '';
@@ -297,15 +354,7 @@ function createUrlItem(label, url) {
 // Start game
 startGameBtn.addEventListener('click', () => {
     console.log('Start game button clicked!');
-    console.log('isHost:', isHost);
-    console.log('currentGameId:', currentGameId);
-
-    // Only host can start the game
-    if (!isHost) {
-        showModal('Only the host can start the game!');
-        return;
-    }
-
+    
     // Disable button to prevent multiple clicks
     startGameBtn.disabled = true;
     startGameBtn.textContent = 'Starting...';

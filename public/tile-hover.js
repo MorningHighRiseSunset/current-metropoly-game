@@ -6,6 +6,20 @@ const tileHoverType = document.getElementById('tileHoverType');
 let currentVideo = null;
 let hoverTimeout = null;
 
+// Function to hide tile hover immediately (for when modals open)
+function hideTileHoverImmediately() {
+    if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+        hoverTimeout = null;
+    }
+    if (currentVideo) {
+        currentVideo.pause();
+        currentVideo = null;
+    }
+    tileHoverMedia.innerHTML = '';
+    tileHoverPreview.classList.add('hidden');
+}
+
 function showTileHover(tilePosition) {
     if (!tileMedia || !tileMedia[tilePosition]) return;
     
