@@ -55,48 +55,59 @@
             </div>
 
             <div id="gameCreatedSection" class="hidden">
-                <div class="game-info">
-                    <h2>Game Created!</h2>
-                    <div class="game-id-display">
-                        <p>Share this Game ID with friends:</p>
-                        <div class="game-id-box">
-                            <span id="generatedGameId"></span>
-                            <button id="copyIdBtn" class="btn btn-small">Copy</button>
+                <div class="game-lobby-container">
+                    <div class="game-id-card">
+                        <div class="card-header">
+                            <h3>Game ID</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="game-id-large" id="generatedGameId"></div>
+                            <button id="copyIdBtn" class="copy-button">
+                                <span>Copy</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="connection-info">
-                        <h3>Connection URLs for Friends</h3>
-                        <div id="connectionUrls" class="urls-list"></div>
-                        <p class="connection-note">Share the Online URL for internet players. Network URL is for same-WiFi/LAN only.</p>
-                    </div>
-                    <div class="waiting-room">
-                        <h3>Waiting for players...</h3>
-                        <div id="playersList" class="players-list"></div>
-                        <div class="ai-controls">
-                            <h3>Add AI Players</h3>
-                            <div class="ai-buttons">
-                                <button id="addAiBtn" class="btn btn-secondary">+ Add AI Player</button>
+                    
+                    <div class="players-card">
+                        <div class="card-header">
+                            <h3>Players</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="playersList" class="players-list"></div>
+                            <div class="ai-controls">
+                                <button id="addAiBtn" class="btn btn-secondary">+ Add AI</button>
                                 <button id="removeAiBtn" class="btn btn-secondary">- Remove AI</button>
                             </div>
-                            <p class="ai-info">AI players will automatically play against you</p>
+                            <button id="startGameBtn" class="btn btn-success hidden">Start Game</button>
                         </div>
-                        <button id="startGameBtn" class="btn btn-success hidden">Start Game</button>
                     </div>
                 </div>
             </div>
 
             <div id="lobbySection" class="hidden">
-                <div class="lobby-info">
-                    <h2>Game Lobby</h2>
-                    <div class="game-details">
-                        <p><strong>Game ID:</strong> <span id="lobbyGameId"></span></p>
+                <div class="game-lobby-container">
+                    <div class="game-id-card">
+                        <div class="card-header">
+                            <h3>Game ID</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="game-id-large" id="lobbyGameId"></div>
+                            <button id="copyLobbyIdBtn" class="copy-button">
+                                <span>Copy</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="players-section">
-                        <h3>Players in Lobby:</h3>
-                        <div id="lobbyPlayersList" class="players-list"></div>
-                    </div>
-                    <div class="lobby-status">
-                        <p id="lobbyStatus">Waiting for host to start the game...</p>
+                    
+                    <div class="players-card">
+                        <div class="card-header">
+                            <h3>Players</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="lobbyPlayersList" class="players-list"></div>
+                            <div class="lobby-status">
+                                <p id="lobbyStatus">Waiting for host to start the game...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -3,10 +3,8 @@ function getConfiguredSocketServerUrl() {
     const urlParamServer = params.get('server');
     const runtimeUrl = window.RUNTIME_CONFIG && window.RUNTIME_CONFIG.socketServerUrl;
     const storedUrl = localStorage.getItem('metropoly_socket_server_url');
-    // If runtime-config.js fails to load on the frontend host (e.g. Vercel rewrite -> HTML),
-    // we still want a working default Socket.IO backend.
-    const defaultBackendUrl = 'https://current-metropoly-game.onrender.com';
-    const configuredUrl = urlParamServer || runtimeUrl || storedUrl || defaultBackendUrl || window.location.origin;
+    // Prefer local origin for local development, fall back to remote backend
+    const configuredUrl = urlParamServer || runtimeUrl || storedUrl || window.location.origin || 'https://current-metropoly-game.onrender.com';
     if (urlParamServer) {
         localStorage.setItem('metropoly_socket_server_url', urlParamServer);
     }
@@ -14,6 +12,7 @@ function getConfiguredSocketServerUrl() {
 }
 
 const SOCKET_SERVER_URL = getConfiguredSocketServerUrl();
+console.log('Connecting to socket server:', SOCKET_SERVER_URL);
 const socket = io(SOCKET_SERVER_URL, {
     transports: ['websocket', 'polling']
 });
@@ -217,6 +216,12 @@ copyIdBtn.addEventListener('click', () => {
     copyToClipboard(gameIdText, copyIdBtn);
 });
 
+// Copy lobby game ID
+copyLobbyIdBtn.addEventListener('click', () => {
+    const gameIdText = document.getElementById('lobbyGameId').textContent;
+    copyToClipboard(gameIdText, copyLobbyIdBtn);
+});
+
 // Fallback copy function for browsers without clipboard API
 function copyToClipboard(text, button) {
     // Try modern clipboard API first
@@ -286,6 +291,10 @@ function showCopyError(button) {
 // Online build: only share the public invite link (no LAN / local network URLs).
 function loadServerInfo() {
     const connectionUrlsDiv = document.getElementById('connectionUrls');
+    if (!connectionUrlsDiv) {
+        console.warn('connectionUrls element not found, skipping loadServerInfo');
+        return;
+    }
     connectionUrlsDiv.innerHTML = '';
 
     if (PUBLIC_SHARE_ORIGIN) {
@@ -326,22 +335,7 @@ function createUrlItem(label, url) {
         e.preventDefault();
         e.stopPropagation();
         console.log('Copy button clicked for URL:', url);
-        navigator.clipboard.writeText(url).then(() => {
-            copyBtn.textContent = 'Copied!';
-            copyBtn.style.backgroundColor = '#28a745';
-            setTimeout(() => {
-                copyBtn.textContent = 'Copy';
-                copyBtn.style.backgroundColor = '';
-            }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy URL:', err);
-            copyBtn.textContent = 'Failed!';
-            copyBtn.style.backgroundColor = '#dc2626';
-            setTimeout(() => {
-                copyBtn.textContent = 'Copy';
-                copyBtn.style.backgroundColor = '';
-            }, 2000);
-        });
+        copyToClipboard(url, copyBtn);
     });
     
     item.appendChild(labelSpan);
@@ -582,4 +576,8 @@ socket.on('disconnect', () => {
     showModal('Disconnected from server. Please refresh the page.');
 });
 
-autoJoinFromUrlIfPresent();
+// Wait for socket to connect before auto-joining
+socket.on('connect', () => {
+    console.log('Socket connected, checking for auto-join...');
+    autoJoinFromUrlIfPresent();
+});

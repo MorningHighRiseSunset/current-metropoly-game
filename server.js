@@ -127,6 +127,7 @@ function getColorGroups() {
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/Videos', express.static(path.join(__dirname, 'Videos')));
 app.use('/Models', express.static(path.join(__dirname, 'Models')));
 
 // Game state storage
@@ -357,6 +358,8 @@ function executeAIRollDice(game, aiPlayer) {
         const dice2 = Math.floor(Math.random() * 6) + 1;
         const total = dice1 + dice2;
         const isDoubles = dice1 === dice2;
+
+        console.log(`AI JAIL ROLL: ${aiPlayer.name} rolled ${dice1} and ${dice2} (doubles: ${isDoubles})`);
 
         aiPlayer.jailTurns++;
 
@@ -1286,6 +1289,8 @@ io.on('connection', (socket) => {
             const dice2 = Math.floor(Math.random() * 6) + 1;
             const total = dice1 + dice2;
             const isDoubles = dice1 === dice2;
+
+            console.log(`JAIL ROLL: Player ${currentPlayer.name} rolled ${dice1} and ${dice2} (doubles: ${isDoubles})`);
 
             currentPlayer.jailTurns++;
             

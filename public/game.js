@@ -37,7 +37,7 @@ const tokenData = [
     // { name: 'Rolls Royce', model: '/Models/RollsRoyce/rollsRoyceCarAnim.glb', image: '/images/rolls%20royce%20image.png', scale: 0.14, facingOffset: -Math.PI / 2 },
     { name: 'Top Hat', model: '/Models/TopHat/tophat.glb', image: '/images/top%20hat%20image.png', scale: 0.22 },
     // { name: 'Vegas Model', model: '/Models/WhiteGirlIdle/Standing Idle.fbx', image: '/images/woman%20model%20image.png', scale: 0.1 },
-    { name: 'Coffee Cup', model: '/Models/CoffeeCup/coffee.gltf', image: '/images/coffee%20cup%20image.png', scale: 0.25 }
+    { name: 'Coffee Cup', model: '/Models/CoffeeCup/coffee.gltf', image: '/images/coffee%20image.png', scale: 0.25 }
 ];
 
 // Initialize 3D dice scene
@@ -370,6 +370,28 @@ let boardEnvironmentGroup = null;
 let scene3DInitialized = false;
 let resizeObserver = null;
 
+// 3D Image Carousel variables
+let carouselGroup = null;
+let carouselImages = [];
+let currentCarouselIndex = 0;
+let carouselAnimationId = null;
+const carouselImagesList = [
+    "Images/p-las-vegas-motor-speedway_55_660x440_201404181828.webp",
+    "https://s3-us-west-1.amazonaws.com/exr-static/upload/vegassupercars/off_road/track_overview/gallery/SV_OFF_ROAD_TRACK_GALLERY_7.jpg",
+    "Images/230613231941-04-knights-stanley-cup-061323.jpg",
+    "Images/702-helicopters.webp",
+    "Images/unnamed.gif",
+    "Images/raidersimage.png",
+    "https://s.abcnews.com/images/Sports/las-vegas-aces-gty-thg-180808_hpMain_16x9_992.jpg",
+    "Images/ResortsWorldTheater.jpg",
+    "Images/themirage.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/c/c1/Wynn_2_%282%29.jpg",
+    "https://shrinerschildrensopen.com/wp-content/uploads/2022/10/ShrinersChildrens-18-hole-2022.jpg",
+    "Images/thesphere.jpg",
+    "Images/welcome-to-caesars-palace.jpg",
+    "Images/hq720.jpg"
+];
+
 // 3D Dice variables
 let diceScene, diceCamera, diceRenderer;
 let dice1Mesh, dice2Mesh;
@@ -424,6 +446,9 @@ const CAMERA_DISTANCE_MAX = 55;
 const CAMERA_DISTANCE_DEFAULT = 14;
 let cameraPolarDeg = 55;
 let cameraAzimuthDeg = 0;
+let cameraTargetX = 0;
+let cameraTargetY = 0;
+let cameraTargetZ = 0;
 let isRightMouseDown = false;
 let lastMouseX = 0;
 let lastMouseY = 0;
@@ -493,18 +518,6 @@ initThemeToggle();
 // Token selection state
 let selectedTokenIndex = null;
 let tokenSelectionListenerAdded = false;
-
-// Token configuration
-const tokens = [
-    { id: 'car', emoji: '🚗', color: '#e74c3c' },
-    { id: 'dog', emoji: '🐕', color: '#3498db' },
-    { id: 'hat', emoji: '🎩', color: '#2ecc71' },
-    { id: 'ship', emoji: '🚢', color: '#f39c12' },
-    { id: 'boot', emoji: '👢', color: '#9b59b6' },
-    { id: 'iron', emoji: '🔧', color: '#34495e' },
-    { id: 'wheelbarrow', emoji: '🚚', color: '#e67e22' },
-    { id: 'thimble', emoji: '🧵', color: '#16a085' }
-];
 
 // Board configuration - Las Vegas Monopoly themed
 const boardConfig = [
@@ -595,7 +608,13 @@ function initializeBoard() {
             space.style.gridColumn = col + 1;
             space.style.visibility = 'hidden'; // Invisible, just for click detection
             
-            space.addEventListener('click', () => showPropertyInfo(boardConfig[position]));
+            space.addEventListener('click', () => {
+                if (tileHasLandingMedia(position) && typeof showTileHover === 'function') {
+                    showTileHover(position);
+                } else {
+                    showPropertyInfo(boardConfig[position]);
+                }
+            });
             gameBoard.appendChild(space);
             boardSpaces[position] = space;
         }
@@ -614,10 +633,10 @@ function updateThreeCamera() {
     const polar = (cameraPolarDeg * Math.PI) / 180;
     const azimuth = (cameraAzimuthDeg * Math.PI) / 180;
 
-    camera.position.x = cameraDistance * Math.cos(polar) * Math.sin(azimuth);
-    camera.position.y = cameraDistance * Math.sin(polar);
-    camera.position.z = cameraDistance * Math.cos(polar) * Math.cos(azimuth);
-    camera.lookAt(0, 0, 0);
+    camera.position.x = cameraTargetX + cameraDistance * Math.cos(polar) * Math.sin(azimuth);
+    camera.position.y = cameraTargetY + cameraDistance * Math.sin(polar);
+    camera.position.z = cameraTargetZ + cameraDistance * Math.cos(polar) * Math.cos(azimuth);
+    camera.lookAt(cameraTargetX, cameraTargetY, cameraTargetZ);
 }
 
 function on3DBoardClick(event) {
@@ -664,32 +683,21 @@ function tileHasLandingMedia(position) {
 function handlePlayerLanding(playerId, newPosition) {
     console.log('handlePlayerLanding called:', { playerId, newPosition, myPlayerId, isCurrentPlayer: playerId === myPlayerId });
     
-    // Show property info modal for current player when landing on property
-    // This includes the embedded media, so we don't need the separate hover preview
-    if (playerId === myPlayerId && boardConfig[newPosition]) {
-        const spaceData = boardConfig[newPosition];
-        console.log('Space data:', spaceData);
-        if (spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility') {
-            console.log('Calling showPropertyInfo for:', spaceData.name);
-            showPropertyInfo(spaceData);
-        }
-    }
-    
-    // Only show tile hover preview for non-property spaces (chance, community chest, etc.)
-    // Don't show it for properties since property modal already has embedded media
-    if (playerId === myPlayerId && boardConfig[newPosition]) {
-        const spaceData = boardConfig[newPosition];
-        if (spaceData.type !== 'property' && spaceData.type !== 'railroad' && spaceData.type !== 'utility') {
-            if (tileHasLandingMedia(newPosition) && typeof showTileHover === 'function') {
-                showTileHover(newPosition);
-            }
-        }
-    }
-    
     // Show buy modal for unowned properties (this will show after property modal)
     if (playerId === myPlayerId) {
         const spaceData = getUnownedPurchasableSpace(newPosition);
-        if (spaceData) startPropertyDecision(spaceData, newPosition);
+        if (spaceData) {
+            console.log('Starting property decision for:', spaceData.name);
+            startPropertyDecision(spaceData, newPosition);
+        } else {
+            // If not a purchasable property, show property info modal
+            if (boardConfig[newPosition]) {
+                const spaceData = boardConfig[newPosition];
+                console.log('Space data:', spaceData);
+                console.log('Calling showPropertyInfo for:', spaceData.name);
+                showPropertyInfo(spaceData);
+            }
+        }
     }
 }
 
@@ -783,33 +791,10 @@ function updateBuyModalContent() {
     const secondsLeft = Math.max(0, Math.ceil((propertyDecisionEndsAt - now) / 1000));
     const canAfford = currentPlayer && currentPlayer.money >= activePropertyDecision.spaceData.price;
 
-    let html = `<div class="buy-modal-layout">`;
-    
-    // Add media section on the left
-    html += `<div class="buy-modal-media-section">`;
-    if (typeof tileMedia !== 'undefined' && tileMedia[activePropertyDecision.spaceData.position]) {
-        const media = tileMedia[activePropertyDecision.spaceData.position];
-        
-        // Prefer video if available
-        if (media.videos && media.videos.length > 0) {
-            const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
-            html += `<video src="${randomVideo}" autoplay muted loop playsinline controls style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;"></video>`;
-        } else if (media.images && media.images.length > 0) {
-            const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
-            html += `<img src="${randomImage}" alt="${activePropertyDecision.spaceData.name}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;">`;
-        }
-    }
-    html += `</div>`;
-    
-    // Add info section on the right
-    html += `<div class="buy-modal-info-section">`;
-    html += `<p><strong>${activePropertyDecision.spaceData.name}</strong></p>`;
+    let html = `<p><strong>${activePropertyDecision.spaceData.name}</strong></p>`;
     html += `<p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>`;
     html += `<p>Rent: <strong>$${activePropertyDecision.spaceData.rent ? activePropertyDecision.spaceData.rent[0] : 0}</strong></p>`;
-    html += `<p>Decision timer: <strong>${secondsLeft}s</strong></p>`;
     html += `<p>${canAfford ? 'Buy this property, Pass, or click End Turn when you are done.' : 'Not enough money to buy. Pass or click End Turn.'}</p>`;
-    html += `</div>`;
-    html += `</div>`; // Close buy-modal-layout
     
     buyContent.innerHTML = html;
 }
@@ -828,10 +813,10 @@ function startPropertyDecision(spaceData, position) {
         hideTileHoverImmediately();
     }
     
-    // Also hide property modal since buy modal will show
-    if (propertyModal) {
-        propertyModal.classList.add('hidden');
-    }
+    // Don't hide property modal - let user see both
+    // if (propertyModal) {
+    //     propertyModal.classList.add('hidden');
+    // }
     
     buyModal.classList.remove('hidden');
     updateUI();
@@ -1208,32 +1193,7 @@ function showPropertyInfo(spaceData) {
     
     title.textContent = spaceData.name;
     
-    let html = `<div class="property-modal-layout">`;
-    
-    // Add media section on the left
-    html += `<div class="property-modal-media-section">`;
-    console.log('tileMedia available:', typeof tileMedia !== 'undefined');
-    if (typeof tileMedia !== 'undefined' && tileMedia[spaceData.position]) {
-        const media = tileMedia[spaceData.position];
-        console.log('Media found:', media);
-        
-        // Prefer video if available
-        if (media.videos && media.videos.length > 0) {
-            const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
-            html += `<video src="${randomVideo}" autoplay muted loop playsinline controls style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px;"></video>`;
-        } else if (media.images && media.images.length > 0) {
-            const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
-            html += `<img src="${randomImage}" alt="${spaceData.name}" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px;">`;
-        }
-    } else {
-        console.log('No media available for position:', spaceData.position);
-        html += `<div style="color: #888; font-size: 0.9rem; padding: 20px; text-align: center; border: 1px solid #333; border-radius: 8px;">No media available</div>`;
-    }
-    html += `</div>`;
-    
-    // Add info section on the right
-    html += `<div class="property-modal-info-section">`;
-    html += `<p><strong>Type:</strong> ${spaceData.type}</p>`;
+    let html = `<p><strong>Type:</strong> ${spaceData.type}</p>`;
     
     if (spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility') {
         html += `<p><strong>Price:</strong> $${spaceData.price}</p>`;
@@ -1253,8 +1213,6 @@ function showPropertyInfo(spaceData) {
     } else if (spaceData.type === 'tax') {
         html += `<p><strong>Tax Amount:</strong> $${spaceData.amount}</p>`;
     }
-    html += `</div>`;
-    html += `</div>`; // Close property-modal-layout
     
     content.innerHTML = html;
     
@@ -2296,7 +2254,7 @@ cardOkBtn.addEventListener('click', () => {
                 isRightMouseDown = true;
                 lastMouseX = e.clientX;
                 lastMouseY = e.clientY;
-                boardContainer.style.cursor = 'grabbing';
+                boardContainer.style.cursor = e.shiftKey ? 'move' : 'grabbing';
                 e.preventDefault();
             }
         });
@@ -2307,8 +2265,32 @@ cardOkBtn.addEventListener('click', () => {
             const deltaX = e.clientX - lastMouseX;
             const deltaY = e.clientY - lastMouseY;
 
-            cameraAzimuthDeg += deltaX * 0.5;
-            cameraPolarDeg = Math.max(15, Math.min(85, cameraPolarDeg - deltaY * 0.5));
+            if (e.shiftKey) {
+                // Pan camera (move target)
+                const polar = (cameraPolarDeg * Math.PI) / 180;
+                const azimuth = (cameraAzimuthDeg * Math.PI) / 180;
+
+                // Calculate pan direction based on camera orientation
+                const panSpeed = 0.02 * cameraDistance;
+                const right = new THREE.Vector3(
+                    Math.cos(azimuth),
+                    0,
+                    -Math.sin(azimuth)
+                );
+                const forward = new THREE.Vector3(
+                    -Math.sin(azimuth) * Math.cos(polar),
+                    Math.sin(polar),
+                    -Math.cos(azimuth) * Math.cos(polar)
+                );
+
+                cameraTargetX -= (right.x * deltaX + forward.x * deltaY) * panSpeed;
+                cameraTargetY += deltaY * panSpeed * 0.5;
+                cameraTargetZ -= (right.z * deltaX + forward.z * deltaY) * panSpeed;
+            } else {
+                // Orbit around target
+                cameraAzimuthDeg += deltaX * 0.5;
+                cameraPolarDeg = Math.max(15, Math.min(85, cameraPolarDeg - deltaY * 0.5));
+            }
             updateThreeCamera();
 
             lastMouseX = e.clientX;
@@ -2333,6 +2315,9 @@ cardOkBtn.addEventListener('click', () => {
             cameraDistance = CAMERA_DISTANCE_DEFAULT;
             cameraPolarDeg = 55;
             cameraAzimuthDeg = 0;
+            cameraTargetX = 0;
+            cameraTargetY = 0;
+            cameraTargetZ = 0;
             updateThreeCamera();
         });
     }
@@ -2388,6 +2373,7 @@ function attachCenterPanelCSS2D() {
     css2dRenderer.domElement.style.zIndex = '2';
     css2dRenderer.domElement.style.overflow = 'visible';
     token3DScene.appendChild(css2dRenderer.domElement);
+
 }
 
 function start3DScene() {
@@ -2432,6 +2418,7 @@ function start3DScene() {
 
     create3DBoard();
     attachCenterPanelCSS2D();
+    create3DCarousel();
     updateThreeCamera();
     scene3DInitialized = true;
 
@@ -2470,10 +2457,10 @@ function tileSubLabel(spaceData) {
 
 // Y rotation so tile face (and color strip) point toward board center
 function getTileFacingRotationY(row, col) {
-    if (row === 0) return Math.PI;
-    if (row === 10) return 0;
-    if (col === 10) return -Math.PI / 2;
-    if (col === 0) return Math.PI / 2;
+    if (row === 0) return Math.PI; // Top row: face south (toward center)
+    if (row === 10) return 0; // Bottom row: face north (toward center)
+    if (col === 10) return -Math.PI / 2; // Right column: face west (toward center)
+    if (col === 0) return Math.PI / 2; // Left column: face east (toward center)
     return 0;
 }
 
@@ -2524,6 +2511,10 @@ function createMonopolyFaceTexture(spaceData, row, col) {
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext('2d');
+
+    // Flip canvas horizontally to fix text reversal
+    ctx.translate(W, 0);
+    ctx.scale(-1, 1);
 
     const inner = { x: pad + 4, y: pad + 4, w: W - (pad + 4) * 2, h: H - (pad + 4) * 2 };
 
@@ -2728,10 +2719,11 @@ function create3DBoard() {
         for (let col = 0; col < boardSize; col++) {
             let position = null;
 
-            if (row === 0) position = col;
-            else if (row === 10) position = 20 + (10 - col);
-            else if (col === 0) position = 30 + (10 - row);
-            else if (col === 10) position = 10 + row;
+            // Use the same logic as positionToGrid function for consistency
+            if (row === 0) position = col; // Top row: GO (0) to JAIL (10)
+            else if (row === 10) position = 20 + (10 - col); // Bottom row: FREE PARKING (20) to GO TO JAIL (30)
+            else if (col === 0) position = 30 + (10 - row); // Left column: GO TO JAIL (30) to GO (39)
+            else if (col === 10) position = 10 + row; // Right column: JAIL (10) to FREE PARKING (20)
             else continue;
 
             const spaceData = boardConfig[position];
@@ -2748,6 +2740,74 @@ function create3DBoard() {
             boardMeshes[position] = tile;
         }
     }
+}
+
+// Create 3D image carousel on the board surface
+function create3DCarousel() {
+    if (!scene || carouselGroup) return;
+
+    carouselGroup = new THREE.Group();
+    carouselImages = [];
+    currentCarouselIndex = 0;
+
+    const textureLoader = new THREE.TextureLoader();
+    const carouselWidth = 4.0;
+    const carouselHeight = 2.5;
+
+    carouselImagesList.forEach((imageUrl, index) => {
+        textureLoader.load(
+            imageUrl,
+            (texture) => {
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.FrontSide,
+                    transparent: true
+                });
+
+                const geometry = new THREE.PlaneGeometry(carouselWidth, carouselHeight);
+                const mesh = new THREE.Mesh(geometry, material);
+
+                mesh.position.set(0, 0.15, 0);
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.visible = index === 0;
+
+                carouselGroup.add(mesh);
+                carouselImages.push(mesh);
+
+                if (carouselImages.length === carouselImagesList.length) {
+                    scene.add(carouselGroup);
+                    startCarouselAnimation();
+                }
+            },
+            undefined,
+            (error) => {
+                console.error('Failed to load carousel image:', imageUrl, error);
+            }
+        );
+    });
+}
+
+// Animate the carousel by cycling through images
+function startCarouselAnimation() {
+    if (carouselAnimationId) {
+        cancelAnimationFrame(carouselAnimationId);
+    }
+
+    let lastSwitchTime = Date.now();
+    const switchInterval = 3000; // Switch every 3 seconds
+
+    function animateCarousel() {
+        const now = Date.now();
+        if (now - lastSwitchTime >= switchInterval && carouselImages.length > 0) {
+            carouselImages[currentCarouselIndex].visible = false;
+            currentCarouselIndex = (currentCarouselIndex + 1) % carouselImages.length;
+            carouselImages[currentCarouselIndex].visible = true;
+            lastSwitchTime = now;
+        }
+        carouselAnimationId = requestAnimationFrame(animateCarousel);
+    }
+
+    animateCarousel();
 }
 
 // Animation loop for dice scene

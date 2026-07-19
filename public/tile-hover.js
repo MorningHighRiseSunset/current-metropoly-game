@@ -51,6 +51,11 @@ function showTileHover(tilePosition) {
         video.muted = true;
         video.loop = true;
         video.playsInline = true;
+        video.controls = true;
+        video.style.width = '100%';
+        video.style.maxHeight = '200px';
+        video.style.objectFit = 'cover';
+        video.style.borderRadius = '8px';
         currentVideo = video;
         tileHoverMedia.appendChild(video);
     } else if (media.images.length > 0) {
@@ -58,6 +63,10 @@ function showTileHover(tilePosition) {
         const img = document.createElement('img');
         img.src = randomImage;
         img.alt = media.name;
+        img.style.width = '100%';
+        img.style.maxHeight = '200px';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '8px';
         tileHoverMedia.appendChild(img);
     } else {
         // No media available, show placeholder

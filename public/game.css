@@ -754,7 +754,6 @@ body {
         inset 0 0 40px rgba(74, 158, 255, 0.15);
     backdrop-filter: blur(15px);
     pointer-events: auto;
-    display: none; /* Hidden - game log moved to sidebar */
 }
 
 /* Pinned to 3D board center via THREE.CSS2DObject (see game.js) */
@@ -1564,7 +1563,7 @@ body {
     background: var(--card-bg);
     padding: 30px;
     border-radius: 15px;
-    max-width: 500px;
+    max-width: 700px;
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
