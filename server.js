@@ -129,6 +129,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/Videos', express.static(path.join(__dirname, 'Videos')));
 app.use('/Models', express.static(path.join(__dirname, 'Models')));
+app.use('/tokenimages', express.static(path.join(__dirname, 'tokenimages')));
 
 // Game state storage
 const games = {};

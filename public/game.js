@@ -33,11 +33,11 @@ let waitingForBuyResult = false;
 
 // Token data
 const tokenData = [
-    { name: 'Burger', model: '/Models/Cheeseburger/cheeseburger.glb', image: '/images/burger%20image.png', scale: 0.42 },
-    // { name: 'Rolls Royce', model: '/Models/RollsRoyce/rollsRoyceCarAnim.glb', image: '/images/rolls%20royce%20image.png', scale: 0.14, facingOffset: -Math.PI / 2 },
-    { name: 'Top Hat', model: '/Models/TopHat/tophat.glb', image: '/images/top%20hat%20image.png', scale: 0.22 },
-    // { name: 'Vegas Model', model: '/Models/WhiteGirlIdle/Standing Idle.fbx', image: '/images/woman%20model%20image.png', scale: 0.1 },
-    { name: 'Coffee Cup', model: '/Models/CoffeeCup/coffee.gltf', image: '/images/coffee%20image.png', scale: 0.25 }
+    { name: 'Burger', model: '/Models/Cheeseburger/cheeseburger.glb', image: '/tokenimages/burger%20image.png', scale: 0.42 },
+    // { name: 'Rolls Royce', model: '/Models/RollsRoyce/rollsRoyceCarAnim.glb', image: '/tokenimages/rolls%20royce%20image.png', scale: 0.14, facingOffset: -Math.PI / 2 },
+    { name: 'Top Hat', model: '/Models/TopHat/tophat.glb', image: '/tokenimages/top%20hat%20image.png', scale: 0.22 },
+    // { name: 'Vegas Model', model: '/Models/WhiteGirlIdle/Standing Idle.fbx', image: '/tokenimages/woman%20model%20image.png', scale: 0.1 },
+    { name: 'Coffee Cup', model: '/Models/CoffeeCup/coffee.gltf', image: '/tokenimages/coffee%20image.png', scale: 0.25 }
 ];
 
 // Initialize 3D dice scene
@@ -360,8 +360,6 @@ const gameCodeEl = document.getElementById('gameCode');
 
 // Three.js variables for 3D tokens and board
 let scene, camera, renderer;
-let css2dRenderer = null;
-let centerPanelCSS2D = null;
 let tokenModels = {};
 let tokenMeshes = {};
 let tokenLoading = {};
@@ -369,28 +367,6 @@ let boardMeshes = {}; // Store board space meshes
 let boardEnvironmentGroup = null;
 let scene3DInitialized = false;
 let resizeObserver = null;
-
-// 3D Image Carousel variables
-let carouselGroup = null;
-let carouselImages = [];
-let currentCarouselIndex = 0;
-let carouselAnimationId = null;
-const carouselImagesList = [
-    "Images/p-las-vegas-motor-speedway_55_660x440_201404181828.webp",
-    "https://s3-us-west-1.amazonaws.com/exr-static/upload/vegassupercars/off_road/track_overview/gallery/SV_OFF_ROAD_TRACK_GALLERY_7.jpg",
-    "Images/230613231941-04-knights-stanley-cup-061323.jpg",
-    "Images/702-helicopters.webp",
-    "Images/unnamed.gif",
-    "Images/raidersimage.png",
-    "https://s.abcnews.com/images/Sports/las-vegas-aces-gty-thg-180808_hpMain_16x9_992.jpg",
-    "Images/ResortsWorldTheater.jpg",
-    "Images/themirage.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/c/c1/Wynn_2_%282%29.jpg",
-    "https://shrinerschildrensopen.com/wp-content/uploads/2022/10/ShrinersChildrens-18-hole-2022.jpg",
-    "Images/thesphere.jpg",
-    "Images/welcome-to-caesars-palace.jpg",
-    "Images/hq720.jpg"
-];
 
 // 3D Dice variables
 let diceScene, diceCamera, diceRenderer;
@@ -787,8 +763,6 @@ function updateBuyModalContent() {
     const buyContent = document.getElementById('buyContent');
     if (!buyContent) return;
 
-    const now = Date.now();
-    const secondsLeft = Math.max(0, Math.ceil((propertyDecisionEndsAt - now) / 1000));
     const canAfford = currentPlayer && currentPlayer.money >= activePropertyDecision.spaceData.price;
 
     let html = `<p><strong>${activePropertyDecision.spaceData.name}</strong></p>`;
@@ -805,7 +779,6 @@ function startPropertyDecision(spaceData, position) {
     clearPropertyDecisionTimer();
     waitingForBuyResult = false;
     activePropertyDecision = { spaceData, position };
-    propertyDecisionEndsAt = Date.now() + 15000;
     updateBuyModalContent();
     
     // Hide tile hover preview when buy modal opens
@@ -820,17 +793,6 @@ function startPropertyDecision(spaceData, position) {
     
     buyModal.classList.remove('hidden');
     updateUI();
-
-    propertyDecisionTimer = setInterval(() => {
-        updateBuyModalContent();
-        if (!propertyDecisionEndsAt || Date.now() < propertyDecisionEndsAt) return;
-
-        clearPropertyDecisionTimer();
-        buyModal.classList.add('hidden');
-        activePropertyDecision = null;
-        updateUI();
-        addLogEntry(`Decision time expired for ${spaceData.name}. Use End Turn when ready.`, 'system');
-    }, 250);
 }
 
 function lerpCoords(from, to, t) {
@@ -1676,6 +1638,7 @@ socket.on('propertyPurchased', (data) => {
             clearPropertyDecisionTimer();
             if (buyModal) buyModal.classList.add('hidden');
             updateUI();
+            endTurnNow();
         }
     }
 });
@@ -2338,42 +2301,7 @@ function resize3DScene() {
     camera.aspect = size.w / size.h;
     camera.updateProjectionMatrix();
     renderer.setSize(size.w, size.h);
-    if (css2dRenderer) {
-        css2dRenderer.setSize(size.w, size.h);
-    }
     return true;
-}
-
-function attachCenterPanelCSS2D() {
-    const centerArea = document.getElementById('centerArea');
-    if (!centerArea || !scene) return;
-    if (typeof THREE.CSS2DRenderer === 'undefined' || typeof THREE.CSS2DObject === 'undefined') {
-        console.warn('CSS2DRenderer not loaded; center panel stays 2D overlay');
-        return;
-    }
-    if (css2dRenderer && centerPanelCSS2D) return;
-
-    centerArea.classList.add('center-area--css2d');
-
-    centerPanelCSS2D = new THREE.CSS2DObject(centerArea);
-    const padTopY = BOARD_LAYOUT.tileHeight * 0.5 + 0.018;
-    centerPanelCSS2D.position.set(0, padTopY + 0.04, 0);
-    scene.add(centerPanelCSS2D);
-
-    css2dRenderer = new THREE.CSS2DRenderer();
-    const sz = getBoardContainerSize();
-    if (sz) css2dRenderer.setSize(sz.w, sz.h);
-    css2dRenderer.domElement.className = 'css2d-layer';
-    css2dRenderer.domElement.style.position = 'absolute';
-    css2dRenderer.domElement.style.left = '0';
-    css2dRenderer.domElement.style.top = '0';
-    css2dRenderer.domElement.style.width = '100%';
-    css2dRenderer.domElement.style.height = '100%';
-    css2dRenderer.domElement.style.pointerEvents = 'none';
-    css2dRenderer.domElement.style.zIndex = '2';
-    css2dRenderer.domElement.style.overflow = 'visible';
-    token3DScene.appendChild(css2dRenderer.domElement);
-
 }
 
 function start3DScene() {
@@ -2417,8 +2345,6 @@ function start3DScene() {
     scene.add(fillLight);
 
     create3DBoard();
-    attachCenterPanelCSS2D();
-    create3DCarousel();
     updateThreeCamera();
     scene3DInitialized = true;
 
@@ -2742,73 +2668,6 @@ function create3DBoard() {
     }
 }
 
-// Create 3D image carousel on the board surface
-function create3DCarousel() {
-    if (!scene || carouselGroup) return;
-
-    carouselGroup = new THREE.Group();
-    carouselImages = [];
-    currentCarouselIndex = 0;
-
-    const textureLoader = new THREE.TextureLoader();
-    const carouselWidth = 4.0;
-    const carouselHeight = 2.5;
-
-    carouselImagesList.forEach((imageUrl, index) => {
-        textureLoader.load(
-            imageUrl,
-            (texture) => {
-                const material = new THREE.MeshBasicMaterial({
-                    map: texture,
-                    side: THREE.FrontSide,
-                    transparent: true
-                });
-
-                const geometry = new THREE.PlaneGeometry(carouselWidth, carouselHeight);
-                const mesh = new THREE.Mesh(geometry, material);
-
-                mesh.position.set(0, 0.15, 0);
-                mesh.rotation.x = -Math.PI / 2;
-                mesh.visible = index === 0;
-
-                carouselGroup.add(mesh);
-                carouselImages.push(mesh);
-
-                if (carouselImages.length === carouselImagesList.length) {
-                    scene.add(carouselGroup);
-                    startCarouselAnimation();
-                }
-            },
-            undefined,
-            (error) => {
-                console.error('Failed to load carousel image:', imageUrl, error);
-            }
-        );
-    });
-}
-
-// Animate the carousel by cycling through images
-function startCarouselAnimation() {
-    if (carouselAnimationId) {
-        cancelAnimationFrame(carouselAnimationId);
-    }
-
-    let lastSwitchTime = Date.now();
-    const switchInterval = 3000; // Switch every 3 seconds
-
-    function animateCarousel() {
-        const now = Date.now();
-        if (now - lastSwitchTime >= switchInterval && carouselImages.length > 0) {
-            carouselImages[currentCarouselIndex].visible = false;
-            currentCarouselIndex = (currentCarouselIndex + 1) % carouselImages.length;
-            carouselImages[currentCarouselIndex].visible = true;
-            lastSwitchTime = now;
-        }
-        carouselAnimationId = requestAnimationFrame(animateCarousel);
-    }
-
-    animateCarousel();
-}
 
 // Animation loop for dice scene
 function animateDiceScene() {
@@ -2827,9 +2686,6 @@ function animate3DScene() {
     
     if (renderer && scene && camera) {
         renderer.render(scene, camera);
-    }
-    if (css2dRenderer && scene && camera) {
-        css2dRenderer.render(scene, camera);
     }
 }
 

@@ -757,7 +757,7 @@ body {
 }
 
 /* Pinned to 3D board center via THREE.CSS2DObject (see game.js) */
-.center-area.center-area--css2d {
+/* .center-area.center-area--css2d {
     position: static;
     top: auto;
     left: auto;
@@ -769,7 +769,7 @@ body {
     z-index: 5;
     justify-content: flex-start;
     align-items: stretch;
-}
+} */
 
 .center-area .center-panel {
     pointer-events: auto;
@@ -910,6 +910,7 @@ body {
     height: 100%;
     object-fit: contain;
     background: transparent;
+    mix-blend-mode: multiply;
 }
 
 .token-option:hover .token-image {
