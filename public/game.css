@@ -910,7 +910,6 @@ body {
     height: 100%;
     object-fit: contain;
     background: transparent;
-    mix-blend-mode: multiply;
 }
 
 .token-option:hover .token-image {
@@ -1568,6 +1567,7 @@ body {
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
+    overflow-x: hidden;
     position: relative;
     box-shadow: 0 10px 40px var(--shadow-color);
     transition: background 0.3s ease;

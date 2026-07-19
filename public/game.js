@@ -145,7 +145,7 @@ function roll3DDice(dice1Value, dice2Value, callbacks) {
     }
     if (!dice1Mesh || !dice2Mesh) {
         createDice();
-        setTimeout(() => roll3DDice(dice1Value, dice2Value, callbacks), 200);
+        setTimeout(() => roll3DDice(dice1Value, dice2Value, callbacks), 50);
         return;
     }
 
@@ -171,12 +171,10 @@ function roll3DDice(dice1Value, dice2Value, callbacks) {
             if (callbacks && typeof callbacks.onLand === 'function') {
                 callbacks.onLand();
             }
-            setTimeout(() => {
-                if (!diceRolling && dice1Mesh && dice2Mesh) {
-                    dice1Mesh.visible = false;
-                    dice2Mesh.visible = false;
-                }
-            }, 600);
+            if (!diceRolling && dice1Mesh && dice2Mesh) {
+                dice1Mesh.visible = false;
+                dice2Mesh.visible = false;
+            }
         }
     });
 
@@ -585,11 +583,7 @@ function initializeBoard() {
             space.style.visibility = 'hidden'; // Invisible, just for click detection
             
             space.addEventListener('click', () => {
-                if (tileHasLandingMedia(position) && typeof showTileHover === 'function') {
-                    showTileHover(position);
-                } else {
-                    showPropertyInfo(boardConfig[position]);
-                }
+                showPropertyInfo(boardConfig[position]);
             });
             gameBoard.appendChild(space);
             boardSpaces[position] = space;
@@ -747,7 +741,7 @@ function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
     cancelClientAutoEndTurn();
 
     const moveSteps = getMoveStepCount(oldPosition, newPosition);
-    const delay = getDiceRollDurationMs() + 200 + moveSteps * TOKEN_STEP_DURATION_MS + 600;
+    const delay = getDiceRollDurationMs() + 100 + moveSteps * TOKEN_STEP_DURATION_MS + 200;
 
     clientAutoEndTurnTimer = setTimeout(() => {
         clientAutoEndTurnTimer = null;
@@ -928,7 +922,7 @@ function animateTokenMove(playerId, oldPosition, newPosition, onComplete, direct
             return;
         }
         if (attempts++ < 80) {
-            setTimeout(waitForModel, 100);
+            setTimeout(waitForModel, 50);
             return;
         }
         player.position = newPosition;
@@ -1281,15 +1275,13 @@ function addLogEntry(message, type = 'system') {
     gameLog.appendChild(logEntry);
     
     // Auto-scroll to bottom and limit entries
-    setTimeout(() => {
-        gameLog.scrollTop = gameLog.scrollHeight;
-        
-        // Keep only last 50 entries
-        const entries = gameLog.querySelectorAll('.log-entry');
-        if (entries.length > 50) {
-            entries[0].remove();
-        }
-    }, 100);
+    gameLog.scrollTop = gameLog.scrollHeight;
+    
+    // Keep only last 50 entries
+    const entries = gameLog.querySelectorAll('.log-entry');
+    if (entries.length > 50) {
+        entries[0].remove();
+    }
 }
 
 // Add chat message
@@ -1570,11 +1562,8 @@ socket.on('gameStarted', (data) => {
     initRevealedPlayersForTurn();
     updateUI();
     updateTokens();
-
-    setTimeout(() => {
-        update3DTokenPositions();
-        updateTokenVisibility();
-    }, 500);
+    update3DTokenPositions();
+    updateTokenVisibility();
 
     addLogEntry('Game started!', 'system');
     addChatMessage('System', 'Game started! Good luck!');
