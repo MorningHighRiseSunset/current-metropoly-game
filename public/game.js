@@ -496,45 +496,44 @@ let tokenSelectionListenerAdded = false;
 // Board configuration - Las Vegas Monopoly themed
 const boardConfig = [
     { name: 'GO', type: 'corner', position: 0 },
-    { name: 'Las Vegas Raiders', type: 'property', color: '#8B4513', price: 350, rent: [17, 85, 255, 765, 1360, 2125], position: 1 },
+    { name: 'Las Vegas Raiders', type: 'property', color: '#8B4513', price: 350, rent: [17, 85, 255, 765, 1360, 2125], position: 1, address: '3333 Al Davis Way, Las Vegas, NV 89118 (Allegiant Stadium)' },
     { name: 'Community Cards', type: 'community-chest', position: 2 },
-    { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 300, rent: [15, 75, 225, 675, 1200, 1875], position: 3 },
+    { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', price: 300, rent: [15, 75, 225, 675, 1200, 1875], position: 3, address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115 (Las Vegas Motor Speedway)' },
     { name: 'Income Tax', type: 'tax', amount: 200, position: 4 },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 5 },
-    { name: 'Las Vegas Monorail', type: 'property', color: '#87CEEB', price: 250, rent: [12, 60, 180, 540, 800, 1100], position: 6 },
+    { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 5, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'Speed Vegas Off Roading', type: 'property', color: '#87CEEB', price: 250, rent: [25, 50, 150, 450, 625, 750], position: 6, address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054 (SPEEDVEGAS)' },
     { name: 'Chance', type: 'chance', position: 7 },
-    { name: 'Speed Vegas Off Roading', type: 'property', color: '#87CEEB', price: 220, rent: [11, 55, 165, 495, 720, 990], position: 8 },
-    { name: 'Las Vegas Golden Knights', type: 'property', color: '#87CEEB', price: 275, rent: [14, 70, 210, 630, 930, 1275], position: 9 },
-    { name: 'JAIL', type: 'corner', position: 10 },
-    { name: 'Maverick Helicopter Rides', type: 'property', color: '#FF69B4', price: 320, rent: [16, 80, 240, 720, 1060, 1450], position: 11 },
+    { name: 'Las Vegas Golden Knights', type: 'property', color: '#87CEEB', price: 275, rent: [28, 55, 165, 495, 700, 850], position: 8, address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158 (T-Mobile Arena)' },
+    { name: 'Maverick Helicopter Rides', type: 'property', color: '#87CEEB', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 9, address: '6075 S Las Vegas Blvd, Las Vegas, NV 89119' },
+    { name: 'JAIL', type: 'corner', position: 10, address: 'Jail Square' },
+    { name: 'Brothel', type: 'property', color: '#FF69B4', price: 200, rent: [20, 40, 120, 360, 500, 600], position: 11, address: 'Nevada Brothel (Fictional)' },
     { name: 'Electric Company', type: 'utility', price: 180, position: 12 },
-    { name: 'Bet MGM', type: 'property', color: '#FF69B4', price: 350, rent: [17, 85, 255, 765, 1360, 2125], position: 13 },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 14 },
-    { name: 'Las Vegas Monorail', type: 'property', color: '#FFA500', price: 250, rent: [12, 60, 180, 540, 800, 1100], position: 15 },
-    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 400, rent: [20, 100, 300, 900, 1325, 1825], position: 16 },
+    { name: 'Bet MGM', type: 'property', color: '#FF69B4', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 13, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 14, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 15, address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115' },
+    { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 16, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (Michelob ULTRA Arena)' },
     { name: 'Community Cards', type: 'community-chest', position: 17 },
-    { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 300, rent: [15, 75, 225, 675, 1200, 1875], position: 18 },
-    { name: 'Brothel', type: 'property', color: '#FFA500', price: 200, rent: [10, 50, 150, 450, 625, 750], position: 19 },
+    { name: 'Horseback Riding', type: 'property', color: '#FF0000', price: 260, rent: [26, 52, 156, 468, 650, 780], position: 18, address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV' },
+    { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 19, address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109 (Resorts World)' },
     { name: 'FREE PARKING', type: 'corner', position: 20 },
-    { name: 'Hard Rock Hotel', type: 'property', color: '#FF0000', price: 260, rent: [13, 65, 195, 585, 860, 1180], position: 21 },
+    { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 280, rent: [28, 56, 168, 504, 700, 840], position: 21, address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Chance', type: 'chance', position: 22 },
-    { name: 'Horseback Riding', type: 'property', color: '#FF0000', price: 260, rent: [13, 65, 195, 585, 860, 1180], position: 23 },
-    { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 350, rent: [17, 85, 255, 765, 1360, 2125], position: 24 },
-    { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 25 },
-    { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', price: 300, rent: [15, 75, 225, 675, 1200, 1875], position: 26 },
+    { name: 'Wynn Las Vegas', type: 'property', color: '#FFFF00', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 23, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 24, address: '' },
+    { name: 'Bachelor & Bachelorette Parties', type: 'property', color: '#008000', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 25, address: 'Various locations across Las Vegas Strip' },
+    { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 26, address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104 (Little White Wedding Chapel)' },
     { name: 'Community Cards', type: 'community-chest', position: 27 },
-    { name: 'Sphere', type: 'property', color: '#FFFF00', price: 400, rent: [20, 100, 300, 900, 1325, 1825], position: 28 },
+    { name: 'Sphere', type: 'property', color: '#008000', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 28, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
     { name: 'Water Works', type: 'utility', price: 200, position: 29 },
-    { name: 'GO TO JAIL', type: 'corner', position: 30 },
-    { name: 'Wynn Las Vegas', type: 'property', color: '#008000', price: 320, rent: [16, 80, 240, 720, 1060, 1450], position: 31 },
-    { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#008000', price: 350, rent: [17, 85, 255, 765, 1360, 2125], position: 32 },
+    { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 420, rent: [42, 84, 252, 756, 1050, 1260], position: 30, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'GO TO JAIL', type: 'corner', position: 31 },
+    { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#0000FF', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 32, address: '4949 N Rancho Dr, Las Vegas, NV 89130' },
     { name: 'Luxury Tax', type: 'tax', amount: 100, position: 33 },
     { name: 'Chance', type: 'chance', position: 34 },
-    { name: 'House of Blues', type: 'property', color: '#008000', price: 300, rent: [15, 75, 225, 675, 1200, 1875], position: 35 },
-    { name: 'The Cosmopolitan', type: 'railroad', price: 350, rent: [25, 50, 100, 200], position: 36 },
-    { name: 'Community Cards', type: 'community-chest', position: 37 },
-    { name: 'Las Vegas Monorail', type: 'property', color: '#0000FF', price: 250, rent: [12, 60, 180, 540, 800, 1100], position: 38 },
-    { name: 'Speed Vegas Off Roading', type: 'property', color: '#0000FF', price: 275, rent: [14, 70, 210, 630, 930, 1275], position: 39 }
+    { name: 'House of Blues', type: 'property', color: '#0000FF', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 35, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
+    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 37, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 38, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'Speed Vegas Off Roading', type: 'property', color: '#4B0082', price: 275, rent: [28, 55, 165, 495, 700, 850], position: 39, address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054 (SPEEDVEGAS)' }
 ];
 
 // Initialize game board
@@ -774,11 +773,6 @@ function startPropertyDecision(spaceData, position) {
     waitingForBuyResult = false;
     activePropertyDecision = { spaceData, position };
     updateBuyModalContent();
-    
-    // Hide tile hover preview when buy modal opens
-    if (typeof hideTileHoverImmediately === 'function') {
-        hideTileHoverImmediately();
-    }
     
     // Don't hide property modal - let user see both
     // if (propertyModal) {
@@ -1139,17 +1133,58 @@ function showPropertyInfo(spaceData) {
     const modal = propertyModal;
     const title = document.getElementById('propertyTitle');
     const content = document.getElementById('propertyContent');
+    const mediaContainer = document.getElementById('propertyMedia');
     
-    console.log('Modal elements:', { modal: !!modal, title: !!title, content: !!content });
+    console.log('Modal elements:', { modal: !!modal, title: !!title, content: !!content, mediaContainer: !!mediaContainer });
     
-    if (!modal || !title || !content) {
+    if (!modal || !title || !content || !mediaContainer) {
         console.error('Modal elements not found!');
         return;
     }
     
     title.textContent = spaceData.name;
     
-    let html = `<p><strong>Type:</strong> ${spaceData.type}</p>`;
+    // Clear previous media
+    mediaContainer.innerHTML = '';
+    
+    // Load media from tileMedia if available
+    if (tileMedia && tileMedia[spaceData.position]) {
+        const media = tileMedia[spaceData.position];
+        
+        // Prefer video if available
+        if (media.videos && media.videos.length > 0) {
+            const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
+            const video = document.createElement('video');
+            video.src = randomVideo;
+            video.autoplay = true;
+            video.muted = true;
+            video.loop = true;
+            video.playsInline = true;
+            video.controls = true;
+            video.style.width = '100%';
+            video.style.maxHeight = '250px';
+            video.style.objectFit = 'cover';
+            video.style.borderRadius = '8px';
+            mediaContainer.appendChild(video);
+        } else if (media.images && media.images.length > 0) {
+            const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+            const img = document.createElement('img');
+            img.src = randomImage;
+            img.alt = media.name;
+            img.style.width = '100%';
+            img.style.maxHeight = '250px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '8px';
+            mediaContainer.appendChild(img);
+        }
+    }
+    
+    let html = `<p><strong>Position:</strong> ${spaceData.position}</p>`;
+    html += `<p><strong>Type:</strong> ${spaceData.type}</p>`;
+    
+    if (spaceData.address) {
+        html += `<p><strong>Address:</strong> ${spaceData.address}</p>`;
+    }
     
     if (spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility') {
         html += `<p><strong>Price:</strong> $${spaceData.price}</p>`;
@@ -1171,11 +1206,6 @@ function showPropertyInfo(spaceData) {
     }
     
     content.innerHTML = html;
-    
-    // Hide tile hover preview when property modal opens
-    if (typeof hideTileHoverImmediately === 'function') {
-        hideTileHoverImmediately();
-    }
     
     console.log('Removing hidden class from modal');
     modal.classList.remove('hidden');
@@ -2556,6 +2586,7 @@ function createPremiumBoardTile(spaceData, row, col) {
     group.add(slab);
 
     const tex = createMonopolyFaceTexture(spaceData, row, col);
+
     const faceMat = new THREE.MeshBasicMaterial({
         map: tex,
         transparent: true,
@@ -2577,6 +2608,85 @@ function createPremiumBoardTile(spaceData, row, col) {
     group.add(edgeLines);
 
     return group;
+}
+
+// Center carousel variables
+let centerCarouselGroup = null;
+let carouselImages = [];
+let carouselCurrentIndex = 0;
+
+function createCenterCarousel(parentGroup) {
+    if (centerCarouselGroup) {
+        parentGroup.remove(centerCarouselGroup);
+    }
+    
+    centerCarouselGroup = new THREE.Group();
+    carouselImages = [];
+    
+    // Collect all images from tileMedia
+    const allImages = [];
+    if (typeof tileMedia !== 'undefined') {
+        Object.values(tileMedia).forEach(media => {
+            if (media.images && media.images.length > 0) {
+                media.images.forEach(img => allImages.push(img));
+            }
+        });
+    }
+    
+    if (allImages.length === 0) return;
+    
+    const textureLoader = new THREE.TextureLoader();
+    
+    // Create single image mesh for slideshow
+    const tex = textureLoader.load(allImages[0]);
+    if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
+        const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
+        tex.anisotropy = Math.min(8, maxA);
+    }
+    
+    const imageMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(9, 9),
+        new THREE.MeshBasicMaterial({
+            map: tex,
+            transparent: true,
+            side: THREE.DoubleSide
+        })
+    );
+    
+    imageMesh.position.set(0, 0.16, 0);
+    imageMesh.rotation.x = -Math.PI / 2;
+    imageMesh.userData.images = allImages;
+    imageMesh.userData.currentIndex = 0;
+    imageMesh.userData.lastChange = Date.now();
+    
+    centerCarouselGroup.add(imageMesh);
+    carouselImages.push(imageMesh);
+    
+    parentGroup.add(centerCarouselGroup);
+}
+
+function animateCenterCarousel() {
+    if (!centerCarouselGroup || carouselImages.length === 0) return;
+    
+    const imageMesh = carouselImages[0];
+    const now = Date.now();
+    const changeInterval = 3000; // Change every 3 seconds
+    
+    if (now - imageMesh.userData.lastChange > changeInterval) {
+        imageMesh.userData.lastChange = now;
+        imageMesh.userData.currentIndex = (imageMesh.userData.currentIndex + 1) % imageMesh.userData.images.length;
+        carouselCurrentIndex = imageMesh.userData.currentIndex;
+        
+        const textureLoader = new THREE.TextureLoader();
+        const newTex = textureLoader.load(imageMesh.userData.images[imageMesh.userData.currentIndex]);
+        if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
+            const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
+            newTex.anisotropy = Math.min(8, maxA);
+        }
+        
+        imageMesh.material.map = newTex;
+        imageMesh.material.needsUpdate = true;
+    }
 }
 
 // Create the 3D board in Three.js
@@ -2628,6 +2738,9 @@ function create3DBoard() {
     centerPad.position.y = tileHeight * 0.5;
     boardEnvironmentGroup.add(centerPad);
 
+    // Create revolving image carousel in center
+    createCenterCarousel(boardEnvironmentGroup);
+
     scene.add(boardEnvironmentGroup);
 
     for (let row = 0; row < boardSize; row++) {
@@ -2672,6 +2785,7 @@ function animate3DScene() {
     requestAnimationFrame(animate3DScene);
     
     update3DTokenPositions();
+    animateCenterCarousel();
     
     if (renderer && scene && camera) {
         renderer.render(scene, camera);

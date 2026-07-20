@@ -9,7 +9,7 @@ const tileMedia = {
     6: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading%201%20(1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] },
     7: { name: 'Chance', videos: [], images: [] },
     8: { name: 'Las Vegas Golden Knights', videos: ['/Videos/LV%20GKnights%201%20(1).mp4', '/Videos/LV%20GKnights%202%20(1).mp4', '/Videos/LV%20Golden%20Knights%20(1).mp4'], images: ['/images/230613231941-04-knights-stanley-cup-061323.jpg'] },
-    9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/MavHeli%201.mp4%20(1).mp4', '/Videos/MavHeli%202.mp4%20(1).mp4', '/Videos/MavHeli%203.mp4%20(1).mp4'], images: ['/images/helicopter%20image.png', '/images/HelicopterRidesNight.jpg', '/images/702-helicopters.webp'] },
+    9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/MavHeli%201.mp4%20(1).mp4', '/Videos/MavHeli%202.mp4%20(1).mp4', '/Videos/MavHeli%203.mp4%20(1).mp4'], images: ['/images/HelicopterRidesNight.jpg', '/images/702-helicopters.webp'] },
     10: { name: 'JAIL', videos: ['/Videos/Jailclip4.mp4', '/Videos/Jailclip5.mp4', '/Videos/jailclip6.mp4_1743296163946.mp4', '/Videos/Jailmoment2(cropped).mp4', '/Videos/jailmoment3(cropped).mp4', '/Videos/Imgoingtojail.mp4'], images: [] },
     11: { name: 'Brothel', videos: ['/Videos/tapDancingWomen.mp4', '/Videos/BrothelVid%20(1).mp4'], images: [] },
     12: { name: 'Electric Company', videos: [], images: [] },
@@ -20,7 +20,7 @@ const tileMedia = {
     17: { name: 'Community Cards', videos: [], images: [] },
     18: { name: 'Horseback Riding', videos: ['/Videos/horse6%20(1).mp4'], images: [] },
     19: { name: 'Resorts World Theatre', videos: [], images: ['/images/ResortsWorldTheater.jpg', '/images/Richling-house-of-blues-sunset.webp'] },
-    20: { name: 'FREE PARKING', videos: [], images: ['/images/free%20parking.jpg'] },
+    20: { name: 'FREE PARKING', videos: [], images: ['/images/Screenshot%202024-12-12%20033702.png'] },
     21: { name: 'Chance', videos: [], images: [] },
     22: { name: 'Hard Rock Hotel', videos: [], images: [] },
     23: { name: 'Wynn Las Vegas', videos: [], images: ['/images/Wynn_2_(2).jpg'] },
@@ -39,5 +39,5 @@ const tileMedia = {
     36: { name: 'The Cosmopolitan', videos: [], images: ['/images/cosmopolitan.jpg'] },
     37: { name: 'Community Cards', videos: [], images: [] },
     38: { name: 'Las Vegas Monorail', videos: ['/Videos/Monorail%20(1).mp4'], images: [] },
-    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Vegas%20Off-Road%20Experience%20at%20Speed%20Vegas%20Motorsport%20Park%20(1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] }
+    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Vegas%20Off-Road%20Experience%20at%20Speed%20Vegas%20Motorsport%20Park%20(1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg', '/images/Screenshot%202024-12-12%20033702.png'] }
 };
