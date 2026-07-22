@@ -7,10 +7,17 @@
     <link rel="stylesheet" href="/game.css">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.0/umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fflate/0.8.0/fflate.min.js"></script>
+    <script>
+        // Ensure fflate is globally available for FBXLoader
+        if (typeof fflate !== 'undefined') {
+            window.fflate = fflate;
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="/dice-glb-config.js"></script>
 </head>
 <body>
@@ -21,8 +28,10 @@
                 <h1>🏛️ METROPOLY</h1>
                 <div class="game-id">Game: <span id="gameCode">LOADING...</span></div>
             </div>
-            <div class="player-info">
-                <div class="player-name" id="playerName">Player</div>
+            <div class="header-actions">
+                <div class="player-info">
+                    <div class="player-name" id="playerName">Player</div>
+                </div>
             </div>
         </header>
         
@@ -34,6 +43,13 @@
             <div class="modal-content">
                 <span class="modal-close">&times;</span>
                 <h2>Settings</h2>
+                <div class="settings-section">
+                    <h3>Game Log</h3>
+                    <div id="gameLog" class="game-log-messages panel-scroll">
+                        <div class="log-entry">Welcome to Metropoly!</div>
+                        <div class="log-entry">Waiting for players...</div>
+                    </div>
+                </div>
                 <div class="settings-section">
                     <h3>Theme</h3>
                     <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
@@ -75,11 +91,18 @@
                     </div>
                 </div>
 
-                <div class="sidebar-panel sidebar-panel--log">
-                    <h3 class="sidebar-panel-title">Game Log</h3>
-                    <div id="gameLog" class="game-log-messages panel-scroll">
-                        <div class="log-entry">Welcome to Metropoly!</div>
-                        <div class="log-entry">Waiting for players...</div>
+                <div class="sidebar-panel sidebar-panel--video">
+                    <h3 class="sidebar-panel-title">Video Chat</h3>
+                    <div class="video-chat-content">
+                        <div class="video-container">
+                            <video id="localVideo" class="local-video" muted playsinline autoplay></video>
+                            <video id="remoteVideo" class="remote-video" playsinline autoplay></video>
+                        </div>
+                        <div class="video-controls">
+                            <div id="connectionStatus" class="connection-status">Not connected</div>
+                            <button id="startVideoCall" class="btn btn-primary btn-block">Start Call</button>
+                            <button id="endVideoCall" class="btn btn-danger btn-block" style="display: none;">End Call</button>
+                        </div>
                     </div>
                 </div>
 
@@ -134,35 +157,43 @@
                 <div class="tokens-grid">
                     <div class="token-option" data-token="0">
                         <div class="token-image">
-                            <img src="/tokenimages/burger%20image.png" alt="Burger">
+                            <img src="/images/Burger.png" alt="Burger">
                         </div>
                         <div class="token-name">Burger</div>
                     </div>
-                    <!-- Rolls Royce disabled
                     <div class="token-option" data-token="1">
                         <div class="token-image">
-                            <img src="/images/rolls%20royce%20image.png" alt="Rolls Royce">
+                            <img src="/images/football.png" alt="Football">
+                        </div>
+                        <div class="token-name">Football</div>
+                    </div>
+                    <div class="token-option" data-token="2">
+                        <div class="token-image">
+                            <img src="/images/helicopter.png" alt="Helicopter">
+                        </div>
+                        <div class="token-name">Helicopter</div>
+                    </div>
+                    <div class="token-option" data-token="3">
+                        <div class="token-image">
+                            <img src="/images/rolls royce.png" alt="Rolls Royce">
                         </div>
                         <div class="token-name">Rolls Royce</div>
                     </div>
-                    -->
-                    <div class="token-option" data-token="1">
+                    <div class="token-option" data-token="4">
                         <div class="token-image">
-                            <img src="/tokenimages/top%20hat%20image.png" alt="Top Hat">
+                            <img src="/images/Shoe.png" alt="Shoe">
+                        </div>
+                        <div class="token-name">Shoe</div>
+                    </div>
+                    <div class="token-option" data-token="5">
+                        <div class="token-image">
+                            <img src="/images/top hat.png" alt="Top Hat">
                         </div>
                         <div class="token-name">Top Hat</div>
                     </div>
-                    <!-- Vegas Model disabled
-                    <div class="token-option" data-token="3">
+                    <div class="token-option" data-token="7">
                         <div class="token-image">
-                            <img src="/images/woman%20model%20image.png" alt="Vegas Model">
-                        </div>
-                        <div class="token-name">Vegas Model</div>
-                    </div>
-                    -->
-                    <div class="token-option" data-token="2">
-                        <div class="token-image">
-                            <img src="/tokenimages/coffee%20image.png" alt="Coffee Cup">
+                            <img src="/tokenimages/coffee%20image.png" alt="Coffee Cup" style="object-fit: cover; object-position: center;">
                         </div>
                         <div class="token-name">Coffee Cup</div>
                     </div>

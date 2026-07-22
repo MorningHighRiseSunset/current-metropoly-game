@@ -65,7 +65,7 @@ function showTileHover(tilePosition) {
         img.alt = media.name;
         img.style.width = '100%';
         img.style.maxHeight = '200px';
-        img.style.objectFit = 'cover';
+        img.style.objectFit = 'contain';
         img.style.borderRadius = '8px';
         tileHoverMedia.appendChild(img);
     } else {

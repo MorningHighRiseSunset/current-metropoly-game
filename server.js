@@ -89,7 +89,7 @@ function getBoardSpaces() {
         { name: 'Chance', type: 'chance', position: 22 },
         { name: 'Wynn Las Vegas', type: 'property', color: '#FFFF00', group: 'yellow', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 23, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', group: 'yellow', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 24, address: '' },
-        { name: 'Bachelor & Bachelorette Parties', type: 'property', color: '#008000', group: 'green', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 25, address: 'Various locations across Las Vegas Strip' },
+        { name: 'Shriners Children\'s Open', type: 'property', color: '#008000', group: 'green', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 25, address: '' },
         { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', group: 'green', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 26, address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104 (Little White Wedding Chapel)' },
         { name: 'Community Cards', type: 'community-chest', position: 27 },
         { name: 'Sphere', type: 'property', color: '#008000', group: 'green', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 28, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
@@ -838,6 +838,26 @@ io.on('connection', (socket) => {
 
         // Mark game as ready to send gameStarted when players join game page
         game.readyToSendGameStarted = true;
+
+        // Add timeout to handle cases where players don't acknowledge
+        game.ackTimeout = setTimeout(() => {
+            if (game.status === 'starting') {
+                console.log(`Acknowledgment timeout for game ${game.id}. Forcing game start.`);
+                game.status = 'playing';
+                game.gameState.diceRolled = false;
+                game.gameState.turnPhase = 'roll';
+                
+                io.to(playerData.gameId).emit('gameReady', {
+                    message: 'Game started (timeout)',
+                    gameState: game.gameState,
+                    players: game.players
+                });
+                
+                setTimeout(() => {
+                    checkAndExecuteAITurn(game);
+                }, 1000);
+            }
+        }, 10000); // 10 second timeout
     });
 
     // Handle acknowledgments from game page
@@ -855,6 +875,12 @@ io.on('connection', (socket) => {
             // All players acknowledged, game is ready
             game.status = 'playing';
             console.log('All players acknowledged. Game is now ready to play!');
+
+            // Clear the timeout since all players acknowledged
+            if (game.ackTimeout) {
+                clearTimeout(game.ackTimeout);
+                delete game.ackTimeout;
+            }
 
             // Ensure diceRolled is false when game is ready
             game.gameState.diceRolled = false;
@@ -1016,6 +1042,17 @@ io.on('connection', (socket) => {
         
         const { tokenIndex } = data;
         
+        // Check if it's this player's turn to pick a token
+        const humanPlayers = game.players.filter(p => p && !p.isAI);
+        const playersWhoPicked = humanPlayers.filter(p => p.tokenIndex !== undefined);
+        const playerIndex = humanPlayers.findIndex(p => p && p.id === socket.id);
+        
+        // Player can only pick if they are the next in line (or if no one has picked yet and they're first)
+        if (playersWhoPicked.length !== playerIndex) {
+            socket.emit('gameError', 'Wait for your turn to pick a token');
+            return;
+        }
+        
         // Set player's token
         player.tokenIndex = tokenIndex;
         
@@ -1030,7 +1067,6 @@ io.on('connection', (socket) => {
         });
         
         // Check if all HUMAN players have selected tokens
-        const humanPlayers = game.players.filter(p => p && !p.isAI);
         const allHumanPlayersReady = humanPlayers.every(p => p.tokenIndex !== undefined);
         if (allHumanPlayersReady && humanPlayers.length >= 1) {
             console.log(`SERVER: All human players have selected tokens, assigning AI tokens`);
@@ -2376,6 +2412,84 @@ io.on('connection', (socket) => {
 
         cancelScheduledTurnEnd(game, socket.id);
         advanceTurn(game);
+    });
+
+    // Video call signaling
+    socket.on('peerIdShare', (data) => {
+        const playerData = players[socket.id];
+        if (!playerData || !playerData.gameId) return;
+
+        const game = games[playerData.gameId];
+        if (!game) return;
+
+        // Forward peer ID to other players in the game
+        game.players.forEach(player => {
+            if (player && player.id !== socket.id) {
+                io.to(player.id).emit('peerIdShare', {
+                    gameId: data.gameId,
+                    playerId: data.playerId,
+                    peerId: data.peerId
+                });
+            }
+        });
+    });
+
+    socket.on('requestPeerId', (data) => {
+        const playerData = players[socket.id];
+        if (!playerData || !playerData.gameId) return;
+
+        const game = games[playerData.gameId];
+        if (!game) return;
+
+        // Request peer ID from other players in the game
+        game.players.forEach(player => {
+            if (player && player.id !== socket.id) {
+                io.to(player.id).emit('requestPeerId', {
+                    gameId: data.gameId,
+                    playerId: data.playerId
+                });
+            }
+        });
+    });
+
+    socket.on('videoCallRequest', (data) => {
+        console.log('=== SERVER: videoCallRequest received ===', data);
+        
+        // Find game by gameId from data, not by looking up player
+        const game = games[data.gameId];
+        if (!game) {
+            console.log('videoCallRequest - game not found:', data.gameId);
+            return;
+        }
+
+        console.log('Game found:', game.id, 'players:', game.players.length);
+        
+        // Forward to other players in the game
+        game.players.forEach(player => {
+            if (player && player.id !== socket.id) {
+                console.log('videoCallRequest - forwarding to:', player.id, 'name:', player.name);
+                io.to(player.id).emit('videoCallRequest', data);
+            }
+        });
+        console.log('=== SERVER: videoCallRequest processing complete ===');
+    });
+
+    socket.on('videoCallEnd', (data) => {
+        const playerData = players[socket.id];
+        if (!playerData || !playerData.gameId) return;
+
+        const game = games[playerData.gameId];
+        if (!game) return;
+
+        // Forward call end to other players in the game
+        game.players.forEach(player => {
+            if (player && player.id !== socket.id) {
+                io.to(player.id).emit('videoCallEnd', {
+                    gameId: data.gameId,
+                    playerId: data.playerId
+                });
+            }
+        });
     });
 
     // Handle disconnection

@@ -33,10 +33,13 @@ let waitingForBuyResult = false;
 
 // Token data
 const tokenData = [
-    { name: 'Burger', model: '/Models/Cheeseburger/cheeseburger.glb', image: '/tokenimages/burger%20image.png', scale: 0.42 },
-    // { name: 'Rolls Royce', model: '/Models/RollsRoyce/rollsRoyceCarAnim.glb', image: '/tokenimages/rolls%20royce%20image.png', scale: 0.14, facingOffset: -Math.PI / 2 },
-    { name: 'Top Hat', model: '/Models/TopHat/tophat.glb', image: '/tokenimages/top%20hat%20image.png', scale: 0.22 },
-    // { name: 'Vegas Model', model: '/Models/WhiteGirlIdle/Standing Idle.fbx', image: '/tokenimages/woman%20model%20image.png', scale: 0.1 },
+    { name: 'Burger', model: '/Models/Cheeseburger/cheeseburger.glb', image: '/images/Burger.png', scale: 0.42 },
+    { name: 'Football', model: '/Models/Football/football.glb', image: '/images/football.png', scale: 0.25 },
+    { name: 'Helicopter', model: '/Models/Helicopter/helicopter.glb', image: '/images/helicopter.png', scale: 0.002 },
+    { name: 'Rolls Royce', model: '/Models/RollsRoyce/rollsRoyceCarAnim.glb', image: '/images/rolls royce.png', scale: 0.14, facingOffset: Math.PI / 2 },
+    { name: 'Shoe', model: '/Models/Shoe/shoe.glb', image: '/images/Shoe.png', scale: 0.25 },
+    { name: 'Top Hat', model: '/Models/TopHat/tophat.glb', image: '/images/top hat.png', scale: 0.22 },
+    { name: 'White Girl', model: '/Models/WhiteGirlIdle/Standing Idle.fbx', walkModel: '/Models/WhiteGirlWalk/Walking.fbx', image: '/images/female model.png', scale: 0.06 },
     { name: 'Coffee Cup', model: '/Models/CoffeeCup/coffee.gltf', image: '/tokenimages/coffee%20image.png', scale: 0.25 }
 ];
 
@@ -145,7 +148,7 @@ function roll3DDice(dice1Value, dice2Value, callbacks) {
     }
     if (!dice1Mesh || !dice2Mesh) {
         createDice();
-        setTimeout(() => roll3DDice(dice1Value, dice2Value, callbacks), 50);
+        setTimeout(() => roll3DDice(dice1Value, dice2Value, callbacks), 10);
         return;
     }
 
@@ -221,7 +224,9 @@ function getTokenFacingRotationBetween(fromPos, toPos, yawOffset = 0) {
     const dx = to.x - from.x;
     const dz = to.z - from.z;
     if (dx === 0 && dz === 0) return yawOffset;
-    return Math.atan2(dx, -dz) + yawOffset;
+    // Calculate angle to face movement direction
+    const angle = Math.atan2(dx, dz) + Math.PI; // Add 180° to fix orientation
+    return angle + yawOffset;
 }
 
 /** Y rotation so token faces the next space along the board path. */
@@ -242,7 +247,9 @@ function lerpAngleY(fromY, toY, t) {
 
 function applyTokenFacing(model, position, direction = 'forward', player = null) {
     if (!model) return;
-    model.rotation.y = getTokenFacingRotationY(position, direction, getTokenYawOffset(player));
+    // Face direction of movement (next tile)
+    const rotation = getTokenFacingRotationY(position, direction, getTokenYawOffset(player));
+    model.rotation.y = rotation;
 }
 
 function applyTokenFacingBetween(model, fromPos, toPos, player = null) {
@@ -294,6 +301,13 @@ function revealPlayerToken(playerId) {
 
 function initRevealedPlayersForTurn() {
     revealedPlayerIds.clear();
+    // Reveal all players who have moved (position > 0 or have rolled)
+    players.forEach(player => {
+        if (player && player.id && player.position > 0) {
+            revealedPlayerIds.add(player.id);
+        }
+    });
+    // Also reveal current player even if they haven't moved yet
     if (gameState && gameState.currentPlayer) {
         revealedPlayerIds.add(gameState.currentPlayer);
     }
@@ -376,7 +390,7 @@ const revealedPlayerIds = new Set();
 const tokenAnimatingIds = new Set();
 const tokenAnimationHandles = {};
 const pendingRollTokenMoves = {};
-const TOKEN_STEP_DURATION_MS = 320;
+const TOKEN_STEP_DURATION_MS = 150;
 
 function markPendingRollTokenMove(playerId) {
     if (!playerId) return;
@@ -414,11 +428,11 @@ const boardContainer = document.querySelector('.board-container');
 const boardViewport = document.querySelector('.board-viewport');
 
 // Three.js orbit camera (degrees / distance — shared by board + token models)
-let cameraDistance = 14;
+let cameraDistance = 10;
 const CAMERA_DISTANCE_MIN = 6;
 const CAMERA_DISTANCE_MAX = 55;
-const CAMERA_DISTANCE_DEFAULT = 14;
-let cameraPolarDeg = 55;
+const CAMERA_DISTANCE_DEFAULT = 10;
+let cameraPolarDeg = 90;
 let cameraAzimuthDeg = 0;
 let cameraTargetX = 0;
 let cameraTargetY = 0;
@@ -442,6 +456,9 @@ const themeToggle = document.getElementById('themeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
 const settingsModalClose = document.querySelector('.modal-close');
+
+// Video cleanup
+let currentPropertyVideo = null;
 
 // Theme toggle functionality
 function initThemeToggle() {
@@ -506,7 +523,7 @@ const boardConfig = [
     { name: 'Las Vegas Golden Knights', type: 'property', color: '#87CEEB', price: 275, rent: [28, 55, 165, 495, 700, 850], position: 8, address: '3780 S Las Vegas Blvd, Las Vegas, NV 89158 (T-Mobile Arena)' },
     { name: 'Maverick Helicopter Rides', type: 'property', color: '#87CEEB', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 9, address: '6075 S Las Vegas Blvd, Las Vegas, NV 89119' },
     { name: 'JAIL', type: 'corner', position: 10, address: 'Jail Square' },
-    { name: 'Brothel', type: 'property', color: '#FF69B4', price: 200, rent: [20, 40, 120, 360, 500, 600], position: 11, address: 'Nevada Brothel (Fictional)' },
+    { name: 'Brothel', type: 'property', color: '#FF69B4', price: 200, rent: [20, 40, 120, 360, 500, 600], position: 11, address: 'Nevada Brothel' },
     { name: 'Electric Company', type: 'utility', price: 180, position: 12 },
     { name: 'Bet MGM', type: 'property', color: '#FF69B4', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 13, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 14, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
@@ -519,8 +536,8 @@ const boardConfig = [
     { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 280, rent: [28, 56, 168, 504, 700, 840], position: 21, address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Chance', type: 'chance', position: 22 },
     { name: 'Wynn Las Vegas', type: 'property', color: '#FFFF00', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 23, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109' },
-    { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 24, address: '' },
-    { name: 'Bachelor & Bachelorette Parties', type: 'property', color: '#008000', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 25, address: 'Various locations across Las Vegas Strip' },
+    { name: 'County Fair', type: 'property', color: '#FFFF00', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 24, address: '1301 W Whipple Ave, Logandale, NV 89021' },
+    { name: 'Shriners Children\'s Open', type: 'property', color: '#008000', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 25, address: '' },
     { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 26, address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104 (Little White Wedding Chapel)' },
     { name: 'Community Cards', type: 'community-chest', position: 27 },
     { name: 'Sphere', type: 'property', color: '#008000', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 28, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
@@ -531,6 +548,7 @@ const boardConfig = [
     { name: 'Luxury Tax', type: 'tax', amount: 100, position: 33 },
     { name: 'Chance', type: 'chance', position: 34 },
     { name: 'House of Blues', type: 'property', color: '#0000FF', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 35, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
+    { name: 'Venetian', type: 'property', color: '#4B0082', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 36, address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 37, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 38, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Speed Vegas Off Roading', type: 'property', color: '#4B0082', price: 275, rent: [28, 55, 165, 495, 700, 850], position: 39, address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054 (SPEEDVEGAS)' }
@@ -573,19 +591,19 @@ function initializeBoard() {
             const spaceData = boardConfig[position];
             if (!spaceData) continue;
             
-            // Create invisible click target
-            const space = document.createElement('div');
-            space.className = 'board-space';
-            space.dataset.position = position;
-            space.style.gridRow = row + 1;
-            space.style.gridColumn = col + 1;
-            space.style.visibility = 'hidden'; // Invisible, just for click detection
-            
-            space.addEventListener('click', () => {
-                showPropertyInfo(boardConfig[position]);
-            });
-            gameBoard.appendChild(space);
-            boardSpaces[position] = space;
+            // Create invisible click target (disabled - using 3D raycasting instead for accuracy with camera rotation)
+            // const space = document.createElement('div');
+            // space.className = 'board-space';
+            // space.dataset.position = position;
+            // space.style.gridRow = row + 1;
+            // space.style.gridColumn = col + 1;
+            // space.style.visibility = 'hidden'; // Invisible, just for click detection
+            // 
+            // space.addEventListener('click', () => {
+            //     showPropertyInfo(boardConfig[position]);
+            // });
+            // gameBoard.appendChild(space);
+            // boardSpaces[position] = space;
         }
     }
     
@@ -619,17 +637,27 @@ function on3DBoardClick(event) {
 
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
-    const hits = raycaster.intersectObjects(Object.values(boardMeshes), true);
+    
+    // Create a plane at y=0 to detect where on the board we clicked
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const intersectionPoint = new THREE.Vector3();
+    raycaster.ray.intersectPlane(plane, intersectionPoint);
+    
+    if (!intersectionPoint) return;
 
-    if (!hits.length) return;
+    // Convert world position to grid coordinates
+    const { step } = BOARD_LAYOUT;
+    const col = Math.round(intersectionPoint.x / step) + 5;
+    const row = Math.round(intersectionPoint.z / step) + 5;
 
-    let object = hits[0].object;
-    while (object && object.userData.position === undefined && object.parent) {
-        object = object.parent;
-    }
-
-    const position = object?.userData?.position;
-    if (position !== undefined && boardConfig[position]) {
+    // Calculate position from grid coordinates
+    let position = null;
+    if (row === 0) position = col;
+    else if (row === 10) position = 20 + (10 - col);
+    else if (col === 0) position = 30 + (10 - row);
+    else if (col === 10) position = 10 + row;
+    
+    if (position !== undefined && position !== null && boardConfig[position]) {
         showPropertyInfo(boardConfig[position]);
     }
 }
@@ -659,12 +687,15 @@ function handlePlayerLanding(playerId, newPosition) {
             console.log('Starting property decision for:', spaceData.name);
             startPropertyDecision(spaceData, newPosition);
         } else {
-            // If not a purchasable property, show property info modal
+            // If not a purchasable property, show property info modal (but not for Chance/Community Chest - those use card modal)
             if (boardConfig[newPosition]) {
                 const spaceData = boardConfig[newPosition];
                 console.log('Space data:', spaceData);
-                console.log('Calling showPropertyInfo for:', spaceData.name);
-                showPropertyInfo(spaceData);
+                // Don't show property modal for Chance/Community Chest - they use card modal
+                if (spaceData.type !== 'chance' && spaceData.type !== 'community-chest') {
+                    console.log('Calling showPropertyInfo for:', spaceData.name);
+                    showPropertyInfo(spaceData);
+                }
             }
         }
     }
@@ -740,7 +771,7 @@ function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
     cancelClientAutoEndTurn();
 
     const moveSteps = getMoveStepCount(oldPosition, newPosition);
-    const delay = getDiceRollDurationMs() + 100 + moveSteps * TOKEN_STEP_DURATION_MS + 200;
+    const delay = getDiceRollDurationMs() + 50 + moveSteps * TOKEN_STEP_DURATION_MS + 50;
 
     clientAutoEndTurnTimer = setTimeout(() => {
         clientAutoEndTurnTimer = null;
@@ -761,7 +792,7 @@ function updateBuyModalContent() {
     let html = `<p><strong>${activePropertyDecision.spaceData.name}</strong></p>`;
     html += `<p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>`;
     html += `<p>Rent: <strong>$${activePropertyDecision.spaceData.rent ? activePropertyDecision.spaceData.rent[0] : 0}</strong></p>`;
-    html += `<p>${canAfford ? 'Buy this property, Pass, or click End Turn when you are done.' : 'Not enough money to buy. Pass or click End Turn.'}</p>`;
+    html += `<p>${canAfford ? 'Buy this property or click End Turn when you are done.' : 'Not enough money to buy. Click End Turn.'}</p>`;
     
     buyContent.innerHTML = html;
 }
@@ -829,10 +860,15 @@ function animateTokenMove(playerId, oldPosition, newPosition, onComplete, direct
         revealPlayerToken(playerId);
         model.visible = true;
 
+        // Switch to walk animation if available
+        setTokenAnimation(playerId, 'walk');
+
         if (steps.length === 0) {
             player.position = newPosition;
             tokenAnimatingIds.delete(playerId);
             update3DTokenPositions();
+            // Switch back to idle animation
+            setTokenAnimation(playerId, 'idle');
             if (onComplete) onComplete();
             return;
         }
@@ -856,6 +892,8 @@ function animateTokenMove(playerId, oldPosition, newPosition, onComplete, direct
                 tokenAnimatingIds.delete(playerId);
                 delete tokenAnimationHandles[playerId];
                 update3DTokenPositions();
+                // Switch back to idle animation
+                setTokenAnimation(playerId, 'idle');
                 if (onComplete) onComplete();
                 return;
             }
@@ -916,7 +954,7 @@ function animateTokenMove(playerId, oldPosition, newPosition, onComplete, direct
             return;
         }
         if (attempts++ < 80) {
-            setTimeout(waitForModel, 50);
+            setTimeout(waitForModel, 10);
             return;
         }
         player.position = newPosition;
@@ -960,6 +998,49 @@ function getTileCoordinates(position) {
 }
 
 // Load 3D token model
+function loadWalkModel(tokenInfo, player, idleModel) {
+    const loader = new THREE.FBXLoader();
+    loader.load(tokenInfo.walkModel,
+        function(fbx) {
+            console.log(`Walk model loaded for ${player.name}`);
+            idleModel.walkModel = fbx;
+            idleModel.walkAnimations = fbx.animations;
+        },
+        function(xhr) {
+            if (xhr.lengthComputable) {
+                const percentComplete = xhr.loaded / xhr.total * 100;
+                console.log(`Loading walk model: ${percentComplete.toFixed(2)}%`);
+            }
+        },
+        function(error) {
+            console.error(`Error loading walk model for ${player.name}:`, error);
+        }
+    );
+}
+
+function setTokenAnimation(playerId, animType) {
+    const model = tokenModels[playerId];
+    if (!model || !model.mixer || !model.animations) return;
+    
+    if (model.currentAnim === animType) return;
+    
+    // Stop current animation
+    model.mixer.stopAllAction();
+    
+    let animations = model.animations;
+    
+    // If switching to walk and we have a walk model with its own animations
+    if (animType === 'walk' && model.walkAnimations) {
+        animations = model.walkAnimations;
+    }
+    
+    if (animations.length > 0) {
+        const action = model.mixer.clipAction(animations[0]);
+        action.play();
+        model.currentAnim = animType;
+    }
+}
+
 function loadTokenModel(tokenIndex, player) {
     const tokenInfo = tokenData[tokenIndex];
     if (!tokenInfo || !tokenInfo.model) {
@@ -995,22 +1076,36 @@ function loadTokenModel(tokenIndex, player) {
                 tokenMeshes[player.id] = model;
                 delete tokenLoading[player.id];
 
-                scene.add(model);
-                model.visible = isTokenVisible(player.id);
-                applyTokenFacing(model, player.position || 0, 'forward', player);
-                console.log(`3D Token loaded and added to scene for ${player.name}`);
+                if (scene) {
+                    scene.add(model);
+                    model.visible = isTokenVisible(player.id);
+                    applyTokenFacing(model, player.position || 0, 'forward', player);
+                    console.log(`3D Token loaded and added to scene for ${player.name}`);
 
-                update3DTokenPositions();
-                updateTokenVisibility();
+                    update3DTokenPositions();
+                    updateTokenVisibility();
+                }
 
                 // Check if model has animations
                 if (fbx.animations && fbx.animations.length > 0) {
                     console.log(`FBX model has ${fbx.animations.length} animations`);
-                    // Set up animation mixer for Vegas model
+                    // Set up animation mixer
                     const mixer = new THREE.AnimationMixer(model);
                     model.mixer = mixer;
-                    const action = mixer.clipAction(fbx.animations[0]);
-                    action.play();
+                    model.animations = fbx.animations;
+                    model.currentAnim = 'idle';
+                    
+                    // Play all animations with faster speed
+                    fbx.animations.forEach((anim) => {
+                        const action = mixer.clipAction(anim);
+                        action.timeScale = 3.0; // Spin 3x faster
+                        action.play();
+                    });
+                    
+                    // If this token has a walk model (White Girl), load it too
+                    if (tokenInfo.walkModel) {
+                        loadWalkModel(tokenInfo, player, model);
+                    }
                 }
             },
             function(error) {
@@ -1045,19 +1140,26 @@ function loadTokenModel(tokenIndex, player) {
                 tokenMeshes[player.id] = model;
                 delete tokenLoading[player.id];
 
-                scene.add(model);
-                model.visible = isTokenVisible(player.id);
-                applyTokenFacing(model, player.position || 0, 'forward', player);
-                update3DTokenPositions();
-                updateTokenVisibility();
+                if (scene) {
+                    scene.add(model);
+                    model.visible = isTokenVisible(player.id);
+                    applyTokenFacing(model, player.position || 0, 'forward', player);
+                    update3DTokenPositions();
+                    updateTokenVisibility();
+                }
 
                 if (gltf.animations && gltf.animations.length > 0) {
                     const mixer = new THREE.AnimationMixer(model);
                     model.mixer = mixer;
+                    model.animations = gltf.animations;
+                    model.currentAnim = 'idle';
 
-                    // Play idle animation
-                    const action = mixer.clipAction(gltf.animations[0]);
-                    action.play();
+                    // Play all animations with faster speed
+                    gltf.animations.forEach((anim) => {
+                        const action = mixer.clipAction(anim);
+                        action.timeScale = 3.0; // Spin 3x faster
+                        action.play();
+                    });
                 }
             },
             function(xhr) {
@@ -1124,7 +1226,7 @@ function updateTokens() {
     // Update 3D token positions after loading models
     setTimeout(() => {
         update3DTokenPositions();
-    }, 100);
+    }, 10);
 }
 
 // Show property information
@@ -1157,7 +1259,7 @@ function showPropertyInfo(spaceData) {
             const video = document.createElement('video');
             video.src = randomVideo;
             video.autoplay = true;
-            video.muted = true;
+            video.muted = false;
             video.loop = true;
             video.playsInline = true;
             video.controls = true;
@@ -1166,6 +1268,14 @@ function showPropertyInfo(spaceData) {
             video.style.objectFit = 'cover';
             video.style.borderRadius = '8px';
             mediaContainer.appendChild(video);
+            currentPropertyVideo = video;
+            
+            // Handle autoplay restrictions - try to play with sound, fall back to muted if needed
+            video.play().catch(error => {
+                console.log('Autoplay with sound blocked, trying muted:', error);
+                video.muted = true;
+                video.play().catch(e => console.log('Autoplay even muted failed:', e));
+            });
         } else if (media.images && media.images.length > 0) {
             const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
             const img = document.createElement('img');
@@ -1209,6 +1319,16 @@ function showPropertyInfo(spaceData) {
     
     console.log('Removing hidden class from modal');
     modal.classList.remove('hidden');
+}
+
+// Cleanup property video when modal closes
+function cleanupPropertyVideo() {
+    if (currentPropertyVideo) {
+        currentPropertyVideo.pause();
+        currentPropertyVideo.src = '';
+        currentPropertyVideo.load();
+        currentPropertyVideo = null;
+    }
 }
 
 // Update players list
@@ -2198,6 +2318,9 @@ document.querySelectorAll('.modal-close').forEach(closeBtn => {
             activePropertyDecision = null;
             waitingForBuyResult = false;
         }
+        if (modal === propertyModal) {
+            cleanupPropertyVideo();
+        }
         modal.classList.add('hidden');
     });
 });
@@ -2211,6 +2334,9 @@ document.querySelectorAll('.modal').forEach(modal => {
                 clearPropertyDecisionTimer();
                 activePropertyDecision = null;
                 waitingForBuyResult = false;
+            }
+            if (modal === propertyModal) {
+                cleanupPropertyVideo();
             }
             modal.classList.add('hidden');
         }
@@ -2248,26 +2374,24 @@ cardOkBtn.addEventListener('click', () => {
             const deltaY = e.clientY - lastMouseY;
 
             if (e.shiftKey) {
-                // Pan camera (move target)
-                const polar = (cameraPolarDeg * Math.PI) / 180;
-                const azimuth = (cameraAzimuthDeg * Math.PI) / 180;
-
-                // Calculate pan direction based on camera orientation
+                e.preventDefault();
+                // Pan camera (move target) - pure screen-space left/right and up/down
                 const panSpeed = 0.02 * cameraDistance;
+                
+                // Get camera's right vector for horizontal panning
+                const azimuth = (cameraAzimuthDeg * Math.PI) / 180;
                 const right = new THREE.Vector3(
                     Math.cos(azimuth),
                     0,
                     -Math.sin(azimuth)
                 );
-                const forward = new THREE.Vector3(
-                    -Math.sin(azimuth) * Math.cos(polar),
-                    Math.sin(polar),
-                    -Math.cos(azimuth) * Math.cos(polar)
-                );
-
-                cameraTargetX -= (right.x * deltaX + forward.x * deltaY) * panSpeed;
-                cameraTargetY += deltaY * panSpeed * 0.5;
-                cameraTargetZ -= (right.z * deltaX + forward.z * deltaY) * panSpeed;
+                
+                // Horizontal: move along camera's right vector (left/right on screen)
+                cameraTargetX -= right.x * deltaX * panSpeed;
+                cameraTargetZ -= right.z * deltaX * panSpeed;
+                
+                // Vertical: move along world Y axis (true up/down on screen)
+                cameraTargetY += deltaY * panSpeed;
             } else {
                 // Orbit around target
                 cameraAzimuthDeg += deltaX * 0.5;
@@ -2287,6 +2411,10 @@ cardOkBtn.addEventListener('click', () => {
         });
 
         boardContainer.addEventListener('wheel', (e) => {
+            if (e.shiftKey) {
+                e.preventDefault();
+                return;
+            }
             e.preventDefault();
             const delta = e.deltaY > 0 ? 1.2 : -1.2;
             cameraDistance = Math.max(CAMERA_DISTANCE_MIN, Math.min(CAMERA_DISTANCE_MAX, cameraDistance + delta));
@@ -2607,6 +2735,60 @@ function createPremiumBoardTile(spaceData, row, col) {
     );
     group.add(edgeLines);
 
+    // Add Ferris Wheel model for County Fair (position 24)
+    if (spaceData.position === 24 && spaceData.name === 'County Fair') {
+        const loader = new THREE.GLTFLoader();
+        loader.load('/Models/Ferris Wheel/scene.gltf',
+            function(gltf) {
+                const ferrisWheel = gltf.scene;
+                const scale = tileSize * 0.06;
+                ferrisWheel.scale.set(scale, scale, scale);
+                ferrisWheel.position.y = tileHeight / 2 + 0.05;
+                ferrisWheel.userData.isFerrisWheel = true;
+                ferrisWheel.userData.lastUpdate = 0;
+                
+                // Optimize model for performance
+                ferrisWheel.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = false;
+                        child.receiveShadow = false;
+                        if (child.material) {
+                            child.material.flatShading = true;
+                            // Disable expensive material features
+                            child.material.needsUpdate = true;
+                            if (child.material.map) {
+                                child.material.map.anisotropy = 1;
+                            }
+                        }
+                    }
+                });
+                
+                // Setup animation mixer if model has animations
+                if (gltf.animations && gltf.animations.length > 0) {
+                    const mixer = new THREE.AnimationMixer(ferrisWheel);
+                    ferrisWheel.mixer = mixer;
+                    ferrisWheel.animations = gltf.animations;
+                    
+                    // Play the animation with reduced time scale for performance
+                    const action = mixer.clipAction(gltf.animations[0]);
+                    action.timeScale = 0.3;
+                    action.play();
+                }
+                
+                group.add(ferrisWheel);
+            },
+            function(xhr) {
+                if (xhr.lengthComputable) {
+                    const percentComplete = xhr.loaded / xhr.total * 100;
+                    console.log(`Loading Ferris Wheel: ${percentComplete.toFixed(2)}%`);
+                }
+            },
+            function(error) {
+                console.error('Error loading Ferris Wheel model:', error);
+            }
+        );
+    }
+
     return group;
 }
 
@@ -2623,10 +2805,12 @@ function createCenterCarousel(parentGroup) {
     centerCarouselGroup = new THREE.Group();
     carouselImages = [];
     
-    // Collect all images from tileMedia
+    // Collect all images from tileMedia (exclude FREE PARKING)
     const allImages = [];
     if (typeof tileMedia !== 'undefined') {
-        Object.values(tileMedia).forEach(media => {
+        Object.entries(tileMedia).forEach(([position, media]) => {
+            // Skip FREE PARKING (position 20) from carousel
+            if (position === '20') return;
             if (media.images && media.images.length > 0) {
                 media.images.forEach(img => allImages.push(img));
             }
@@ -2786,10 +2970,29 @@ function animate3DScene() {
     
     update3DTokenPositions();
     animateCenterCarousel();
+    animateFerrisWheels();
     
     if (renderer && scene && camera) {
         renderer.render(scene, camera);
     }
+}
+
+// Animate all Ferris wheels on the board
+function animateFerrisWheels() {
+    const now = Date.now();
+    Object.values(boardMeshes).forEach(tile => {
+        if (tile && tile.children) {
+            tile.children.forEach(child => {
+                if (child.userData && child.userData.isFerrisWheel && child.mixer) {
+                    // Skip frames to reduce CPU load - update every 3rd frame (~50ms)
+                    if (!child.userData.lastUpdate || now - child.userData.lastUpdate > 50) {
+                        child.mixer.update(0.05);
+                        child.userData.lastUpdate = now;
+                    }
+                }
+            });
+        }
+    });
 }
 
 // Initialize the game
@@ -2804,5 +3007,283 @@ function animate3DScene() {
             console.error('3D scene initialization failed:', error);
         }
     });
+
+// Video Chat Variables
+let peer = null;
+let conn = null;
+let localStream = null;
+let remoteStream = null;
+let videoCall = null;
+let isCallActive = false;
+let myPeerId = null;
+let opponentPeerId = null;
+
+// Initialize PeerJS
+function initializePeerJS() {
+    if (peer) return;
+
+    // Create a new PeerJS instance with a random ID
+    peer = new Peer(null, {
+        debug: 2
+    });
+
+    peer.on('open', (id) => {
+        console.log('PeerJS connected with ID:', id);
+        myPeerId = id;
+        updateConnectionStatus('Ready to call');
+        // Share peer ID with other players via socket
+        socket.emit('peerIdShare', {
+            gameId: currentGameId,
+            playerId: myPlayerId,
+            peerId: id
+        });
+    });
+
+    peer.on('call', (call) => {
+        console.log('Incoming call from:', call.peer);
+        // Answer with local stream if available
+        if (localStream) {
+            console.log('Answering with existing stream');
+            call.answer(localStream);
+        } else {
+            // Get stream first then answer
+            console.log('Getting stream to answer call');
+            navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user' },
+                audio: true
+            }).then(stream => {
+                localStream = stream;
+                const localVideo = document.getElementById('localVideo');
+                localVideo.srcObject = localStream;
+                call.answer(stream);
+            }).catch(err => {
+                console.error('Error getting media for incoming call:', err);
+            });
+        }
+        videoCall = call;
+        handleCall(call);
+    });
+
+    peer.on('error', (err) => {
+        console.error('PeerJS error:', err);
+        updateConnectionStatus('Error: ' + err.type);
+    });
+}
+
+// Start video call
+async function startVideoCall() {
+    console.log('startVideoCall called');
+    // Wait for peer to be ready
+    if (!peer || !myPeerId) {
+        updateConnectionStatus('Connecting to peer server...');
+        if (!peer) {
+            console.log('Initializing PeerJS...');
+            initializePeerJS();
+        }
+        // Wait a bit for peer to connect
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    if (!myPeerId) {
+        console.log('Error: Peer not ready - myPeerId is null');
+        updateConnectionStatus('Error: Peer not ready');
+        return;
+    }
+
+    console.log('Peer ready, myPeerId:', myPeerId);
+
+    try {
+        // Get local media stream
+        console.log('Getting user media...');
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: true
+        });
+
+        // Display local video
+        const localVideo = document.getElementById('localVideo');
+        localVideo.srcObject = localStream;
+
+        updateConnectionStatus('Calling...');
+
+        // Send call request to other player with our peer ID
+        console.log('Sending video call request with peerId:', myPeerId, 'gameId:', currentGameId, 'playerId:', myPlayerId);
+        socket.emit('videoCallRequest', {
+            gameId: currentGameId,
+            playerId: myPlayerId,
+            peerId: myPeerId
+        });
+        console.log('videoCallRequest emitted');
+
+        document.getElementById('startVideoCall').style.display = 'none';
+        document.getElementById('endVideoCall').style.display = 'block';
+        isCallActive = true;
+
+    } catch (err) {
+        console.error('Error getting media stream:', err);
+        updateConnectionStatus('Error: Camera access denied');
+    }
+}
+
+// Handle incoming video call
+function handleCall(call) {
+    call.on('stream', (stream) => {
+        console.log('Received remote stream');
+        remoteStream = stream;
+        const remoteVideo = document.getElementById('remoteVideo');
+        remoteVideo.srcObject = stream;
+        updateConnectionStatus('Connected');
+    });
+
+    call.on('close', () => {
+        console.log('Call ended');
+        endVideoCall();
+    });
+
+    call.on('error', (err) => {
+        console.error('Call error:', err);
+        updateConnectionStatus('Call error');
+    });
+}
+
+// End video call
+function endVideoCall() {
+    if (videoCall) {
+        videoCall.close();
+        videoCall = null;
+    }
+
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    localVideo.srcObject = null;
+    remoteVideo.srcObject = null;
+
+    document.getElementById('startVideoCall').style.display = 'block';
+    document.getElementById('endVideoCall').style.display = 'none';
+    updateConnectionStatus('Not connected');
+    isCallActive = false;
+
+    // Notify other player
+    socket.emit('videoCallEnd', {
+        gameId: currentGameId,
+        playerId: myPlayerId
+    });
+}
+
+// Update connection status display
+function updateConnectionStatus(status) {
+    const statusEl = document.getElementById('connectionStatus');
+    if (statusEl) {
+        statusEl.textContent = status;
+    }
+}
+
+// Video chat UI event listeners
+function setupVideoChatUI() {
+    console.log('setupVideoChatUI called');
+    const startVideoCallBtn = document.getElementById('startVideoCall');
+    const endVideoCallBtn = document.getElementById('endVideoCall');
+
+    console.log('startVideoCallBtn:', startVideoCallBtn, 'endVideoCallBtn:', endVideoCallBtn);
+
+    // Initialize PeerJS on load
+    if (!peer) {
+        console.log('Initializing PeerJS from setupVideoChatUI');
+        initializePeerJS();
+    }
+
+    if (startVideoCallBtn) {
+        startVideoCallBtn.addEventListener('click', startVideoCall);
+        console.log('Added click listener to startVideoCallBtn');
+    } else {
+        console.log('startVideoCallBtn not found');
+    }
+
+    if (endVideoCallBtn) {
+        endVideoCallBtn.addEventListener('click', endVideoCall);
+    }
+
+    console.log('Setting up socket event listeners for video call');
+}
+
+// Set up socket event listeners globally (not inside setupVideoChatUI)
+socket.on('videoCallRequest', async (data) => {
+    console.log('=== CLIENT: Received videoCallRequest event ===', data);
+    console.log('myPlayerId:', myPlayerId, 'isCallActive:', isCallActive);
+    if (data.playerId !== myPlayerId && !isCallActive) {
+        console.log('CLIENT: Processing call request from:', data.playerId);
+        // Store caller's peer ID
+        opponentPeerId = data.peerId;
+        
+        // Get our stream and call them back
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user' },
+                audio: true
+            });
+
+            const localVideo = document.getElementById('localVideo');
+            localVideo.srcObject = localStream;
+
+            updateConnectionStatus('Connecting...');
+
+            // Call the caller back
+            if (peer && opponentPeerId) {
+                console.log('Calling back:', opponentPeerId);
+                const call = peer.call(opponentPeerId, localStream);
+                videoCall = call;
+                handleCall(call);
+            } else {
+                console.error('Cannot call back - peer or opponentPeerId missing', { peer: !!peer, opponentPeerId });
+            }
+
+            document.getElementById('startVideoCall').style.display = 'none';
+            document.getElementById('endVideoCall').style.display = 'block';
+            isCallActive = true;
+        } catch (err) {
+            console.error('Error getting media for incoming call:', err);
+            updateConnectionStatus('Error: Camera access denied');
+        }
+    } else {
+        console.log('CLIENT: Ignoring call request - from self or already active');
+    }
+});
+
+socket.on('videoCallEnd', (data) => {
+    console.log('Video call ended by:', data.playerId);
+    if (data.playerId !== myPlayerId) {
+        endVideoCall();
+    }
+});
+
+socket.on('peerIdShare', (data) => {
+    console.log('Received peer ID from:', data.playerId, 'peer:', data.peerId);
+    if (data.playerId !== myPlayerId) {
+        opponentPeerId = data.peerId;
+    }
+});
+
+socket.on('requestPeerId', (data) => {
+    console.log('Peer ID requested by:', data.playerId);
+    if (data.playerId !== myPlayerId && myPeerId) {
+        socket.emit('peerIdShare', {
+            gameId: currentGameId,
+            playerId: myPlayerId,
+            peerId: myPeerId
+        });
+    }
+});
+
+// Setup video chat UI when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupVideoChatUI);
+} else {
+    setupVideoChatUI();
+}
     updateUI();
 });

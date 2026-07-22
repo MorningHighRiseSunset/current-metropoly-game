@@ -360,7 +360,7 @@ startGameBtn.addEventListener('click', () => {
     setTimeout(() => {
         console.log('LOBBY: Redirecting to game page...');
         window.location.href = `/game/${currentGameId}`;
-    }, 500);
+    }, 50);
 });
 
 // Add AI player
@@ -518,7 +518,7 @@ socket.on('gameStarted', (data) => {
         console.log('LOBBY: Non-host player redirecting to game page...');
         setTimeout(() => {
             window.location.href = `/game/${currentGameId}`;
-        }, 500);
+        }, 50);
     } else {
         console.log('LOBBY: Host already redirected, ignoring gameStarted in lobby');
     }
