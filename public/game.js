@@ -2131,6 +2131,9 @@ socket.on('doublesRolled', (data) => {
         if (player.id === myPlayerId) {
             updateUI();
         }
+        
+        // Show visual notification for doubles
+        showDoublesNotification(player.name);
     }
 });
 
@@ -2160,6 +2163,74 @@ function showCardModal(cardType, message, action) {
         </div>
     `;
     cardModal.classList.remove('hidden');
+}
+
+// Show doubles notification
+function showDoublesNotification(playerName) {
+    const notification = document.createElement('div');
+    notification.className = 'doubles-notification';
+    notification.innerHTML = `
+        <div class="doubles-content">
+            <div class="doubles-icon">🎲🎲</div>
+            <div class="doubles-text">${playerName} rolled DOUBLES!</div>
+            <div class="doubles-subtext">Roll again!</div>
+        </div>
+    `;
+    notification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 50px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        z-index: 10000;
+        animation: doublesPopup 2s ease-out forwards;
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+    `;
+    
+    // Add animation keyframes if not already present
+    if (!document.getElementById('doubles-animation')) {
+        const style = document.createElement('style');
+        style.id = 'doubles-animation';
+        style.textContent = `
+            @keyframes doublesPopup {
+                0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+                40% { transform: translate(-50%, -50%) scale(1); }
+                80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            }
+            .doubles-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            .doubles-icon {
+                font-size: 48px;
+            }
+            .doubles-text {
+                font-size: 24px;
+                font-weight: bold;
+            }
+            .doubles-subtext {
+                font-size: 18px;
+                opacity: 0.9;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after animation
+    setTimeout(() => {
+        notification.remove();
+    }, 2000);
 }
 
 socket.on('chatMessage', (data) => {
