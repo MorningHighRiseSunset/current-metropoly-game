@@ -1,7 +1,7 @@
 // Configuration for CDN paths
-// Set USE_CDN to true after uploading models to Cloudflare R2 or similar
-const USE_CDN = false;
-const CDN_BASE_URL = 'https://your-r2-bucket.r2.dev/Models'; // Replace with your actual R2 public URL
+// Models served from Cloudflare R2
+const USE_CDN = true;
+const CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev';
 
 module.exports = {
   USE_CDN,
