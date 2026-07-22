@@ -49,6 +49,7 @@ function getModelPath(localPath) {
     const CDN_BASE_URL = window.CDN_BASE_URL || '';
     
     if (USE_CDN && CDN_BASE_URL) {
+        // CDN_BASE_URL already includes /Models, so just replace the leading /Models
         return localPath.replace('/Models', CDN_BASE_URL);
     }
     return localPath;
