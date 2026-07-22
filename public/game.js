@@ -1241,6 +1241,9 @@ function updateTokens() {
     }, 10);
 }
 
+// Cache for loaded media to prevent re-loading
+const mediaCache = {};
+
 // Show property information
 function showPropertyInfo(spaceData) {
     console.log('showPropertyInfo called for:', spaceData.name, 'position:', spaceData.position);
@@ -1261,44 +1264,83 @@ function showPropertyInfo(spaceData) {
     // Clear previous media
     mediaContainer.innerHTML = '';
     
+    // Show loading indicator
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.textContent = 'Loading...';
+    loadingIndicator.style.textAlign = 'center';
+    loadingIndicator.style.padding = '20px';
+    mediaContainer.appendChild(loadingIndicator);
+    
     // Load media from tileMedia if available
     if (tileMedia && tileMedia[spaceData.position]) {
         const media = tileMedia[spaceData.position];
+        const cacheKey = `${spaceData.position}_${media.name}`;
         
-        // Prefer video if available
-        if (media.videos && media.videos.length > 0) {
-            const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
-            const video = document.createElement('video');
-            video.src = randomVideo;
-            video.autoplay = true;
-            video.muted = false;
-            video.loop = true;
-            video.playsInline = true;
-            video.controls = true;
-            video.style.width = '100%';
-            video.style.maxHeight = '250px';
-            video.style.objectFit = 'cover';
-            video.style.borderRadius = '8px';
-            mediaContainer.appendChild(video);
-            currentPropertyVideo = video;
-            
-            // Handle autoplay restrictions - try to play with sound, fall back to muted if needed
-            video.play().catch(error => {
-                console.log('Autoplay with sound blocked, trying muted:', error);
-                video.muted = true;
-                video.play().catch(e => console.log('Autoplay even muted failed:', e));
-            });
-        } else if (media.images && media.images.length > 0) {
-            const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
-            const img = document.createElement('img');
-            img.src = randomImage;
-            img.alt = media.name;
-            img.style.width = '100%';
-            img.style.maxHeight = '250px';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '8px';
-            mediaContainer.appendChild(img);
+        // Check cache first
+        if (mediaCache[cacheKey]) {
+            mediaContainer.innerHTML = '';
+            mediaContainer.appendChild(mediaCache[cacheKey].cloneNode(true));
+            if (mediaCache[cacheKey].tagName === 'VIDEO') {
+                const video = mediaContainer.querySelector('video');
+                currentPropertyVideo = video;
+                video.play().catch(e => console.log('Autoplay failed:', e));
+            }
+        } else {
+            // Prefer video if available
+            if (media.videos && media.videos.length > 0) {
+                const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
+                const video = document.createElement('video');
+                video.src = randomVideo;
+                video.autoplay = true;
+                video.muted = false;
+                video.loop = true;
+                video.playsInline = true;
+                video.controls = true;
+                video.style.width = '100%';
+                video.style.maxHeight = '250px';
+                video.style.objectFit = 'cover';
+                video.style.borderRadius = '8px';
+                video.preload = 'metadata';
+                
+                video.addEventListener('loadeddata', () => {
+                    mediaContainer.innerHTML = '';
+                    mediaContainer.appendChild(video);
+                    mediaCache[cacheKey] = video.cloneNode(true);
+                    currentPropertyVideo = video;
+                    video.play().catch(e => console.log('Autoplay failed:', e));
+                });
+                
+                video.addEventListener('error', () => {
+                    mediaContainer.innerHTML = '';
+                    loadingIndicator.textContent = 'Media unavailable';
+                });
+            } else if (media.images && media.images.length > 0) {
+                const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+                const img = document.createElement('img');
+                img.src = randomImage;
+                img.alt = media.name;
+                img.style.width = '100%';
+                img.style.maxHeight = '250px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.loading = 'lazy';
+                
+                img.addEventListener('load', () => {
+                    mediaContainer.innerHTML = '';
+                    mediaContainer.appendChild(img);
+                    mediaCache[cacheKey] = img.cloneNode(true);
+                });
+                
+                img.addEventListener('error', () => {
+                    mediaContainer.innerHTML = '';
+                    loadingIndicator.textContent = 'Image unavailable';
+                });
+            } else {
+                mediaContainer.innerHTML = '';
+            }
         }
+    } else {
+        mediaContainer.innerHTML = '';
     }
     
     let html = `<p><strong>Position:</strong> ${spaceData.position}</p>`;
