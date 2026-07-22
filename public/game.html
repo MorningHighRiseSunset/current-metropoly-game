@@ -19,6 +19,11 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="/dice-glb-config.js"></script>
+    <script>
+        // CDN Configuration - Set USE_CDN to true after uploading models to Cloudflare R2
+        window.USE_CDN = false;
+        window.CDN_BASE_URL = 'https://your-r2-bucket.r2.dev/Models'; // Replace with your actual R2 public URL
+    </script>
 </head>
 <body>
     <div class="game-container">

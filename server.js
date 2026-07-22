@@ -128,7 +128,15 @@ function getColorGroups() {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/Videos', express.static(path.join(__dirname, 'Videos')));
-app.use('/Models', express.static(path.join(__dirname, 'Models')));
+
+// Serve Models from CDN if configured, otherwise from local directory
+if (process.env.USE_CDN === 'true' && process.env.CDN_BASE_URL) {
+    // Models served from CDN - no local static serving needed
+    console.log('Models will be served from CDN:', process.env.CDN_BASE_URL);
+} else {
+    app.use('/Models', express.static(path.join(__dirname, 'Models')));
+}
+
 app.use('/tokenimages', express.static(path.join(__dirname, 'tokenimages')));
 
 // Game state storage

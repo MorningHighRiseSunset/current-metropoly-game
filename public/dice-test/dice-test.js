@@ -125,6 +125,13 @@
 
     function getDiceModelUrls() {
         const urls = [];
+        const USE_CDN = window.USE_CDN || false;
+        const CDN_BASE_URL = window.CDN_BASE_URL || '';
+        
+        if (USE_CDN && CDN_BASE_URL) {
+            urls.push(`${CDN_BASE_URL}/Dice/dice.glb`);
+        }
+        
         try {
             urls.push(new URL('../../Models/Dice/dice.glb', window.location.href).href);
             urls.push(new URL('../Models/Dice/dice.glb', window.location.href).href);

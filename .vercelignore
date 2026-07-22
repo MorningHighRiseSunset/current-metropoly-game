@@ -1,7 +1,6 @@
 # Exclude large media directories from Vercel deployment
-# Videos/ - Excluded (too large, optional content)
-# Images/ - Included (needed for game)
-# Models/ - Included (needed for game)
+Videos/
+Models/
 node_modules/
 .git/
 

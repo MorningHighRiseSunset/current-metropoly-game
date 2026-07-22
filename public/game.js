@@ -33,15 +33,26 @@ let waitingForBuyResult = false;
 
 // Token data
 const tokenData = [
-    { name: 'Burger', model: '/Models/Cheeseburger/cheeseburger.glb', image: '/images/Burger.png', scale: 0.42 },
-    { name: 'Football', model: '/Models/Football/football.glb', image: '/images/football.png', scale: 0.25 },
-    { name: 'Helicopter', model: '/Models/Helicopter/helicopter.glb', image: '/images/helicopter.png', scale: 0.002 },
-    { name: 'Rolls Royce', model: '/Models/RollsRoyce/rollsRoyceCarAnim.glb', image: '/images/rolls royce.png', scale: 0.14, facingOffset: Math.PI / 2 },
-    { name: 'Shoe', model: '/Models/Shoe/shoe.glb', image: '/images/Shoe.png', scale: 0.25 },
-    { name: 'Top Hat', model: '/Models/TopHat/tophat.glb', image: '/images/top hat.png', scale: 0.22 },
-    { name: 'White Girl', model: '/Models/WhiteGirlIdle/Standing Idle.fbx', walkModel: '/Models/WhiteGirlWalk/Walking.fbx', image: '/images/female model.png', scale: 0.06 },
-    { name: 'Coffee Cup', model: '/Models/CoffeeCup/coffee.gltf', image: '/tokenimages/coffee%20image.png', scale: 0.25 }
+    { name: 'Burger', model: getModelPath('/Models/Cheeseburger/cheeseburger.glb'), image: '/images/Burger.png', scale: 0.42 },
+    { name: 'Football', model: getModelPath('/Models/Football/football.glb'), image: '/images/football.png', scale: 0.25 },
+    { name: 'Helicopter', model: getModelPath('/Models/Helicopter/helicopter.glb'), image: '/images/helicopter.png', scale: 0.002 },
+    { name: 'Rolls Royce', model: getModelPath('/Models/RollsRoyce/rollsRoyceCarAnim.glb'), image: '/images/rolls royce.png', scale: 0.14, facingOffset: Math.PI / 2 },
+    { name: 'Shoe', model: getModelPath('/Models/Shoe/shoe.glb'), image: '/images/Shoe.png', scale: 0.25 },
+    { name: 'Top Hat', model: getModelPath('/Models/TopHat/tophat.glb'), image: '/images/top hat.png', scale: 0.22 },
+    { name: 'White Girl', model: getModelPath('/Models/WhiteGirlIdle/Standing Idle.fbx'), walkModel: getModelPath('/Models/WhiteGirlWalk/Walking.fbx'), image: '/images/female model.png', scale: 0.06 },
+    { name: 'Coffee Cup', model: getModelPath('/Models/CoffeeCup/coffee.gltf'), image: '/tokenimages/coffee%20image.png', scale: 0.25 }
 ];
+
+// Helper function to get model path (supports CDN)
+function getModelPath(localPath) {
+    const USE_CDN = window.USE_CDN || false;
+    const CDN_BASE_URL = window.CDN_BASE_URL || '';
+    
+    if (USE_CDN && CDN_BASE_URL) {
+        return localPath.replace('/Models', CDN_BASE_URL);
+    }
+    return localPath;
+}
 
 // Initialize 3D dice scene
 function initializeDiceScene() {
@@ -2738,7 +2749,7 @@ function createPremiumBoardTile(spaceData, row, col) {
     // Add Ferris Wheel model for County Fair (position 24)
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
         const loader = new THREE.GLTFLoader();
-        loader.load('/Models/Ferris Wheel/scene.gltf',
+        loader.load(getModelPath('/Models/Ferris Wheel/scene.gltf'),
             function(gltf) {
                 const ferrisWheel = gltf.scene;
                 const scale = tileSize * 0.06;
