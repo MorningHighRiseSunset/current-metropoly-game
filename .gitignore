@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Media files (too large for deployment)
+Videos/
+Images/
+Models/
+
+# Logs
+*.log
+error-logs.txt
+
+# Notes
+Notes
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/

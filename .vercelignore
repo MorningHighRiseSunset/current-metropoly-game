@@ -1,0 +1,11 @@
+# Exclude large media directories from Vercel deployment
+Videos/
+Images/
+Models/
+node_modules/
+.git/
+
+# Exclude other unnecessary files
+*.log
+error-logs.txt
+Notes
