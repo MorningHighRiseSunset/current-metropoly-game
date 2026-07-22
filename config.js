@@ -1,7 +1,8 @@
 // Configuration for CDN paths
 // Models served from Cloudflare R2
+// Note: Custom domain needed for HTTPS support
 const USE_CDN = true;
-const CDN_BASE_URL = 'http://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models';
+const CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models';
 
 module.exports = {
   USE_CDN,
