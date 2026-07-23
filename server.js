@@ -127,7 +127,13 @@ function getColorGroups() {
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'Images')));
-app.use('/Videos', express.static(path.join(__dirname, 'Videos')));
+// Serve Videos from CDN if configured, otherwise from local directory
+if (process.env.USE_VIDEO_CDN === 'true' && process.env.VIDEO_CDN_BASE_URL) {
+    // Videos served from CDN - no local static serving needed
+    console.log('Videos will be served from CDN:', process.env.VIDEO_CDN_BASE_URL);
+} else {
+    app.use('/Videos', express.static(path.join(__dirname, 'Videos')));
+}
 
 // Serve Models from CDN if configured, otherwise from local directory
 if (process.env.USE_CDN === 'true' && process.env.CDN_BASE_URL) {

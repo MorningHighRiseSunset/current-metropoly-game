@@ -14,7 +14,6 @@ Notes
 
 # Environment variables
 .env
-.env.local
 
 # IDE
 .vscode/
@@ -26,3 +25,6 @@ Thumbs.db
 
 # Git
 .git/
+
+.vercel
+.env*.local
