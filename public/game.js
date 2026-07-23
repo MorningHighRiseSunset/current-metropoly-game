@@ -2440,7 +2440,7 @@ function showDoublesNotification(playerName) {
 }
 
 socket.on('chatMessage', (data) => {
-    addChatMessage(data.playerName, data.message);
+    addChatMessage(data.sender, data.message);
 });
 
 socket.on('gameOver', (data) => {
