@@ -1061,6 +1061,13 @@ io.on('connection', (socket) => {
             return;
         }
         
+        // Check if token is already taken by another player
+        const takenTokens = humanPlayers.filter(p => p.tokenIndex !== undefined).map(p => p.tokenIndex);
+        if (takenTokens.includes(tokenIndex)) {
+            socket.emit('gameError', 'This token is already taken');
+            return;
+        }
+        
         // Set player's token
         player.tokenIndex = tokenIndex;
         
@@ -2420,6 +2427,26 @@ io.on('connection', (socket) => {
 
         cancelScheduledTurnEnd(game, socket.id);
         advanceTurn(game);
+    });
+
+    // Casino winnings
+    socket.on('casinoWinnings', (data) => {
+        const playerData = players[socket.id];
+        if (!playerData) return;
+
+        const game = games[playerData.gameId];
+        if (!game) return;
+
+        const player = game.players.find(p => p && p.id === socket.id);
+        if (!player) return;
+
+        const winnings = data.amount || 0;
+        player.money += winnings;
+
+        io.to(game.id).emit('playerMoneyUpdate', {
+            playerId: player.id,
+            money: player.money
+        });
     });
 
     // Video call signaling

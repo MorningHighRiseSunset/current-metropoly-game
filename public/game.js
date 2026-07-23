@@ -698,18 +698,9 @@ function handlePlayerLanding(playerId, newPosition) {
         if (spaceData) {
             console.log('Starting property decision for:', spaceData.name);
             startPropertyDecision(spaceData, newPosition);
-        } else {
-            // If not a purchasable property, show property info modal (but not for Chance/Community Chest - those use card modal)
-            if (boardConfig[newPosition]) {
-                const spaceData = boardConfig[newPosition];
-                console.log('Space data:', spaceData);
-                // Don't show property modal for Chance/Community Chest - they use card modal
-                if (spaceData.type !== 'chance' && spaceData.type !== 'community-chest') {
-                    console.log('Calling showPropertyInfo for:', spaceData.name);
-                    showPropertyInfo(spaceData);
-                }
-            }
         }
+        // For owned properties, rent payment is handled by the server - do nothing here
+        // Property info modal should only be shown when user manually clicks on a tile
     }
 }
 
@@ -853,6 +844,19 @@ function openCasinoGame(gameName) {
     if (buyModal) {
         buyModal.classList.add('hidden');
     }
+    
+    // Listen for messages from the casino game iframe
+    window.addEventListener('message', handleCasinoGameMessage);
+}
+
+// Handle messages from casino game iframe
+function handleCasinoGameMessage(event) {
+    if (event.data && event.data.type === 'casinoWinnings') {
+        const winnings = event.data.amount || 0;
+        if (winnings !== 0 && socket) {
+            socket.emit('casinoWinnings', { amount: winnings });
+        }
+    }
 }
 
 // Close casino game modal
@@ -867,6 +871,9 @@ function closeCasinoGame() {
     if (casinoContainer) {
         casinoContainer.innerHTML = '';
     }
+    
+    // Remove message listener
+    window.removeEventListener('message', handleCasinoGameMessage);
     
     // Auto-end turn after closing casino game
     if (activePropertyDecision && activePropertyDecision.spaceData.isCasino) {
@@ -2120,6 +2127,15 @@ socket.on('rentPaid', (data) => {
         owner.money = data.newOwnerMoney;
         updateUI();
         addLogEntry(`${payer.name} paid $${data.amount} rent to ${owner.name} for ${data.property.name}`, 'system');
+    }
+});
+
+// Handle casino winnings
+socket.on('playerMoneyUpdate', (data) => {
+    const player = players.find(p => p && p.id === data.playerId);
+    if (player) {
+        player.money = data.money;
+        updateUI();
     }
 });
 

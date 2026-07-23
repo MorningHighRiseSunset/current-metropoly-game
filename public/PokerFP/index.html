@@ -1,0 +1,42 @@
+
+<div class="poker-container">
+	<h1>Texas Hold'em Poker</h1>
+	<div class="table-area">
+		<div class="ai-area">
+			<div class="ai-label">AI</div>
+			<div class="ai-cards cards">
+				<div class="card back"></div>
+				<div class="card back"></div>
+			</div>
+			<div class="ai-chips">Chips: <span id="ai-chips">1000</span></div>
+		</div>
+		<div class="community-area">
+			<div class="community-cards cards">
+				<div class="card" id="comm-card-1"></div>
+				<div class="card" id="comm-card-2"></div>
+				<div class="card" id="comm-card-3"></div>
+				<div class="card" id="comm-card-4"></div>
+				<div class="card" id="comm-card-5"></div>
+			</div>
+			<div class="pot">Pot: <span id="pot">0</span></div>
+		</div>
+		<div class="player-area">
+			<div class="player-label">You</div>
+			<div class="player-cards cards">
+				<div class="card" id="player-card-1"></div>
+				<div class="card" id="player-card-2"></div>
+			</div>
+			<div class="player-chips">Chips: <span id="player-chips">1000</span></div>
+		</div>
+	</div>
+	<div class="controls">
+		<button id="btn-fold">Fold</button>
+		<button id="btn-check">Check</button>
+		<button id="btn-call">Call</button>
+		<button id="btn-bet">Bet</button>
+		<input type="number" id="bet-amount" min="1" value="50" step="1" style="width: 60px;">
+		<button id="btn-newgame">New Game</button>
+	</div>
+	<div class="message" id="message"></div>
+</div>
+<script src="script.js"></script>

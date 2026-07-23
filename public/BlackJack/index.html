@@ -1,0 +1,55 @@
+
+<div id="game-ui">
+  <svg class="table-svg" width="1000" height="700" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg">
+    <!-- Blackjack table image as background -->
+    <image href="images/blackjack-red-yellow-square-box-complete-for-printing-and-website-Classic-Green-343-C.gif" x="0" y="0" width="1000" height="700" />
+    <!-- Yellow betting squares -->
+    <polygon class="bet-square" id="bet0" points="233,274 185,307 213,346 260,313" />
+    <polygon class="bet-square" id="bet1" points="275,331 236,372 270,405 309,363" />
+    <polygon class="bet-square" id="bet2" points="329,376 300,425 341,449 370,400" />
+    <polygon class="bet-square" id="bet3" points="394,411 378,467 423,480 440,425" />
+    <polygon class="bet-square" id="bet4" points="467,427 466,485 514,485 514,427" />
+    <polygon class="bet-square" id="bet5" points="591,411 545,423 559,479 606,467" />
+    <polygon class="bet-square" id="bet6" points="658,377 616,400 644,451 686,428" />
+    <polygon class="bet-square" id="bet7" points="713,330 678,363 718,405 753,372" />
+    <polygon class="bet-square" id="bet8" points="756,273 727,311 772,346 801,309" />
+    <!-- Chips will be animated and placed here -->
+    <g id="chips-layer"></g>
+    <!-- Cards will be animated and placed here -->
+    <g id="cards-layer"></g>
+  </svg>
+  <div id="controls" style="position:absolute;top:0px;left:50%;transform:translateX(-50%);width:auto;min-width:320px;max-width:90%;background:rgba(34,34,34,0.95);padding:12px 24px;display:flex;z-index:99;flex-direction:row;align-items:center;justify-content:center;gap:16px;border-radius:0 0 18px 18px;">
+    <button id="deal-btn">Deal</button>
+    <button id="hit-btn" disabled>Hit</button>
+    <button id="stand-btn" disabled>Stand</button>
+    <button id="instructions-btn">Instructions</button>
+    <span id="balance">Balance: $1000</span>
+  </div>
+  <audio id="chip-sound" src="Sounds/cardSoundOne.mp3" preload="auto"></audio>
+  <audio id="card-sound1" src="Sounds/cardSoundOne.mp3" preload="auto" onerror="this.src='Sounds/flipcard-91468.mp3'"></audio>
+  <audio id="card-sound2" src="Sounds/flipcard-91468.mp3" preload="auto"></audio>
+
+  <!-- Instructions Modal -->
+  <div id="instructions-modal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
+    <div style="background:#222; color:#FFD700; padding:32px 36px; border-radius:18px; max-width:400px; margin:auto; box-shadow:0 4px 32px #000; position:relative;">
+      <h2 style="margin-top:0;">Blackjack Instructions</h2>
+      <h3>Card Points</h3>
+      <ul style="margin-bottom:16px;">
+        <li>Ace (A): 1 or 11 points</li>
+        <li>2-10: Face value</li>
+        <li>Jack (J), Queen (Q), King (K): 10 points</li>
+      </ul>
+      <h3>How to Play</h3>
+      <ul>
+        <li>Place your bet by clicking a yellow square.</li>
+        <li>Click <b>Deal</b> to receive two cards.</li>
+        <li>Click <b>Hit</b> to draw another card, or <b>Stand</b> to keep your hand.</li>
+        <li>If your hand exceeds 21, you bust and lose.</li>
+        <li>Dealer draws until reaching 17 or higher.</li>
+        <li>Closest to 21 without busting wins. Ties are a push.</li>
+      </ul>
+  <button id="close-instructions" style="position:absolute; top:12px; right:18px; background:none; color:#FFD700; border:none; border-radius:50%; width:32px; height:32px; font-size:1.6em; font-weight:bold; cursor:pointer; line-height:1;">&times;</button>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
