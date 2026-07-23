@@ -1457,13 +1457,6 @@ function showPropertyInfo(spaceData) {
     // Clear previous media
     mediaContainer.innerHTML = '';
     
-    // Show loading indicator
-    const loadingIndicator = document.createElement('div');
-    loadingIndicator.textContent = 'Loading...';
-    loadingIndicator.style.textAlign = 'center';
-    loadingIndicator.style.padding = '20px';
-    mediaContainer.appendChild(loadingIndicator);
-    
     // Load media from tileMedia if available
     if (tileMedia && tileMedia[spaceData.position]) {
         const media = tileMedia[spaceData.position];
@@ -1471,11 +1464,11 @@ function showPropertyInfo(spaceData) {
         
         // Check cache first
         if (mediaCache[cacheKey]) {
-            mediaContainer.innerHTML = '';
             mediaContainer.appendChild(mediaCache[cacheKey].cloneNode(true));
             if (mediaCache[cacheKey].tagName === 'VIDEO') {
                 const video = mediaContainer.querySelector('video');
                 currentPropertyVideo = video;
+                video.currentTime = 0; // Reset video to start
                 video.play().catch(e => console.log('Autoplay failed:', e));
             }
         } else {
@@ -1497,7 +1490,6 @@ function showPropertyInfo(spaceData) {
                 video.preload = 'metadata';
                 
                 video.addEventListener('loadeddata', () => {
-                    mediaContainer.innerHTML = '';
                     mediaContainer.appendChild(video);
                     mediaCache[cacheKey] = video.cloneNode(true);
                     currentPropertyVideo = video;
@@ -1573,12 +1565,18 @@ function showPropertyInfo(spaceData) {
 
 // Cleanup property video when modal closes
 function cleanupPropertyVideo() {
-    if (currentPropertyVideo) {
-        currentPropertyVideo.pause();
-        currentPropertyVideo.src = '';
-        currentPropertyVideo.load();
-        currentPropertyVideo = null;
+    // Stop all videos in the media container
+    const mediaContainer = document.getElementById('property-media');
+    if (mediaContainer) {
+        const videos = mediaContainer.querySelectorAll('video');
+        videos.forEach(video => {
+            video.pause();
+            video.src = '';
+            video.load();
+        });
+        mediaContainer.innerHTML = '';
     }
+    currentPropertyVideo = null;
 }
 
 // Update players list
