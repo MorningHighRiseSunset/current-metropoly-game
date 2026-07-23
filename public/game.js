@@ -539,15 +539,15 @@ const boardConfig = [
     { name: 'Electric Company', type: 'utility', price: 180, position: 12 },
     { name: 'Bet MGM', type: 'property', color: '#FF69B4', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 13, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 14, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
-    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 15, address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115' },
+    { name: 'Bellagio', type: 'property', color: '#FFA500', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 15, address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115', isCasino: true, casinoGame: 'PokerFP' },
     { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 16, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (Michelob ULTRA Arena)' },
     { name: 'Community Cards', type: 'community-chest', position: 17 },
     { name: 'Horseback Riding', type: 'property', color: '#FF0000', price: 260, rent: [26, 52, 156, 468, 650, 780], position: 18, address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV' },
     { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 19, address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109 (Resorts World)' },
     { name: 'FREE PARKING', type: 'corner', position: 20 },
-    { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 280, rent: [28, 56, 168, 504, 700, 840], position: 21, address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', price: 280, rent: [28, 56, 168, 504, 700, 840], position: 21, address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'slotMachine' },
     { name: 'Chance', type: 'chance', position: 22 },
-    { name: 'Wynn Las Vegas', type: 'property', color: '#FFFF00', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 23, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'Wynn Las Vegas', type: 'property', color: '#FFFF00', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 23, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'Roulette' },
     { name: 'County Fair', type: 'property', color: '#FFFF00', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 24, address: '1301 W Whipple Ave, Logandale, NV 89021' },
     { name: 'Shriners Children\'s Open', type: 'property', color: '#008000', price: 320, rent: [32, 65, 195, 580, 800, 950], position: 25, address: '' },
     { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 26, address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104 (Little White Wedding Chapel)' },
@@ -555,13 +555,13 @@ const boardConfig = [
     { name: 'Sphere', type: 'property', color: '#008000', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 28, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
     { name: 'Water Works', type: 'utility', price: 200, position: 29 },
     { name: 'GO TO JAIL', type: 'corner', position: 30 },
-    { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 420, rent: [42, 84, 252, 756, 1050, 1260], position: 31, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109' },
-    { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#0000FF', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 32, address: '4949 N Rancho Dr, Las Vegas, NV 89130' },
+    { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 420, rent: [42, 84, 252, 756, 1050, 1260], position: 31, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'BlackJack' },
+    { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#0000FF', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 32, address: '4949 N Rancho Dr, Las Vegas, NV 89130', isCasino: true, casinoGame: 'Craps' },
     { name: 'Luxury Tax', type: 'tax', amount: 100, position: 33 },
     { name: 'Chance', type: 'chance', position: 34 },
     { name: 'House of Blues', type: 'property', color: '#0000FF', price: 300, rent: [30, 60, 180, 540, 750, 900], position: 35, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
-    { name: 'Venetian', type: 'property', color: '#4B0082', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 36, address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109' },
-    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 37, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
+    { name: 'Venetian', type: 'property', color: '#4B0082', price: 400, rent: [40, 80, 240, 720, 1000, 1200], position: 36, address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'Baccarat' },
+    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 350, rent: [35, 70, 210, 630, 875, 1050], position: 37, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'Roulette' },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 250, rent: [25, 50, 100, 200], position: 38, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Speed Vegas Off Roading', type: 'property', color: '#4B0082', price: 275, rent: [28, 55, 165, 495, 700, 850], position: 39, address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054 (SPEEDVEGAS)' }
 ];
@@ -797,9 +797,11 @@ function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
 function updateBuyModalContent() {
     if (!activePropertyDecision) return;
     const buyContent = document.getElementById('buyContent');
+    const playCasinoBtn = document.getElementById('playCasinoBtn');
     if (!buyContent) return;
 
     const canAfford = currentPlayer && currentPlayer.money >= activePropertyDecision.spaceData.price;
+    const isCasino = activePropertyDecision.spaceData.isCasino;
 
     let html = `<p><strong>${activePropertyDecision.spaceData.name}</strong></p>`;
     html += `<p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>`;
@@ -807,6 +809,11 @@ function updateBuyModalContent() {
     html += `<p>${canAfford ? 'Buy this property or click End Turn when you are done.' : 'Not enough money to buy. Click End Turn.'}</p>`;
     
     buyContent.innerHTML = html;
+
+    // Show/hide casino game button based on property type
+    if (playCasinoBtn) {
+        playCasinoBtn.style.display = isCasino ? 'block' : 'none';
+    }
 }
 
 function startPropertyDecision(spaceData, position) {
@@ -824,6 +831,47 @@ function startPropertyDecision(spaceData, position) {
     
     buyModal.classList.remove('hidden');
     updateUI();
+}
+
+// Open casino game modal
+function openCasinoGame(gameName) {
+    const casinoModal = document.getElementById('casinoGameModal');
+    const casinoTitle = document.getElementById('casinoGameTitle');
+    const casinoContainer = document.getElementById('casinoGameContainer');
+    
+    if (!casinoModal || !casinoContainer) return;
+    
+    casinoTitle.textContent = `Play ${gameName}`;
+    
+    // Load casino game in iframe
+    const gamePath = `/${gameName}/index.html`;
+    casinoContainer.innerHTML = `<iframe src="${gamePath}" class="casino-iframe" frameborder="0"></iframe>`;
+    
+    casinoModal.classList.remove('hidden');
+    
+    // Hide buy modal
+    if (buyModal) {
+        buyModal.classList.add('hidden');
+    }
+}
+
+// Close casino game modal
+function closeCasinoGame() {
+    const casinoModal = document.getElementById('casinoGameModal');
+    const casinoContainer = document.getElementById('casinoGameContainer');
+    
+    if (casinoModal) {
+        casinoModal.classList.add('hidden');
+    }
+    
+    if (casinoContainer) {
+        casinoContainer.innerHTML = '';
+    }
+    
+    // Auto-end turn after closing casino game
+    if (activePropertyDecision && activePropertyDecision.spaceData.isCasino) {
+        endTurnNow();
+    }
 }
 
 function lerpCoords(from, to, t) {
@@ -2363,17 +2411,30 @@ function showTokenSelection() {
 
 const confirmBuyBtn = document.getElementById('confirmBuyBtn');
 const cancelBuyBtn = document.getElementById('cancelBuyBtn');
+const playCasinoBtn = document.getElementById('playCasinoBtn');
+const closeCasinoBtn = document.getElementById('closeCasinoBtn');
+
 if (confirmBuyBtn) {
     confirmBuyBtn.addEventListener('click', () => {
         if (!activePropertyDecision) return;
         const { position, spaceData } = activePropertyDecision;
         const canAfford = currentPlayer && currentPlayer.money >= spaceData.price;
+        const isCasino = spaceData.isCasino;
         clearPropertyDecisionTimer();
         buyModal.classList.add('hidden');
 
         if (canAfford) {
             waitingForBuyResult = true;
             socket.emit('buyProperty', { position });
+            
+            // Auto-end turn for non-casino properties
+            if (!isCasino) {
+                setTimeout(() => {
+                    if (gameState && gameState.currentPlayer === myPlayerId) {
+                        endTurnNow();
+                    }
+                }, 500);
+            }
         } else {
             socket.emit('passProperty', { position });
             addLogEntry(`Cannot afford ${spaceData.name}. Passing.`, 'system');
@@ -2389,6 +2450,20 @@ if (cancelBuyBtn) {
         clearPropertyDecisionTimer();
         buyModal.classList.add('hidden');
         activePropertyDecision = null;
+    });
+}
+
+if (playCasinoBtn) {
+    playCasinoBtn.addEventListener('click', () => {
+        if (!activePropertyDecision || !activePropertyDecision.spaceData.isCasino) return;
+        const gameName = activePropertyDecision.spaceData.casinoGame;
+        openCasinoGame(gameName);
+    });
+}
+
+if (closeCasinoBtn) {
+    closeCasinoBtn.addEventListener('click', () => {
+        closeCasinoGame();
     });
 }
 
