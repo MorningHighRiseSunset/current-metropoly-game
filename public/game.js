@@ -97,6 +97,47 @@ function initializeDiceScene() {
     diceSceneInitialized = true;
 }
 
+// Dice roll sound (Web Audio API)
+function playDiceRollSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const duration = 0.3;
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + duration);
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + duration);
+        
+        // Add some random clicks for dice clatter
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                const clickOsc = audioContext.createOscillator();
+                const clickGain = audioContext.createGain();
+                clickOsc.type = 'square';
+                clickOsc.frequency.setValueAtTime(200 + Math.random() * 300, audioContext.currentTime);
+                clickGain.gain.setValueAtTime(0.1, audioContext.currentTime);
+                clickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+                clickOsc.connect(clickGain);
+                clickGain.connect(audioContext.destination);
+                clickOsc.start();
+                clickOsc.stop(audioContext.currentTime + 0.05);
+            }, i * 50);
+        }
+    } catch (e) {
+        console.log('Could not play dice sound:', e);
+    }
+}
+
 let diceGlbTemplate = null;
 let diceGlbLoading = false;
 
@@ -175,6 +216,9 @@ function roll3DDice(dice1Value, dice2Value, callbacks) {
 
     const diceEl = document.getElementById('dice3DContainer');
     if (diceEl) diceEl.classList.add('dice-rolling');
+
+    // Play dice roll sound
+    playDiceRollSound();
 
     let rollTick = runDiceRollAnimation({
         meshes: [dice1Mesh, dice2Mesh],

@@ -24,7 +24,7 @@ const DICE_GLB_CONFIG = {
     scale: 1,
     separation: 1.65,
     restOffsetY: 0.2,
-    rollDurationMs: 1800,
+    rollDurationMs: 800,
     faceEuler: {
         1: { x: 0, y: 0, z: 0 },
         2: { x: 0, y: 0, z: 0 },
