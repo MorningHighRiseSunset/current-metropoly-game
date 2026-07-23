@@ -1484,9 +1484,10 @@ function showPropertyInfo(spaceData) {
             if (media.videos && media.videos.length > 0) {
                 const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
                 const video = document.createElement('video');
-                video.src = randomVideo;
+                // Encode the URL to handle spaces properly
+                video.src = encodeURI(randomVideo);
                 video.autoplay = true;
-                video.muted = false;
+                video.muted = true; // Muted for autoplay to work
                 video.loop = true;
                 video.playsInline = true;
                 video.controls = true;
@@ -1504,7 +1505,9 @@ function showPropertyInfo(spaceData) {
                     video.play().catch(e => console.log('Autoplay failed:', e));
                 });
                 
-                video.addEventListener('error', () => {
+                video.addEventListener('error', (e) => {
+                    console.log('Video load error:', e);
+                    console.log('Failed video src:', randomVideo);
                     mediaContainer.innerHTML = '';
                     loadingIndicator.textContent = 'Media unavailable';
                 });
