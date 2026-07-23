@@ -699,9 +699,17 @@ function handlePlayerLanding(playerId, newPosition) {
             console.log('Starting property decision for:', spaceData.name);
             startPropertyDecision(spaceData, newPosition);
         }
-        // For owned properties, rent payment is handled by the server - do nothing here
-        // Property info modal should only be shown when user manually clicks on a tile
+        // Rent payment UI is now handled by server via showRentPayment event
     }
+}
+
+function getOwnedPropertySpace(position) {
+    const spaceData = boardConfig[position];
+    if (!spaceData) return null;
+    const isPurchasable = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
+    if (!isPurchasable) return null;
+    const owner = players.find(p => p && p.properties && p.properties.includes(position) && p.id !== myPlayerId);
+    return owner ? { spaceData, owner } : null;
 }
 
 function clearPropertyDecisionTimer() {
@@ -789,21 +797,66 @@ function updateBuyModalContent() {
     if (!activePropertyDecision) return;
     const buyContent = document.getElementById('buyContent');
     const playCasinoBtn = document.getElementById('playCasinoBtn');
+    const confirmBuyBtn = document.getElementById('confirmBuyBtn');
+    const cancelBuyBtn = document.getElementById('cancelBuyBtn');
     if (!buyContent) return;
 
+    const isRentDecision = activePropertyDecision.isRent;
     const canAfford = currentPlayer && currentPlayer.money >= activePropertyDecision.spaceData.price;
     const isCasino = activePropertyDecision.spaceData.isCasino;
 
     let html = `<p><strong>${activePropertyDecision.spaceData.name}</strong></p>`;
-    html += `<p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>`;
-    html += `<p>Rent: <strong>$${activePropertyDecision.spaceData.rent ? activePropertyDecision.spaceData.rent[0] : 0}</strong></p>`;
-    html += `<p>${canAfford ? 'Buy this property or click End Turn when you are done.' : 'Not enough money to buy. Click End Turn.'}</p>`;
+    
+    if (isRentDecision) {
+        const owner = activePropertyDecision.owner;
+        const rent = calculateRentAmount(activePropertyDecision.spaceData, owner);
+        html += `<p>Owned by: <strong>${owner.name}</strong></p>`;
+        html += `<p>Rent due: <strong>$${rent}</strong></p>`;
+        html += `<p>You must pay rent to continue.</p>`;
+        
+        // Update button text for rent
+        if (confirmBuyBtn) {
+            confirmBuyBtn.textContent = 'Pay Rent';
+            confirmBuyBtn.onclick = () => {
+                if (currentPlayer && currentPlayer.money >= rent) {
+                    socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
+                    closeBuyModal();
+                    endTurnNow();
+                } else {
+                    alert('Not enough money to pay rent!');
+                }
+            };
+        }
+    } else {
+        html += `<p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>`;
+        html += `<p>Rent: <strong>$${activePropertyDecision.spaceData.rent ? activePropertyDecision.spaceData.rent[0] : 0}</strong></p>`;
+        html += `<p>${canAfford ? 'Buy this property or click End Turn when you are done.' : 'Not enough money to buy. Click End Turn.'}</p>`;
+        
+        // Reset button text for buy
+        if (confirmBuyBtn) {
+            confirmBuyBtn.textContent = 'Buy Property';
+            confirmBuyBtn.onclick = () => {
+                if (canAfford) {
+                    waitingForBuyResult = true;
+                    socket.emit('buyProperty', { position: activePropertyDecision.position });
+                    if (!isCasino) {
+                        setTimeout(() => {
+                            if (gameState && gameState.currentPlayer === myPlayerId) {
+                                endTurnNow();
+                            }
+                        }, 500);
+                    }
+                }
+            };
+        }
+    }
     
     buyContent.innerHTML = html;
 
-    // Show/hide casino game button based on property type
+    // Show/hide casino game button based on property type (only for buy decisions)
+    // DISABLED: Casino games disabled until optimized
     if (playCasinoBtn) {
-        playCasinoBtn.style.display = isCasino ? 'block' : 'none';
+        playCasinoBtn.style.display = 'none';
     }
 }
 
@@ -812,7 +865,7 @@ function startPropertyDecision(spaceData, position) {
     cancelClientAutoEndTurn();
     clearPropertyDecisionTimer();
     waitingForBuyResult = false;
-    activePropertyDecision = { spaceData, position };
+    activePropertyDecision = { spaceData, position, isRent: false };
     updateBuyModalContent();
     
     // Don't hide property modal - let user see both
@@ -824,8 +877,50 @@ function startPropertyDecision(spaceData, position) {
     updateUI();
 }
 
+function startRentDecision(ownedData, position) {
+    if (!ownedData || !buyModal || !currentPlayer) return;
+    cancelClientAutoEndTurn();
+    clearPropertyDecisionTimer();
+    waitingForBuyResult = false;
+    activePropertyDecision = { spaceData: ownedData.spaceData, position, owner: ownedData.owner, isRent: true };
+    updateBuyModalContent();
+    
+    buyModal.classList.remove('hidden');
+    updateUI();
+}
+
+function calculateRentAmount(spaceData, owner) {
+    if (!spaceData || !spaceData.rent) return 0;
+    
+    // Calculate rent based on property type and buildings
+    let rent = spaceData.rent[0] || 0;
+    
+    // Check for houses/hotels
+    if (owner.houses && owner.houses[spaceData.position]) {
+        const houseCount = owner.houses[spaceData.position];
+        if (houseCount === 5) {
+            rent = spaceData.rent[5] || rent; // Hotel
+        } else {
+            rent = spaceData.rent[houseCount] || rent; // Houses
+        }
+    }
+    
+    // Check for monopoly bonus (all properties in color group owned)
+    const colorGroup = boardConfig.filter(p => p && p.color === spaceData.color);
+    const ownsAllInGroup = colorGroup.every(p => owner.properties.includes(p.position));
+    if (ownsAllInGroup && (!owner.houses || !owner.houses[spaceData.position] || owner.houses[spaceData.position] === 0)) {
+        rent = rent * 2; // Double rent for monopoly with no buildings
+    }
+    
+    return rent;
+}
+
 // Open casino game modal
 function openCasinoGame(gameName) {
+    // DISABLED: Casino games disabled until optimized
+    console.log('Casino games are currently disabled');
+    return;
+    
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoTitle = document.getElementById('casinoGameTitle');
     const casinoContainer = document.getElementById('casinoGameContainer');
@@ -2136,6 +2231,17 @@ socket.on('playerMoneyUpdate', (data) => {
     if (player) {
         player.money = data.money;
         updateUI();
+    }
+});
+
+// Handle show rent payment UI
+socket.on('showRentPayment', (data) => {
+    if (data.playerId === myPlayerId) {
+        const spaceData = data.property;
+        const owner = players.find(p => p && p.id === data.ownerId);
+        if (spaceData && owner) {
+            startRentDecision({ spaceData, owner }, data.position);
+        }
     }
 });
 

@@ -533,9 +533,9 @@ window.updatePlayerInfo = updatePlayerInfo;
 if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('Roulette/script.js')) {
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function() {
-			window.initRouletteMinigame();
+			window.initRouletteMinigame(document);
 		});
 	} else {
-		window.initRouletteMinigame();
+		window.initRouletteMinigame(document);
 	}
 }

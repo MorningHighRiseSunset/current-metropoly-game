@@ -1532,41 +1532,52 @@ io.on('connection', (socket) => {
             );
 
             if (owner) {
-                // Calculate rent
-                let rent = calculateRent(landedSpace, owner, game);
-                
-                // Special handling for utilities - need dice roll
-                if (landedSpace.type === 'utility') {
-                    const dice1 = Math.floor(Math.random() * 6) + 1;
-                    const dice2 = Math.floor(Math.random() * 6) + 1;
-                    const diceTotal = dice1 + dice2;
-                    rent = rent * diceTotal; // Apply multiplier to dice roll
-                    
-                    io.to(game.id).emit('utilityRentCalculated', {
+                // For human players, emit event to show rent UI (manual payment)
+                if (!player.isAI) {
+                    io.to(game.id).emit('showRentPayment', {
                         playerId: player.id,
                         ownerId: owner.id,
-                        dice1: dice1,
-                        dice2: dice2,
-                        multiplier: rent / diceTotal,
-                        finalRent: rent
-                    });
-                }
-                
-                // Check if player can pay rent
-                if (player.money >= rent) {
-                    player.money -= rent;
-                    owner.money += rent;
-
-                    io.to(game.id).emit('rentPaid', {
-                        payerId: player.id,
-                        ownerId: owner.id,
-                        amount: rent,
+                        position: newPosition,
                         property: landedSpace,
-                        players: game.players
+                        ownerName: owner.name
                     });
                 } else {
-                    // Player goes bankrupt
-                    handleBankruptcy(game, player, owner, rent);
+                    // AI players pay rent automatically
+                    let rent = calculateRent(landedSpace, owner, game);
+                    
+                    // Special handling for utilities - need dice roll
+                    if (landedSpace.type === 'utility') {
+                        const dice1 = Math.floor(Math.random() * 6) + 1;
+                        const dice2 = Math.floor(Math.random() * 6) + 1;
+                        const diceTotal = dice1 + dice2;
+                        rent = rent * diceTotal; // Apply multiplier to dice roll
+                        
+                        io.to(game.id).emit('utilityRentCalculated', {
+                            playerId: player.id,
+                            ownerId: owner.id,
+                            dice1: dice1,
+                            dice2: dice2,
+                            multiplier: rent / diceTotal,
+                            finalRent: rent
+                        });
+                    }
+                    
+                    // Check if player can pay rent
+                    if (player.money >= rent) {
+                        player.money -= rent;
+                        owner.money += rent;
+
+                        io.to(game.id).emit('rentPaid', {
+                            payerId: player.id,
+                            ownerId: owner.id,
+                            amount: rent,
+                            property: landedSpace,
+                            players: game.players
+                        });
+                    } else {
+                        // Player goes bankrupt
+                        handleBankruptcy(game, player, owner, rent);
+                    }
                 }
             }
         }
@@ -2447,6 +2458,43 @@ io.on('connection', (socket) => {
             playerId: player.id,
             money: player.money
         });
+    });
+
+    // Pay rent (manual payment from client)
+    socket.on('payRent', (data) => {
+        const playerData = players[socket.id];
+        if (!playerData) return;
+
+        const game = games[playerData.gameId];
+        if (!game) return;
+
+        const player = game.players.find(p => p && p.id === socket.id);
+        if (!player) return;
+
+        const position = data.position;
+        const amount = data.amount;
+
+        const boardSpaces = getBoardSpaces();
+        const landedSpace = boardSpaces[position];
+
+        if (landedSpace) {
+            const owner = game.players.find(p => p &&
+                p.properties.includes(position) && p.id !== player.id
+            );
+
+            if (owner && player.money >= amount) {
+                player.money -= amount;
+                owner.money += amount;
+
+                io.to(game.id).emit('rentPaid', {
+                    payerId: player.id,
+                    ownerId: owner.id,
+                    amount: amount,
+                    property: landedSpace,
+                    players: game.players
+                });
+            }
+        }
     });
 
     // Video call signaling
