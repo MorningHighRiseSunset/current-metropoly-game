@@ -2704,7 +2704,23 @@ document.querySelectorAll('.modal').forEach(modal => {
 });
 
 // Initialize on load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Fetch CDN configuration from server
+    try {
+        const configResponse = await fetch('/api/config');
+        const config = await configResponse.json();
+        window.USE_VIDEO_CDN = config.USE_VIDEO_CDN;
+        window.VIDEO_CDN_BASE_URL = config.VIDEO_CDN_BASE_URL;
+        window.USE_CDN = config.USE_CDN;
+        window.CDN_BASE_URL = config.CDN_BASE_URL;
+        console.log('CDN Config loaded:', config);
+    } catch (error) {
+        console.error('Failed to load CDN config:', error);
+        // Fallback to local paths
+        window.USE_VIDEO_CDN = false;
+        window.VIDEO_CDN_BASE_URL = '';
+    }
+
     // Clear any stale player data from previous games
     localStorage.removeItem('playerName');
     

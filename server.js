@@ -126,6 +126,16 @@ function getColorGroups() {
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Endpoint to provide CDN configuration to frontend
+app.get('/api/config', (req, res) => {
+    res.json({
+        USE_VIDEO_CDN: process.env.USE_VIDEO_CDN === 'true',
+        VIDEO_CDN_BASE_URL: process.env.VIDEO_CDN_BASE_URL || '',
+        USE_CDN: process.env.USE_CDN === 'true',
+        CDN_BASE_URL: process.env.CDN_BASE_URL || ''
+    });
+});
 app.use('/images', express.static(path.join(__dirname, 'Images')));
 // Serve Videos from CDN if configured, otherwise from local directory
 if (process.env.USE_VIDEO_CDN === 'true' && process.env.VIDEO_CDN_BASE_URL) {
