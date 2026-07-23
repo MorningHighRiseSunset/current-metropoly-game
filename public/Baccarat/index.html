@@ -1,0 +1,80 @@
+
+<div class="container">
+    <h1>Baccarat</h1>
+    <div class="money-bar">
+        <span id="money-display">$1000</span>
+    </div>
+    <div class="betting-ui">
+        <div class="chip-select">
+            <button class="chip" data-value="10">$10</button>
+            <button class="chip" data-value="50">$50</button>
+            <button class="chip" data-value="100">$100</button>
+            <button class="chip" data-value="500">$500</button>
+        </div>
+        <div class="bet-type-select">
+            <button class="bet-type" data-type="player">Player</button>
+            <button class="bet-type" data-type="banker">Banker</button>
+            <button class="bet-type" data-type="tie">Tie</button>
+        </div>
+        <div class="current-bet">Bet: <span id="current-bet-display">$0</span> on <span id="current-bet-type">-</span></div>
+    </div>
+    <div class="table-3d baccarat-table">
+        <div class="felt"></div>
+        <div class="table-rail"></div>
+        <div class="table-shadow"></div>
+        <div class="betting-spots">
+            <div class="bet-spot player-spot" data-type="player"><span>PLAYER</span><div class="spot-chip" id="player-spot-chip"></div></div>
+            <div class="bet-spot tie-spot" data-type="tie"><span>TIE</span><div class="spot-chip" id="tie-spot-chip"></div></div>
+            <div class="bet-spot banker-spot" data-type="banker"><span>BANKER</span><div class="spot-chip" id="banker-spot-chip"></div></div>
+        </div>
+        <div class="table-cards">
+            <div class="ai-area">
+                <div id="ai-cards" class="cards cards-3d"></div>
+                <div id="ai-score" class="score-value score-3d"></div>
+            </div>
+            <div class="player-area">
+                <div id="player-cards" class="cards cards-3d"></div>
+                <div id="player-score" class="score-value score-3d"></div>
+            </div>
+        </div>
+    </div>
+    <div class="controls">
+        <button id="deal-btn">Deal</button>
+        <button id="reset-btn">Reset</button>
+        <button id="instructions-btn">Instructions</button>
+    </div>
+    <div id="result" class="result"></div>
+    <div id="history" class="history"></div>
+    <div class="next-round-container" style="text-align:center; margin-top:12px; display:none;">
+        <button id="next-round-btn">Next Round</button>
+    </div>
+    <!-- Instructions Modal -->
+    <div id="instructions-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="close-instructions">&times;</span>
+            <h2>Baccarat Rules</h2>
+            <ul>
+                <li>Choose your bet amount and type: Player, Banker, or Tie.</li>
+                <li>Click <b>Deal</b> to start the round.</li>
+                <li>Both Player and Banker are dealt two cards. A third card may be drawn based on the rules.</li>
+                <li>The hand closest to 9 wins. 10s and face cards count as 0. If the total is over 9, only the last digit counts (e.g., 15 = 5).</li>
+                <li><b>Payouts:</b> Player: 1:1, Banker: 0.95:1, Tie: 8:1.</li>
+                <li>If you win, your winnings are added to your balance. If you lose, your bet is lost.</li>
+                <li>Click <b>Reset</b> to start a new game.</li>
+            </ul>
+            <p style="font-size:0.95em;color:#888;">Enjoy the game! For more details, see official Baccarat rules online.</p>
+        </div>
+    </div>
+</div>
+<script>
+// Check if loaded standalone (not in iframe)
+const isStandalone = window === window.top;
+if (isStandalone) {
+  // Initialize with default values for standalone mode
+  window.playerMoney = 25000;
+  window.updateMainGameBalance = function(balance) {
+    // No-op in standalone mode
+  };
+}
+</script>
+

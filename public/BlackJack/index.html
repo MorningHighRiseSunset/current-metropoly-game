@@ -52,4 +52,15 @@
     </div>
   </div>
 </div>
+<script>
+// Check if loaded standalone (not in iframe)
+const isStandalone = window === window.top;
+if (isStandalone) {
+  // Initialize with default values for standalone mode
+  window.playerMoney = 25000;
+  window.updateMainGameBalance = function(balance) {
+    // No-op in standalone mode
+  };
+}
+</script>
 <script src="script.js"></script>

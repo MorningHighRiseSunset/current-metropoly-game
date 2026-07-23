@@ -795,6 +795,17 @@ function offerInsurance() {
 }
 }
 
+// Auto-initialize for standalone usage
+if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('BlackJack/script.js')) {
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', function() {
+			window.initBlackjackMinigame();
+		});
+	} else {
+		window.initBlackjackMinigame();
+	}
+}
+
 // Initial state
 dealBtn.disabled = true;
 hitBtn.disabled = true;

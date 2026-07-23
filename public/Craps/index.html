@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Craps Table</title>
+	<link rel="stylesheet" href="style.css">
+	<!-- Suppress favicon 404 error -->
+	<link rel="icon" href="data:image/x-icon;," type="image/x-icon">
+</head>
+<body>
+	<div class="craps-table-container">
+		<div class="craps-table-image-wrapper">
+			<img src="Craps_table_diagram.svg.png" alt="Craps Table" class="craps-table-img">
+			<!-- Overlays and chips will be rendered here by JS -->
+		</div>
+		<!-- ===================== TESTING MODE: BETTING AREA BOXES ===================== -->
+		<!-- To disable testing mode, comment out the following div and the related script in script.js -->
+		<!--<div id="betting-areas-overlay"></div>
+		<div id="betting-areas-coords-box">
+			<h3>Betting Area Coordinates</h3>
+			<div id="betting-areas-coords-list"></div>
+			<div style="font-size: 0.9em; color: #666;">Format: betting area # (x, y, width, height, rotation) - label</div>
+		</div>
+			===================== END TESTING MODE =====================
+	</div> -->
+	<script>
+	// Check if loaded standalone (not in iframe)
+	const isStandalone = window === window.top;
+	if (isStandalone) {
+		// Initialize with default values for standalone mode
+		window.playerMoney = 25000;
+		window.updateMainGameBalance = function(balance) {
+			// No-op in standalone mode
+		};
+	}
+	</script>
+	<script src="script.js"></script>
+<script src="three.min.js"></script>
+<script src="dice3d-three.js"></script>
+</body>
+</html>

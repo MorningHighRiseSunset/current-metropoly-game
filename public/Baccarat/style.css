@@ -1,0 +1,512 @@
+/* Baccarat History (Bead Road) */
+.history {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin: 12px 0 0 0;
+    min-height: 32px;
+}
+.history .history-item {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #fff;
+    box-shadow: 0 2px 8px #0003;
+    border: 2px solid #e6c97a;
+}
+.history .player { background: #2a5298; }
+.history .banker { background: #b48a3e; }
+.history .tie { background: #229e4c; }
+
+.next-round-container { margin-top: 12px; }
+#next-round-btn {
+    background: linear-gradient(120deg, #f7d774 60%, #b48a3e 100%);
+    color: #1e3c72;
+    font-weight: bold;
+    border: 2px solid #e6c97a;
+    border-radius: 10px;
+    padding: 10px 32px;
+    font-size: 1.1em;
+    box-shadow: 0 2px 8px #b48a3e33;
+    margin-top: 0;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+#next-round-btn:hover {
+    background: linear-gradient(120deg, #b48a3e 60%, #f7d774 100%);
+    color: #2a5298;
+    transform: scale(1.06);
+}
+/* Modal Popup for Instructions */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+    background: rgba(30, 60, 114, 0.35);
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+}
+.modal-content {
+    background: #fff;
+    margin: 8% auto;
+    padding: 32px 28px 24px 28px;
+    border: 2.5px solid #b48a3e;
+    border-radius: 18px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 8px 32px #0005, 0 2px 8px #b48a3e99;
+    position: relative;
+    animation: fadeIn 0.5s cubic-bezier(.4,0,.2,1);
+}
+.modal-content h2 {
+    margin-top: 0;
+    color: #b48a3e;
+    text-align: center;
+    font-size: 1.5em;
+    letter-spacing: 1px;
+}
+.modal-content ul {
+    margin: 18px 0 0 0;
+    padding-left: 18px;
+    color: #1e3c72;
+    font-size: 1.08em;
+}
+.modal-content li {
+    margin-bottom: 8px;
+}
+.close {
+    color: #b48a3e;
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    font-size: 1.7em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+    z-index: 10;
+}
+.close:hover {
+    color: #e74c3c;
+}
+/* Money and Betting UI */
+.money-bar {
+    text-align: right;
+    font-size: 1.3em;
+    color: #f7d774;
+    margin: 0 32px 8px 0;
+    font-weight: bold;
+    text-shadow: 0 2px 8px #000, 0 0px 2px #fff;
+}
+.betting-ui {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 6px;
+}
+.chip-select {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 2px;
+}
+.chip {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    background: radial-gradient(circle at 60% 30%, #fff 0%, #f7d774 60%, #b48a3e 100%);
+    color: #7a5a1e;
+    font-size: 1.1em;
+    font-weight: bold;
+    box-shadow: 0 4px 16px #0008, 0 0 0 4px #e6c97a inset;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+.chip::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px dashed #fff8;
+    box-shadow: 0 0 0 2px #b48a3e inset;
+    z-index: 1;
+}
+.chip::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff8;
+    opacity: 0.7;
+    z-index: 2;
+}
+.chip.selected, .chip:active {
+    transform: scale(1.15) rotate(-6deg);
+    box-shadow: 0 8px 32px #f7d77499, 0 0 0 4px #e6c97a inset;
+    border-color: #f7d774;
+}
+.bet-chip {
+    border: 4px solid #f7d774 !important;
+    box-shadow: 0 8px 32px #f7d77499, 0 0 0 4px #e6c97a inset !important;
+    background: radial-gradient(circle at 60% 30%, #fff 0%, #f7d774 60%, #b48a3e 100%) !important;
+    color: #7a5a1e !important;
+    font-size: 1.1em !important;
+    font-weight: bold !important;
+    z-index: 10;
+}
+.bet-type-select {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 2px;
+}
+.bet-type {
+    background: linear-gradient(120deg, #2a5298 60%, #1e3c72 100%);
+    color: #fff;
+    border: 2px solid #e6c97a;
+    border-radius: 12px;
+    padding: 8px 24px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px 0 rgba(30,60,114,0.10);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.bet-type.selected, .bet-type:active {
+    background: linear-gradient(120deg, #f7d774 60%, #b48a3e 100%);
+    color: #1e3c72;
+    transform: scale(1.08);
+    box-shadow: 0 4px 16px #f7d77499;
+}
+.current-bet {
+    color: #f7d774;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-shadow: 0 2px 8px #000, 0 0px 2px #fff;
+    margin-bottom: 2px;
+}
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: #1e3c72;
+}
+
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: #1e3c72;
+    border-radius: 32px;
+    box-shadow: 0 12px 48px 8px rgba(30,60,114,0.25);
+    padding: 24px 0 0 0;
+    position: relative;
+    overflow: visible;
+    animation: fadeIn 1.2s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+    text-align: center;
+    color: #f7d774;
+    margin-bottom: 16px;
+    letter-spacing: 2px;
+    font-size: 2.2em;
+    text-shadow: 0 2px 16px #000, 0 0px 2px #fff;
+}
+
+/* Casino Table Redesign */
+.table-3d {
+    position: relative;
+    width: 820px;
+    height: 400px;
+    margin: 0 auto 24px auto;
+    perspective: 1200px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+.table-shadow {
+    position: absolute;
+    left: 50%;
+    top: 60%;
+    transform: translate(-50%, -50%) scaleX(1.2) scaleY(1.1);
+    width: 780px;
+    height: 220px;
+    background: radial-gradient(ellipse at center, #0007 0%, #0000 80%);
+    border-radius: 50% 50% 60% 60%/60% 60% 100% 100%;
+    z-index: 0;
+}
+.table-rail {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scaleX(1.08) scaleY(1.08);
+    width: 760px;
+    height: 320px;
+    background: linear-gradient(120deg, #b48a3e 60%, #7a5a1e 100%);
+    border-radius: 420px 420px 120px 120px/260px 260px 80px 80px;
+    box-shadow: 0 8px 32px 0 #0008;
+    z-index: 1;
+    border: 8px solid #e6c97a;
+}
+.felt {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scaleX(1) scaleY(1);
+    width: 700px;
+    height: 260px;
+    background: repeating-linear-gradient(135deg, #1e7e3c 0 4px, #229e4c 4px 8px);
+    background-blend-mode: multiply;
+    border-radius: 400px 400px 100px 100px/240px 240px 60px 60px;
+    box-shadow: 0 24px 64px 0 #000a, 0 2px 24px 0 #1e3c72aa;
+    border: 4px solid #b48a3e;
+    z-index: 2;
+    overflow: hidden;
+}
+.table-labels {
+    position: absolute;
+    width: 100%;
+    top: 80px;
+    left: 0;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+}
+.label {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #f7d774;
+    text-shadow: 0 2px 8px #000, 0 0px 2px #fff;
+    padding: 8px 32px;
+    border-radius: 20px;
+    background: rgba(0,0,0,0.18);
+    letter-spacing: 2px;
+    border: 2px solid #e6c97a;
+}
+.banker-label {
+    margin-left: 80px;
+}
+.player-label {
+    margin-right: 80px;
+}
+.betting-area {
+    position: absolute;
+    left: 50%;
+    bottom: 38px;
+    transform: translateX(-50%);
+    width: 220px;
+    height: 60px;
+    background: rgba(255,255,255,0.08);
+    border: 2.5px dashed #f7d774;
+    border-radius: 32px 32px 40px 40px/32px 32px 60px 60px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    color: #f7d774;
+    text-shadow: 0 2px 8px #000, 0 0px 2px #fff;
+    pointer-events: none;
+}
+.table-cards {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+}
+.ai-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-right: 180px;
+    margin-top: 44px;
+}
+.player-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 180px;
+    margin-bottom: 44px;
+}
+.cards-3d {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 8px;
+    min-height: 90px;
+    perspective: 800px;
+}
+.score-3d {
+    font-size: 1.3em;
+    color: #fff;
+    font-weight: bold;
+    margin-top: 4px;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px #000, 0 0px 2px #fff;
+    min-height: 24px;
+}
+
+.game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.scoreboard {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 24px;
+    gap: 16px;
+}
+
+.score {
+    background: linear-gradient(120deg, #e0e7ef 60%, #f3f6fa 100%);
+    border-radius: 16px;
+    padding: 18px 24px 24px 24px;
+    width: 45%;
+    box-shadow: 0 2px 12px 0 rgba(30,60,114,0.10);
+    text-align: center;
+    position: relative;
+    min-height: 140px;
+    transition: box-shadow 0.3s;
+}
+.score:hover {
+    box-shadow: 0 4px 24px 0 rgba(30,60,114,0.18);
+}
+
+.score h2 {
+    margin: 0 0 12px 0;
+    color: #2a5298;
+}
+
+.cards {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    min-height: 70px;
+}
+
+.card {
+    width: 64px;
+    height: 96px;
+    background: linear-gradient(120deg, #fff 70%, #e0e7ef 100%);
+    border: 3px solid #b48a3e;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.7em;
+    font-weight: bold;
+    color: #1e3c72;
+    box-shadow: 0 8px 32px 0 rgba(30,60,114,0.18), 0 2px 8px #b48a3e99;
+    margin-top: 0;
+    opacity: 0;
+    transform: translateY(40px) scale(0.8) rotate(-8deg) perspective(800px) rotateX(18deg);
+    animation: cardDeal 0.5s cubic-bezier(.4,0,.2,1) forwards;
+    transition: box-shadow 0.2s, transform 0.2s;
+    z-index: 2;
+}
+.card.animated {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg) perspective(800px) rotateX(18deg);
+}
+.card:hover {
+    box-shadow: 0 16px 48px 0 rgba(30,60,114,0.28), 0 4px 16px #b48a3e99;
+    transform: scale(1.10) rotate(2deg) perspective(800px) rotateX(10deg);
+}
+@keyframes cardDeal {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.8) rotate(-8deg) perspective(800px) rotateX(18deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg) perspective(800px) rotateX(18deg);
+    }
+}
+
+.score-value {
+    font-size: 1.7em;
+    color: #1e3c72;
+    font-weight: bold;
+    margin-top: 8px;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px #e0e7ef;
+}
+
+.controls {
+    margin: 16px 0 8px 0;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    z-index: 2;
+}
+
+button {
+    background: linear-gradient(120deg, #2a5298 60%, #1e3c72 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px 0 rgba(30,60,114,0.10);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+button:hover {
+    background: linear-gradient(120deg, #1e3c72 60%, #2a5298 100%);
+    box-shadow: 0 4px 16px 0 rgba(30,60,114,0.18);
+    transform: scale(1.06);
+}
+
+.result {
+    margin-top: 16px;
+    font-size: 1.3em;
+    text-align: center;
+    color: #2a5298;
+    min-height: 32px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px #e0e7ef;
+    animation: fadeIn 0.7s cubic-bezier(.4,0,.2,1);
+}

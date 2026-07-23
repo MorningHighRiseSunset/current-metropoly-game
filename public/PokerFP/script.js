@@ -375,3 +375,14 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 	// --- Start Game ---
 	startNewGame();
 };
+
+// Auto-initialize for standalone usage
+if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('PokerFP/script.js')) {
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', function() {
+			window.initPokerMinigame();
+		});
+	} else {
+		window.initPokerMinigame();
+	}
+}

@@ -1,0 +1,177 @@
+body {
+	background: #245224;
+	font-family: 'Segoe UI', Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+	color: #fff;
+}
+
+.poker-container {
+	width: 600px;
+	margin: 40px auto;
+	background: #245224;
+	border-radius: 18px;
+	box-shadow: 0 4px 24px #000a;
+	padding: 24px 18px 18px 18px;
+	min-height: 600px;
+}
+
+h1 {
+	text-align: center;
+	margin-bottom: 18px;
+	font-size: 2.2em;
+	letter-spacing: 2px;
+}
+
+.table-area {
+	background: #2e6b2e;
+	border-radius: 14px;
+	padding: 18px 10px 10px 10px;
+	margin-bottom: 18px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 18px;
+}
+
+.ai-area, .player-area {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+}
+
+.ai-label, .player-label {
+	font-weight: bold;
+	margin-bottom: 2px;
+}
+
+.cards {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 4px;
+}
+
+
+.card {
+	width: 54px;
+	height: 78px;
+	background: #fff;
+	border-radius: 7px;
+	box-shadow: 0 2px 8px #0005;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.5em;
+	color: #222;
+	position: relative;
+	border: 2px solid #b2b2b2;
+	transition: transform 0.4s cubic-bezier(.4,2,.6,1), box-shadow 0.3s;
+	transform-style: preserve-3d;
+	cursor: pointer;
+	animation: card-deal 0.6s cubic-bezier(.4,2,.6,1);
+}
+
+@keyframes card-deal {
+	0% { transform: translateY(-40px) scale(0.7) rotate(-10deg); opacity: 0; }
+	60% { transform: translateY(8px) scale(1.05) rotate(2deg); opacity: 1; }
+	100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+}
+
+.card:active {
+	box-shadow: 0 4px 16px #000a;
+	transform: scale(1.07) rotate(2deg);
+}
+
+.card.back {
+	background: linear-gradient(135deg, #2d2d2d 0%, #b71c1c 100%);
+	border: 2px solid #b71c1c;
+	position: relative;
+	overflow: hidden;
+}
+.card.back::after {
+	content: "\1F4B0"; /* Unicode for poker chip */
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%) scale(1.5);
+	font-size: 1.7em;
+	color: #fffbe6;
+	opacity: 0.85;
+	pointer-events: none;
+	text-shadow: 0 0 6px #b71c1c, 0 0 2px #fff;
+}
+
+/* Card flip animation (for future use, e.g. on showdown) */
+.card.flip {
+	animation: card-flip 0.6s cubic-bezier(.4,2,.6,1);
+	transform: rotateY(180deg);
+}
+@keyframes card-flip {
+	0% { transform: rotateY(0); }
+	100% { transform: rotateY(180deg); }
+}
+
+.community-area {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+}
+
+.community-cards {
+	margin-bottom: 2px;
+}
+
+.pot {
+	font-size: 1.1em;
+	color: #ffd700;
+	font-weight: bold;
+}
+
+.ai-chips, .player-chips {
+	font-size: 1em;
+	color: #e0e0e0;
+}
+
+.controls {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	margin: 18px 0 8px 0;
+}
+
+.controls button, .controls input[type="number"] {
+	font-size: 1em;
+	padding: 6px 14px;
+	border-radius: 6px;
+	border: none;
+	margin: 0 2px;
+}
+
+.controls button {
+	background: #388e3c;
+	color: #fff;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.controls button:hover {
+	background: #2e7031;
+}
+
+.controls input[type="number"] {
+	width: 60px;
+	background: #fff;
+	color: #222;
+	border: 1px solid #aaa;
+}
+
+.message {
+	text-align: center;
+	min-height: 32px;
+	font-size: 1.1em;
+	margin-top: 8px;
+	color: #ffd700;
+	font-weight: bold;
+}

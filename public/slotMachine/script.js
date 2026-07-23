@@ -162,5 +162,14 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 	fillInitialReels();
 	updateBalanceDisplay();
 };
-						message.style.color = '#fff';
 
+// Auto-initialize for standalone usage
+if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('slotMachine/script.js')) {
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', function() {
+			window.initSlotMachine();
+		});
+	} else {
+		window.initSlotMachine();
+	}
+}

@@ -1,0 +1,130 @@
+body {
+	margin: 0;
+	background: #ffffff;
+	font-family: Arial, sans-serif;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	color: white;
+	gap: 40px;
+	padding: 20px;
+}
+/* Roulette wheel canvas styles (no container background) */
+#wheel {
+	border-radius: 50%;
+	box-shadow: 0 12px 40px 0 #0008;
+	background: radial-gradient(ellipse at 60% 40%, #e2b07a 0%, #a86b2e 100%);
+	display: block;
+	margin-bottom: 10px;
+}
+/* First roulette table styles */
+.roulette-table {
+	background: repeating-linear-gradient(135deg, #0a4a23 0 20px, #145c36 20px 40px);
+	border: 4px solid #e2b07a;
+	box-shadow: 0 6px 24px #0007, 0 1px 0 #fff4 inset;
+	padding: 18px 16px 16px 16px;
+	border-radius: 18px;
+	color: #fffbe6;
+	user-select: none;
+	font-weight: bold;
+	font-size: 17px;
+	line-height: 1.1;
+	max-width: 650px;
+	position: relative;
+	overflow: hidden;
+}
+.table-grid {
+	display: grid;
+	grid-template-columns: repeat(12, 44px);
+	grid-template-rows: 36px 36px 36px 48px 48px;
+	gap: 2px;
+}
+.number-cell {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border: 2px solid #fffbe6;
+	box-shadow: 0 2px 8px #0005 inset, 0 1px 0 #fff4;
+	cursor: pointer;
+	font-size: 17px;
+	user-select: none;
+	border-radius: 7px;
+	background: linear-gradient(145deg, #1b6538 60%, #0a4a23 100%);
+	transition: transform 0.1s;
+}
+.number-cell:active {
+	transform: scale(0.96);
+	box-shadow: 0 1px 2px #0008 inset;
+}
+.number-cell.zero {
+	background: linear-gradient(145deg, #222 60%, #444 100%);
+	color: #fffbe6;
+	border-radius: 10px;
+	font-size: 22px;
+	border: 2.5px solid #e2b07a;
+	box-shadow: 0 2px 10px #0008 inset, 0 1px 0 #fff4;
+}
+.red {
+	background: linear-gradient(145deg, #e53935 60%, #a31515 100%);
+	color: #fffbe6;
+	text-shadow: 0 1px 2px #000a;
+}
+.black {
+	background: linear-gradient(145deg, #222 60%, #444 100%);
+	color: #fffbe6;
+	text-shadow: 0 1px 2px #000a;
+}
+/* Bottom rows: options */
+.bottom-row {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 8px;
+}
+.bet-box {
+	background: linear-gradient(145deg, #1b6538 60%, #0a4a23 100%);
+	border: 2.5px solid #e2b07a;
+	border-radius: 8px;
+	flex: 1;
+	margin: 0 4px;
+	text-align: center;
+	padding: 13px 6px;
+	font-weight: bold;
+	user-select: none;
+	cursor: pointer;
+	box-shadow: 0 1px 6px #0005 inset, 0 1px 0 #fff4;
+	color: #fffbe6;
+	transition: transform 0.1s;
+}
+.bet-box:active {
+	transform: scale(0.97);
+	box-shadow: 0 1px 2px #0008 inset;
+}
+.bet-box.red {
+	background: linear-gradient(145deg, #e53935 60%, #a31515 100%);
+	color: #fffbe6;
+}
+.bet-box.black {
+	background: linear-gradient(145deg, #222 60%, #444 100%);
+	color: #fffbe6;
+}
+.bet-box.red {
+	background: #c51e1e;
+}
+.bet-box.black {
+	background: #111;
+}
+/* 2 to 1 column bets */
+.column-bet {
+	grid-row: 4 / 5;
+	font-size: 15px;
+	border-radius: 0 0 10px 10px;
+	background: linear-gradient(145deg, #1b6538 60%, #0a4a23 100%);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	border: 2px solid #e2b07a;
+	color: #fffbe6;
+	box-shadow: 0 1px 6px #0005 inset, 0 1px 0 #fff4;
+}

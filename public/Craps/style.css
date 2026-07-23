@@ -1,0 +1,223 @@
+/* 3D Dice Roller Styles */
+#dice-3d-wrapper {
+	position: absolute;
+	right: 40px;
+	bottom: 40px;
+	width: 80px;
+	height: 80px;
+	perspective: 600px;
+	z-index: 100;
+}
+.dice-3d {
+	width: 80px;
+	height: 80px;
+	position: absolute;
+	transform-style: preserve-3d;
+	transition: transform 1s cubic-bezier(.25,1.7,.5,1.15);
+}
+.dice-face {
+	position: absolute;
+	width: 80px;
+	height: 80px;
+	background: #fff;
+	border: 2px solid #222;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.chip3d.chip-blue {
+	--chip-main: #2e86de;
+	--chip-edge: #2e86de;
+}
+.chip-stack {
+	position: absolute;
+	z-index: 30;
+	filter: drop-shadow(0 8px 16px #0006);
+}
+.chip3d {
+	border-radius: 50%;
+	width: 48px;
+	height: 18px;
+	box-shadow:
+		0 4px 12px #0007,
+		0 1px 0 #fff8 inset,
+		0 -2px 8px #2224 inset,
+		0 0 0 4px var(--chip-edge, #2e86de) inset;
+	border: 2px solid #222;
+	background:
+		radial-gradient(circle at 50% 40%, #fff 12%, #e0e0e0 32%, var(--chip-main, #2e86de) 80%, #1a3a6e 100%),
+		linear-gradient(180deg, #fff6 0%, transparent 60%, #0002 100%);
+	position: absolute;
+	left: 0;
+	/* Center highlight for 3D effect */
+}
+.chip3d.chip-green {
+	--chip-main: #27ae60;
+	--chip-edge: #27ae60;
+}
+.chip3d.chip-orange {
+	--chip-main: #e67e22;
+	--chip-edge: #e67e22;
+}
+.chip3d.chip-white {
+	--chip-main: #fff;
+	--chip-edge: #bbb;
+}
+/* 3D chip stack styles */
+.chip3d {
+	border-radius: 50% / 44%; /* Elliptical for chip edge */
+	box-shadow: 0 6px 18px #0007, 0 1px 0 #fff4 inset, 0 -2px 8px #2224 inset;
+	border: 2px solid #222;
+	background: radial-gradient(circle at 50% 38%, #fff 18%, #e0e0e0 38%, #2e86de 80%, #1a3a6e 100%);
+	position: absolute;
+	left: 0;
+	/* No perspective/rotateX for top view */
+}
+.chip-amount-label {
+	font-weight: bold;
+	font-size: 15px;
+	color: #fff;
+	text-shadow: 0 2px 6px #000;
+	letter-spacing: 1px;
+}
+.player-chip-stack {
+	cursor: grab;
+	z-index: 50;
+}
+
+.craps-table-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border: 3px solid #333;
+	border-radius: 18px;
+	background: #086609;
+	padding: 12px;
+	width: fit-content;
+	margin: 40px auto;
+	box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+
+.craps-table-image-wrapper {
+	position: relative;
+	display: inline-block;
+}
+
+.craps-table-img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	border-radius: 12px;
+	position: relative;
+	z-index: 10;
+}
+
+/* ===================== TESTING MODE: BETTING AREA BOXES ===================== */
+#betting-areas-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 10;
+}
+
+.betting-area-box {
+	position: absolute;
+	border: 2px dashed #000;
+	background: rgba(0,0,0,0.07);
+	color: #000;
+	font-weight: bold;
+	font-size: 1.2em;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: move;
+	user-select: none;
+	pointer-events: auto;
+	transition: box-shadow 0.2s;
+}
+.betting-area-box.selected {
+	box-shadow: 0 0 0 3px #ff0;
+	z-index: 20;
+}
+.betting-area-box .resize-handle {
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	right: -7px;
+	bottom: -7px;
+	background: #fff;
+	border: 2px solid #000;
+	border-radius: 50%;
+	cursor: se-resize;
+	z-index: 30;
+}
+.betting-area-box .rotate-handle {
+	position: absolute;
+	left: 50%;
+	top: -24px;
+	transform: translateX(-50%);
+	width: 18px;
+	height: 18px;
+	background: #fff;
+	border: 2px solid #000;
+	border-radius: 50%;
+	cursor: grab;
+	z-index: 30;
+}
+
+#betting-areas-coords-box {
+	position: fixed;
+	right: 24px;
+	top: 340px;
+	background: #fff;
+	border: 2px solid #333;
+	border-radius: 10px;
+	padding: 12px 18px;
+	z-index: 100;
+	min-width: 320px;
+	max-width: 400px;
+	box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+	font-family: monospace;
+	max-height: 60vh;
+	overflow-y: auto;
+}
+#betting-areas-coords-box h3 {
+	margin: 0 0 8px 0;
+	font-size: 1.1em;
+}
+#betting-areas-coords-list {
+	font-size: 1em;
+	max-height: 300px;
+	overflow-y: auto;
+}
+/* ===================== END TESTING MODE ===================== */
+
+/* ===================== INTERACTIVE CRAPS GAME ===================== */
+.craps-table-image-wrapper {
+	position: relative;
+	display: inline-block;
+}
+
+.betting-area-interactive {
+	position: absolute;
+	z-index: 20;
+	background: transparent;
+	border: none;
+	transition: box-shadow 0.2s, background 0.2s;
+}
+
+.betting-area-interactive.highlight {
+	background: rgba(255, 255, 0, 0.18);
+	box-shadow: 0 0 12px 4px #ffe066;
+	border-radius: 8px;
+}
+
+.chip-stack {
+	position: absolute;
+	z-index: 30;
+}
+/* ===================== END INTERACTIVE CRAPS GAME ===================== */
