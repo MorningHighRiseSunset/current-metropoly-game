@@ -1,5 +1,4 @@
 # Exclude large media directories from Vercel deployment
-Videos/
 node_modules/
 .git/
 
