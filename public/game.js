@@ -1482,7 +1482,7 @@ function updatePlayersList() {
                     <span class="player-card-name">${displayName}</span>
                     <div class="player-card-badges">${turnBadge}${aiBadge}${jailBadge}</div>
                 </div>
-                <div class="player-card-money">$${(player.money ?? 1500).toLocaleString()}</div>
+                <div class="player-card-money">$${(player.money ?? 25000).toLocaleString()}</div>
             </div>
         `;
 
@@ -1554,12 +1554,12 @@ function addChatMessage(sender, message) {
 // Update UI elements
 function updateUI() {
     if (currentPlayer) {
-        playerMoneyEl.textContent = `$${currentPlayer.money || 1500}`;
+        playerMoneyEl.textContent = `$${currentPlayer.money || 25000}`;
         playerNameEl.textContent = currentPlayer.name;
         localStorage.setItem('playerName', currentPlayer.name);
     } else {
         // Set defaults when currentPlayer is not available
-        playerMoneyEl.textContent = '$1500';
+        playerMoneyEl.textContent = '$25000';
         playerNameEl.textContent = 'Player';
     }
     
