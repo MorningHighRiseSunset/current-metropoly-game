@@ -898,9 +898,12 @@ function updateBuyModalContent() {
     buyContent.innerHTML = html;
 
     // Show/hide casino game button based on property type (only for buy decisions)
-    // DISABLED: Casino games disabled until optimized
     if (playCasinoBtn) {
-        playCasinoBtn.style.display = 'none';
+        if (isCasino) {
+            playCasinoBtn.style.display = 'block';
+        } else {
+            playCasinoBtn.style.display = 'none';
+        }
     }
 }
 
@@ -961,29 +964,25 @@ function calculateRentAmount(spaceData, owner) {
 
 // Open casino game modal
 function openCasinoGame(gameName) {
-    // DISABLED: Casino games disabled until optimized
-    console.log('Casino games are currently disabled');
-    return;
-    
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoTitle = document.getElementById('casinoGameTitle');
     const casinoContainer = document.getElementById('casinoGameContainer');
-    
+
     if (!casinoModal || !casinoContainer) return;
-    
+
     casinoTitle.textContent = `Play ${gameName}`;
-    
+
     // Load casino game in iframe
     const gamePath = `/${gameName}/index.html`;
     casinoContainer.innerHTML = `<iframe src="${gamePath}" class="casino-iframe" frameborder="0"></iframe>`;
-    
+
     casinoModal.classList.remove('hidden');
-    
+
     // Hide buy modal
     if (buyModal) {
         buyModal.classList.add('hidden');
     }
-    
+
     // Listen for messages from the casino game iframe
     window.addEventListener('message', handleCasinoGameMessage);
 }
@@ -1631,7 +1630,7 @@ function updatePlayersList() {
                     <span class="player-card-name">${displayName}</span>
                     <div class="player-card-badges">${turnBadge}${aiBadge}${jailBadge}</div>
                 </div>
-                <div class="player-card-money">$${(player.money ?? 25000).toLocaleString()}</div>
+                <div class="player-card-money">$${(player.money ?? 2500).toLocaleString()}</div>
             </div>
         `;
 
@@ -1703,12 +1702,12 @@ function addChatMessage(sender, message) {
 // Update UI elements
 function updateUI() {
     if (currentPlayer) {
-        playerMoneyEl.textContent = `$${currentPlayer.money || 25000}`;
+        playerMoneyEl.textContent = `$${currentPlayer.money || 2500}`;
         playerNameEl.textContent = currentPlayer.name;
         localStorage.setItem('playerName', currentPlayer.name);
     } else {
         // Set defaults when currentPlayer is not available
-        playerMoneyEl.textContent = '$25000';
+        playerMoneyEl.textContent = '$2500';
         playerNameEl.textContent = 'Player';
     }
     

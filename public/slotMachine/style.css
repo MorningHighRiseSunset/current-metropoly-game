@@ -4,38 +4,38 @@
 .slot-machine-frame {
 	width: 480px;
 	margin: 40px auto;
-	background: linear-gradient(180deg, #e0e0e0 0%, #444 100%);
+	background: linear-gradient(180deg, #1a0a2e 0%, #0d0015 100%);
 	border-radius: 32px 32px 40px 40px;
 	box-shadow:
-		0 20px 60px 0 rgba(0,0,0,0.7),
-		0 0 0 8px #FFD700 inset,
-		0 0 40px 8px #fff8 inset,
-		0 0 80px 0 #FFD700;
+		0 20px 60px 0 rgba(0,0,0,0.8),
+		0 0 0 8px #8b5cf6 inset,
+		0 0 40px 8px #a78bfa inset,
+		0 0 80px 0 #8b5cf6;
 	padding-bottom: 24px;
 	position: relative;
-	border: 6px solid #FFD700;
+	border: 6px solid #8b5cf6;
 	perspective: 900px;
 	transform-style: preserve-3d;
 }
 
 
 .slot-machine-top {
-	background: linear-gradient(90deg, #FFD700 60%, #FFA500 100%);
+	background: linear-gradient(90deg, #8b5cf6 60%, #6d28d9 100%);
 	border-radius: 32px 32px 0 0;
 	padding: 18px 0 8px 0;
 	text-align: center;
 	position: relative;
-	box-shadow: 0 2px 24px 8px #FFD700, 0 2px 12px rgba(0,0,0,0.18);
-	filter: drop-shadow(0 0 12px #FFD700);
+	box-shadow: 0 2px 24px 8px #8b5cf6, 0 2px 12px rgba(0,0,0,0.18);
+	filter: drop-shadow(0 0 12px #8b5cf6);
 }
 
 
 .slot-title {
 	font-size: 2.1rem;
 	font-weight: bold;
-	color: #222;
+	color: #fff;
 	letter-spacing: 3px;
-	text-shadow: 0 2px 8px #fff, 0 0 2px #FFD700, 0 0 24px #FFD700;
+	text-shadow: 0 2px 8px #a78bfa, 0 0 2px #8b5cf6, 0 0 24px #8b5cf6;
 }
 
 .slot-lights {
@@ -47,9 +47,9 @@
 .light {
 	width: 18px;
 	height: 18px;
-	background: radial-gradient(circle, #fff 60%, #FFD700 100%);
+	background: radial-gradient(circle, #fff 60%, #a78bfa 100%);
 	border-radius: 50%;
-	box-shadow: 0 0 2px #FFD700, 0 0 1px #fff;
+	box-shadow: 0 0 2px #8b5cf6, 0 0 1px #fff;
 	border: 2px solid #fff;
 	animation: blink 1.2s infinite alternate;
 }
@@ -61,7 +61,7 @@
 
 @keyframes blink {
 	0% { filter: brightness(1); }
-	100% { filter: brightness(1.3) drop-shadow(0 0 2px #FFD700); }
+	100% { filter: brightness(1.3) drop-shadow(0 0 2px #8b5cf6); }
 }
 
 .slot-machine-body {
@@ -90,17 +90,17 @@
 .lever-bar {
 	width: 12px;
 	height: 120px;
-	background: linear-gradient(180deg, #eee 60%, #888 100%);
+	background: linear-gradient(180deg, #4c1d95 60%, #2e1065 100%);
 	border-radius: 6px;
 	margin-bottom: 0;
-	box-shadow: 0 2px 8px #888, 0 0 12px #FFD700 inset;
+	box-shadow: 0 2px 8px #1e1b4b, 0 0 12px #8b5cf6 inset;
 }
 .lever-knob {
 	width: 32px;
 	height: 32px;
-	background: radial-gradient(circle, #FFD700 60%, #FFA500 100%);
+	background: radial-gradient(circle, #a78bfa 60%, #7c3aed 100%);
 	border-radius: 50%;
-	box-shadow: 0 0 12px #FFD700, 0 0 2px #fff;
+	box-shadow: 0 0 12px #8b5cf6, 0 0 2px #fff;
 	border: 3px solid #fff;
 	margin-top: -8px;
 }
@@ -108,9 +108,9 @@
 .slot-machine-container {
 	width: 400px;
 	margin: 0 auto;
-	background: linear-gradient(135deg, #222 60%, #444 100%);
+	background: linear-gradient(135deg, #1a0a2e 60%, #0d0015 100%);
 	border-radius: 20px;
-	box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+	box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 	padding: 32px 24px 24px 24px;
 	text-align: center;
 	color: #fff;
@@ -137,15 +137,15 @@
 .reel-rect {
 	width: 80px;
 	height: 180px;
-	background: linear-gradient(120deg, #222 60%, #444 100%);
-	border: 4px solid #FFD700;
+	background: linear-gradient(120deg, #1a0a2e 60%, #0d0015 100%);
+	border: 4px solid #8b5cf6;
 	border-radius: 18px;
 	overflow: hidden;
 	box-shadow:
 		0 8px 32px rgba(0,0,0,0.45),
-		0 0 24px 4px #FFD700 inset,
-		0 0 32px 0 #fff8 inset,
-		0 0 32px 0 #FFD700;
+		0 0 24px 4px #8b5cf6 inset,
+		0 0 32px 0 #a78bfa inset,
+		0 0 32px 0 #8b5cf6;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -184,10 +184,10 @@
 	justify-content: flex-start;
 	font-size: 2.8rem;
 	transition: none;
-	filter: drop-shadow(0 2px 8px #FFD700) drop-shadow(0 0 2px #fff);
+	filter: drop-shadow(0 2px 8px #8b5cf6) drop-shadow(0 0 2px #fff);
 }
 .reel-strip.spinning {
-	filter: blur(2.5px) drop-shadow(0 2px 8px #FFD700) drop-shadow(0 0 2px #fff);
+	filter: blur(2.5px) drop-shadow(0 2px 8px #8b5cf6) drop-shadow(0 0 2px #fff);
 }
 .sparkles {
 	position: absolute;
@@ -201,7 +201,7 @@
 	position: absolute;
 	width: 18px;
 	height: 18px;
-	background: radial-gradient(circle, #fff 60%, #FFD700 100%);
+	background: radial-gradient(circle, #fff 60%, #a78bfa 100%);
 	border-radius: 50%;
 	opacity: 0.8;
 	animation: sparkle-fade 1.2s linear forwards;
@@ -221,27 +221,27 @@
 	justify-content: center;
 	font-size: 2.8rem;
 	user-select: none;
-	text-shadow: 0 2px 8px #FFD700, 0 0 2px #fff, 0 0 12px #FFD700;
+	text-shadow: 0 2px 8px #8b5cf6, 0 0 2px #fff, 0 0 12px #8b5cf6;
 }
 
 
 #spinBtn {
-	background: radial-gradient(circle, #FFD700 60%, #FFA500 100%);
-	color: #222;
+	background: radial-gradient(circle, #a78bfa 60%, #7c3aed 100%);
+	color: #fff;
 	font-size: 1.3rem;
 	font-weight: bold;
 	border: 3px solid #fff;
 	border-radius: 50px;
 	padding: 16px 48px;
 	cursor: pointer;
-	box-shadow: 0 4px 16px rgba(0,0,0,0.18), 0 0 0 4px #FFD700 inset;
+	box-shadow: 0 4px 16px rgba(0,0,0,0.18), 0 0 0 4px #8b5cf6 inset;
 	margin-bottom: 18px;
 	transition: background 0.2s, transform 0.1s;
 	letter-spacing: 2px;
 }
 
 #spinBtn:active {
-	background: #FFA500;
+	background: #7c3aed;
 	transform: scale(0.97);
 }
 

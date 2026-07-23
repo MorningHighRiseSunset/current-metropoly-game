@@ -9,7 +9,95 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 		container.querySelector('#reel3-strip')
 	];
 	const balanceSpan = container.querySelector('#slot-balance');
-	let balance = typeof playerMoney === 'number' ? playerMoney : 25000;
+	let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
+
+	// Sound effects using Web Audio API
+	const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+	function playSpinSound() {
+		try {
+			const oscillator = audioContext.createOscillator();
+			const gainNode = audioContext.createGain();
+			oscillator.type = 'sawtooth';
+			oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+			oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1);
+			gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+			gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+			oscillator.connect(gainNode);
+			gainNode.connect(audioContext.destination);
+			oscillator.start();
+			oscillator.stop(audioContext.currentTime + 0.2);
+		} catch (e) {
+			console.log('Could not play spin sound:', e);
+		}
+	}
+
+	function playReelSound() {
+		try {
+			for (let i = 0; i < 8; i++) {
+				setTimeout(() => {
+					const oscillator = audioContext.createOscillator();
+					const gainNode = audioContext.createGain();
+					oscillator.type = 'square';
+					oscillator.frequency.setValueAtTime(400 + Math.random() * 200, audioContext.currentTime);
+					gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+					gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+					oscillator.connect(gainNode);
+					gainNode.connect(audioContext.destination);
+					oscillator.start();
+					oscillator.stop(audioContext.currentTime + 0.05);
+				}, i * 100);
+			}
+		} catch (e) {
+			console.log('Could not play reel sound:', e);
+		}
+	}
+
+	function playWinSound() {
+		try {
+			// Play a cheerful win melody
+			const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+			notes.forEach((freq, i) => {
+				setTimeout(() => {
+					const oscillator = audioContext.createOscillator();
+					const gainNode = audioContext.createGain();
+					oscillator.type = 'sine';
+					oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+					gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+					gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+					oscillator.connect(gainNode);
+					gainNode.connect(audioContext.destination);
+					oscillator.start();
+					oscillator.stop(audioContext.currentTime + 0.3);
+				}, i * 150);
+			});
+		} catch (e) {
+			console.log('Could not play win sound:', e);
+		}
+	}
+
+	function playJackpotSound() {
+		try {
+			// Play an exciting jackpot melody
+			const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00]; // C major scale up
+			notes.forEach((freq, i) => {
+				setTimeout(() => {
+					const oscillator = audioContext.createOscillator();
+					const gainNode = audioContext.createGain();
+					oscillator.type = 'sine';
+					oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+					gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+					gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+					oscillator.connect(gainNode);
+					gainNode.connect(audioContext.destination);
+					oscillator.start();
+					oscillator.stop(audioContext.currentTime + 0.4);
+				}, i * 100);
+			});
+		} catch (e) {
+			console.log('Could not play jackpot sound:', e);
+		}
+	}
 	function updateBalanceDisplay() {
 		balanceSpan.textContent = balance;
 		if (typeof updateMainGameBalance === 'function') {
@@ -19,7 +107,7 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 		}
 		// Send winnings to parent window via postMessage
 		if (window.parent !== window) {
-			const initialBalance = typeof playerMoney === 'number' ? playerMoney : 25000;
+			const initialBalance = typeof playerMoney === 'number' ? playerMoney : 2500;
 			const winnings = balance - initialBalance;
 			if (winnings !== 0) {
 				window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
@@ -76,6 +164,8 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 		updateBalanceDisplay();
 		spinBtn.disabled = true;
 		message.textContent = '';
+		// Play spin sound
+		playSpinSound();
 		// Animate lever
 		const lever = container.querySelector('#slot-lever');
 		lever.classList.add('pulled');
@@ -85,6 +175,8 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 		reelStrips.forEach((strip, idx) => {
 			animateReelDown(strip, finalSymbols[idx], 4000 + idx*500);
 		});
+		// Play reel spinning sound
+		playReelSound();
 		setTimeout(() => {
 			// Wait for the animation to finish, then smoothly fade to the final result
 			reelStrips.forEach((strip, idx) => {
@@ -93,13 +185,12 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 				strip.style.opacity = '0';
 				setTimeout(() => {
 					strip.classList.remove('spinning');
-					// Show four symbols: one above, the final, one below, and one more below
+					// Show three symbols: one above, the final (middle), one below
 					strip.innerHTML = '';
 					const above = getRandomSymbol();
 					const final = finalSymbols[idx];
 					const below = getRandomSymbol();
-					const below2 = getRandomSymbol();
-					[above, final, below, below2].forEach(sym => {
+					[above, final, below].forEach(sym => {
 						const symbolDiv = document.createElement('div');
 						symbolDiv.className = 'reel-symbol';
 						symbolDiv.textContent = sym;
@@ -125,9 +216,11 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 				reward = 50000;
 				message.textContent = `💎💎💎 DIAMOND JACKPOT! Three Diamonds! You win $${reward}!`;
 				message.style.color = '#00eaff';
+				playJackpotSound();
 			} else {
 				message.textContent = `🎉 Jackpot! Three ${symbol}! You win $${reward}!`;
 				message.style.color = '#FFD700';
+				playWinSound();
 			}
 			balance += reward;
 			updateBalanceDisplay();
@@ -138,6 +231,7 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 			updateBalanceDisplay();
 			message.textContent = `Nice! Two matching symbols! You win $${reward}!`;
 			message.style.color = '#FFA500';
+			playWinSound();
 		} else {
 			message.textContent = 'Try again!';
 			message.style.color = '#fff';
@@ -167,9 +261,9 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('slotMachine/script.js')) {
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function() {
-			window.initSlotMachine();
+			window.initSlotMachine(document);
 		});
 	} else {
-		window.initSlotMachine();
+		window.initSlotMachine(document);
 	}
 }

@@ -28,9 +28,9 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 	}
 
 	// --- Game State ---
-	let playerChips = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 25000;
+	let playerChips = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 2500;
 	let startingChips = playerChips;
-	let aiChips = 25000;
+	let aiChips = 2500;
 	let pot = 0;
 	let deck = [];
 	let playerHand = [];
@@ -355,7 +355,7 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 		}
 		// Send winnings to parent window via postMessage
 		if (window.parent !== window) {
-			const initialBalance = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 25000;
+			const initialBalance = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 2500;
 			const winnings = playerChips - initialBalance;
 			if (winnings !== 0) {
 				window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');

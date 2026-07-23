@@ -1,5 +1,5 @@
 body {
-	background: #245224;
+	background: linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);
 	font-family: 'Segoe UI', Arial, sans-serif;
 	margin: 0;
 	padding: 0;
@@ -9,9 +9,9 @@ body {
 .poker-container {
 	width: 600px;
 	margin: 40px auto;
-	background: #245224;
+	background: linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);
 	border-radius: 18px;
-	box-shadow: 0 4px 24px #000a;
+	box-shadow: 0 4px 24px #000a, 0 0 0 2px #8b5cf6;
 	padding: 24px 18px 18px 18px;
 	min-height: 600px;
 }
@@ -24,7 +24,7 @@ h1 {
 }
 
 .table-area {
-	background: #2e6b2e;
+	background: linear-gradient(135deg, #2e1065 0%, #1a0a2e 100%);
 	border-radius: 14px;
 	padding: 18px 10px 10px 10px;
 	margin-bottom: 18px;
@@ -32,6 +32,7 @@ h1 {
 	flex-direction: column;
 	align-items: center;
 	gap: 18px;
+	border: 2px solid #8b5cf6;
 }
 
 .ai-area, .player-area {
@@ -84,8 +85,8 @@ h1 {
 }
 
 .card.back {
-	background: linear-gradient(135deg, #2d2d2d 0%, #b71c1c 100%);
-	border: 2px solid #b71c1c;
+	background: linear-gradient(135deg, #1a0a2e 0%, #4c1d95 100%);
+	border: 2px solid #8b5cf6;
 	position: relative;
 	overflow: hidden;
 }
@@ -96,10 +97,10 @@ h1 {
 	top: 50%;
 	transform: translate(-50%, -50%) scale(1.5);
 	font-size: 1.7em;
-	color: #fffbe6;
+	color: #a78bfa;
 	opacity: 0.85;
 	pointer-events: none;
-	text-shadow: 0 0 6px #b71c1c, 0 0 2px #fff;
+	text-shadow: 0 0 6px #8b5cf6, 0 0 2px #fff;
 }
 
 /* Card flip animation (for future use, e.g. on showdown) */
@@ -125,7 +126,7 @@ h1 {
 
 .pot {
 	font-size: 1.1em;
-	color: #ffd700;
+	color: #a78bfa;
 	font-weight: bold;
 }
 
@@ -151,13 +152,13 @@ h1 {
 }
 
 .controls button {
-	background: #388e3c;
+	background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
 	color: #fff;
 	cursor: pointer;
 	transition: background 0.2s;
 }
 .controls button:hover {
-	background: #2e7031;
+	background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
 }
 
 .controls input[type="number"] {
@@ -172,6 +173,6 @@ h1 {
 	min-height: 32px;
 	font-size: 1.1em;
 	margin-top: 8px;
-	color: #ffd700;
+	color: #a78bfa;
 	font-weight: bold;
 }

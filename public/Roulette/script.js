@@ -1,6 +1,10 @@
 // --- Roulette Game Logic & Animation ---
 // Supports both standalone and dynamic loader usage
 window.initRouletteMinigame = function(root, playerMoney, updateMainGameBalance) {
+	root = root || document;
+	function q(sel) { return (root.querySelector ? root.querySelector(sel) : document.querySelector(sel)); }
+	function qa(sel) { return Array.from(root.querySelectorAll ? root.querySelectorAll(sel) : document.querySelectorAll(sel)); }
+
 	// Attach Spin button event handler (works for both standalone and dynamic)
 	const spinBtn = q('#spin-btn');
 	// Add spin sound
@@ -35,9 +39,6 @@ window.initRouletteMinigame = function(root, playerMoney, updateMainGameBalance)
 			if (typeof window.spinWheel === 'function') window.spinWheel();
 		};
 	}
-	root = root || document;
-	function q(sel) { return (root.querySelector ? root.querySelector(sel) : document.querySelector(sel)); }
-	function qa(sel) { return Array.from(root.querySelectorAll ? root.querySelectorAll(sel) : document.querySelectorAll(sel)); }
 
 	const canvasWheel = q('#wheel');
 	if (!canvasWheel) return;
@@ -79,24 +80,24 @@ function drawWheel(angle = 0, ballA = null) {
 
 	ctxWheel.clearRect(0, 0, canvasWheel.width, canvasWheel.height);
 
-	// 3D wooden border (outer ring)
+	// 3D purple border (outer ring)
 	ctxWheel.beginPath();
 	ctxWheel.arc(centerX, centerY, borderOuter, 0, 2 * Math.PI);
-	ctxWheel.fillStyle = '#5a2d0c';
-	ctxWheel.shadowColor = '#2d1404';
+	ctxWheel.fillStyle = '#2e1065';
+	ctxWheel.shadowColor = '#1a0a2e';
 	ctxWheel.shadowBlur = 18;
 	ctxWheel.fill();
 	ctxWheel.shadowBlur = 0;
 
-	// Main wood ring
+	// Main purple ring
 	ctxWheel.beginPath();
 	ctxWheel.arc(centerX, centerY, borderInner, 0, 2 * Math.PI);
 	ctxWheel.arc(centerX, centerY, borderOuter, 0, 2 * Math.PI, true);
 	ctxWheel.closePath();
 	let grad = ctxWheel.createRadialGradient(centerX, centerY, borderInner, centerX, centerY, borderOuter);
-	grad.addColorStop(0, '#a86b2e');
-	grad.addColorStop(0.5, '#e2b07a');
-	grad.addColorStop(1, '#5a2d0c');
+	grad.addColorStop(0, '#4c1d95');
+	grad.addColorStop(0.5, '#8b5cf6');
+	grad.addColorStop(1, '#2e1065');
 		ctxWheel.save();
 		ctxWheel.translate(centerX, centerY);
 		ctxWheel.rotate(angle * Math.PI / 180);
@@ -105,13 +106,13 @@ function drawWheel(angle = 0, ballA = null) {
 		ctxWheel.beginPath();
 		ctxWheel.arc(0, 0, radius, 0, 2 * Math.PI);
 		let wheelGrad = ctxWheel.createRadialGradient(0, 0, 30, 0, 0, radius);
-		wheelGrad.addColorStop(0, '#fffbe6');
-		wheelGrad.addColorStop(0.15, '#e2b07a');
-		wheelGrad.addColorStop(0.5, '#222');
-		wheelGrad.addColorStop(1, '#111');
+		wheelGrad.addColorStop(0, '#a78bfa');
+		wheelGrad.addColorStop(0.15, '#8b5cf6');
+		wheelGrad.addColorStop(0.5, '#1a0a2e');
+		wheelGrad.addColorStop(1, '#0d0015');
 		ctxWheel.fillStyle = wheelGrad;
 		ctxWheel.fill();
-		ctxWheel.strokeStyle = '#000';
+		ctxWheel.strokeStyle = '#8b5cf6';
 		ctxWheel.lineWidth = 2;
 		ctxWheel.stroke();
 
@@ -132,31 +133,31 @@ function drawWheel(angle = 0, ballA = null) {
 				Math.sin(endAngle) * (radius - 25)
 			);
 			if (colors[num] === 'red') {
-				slotGrad.addColorStop(0, '#e53935');
-				slotGrad.addColorStop(0.5, '#a31515');
-				slotGrad.addColorStop(1, '#e53935');
+				slotGrad.addColorStop(0, '#8b5cf6');
+				slotGrad.addColorStop(0.5, '#6d28d9');
+				slotGrad.addColorStop(1, '#8b5cf6');
 			} else if (colors[num] === 'black') {
-				slotGrad.addColorStop(0, '#444');
-				slotGrad.addColorStop(0.5, '#111');
-				slotGrad.addColorStop(1, '#444');
+				slotGrad.addColorStop(0, '#1a0a2e');
+				slotGrad.addColorStop(0.5, '#0d0015');
+				slotGrad.addColorStop(1, '#1a0a2e');
 			} else {
-				slotGrad.addColorStop(0, '#3fa34d');
-				slotGrad.addColorStop(0.5, '#0a4a23');
-				slotGrad.addColorStop(1, '#3fa34d');
+				slotGrad.addColorStop(0, '#4c1d95');
+				slotGrad.addColorStop(0.5, '#2e1065');
+				slotGrad.addColorStop(1, '#4c1d95');
 			}
 			ctxWheel.fillStyle = slotGrad;
 			ctxWheel.shadowColor = '#0008';
 			ctxWheel.shadowBlur = 4;
 			ctxWheel.fill();
 			ctxWheel.shadowBlur = 0;
-			ctxWheel.strokeStyle = '#fffbe6';
+			ctxWheel.strokeStyle = '#a78bfa';
 			ctxWheel.lineWidth = 1.5;
 			ctxWheel.stroke();
 
 			// Draw number (rotated to center of slot)
 			ctxWheel.save();
 			ctxWheel.rotate(startAngle + (endAngle - startAngle) / 2);
-			ctxWheel.fillStyle = '#fffbe6';
+			ctxWheel.fillStyle = '#fff';
 			ctxWheel.font = 'bold 17px Arial';
 			ctxWheel.textAlign = 'center';
 			ctxWheel.shadowColor = '#000a';
@@ -171,11 +172,11 @@ function drawWheel(angle = 0, ballA = null) {
 		ctxWheel.beginPath();
 		ctxWheel.arc(0, 0, 22, 0, 2 * Math.PI);
 		let spindleGrad = ctxWheel.createRadialGradient(0, 0, 2, 0, 0, 22);
-		spindleGrad.addColorStop(0, '#fffbe6');
-		spindleGrad.addColorStop(0.4, '#bfae7c');
-		spindleGrad.addColorStop(1, '#888');
+		spindleGrad.addColorStop(0, '#a78bfa');
+		spindleGrad.addColorStop(0.4, '#7c3aed');
+		spindleGrad.addColorStop(1, '#4c1d95');
 		ctxWheel.fillStyle = spindleGrad;
-		ctxWheel.shadowColor = '#fffbe6';
+		ctxWheel.shadowColor = '#8b5cf6';
 		ctxWheel.shadowBlur = 8;
 		ctxWheel.fill();
 		ctxWheel.shadowBlur = 0;
@@ -213,7 +214,7 @@ function drawWheel(angle = 0, ballA = null) {
 		ballGrad.addColorStop(0.7, '#b0b0b0');
 		ballGrad.addColorStop(1, '#888');
 		ctxWheel.fillStyle = ballGrad;
-		ctxWheel.shadowColor = '#fffbe6';
+		ctxWheel.shadowColor = '#a78bfa';
 		ctxWheel.shadowBlur = 10;
 		ctxWheel.fill();
 		ctxWheel.shadowBlur = 0;
@@ -225,7 +226,7 @@ function drawWheel(angle = 0, ballA = null) {
 		ctxWheel.beginPath();
 		ctxWheel.arc(hx, hy, 4.2, 0, 2 * Math.PI);
 		ctxWheel.fillStyle = 'rgba(255,255,220,0.92)';
-		ctxWheel.shadowColor = '#fffbe6';
+		ctxWheel.shadowColor = '#a78bfa';
 		ctxWheel.shadowBlur = 12;
 		ctxWheel.fill();
 		ctxWheel.shadowBlur = 0;
@@ -413,7 +414,7 @@ function showResult() {
 
 
 // --- Player Info Logic ---
-window.playerBalance = typeof playerMoney === 'number' ? playerMoney : 25000;
+window.playerBalance = typeof playerMoney === 'number' ? playerMoney : 2500;
 window.betAmount = 1000;
 
 function updatePlayerInfo() {
@@ -433,7 +434,7 @@ function updatePlayerInfo() {
 	}
 	// Send winnings to parent window via postMessage
 	if (window.parent !== window) {
-		const initialBalance = typeof playerMoney === 'number' ? playerMoney : 25000;
+		const initialBalance = typeof playerMoney === 'number' ? playerMoney : 2500;
 		const winnings = window.playerBalance - initialBalance;
 		if (winnings !== 0) {
 			window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');

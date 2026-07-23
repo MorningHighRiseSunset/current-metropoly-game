@@ -133,7 +133,7 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
 	const cardSound2 = q('#card-sound2');
 
 	// --- State ---
-	let balance = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 25000;
+	let balance = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 2500;
 	let currentBet = 0;
 	let currentBetSquare = null;
 	let playerHand = [];
@@ -228,7 +228,7 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
 		}
 		// Send winnings to parent window via postMessage
 		if (window.parent !== window) {
-			const initialBalance = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 25000;
+			const initialBalance = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 2500;
 			const winnings = balance - initialBalance;
 			if (winnings !== 0) {
 				window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');

@@ -2,7 +2,6 @@
 node_modules/
 
 # Media files (too large for deployment)
-Videos/
 Images/
 Models/
 

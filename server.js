@@ -297,8 +297,10 @@ function executeAIRollDice(game, aiPlayer) {
                     io.to(game.id).emit('passedGo', {
                         playerId: aiPlayer.id,
                         amount: 200,
-                        newMoney: aiPlayer.money
+                        newMoney: aiPlayer.money,
+                        players: game.players
                     });
+                    checkGameWinner(game);
                 }
 
                 aiPlayer.position = newPosition;
@@ -335,10 +337,10 @@ function executeAIRollDice(game, aiPlayer) {
                                 io.to(game.id).emit('taxPaid', {
                                     playerId: aiPlayer.id,
                                     amount: landedSpace.amount,
-                                    taxName: landedSpace.name,
                                     newMoney: aiPlayer.money,
                                     players: game.players
                                 });
+                                checkGameWinner(game);
                             }
                             setTimeout(() => gameRuntime.advanceTurn(game), 500);
                         } else if (landedSpace.position === 31) { // Go to Jail
@@ -402,8 +404,10 @@ function executeAIRollDice(game, aiPlayer) {
                 io.to(game.id).emit('goBonus', {
                     playerId: aiPlayer.id,
                     amount: 200,
-                    newMoney: aiPlayer.money
+                    newMoney: aiPlayer.money,
+                    players: game.players
                 });
+                checkGameWinner(game);
             }
 
             setTimeout(() => {
@@ -416,6 +420,13 @@ function executeAIRollDice(game, aiPlayer) {
                 aiPlayer.money -= 50;
                 aiPlayer.inJail = false;
                 aiPlayer.jailTurns = 0;
+                
+                io.to(game.id).emit('jailPaid', {
+                    playerId: aiPlayer.id,
+                    newMoney: aiPlayer.money,
+                    players: game.players
+                });
+                checkGameWinner(game);
 
                 io.to(game.id).emit('playerOutOfJail', {
                     playerId: aiPlayer.id,
@@ -482,8 +493,10 @@ function executeAIRollDice(game, aiPlayer) {
         io.to(game.id).emit('passedGo', {
             playerId: aiPlayer.id,
             amount: 200,
-            newMoney: aiPlayer.money
+            newMoney: aiPlayer.money,
+            players: game.players
         });
+        checkGameWinner(game);
     }
 
     aiPlayer.position = newPosition;
@@ -520,10 +533,10 @@ function executeAIRollDice(game, aiPlayer) {
                     io.to(game.id).emit('taxPaid', {
                         playerId: aiPlayer.id,
                         amount: landedSpace.amount,
-                        taxName: landedSpace.name,
                         newMoney: aiPlayer.money,
                         players: game.players
                     });
+                    checkGameWinner(game);
                 }
                 setTimeout(() => gameRuntime.advanceTurn(game), 500);
             } else if (landedSpace.position === 31) { // Go to Jail
@@ -568,13 +581,15 @@ function executeAIPropertyDecision(game, aiPlayer, property) {
         aiPlayer.money -= property.price;
         if (!aiPlayer.properties) aiPlayer.properties = [];
         aiPlayer.properties.push(aiPlayer.position);
-
+        
         io.to(game.id).emit('propertyPurchased', {
             playerId: aiPlayer.id,
             position: aiPlayer.position,
             propertyName: property.name,
-            newMoney: aiPlayer.money
+            newMoney: aiPlayer.money,
+            players: game.players
         });
+        checkGameWinner(game);
 
         updateGameState(game);
         console.log(`AI ${aiPlayer.name} bought ${property.name}`);
@@ -617,7 +632,7 @@ io.on('connection', (socket) => {
             id: socket.id,
             uid: uuidv4(),
             name: playerName,
-            money: 25000,
+            money: 2500,
             position: 0,
             properties: [],
             inJail: false,
@@ -668,7 +683,7 @@ io.on('connection', (socket) => {
             id: socket.id,
             uid: uuidv4(),
             name: playerName,
-            money: 25000,
+            money: 2500,
             position: 0,
             properties: [],
             inJail: false,
@@ -729,7 +744,7 @@ io.on('connection', (socket) => {
             id: `ai-${gameId}-${Date.now()}`,
             uid: uuidv4(),
             name: `AI Player ${aiPlayerCount}`,
-            money: 25000,
+            money: 2500,
             position: 0,
             properties: [],
             inJail: false,
@@ -1150,6 +1165,8 @@ io.on('connection', (socket) => {
         if (!player.properties) player.properties = [];
         player.properties.push(player.position);
         
+        checkGameWinner(game);
+        
         // Update game state
         io.to(game.id).emit('propertyPurchased', {
             playerId: player.id,
@@ -1376,8 +1393,10 @@ io.on('connection', (socket) => {
                     io.to(game.id).emit('goBonus', {
                         playerId: socket.id,
                         amount: 200,
-                        newMoney: currentPlayer.money
+                        newMoney: currentPlayer.money,
+                        players: game.players
                     });
+                    checkGameWinner(game);
                 }
 
                 io.to(game.id).emit('playerMoved', {
@@ -1398,6 +1417,13 @@ io.on('connection', (socket) => {
                     currentPlayer.money -= 50;
                     currentPlayer.inJail = false;
                     currentPlayer.jailTurns = 0;
+                    
+                    io.to(game.id).emit('jailPaid', {
+                        playerId: socket.id,
+                        newMoney: currentPlayer.money,
+                        players: game.players
+                    });
+                    checkGameWinner(game);
                     
                     io.to(game.id).emit('playerOutOfJail', {
                         playerId: socket.id,
@@ -1458,8 +1484,10 @@ io.on('connection', (socket) => {
             io.to(game.id).emit('passedGo', {
                 playerId: socket.id,
                 amount: 200,
-                newMoney: currentPlayer.money
+                newMoney: currentPlayer.money,
+                players: game.players
             });
+            checkGameWinner(game);
         }
         
         currentPlayer.position = newPosition;
@@ -1568,12 +1596,14 @@ io.on('connection', (socket) => {
                         owner.money += rent;
 
                         io.to(game.id).emit('rentPaid', {
-                            payerId: player.id,
+                            playerId: player.id,
                             ownerId: owner.id,
                             amount: rent,
-                            property: landedSpace,
+                            newMoney: player.money,
+                            ownerNewMoney: owner.money,
                             players: game.players
                         });
+                        checkGameWinner(game);
                     } else {
                         // Player goes bankrupt
                         handleBankruptcy(game, player, owner, rent);
@@ -1692,7 +1722,26 @@ io.on('connection', (socket) => {
     // Check for game winner
     function checkGameWinner(game) {
         const activePlayers = game.players.filter(p => p && !p.isBankrupt);
+        const WINNING_MONEY_THRESHOLD = 10000;
         
+        // Check if any player has reached the money threshold
+        for (const player of activePlayers) {
+            if (player.money >= WINNING_MONEY_THRESHOLD) {
+                game.status = 'finished';
+                game.winner = player.id;
+                
+                io.to(game.id).emit('gameWon', {
+                    winnerId: player.id,
+                    winnerName: player.name,
+                    winReason: 'money',
+                    winningAmount: player.money,
+                    players: game.players
+                });
+                return;
+            }
+        }
+        
+        // Fallback: bankruptcy condition (only one player left)
         if (activePlayers.length === 1) {
             const winner = activePlayers[0];
             game.status = 'finished';
@@ -1701,6 +1750,7 @@ io.on('connection', (socket) => {
             io.to(game.id).emit('gameWon', {
                 winnerId: winner.id,
                 winnerName: winner.name,
+                winReason: 'bankruptcy',
                 players: game.players
             });
         }
@@ -1797,8 +1847,10 @@ io.on('connection', (socket) => {
                 io.to(game.id).emit('playerMoneyChanged', {
                     playerId: player.id,
                     amount: card.amount,
-                    newTotal: player.money
+                    newMoney: player.money,
+                    players: game.players
                 });
+                checkGameWinner(game);
                 break;
                 
             case 'move':
@@ -1912,6 +1964,13 @@ io.on('connection', (socket) => {
                     player.money -= 50;
                     player.inJail = false;
                     player.jailTurns = 0;
+                    
+                    io.to(game.id).emit('jailPaid', {
+                        playerId: player.id,
+                        newMoney: player.money,
+                        players: game.players
+                    });
+                    checkGameWinner(game);
                     
                     io.to(game.id).emit('playerOutOfJail', {
                         playerId: socket.id,
@@ -2116,6 +2175,8 @@ io.on('connection', (socket) => {
             toPlayer.money += trade.offer.money;
             fromPlayer.money += trade.request.money;
             toPlayer.money -= trade.request.money;
+            
+            checkGameWinner(game);
 
             // Transfer properties
             fromPlayer.properties = fromPlayer.properties.filter(p => !trade.offer.properties.includes(p));
@@ -2242,6 +2303,8 @@ io.on('connection', (socket) => {
         player.money += mortgageValue;
         player.mortgagedProperties = player.mortgagedProperties || [];
         player.mortgagedProperties.push(data.position);
+        
+        checkGameWinner(game);
 
         io.to(playerData.gameId).emit('propertyMortgaged', {
             playerId: socket.id,
@@ -2275,6 +2338,8 @@ io.on('connection', (socket) => {
 
         player.money -= unmortgageCost;
         player.mortgagedProperties = player.mortgagedProperties.filter(pos => pos !== data.position);
+        
+        checkGameWinner(game);
 
         io.to(playerData.gameId).emit('propertyUnmortgaged', {
             playerId: socket.id,
@@ -2311,6 +2376,8 @@ io.on('connection', (socket) => {
 
         player.houses[data.position] = currentHouses - 1;
         player.money += sellPrice;
+        
+        checkGameWinner(game);
 
         io.to(playerData.gameId).emit('houseSold', {
             playerId: socket.id,
@@ -2411,6 +2478,13 @@ io.on('connection', (socket) => {
             player.inJail = false;
             player.jailTurns = 0;
             
+            io.to(game.id).emit('jailPaid', {
+                playerId: socket.id,
+                newMoney: player.money,
+                players: game.players
+            });
+            checkGameWinner(game);
+            
             io.to(game.id).emit('playerOutOfJail', {
                 playerId: socket.id,
                 method: 'pay',
@@ -2453,6 +2527,8 @@ io.on('connection', (socket) => {
 
         const winnings = data.amount || 0;
         player.money += winnings;
+        
+        checkGameWinner(game);
 
         io.to(game.id).emit('playerMoneyUpdate', {
             playerId: player.id,
@@ -2487,12 +2563,14 @@ io.on('connection', (socket) => {
                 owner.money += amount;
 
                 io.to(game.id).emit('rentPaid', {
-                    payerId: player.id,
+                    playerId: player.id,
                     ownerId: owner.id,
                     amount: amount,
-                    property: landedSpace,
+                    newMoney: player.money,
+                    ownerNewMoney: owner.money,
                     players: game.players
                 });
+                checkGameWinner(game);
             }
         }
     });

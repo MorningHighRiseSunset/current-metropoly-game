@@ -1,5 +1,5 @@
 // Auto-create Three.js 3D dice roller on page load
-window.initCrapsMinigame = function(container, bankroll = 25000, updateMainGameBalance) {
+window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBalance) {
 	// Clear container
 	container.innerHTML = '';
 	// Create craps table wrapper
@@ -92,7 +92,7 @@ window.initCrapsMinigame = function(container, bankroll = 25000, updateMainGameB
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
 			// Send winnings to parent window via postMessage
 			if (window.parent !== window) {
-				const initialBalance = bankroll || 25000;
+				const initialBalance = bankroll || 2500;
 				const winnings = playerBankroll - initialBalance;
 				if (winnings !== 0) {
 					window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
@@ -104,7 +104,7 @@ window.initCrapsMinigame = function(container, bankroll = 25000, updateMainGameB
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
 			// Send winnings to parent window via postMessage
 			if (window.parent !== window) {
-				const initialBalance = bankroll || 25000;
+				const initialBalance = bankroll || 2500;
 				const winnings = playerBankroll - initialBalance;
 				if (winnings !== 0) {
 					window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
@@ -117,7 +117,7 @@ window.initCrapsMinigame = function(container, bankroll = 25000, updateMainGameB
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
 			// Send winnings to parent window via postMessage
 			if (window.parent !== window) {
-				const initialBalance = bankroll || 25000;
+				const initialBalance = bankroll || 2500;
 				const winnings = playerBankroll - initialBalance;
 				if (winnings !== 0) {
 					window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
@@ -561,7 +561,7 @@ const BETTING_AREAS = [
 
 // Game state
 let playerBets = [];
-let playerBankroll = 25000;
+let playerBankroll = 2500;
 let playerChips = [];
 
 // Casino chip denominations and colors
