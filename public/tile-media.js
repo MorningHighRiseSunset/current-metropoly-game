@@ -1,7 +1,7 @@
 // Tile media mapping (videos and images for each tile)
 const tileMedia = {
     0: { name: 'GO', videos: [], images: [] },
-    1: { name: 'Las Vegas Raiders', videos: ['/Videos/LVRaidersVid.mp4', '/Videos/LVRaiders 2 (1).mp4', '/Videos/LVRaiders 3 (1).mp4', '/Videos/LVRaiders 4 (1).mp4', '/Videos/LVRaiders 5 (1).mp4'], images: ['/images/raidersimage.png'] },
+    1: { name: 'Las Vegas Raiders', videos: ['/Videos/LVRaidersVid.mp4'], images: ['/images/raidersimage.png'] },
     2: { name: 'Community Cards', videos: [], images: [] },
     3: { name: 'Las Vegas Grand Prix', videos: ['/Videos/LV Grand Prix.mp4', '/Videos/LV Grand Prix End (1).mp4'], images: [] },
     4: { name: 'Income Tax', videos: [], images: [] },

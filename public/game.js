@@ -1484,8 +1484,8 @@ function showPropertyInfo(spaceData) {
             if (media.videos && media.videos.length > 0) {
                 const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
                 const video = document.createElement('video');
-                // Encode the URL to handle spaces properly
-                video.src = encodeURI(randomVideo);
+                // Don't encode - browser handles spaces in URLs automatically
+                video.src = randomVideo;
                 video.autoplay = true;
                 video.muted = true; // Muted for autoplay to work
                 video.loop = true;
@@ -1616,7 +1616,7 @@ function updatePlayersList() {
         const displayName = isCurrentPlayer ? 'You' : (player.name || 'Unknown Player');
         const aiBadge = player.isAI ? '<span class="player-card-badge ai">AI</span>' : '';
         const turnBadge = isActiveTurn ? '<span class="player-card-badge turn">Turn</span>' : '';
-        const jailBadge = player.inJail ? '<span class="player-card-badge jail">Jail</span>' : '';
+        const jailBadge = player.inJail ? '<span class="player-card-badge jail">Jail</span>' : (player.position === 10 ? '<span class="player-card-badge visiting">Visiting</span>' : '');
 
         let avatarHtml = '<div class="player-card-avatar player-card-avatar--empty">?</div>';
         if (player.tokenIndex !== undefined && tokenData[player.tokenIndex]) {
@@ -1892,7 +1892,6 @@ socket.on('gameJoined', (data) => {
     }
     
     addLogEntry(`${currentPlayer ? currentPlayer.name : 'Player'} joined the game`, 'player');
-    addChatMessage('System', `Welcome to Metropoly, ${currentPlayer ? currentPlayer.name : 'Player'}!`);
     
     // Update tokens to show all players' tokens on the board
     updateTokens();
@@ -1967,7 +1966,6 @@ socket.on('gameStarted', (data) => {
     updateTokenVisibility();
 
     addLogEntry('Game started!', 'system');
-    addChatMessage('System', 'Game started! Good luck!');
 });
 
 socket.on('gameReady', (data) => {
@@ -1980,7 +1978,6 @@ socket.on('gameReady', (data) => {
     }
 
     addLogEntry(data.message, 'system');
-    addChatMessage('System', data.message);
 
     // Update game status to show game is ready
     const gameCodeEl = document.getElementById('gameCode');
@@ -2015,7 +2012,6 @@ socket.on('propertyPurchased', (data) => {
         
         updateUI();
         addLogEntry(`${player.name} bought ${propertyName} for $${boardConfig[position].price}`, 'property');
-        addChatMessage('System', `${player.name} bought ${propertyName} for $${boardConfig[position].price}`);
         
         // Update property display on board
         if (boardSpaces[position]) {
@@ -2037,9 +2033,6 @@ socket.on('propertyPassed', (data) => {
     const { playerId, position, propertyName } = data;
     const player = players.find(p => p && p.id === playerId);
     
-    if (player) {
-        addChatMessage('System', `${player.name} passed on ${propertyName}`);
-    }
     if (playerId === myPlayerId) {
         waitingForBuyResult = false;
         activePropertyDecision = null;
@@ -2052,9 +2045,6 @@ socket.on('propertyPassed', (data) => {
 socket.on('playerJoined', (data) => {
     players = data.players;
     updateUI();
-    if (!currentPlayer || data.playerName !== currentPlayer.name) {
-        addChatMessage('System', `${data.playerName} joined the game`);
-    }
 });
 
 socket.on('playersUpdated', (data) => {
@@ -2080,13 +2070,10 @@ socket.on('playersUpdated', (data) => {
 
     // Sync token meshes from server positions (skip players mid-animation)
     update3DTokenPositions();
-
-    addChatMessage('System', data.message || 'Player list updated');
 });
 
 socket.on('playerDisconnected', (data) => {
     console.log('DISCONNECT: Received playerDisconnected event:', data);
-    addChatMessage('System', `${data.playerName} disconnected`);
     
     // Update UI to show disconnected status (but keep player in list)
     updateUI();
@@ -2128,10 +2115,6 @@ socket.on('playerMoved', (data) => {
 
         const spaceName = boardConfig[newPosition]?.name || 'unknown space';
         addLogEntry(`${player.name} moved to ${spaceName}`, 'player');
-
-        if (message) {
-            addChatMessage('System', message);
-        }
     }
 });
 
@@ -2337,6 +2320,15 @@ socket.on('playerOutOfJail', (data) => {
         player.jailTurns = 0;
         updateUI();
         addLogEntry(`${player.name} got out of jail (${data.method})`, 'system');
+    }
+});
+
+socket.on('stillInJail', (data) => {
+    const player = players.find(p => p && p.id === data.playerId);
+    if (player) {
+        player.inJail = true;
+        player.jailTurns = data.jailTurns;
+        updateUI();
     }
 });
 
