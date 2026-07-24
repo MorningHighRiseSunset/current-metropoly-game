@@ -913,14 +913,15 @@ function startPropertyDecision(spaceData, position) {
     clearPropertyDecisionTimer();
     waitingForBuyResult = false;
     activePropertyDecision = { spaceData, position, isRent: false };
-    updateBuyModalContent();
     
-    // Don't hide property modal - let user see both
-    // if (propertyModal) {
-    //     propertyModal.classList.add('hidden');
-    // }
+    // Auto-open casino if this is a casino property
+    if (spaceData.isCasino) {
+        openCasinoGame(spaceData.casinoGame);
+    } else {
+        updateBuyModalContent();
+        buyModal.classList.remove('hidden');
+    }
     
-    buyModal.classList.remove('hidden');
     updateUI();
 }
 
@@ -1013,9 +1014,10 @@ function closeCasinoGame() {
     // Remove message listener
     window.removeEventListener('message', handleCasinoGameMessage);
     
-    // Auto-end turn after closing casino game
+    // Show buy modal after casino game ends for property purchase
     if (activePropertyDecision && activePropertyDecision.spaceData.isCasino) {
-        endTurnNow();
+        updateBuyModalContent();
+        buyModal.classList.remove('hidden');
     }
 }
 
