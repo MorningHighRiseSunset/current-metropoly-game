@@ -2858,6 +2858,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateThreeCamera();
         });
     }
+});
 
 function getBoardContainerSize() {
     const el = boardViewport || boardContainer;
