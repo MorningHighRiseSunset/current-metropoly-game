@@ -1120,13 +1120,12 @@ io.on('connection', (socket) => {
             // Assign tokens to AI players now that humans have selected
             const takenTokens = humanPlayers.map(p => p.tokenIndex);
             const availableTokens = [0, 1, 2].filter(token => !takenTokens.includes(token));
-            let tokenIndex = 0;
 
             game.players.forEach(player => {
                 if (player && player.isAI && player.tokenIndex === undefined) {
                     if (availableTokens.length > 0) {
-                        player.tokenIndex = availableTokens[tokenIndex % availableTokens.length];
-                        tokenIndex++;
+                        // Assign first available token and remove it from pool
+                        player.tokenIndex = availableTokens.shift();
                         console.log(`AI player ${player.name} assigned token ${player.tokenIndex}`);
 
                         // Broadcast AI token selection
