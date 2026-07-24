@@ -475,9 +475,9 @@ const BOARD_LAYOUT = {
 // Always use premium 3D card-style tiles (slab + drawn face)
 const playersListEl = document.getElementById('playersList');
 const myPropertiesEl = document.getElementById('myProperties');
-const chatMessagesEl = document.getElementById('chatMessages');
-const chatInputEl = document.getElementById('chatInput');
-const sendChatBtn = document.getElementById('sendChatBtn');
+let chatMessagesEl = null;
+let chatInputEl = null;
+let sendChatBtn = null;
 
 // 3D View Controls
 const boardContainer = document.querySelector('.board-container');
@@ -503,10 +503,10 @@ const buyModal = document.getElementById('buyModal');
 const gameOverModal = document.getElementById('gameOverModal');
 const gameOverTitle = document.getElementById('gameOverTitle');
 const gameOverContent = document.getElementById('gameOverContent');
-const cardModal = document.getElementById('cardModal');
-const cardTitle = document.getElementById('cardTitle');
-const cardContent = document.getElementById('cardContent');
-const cardOkBtn = document.getElementById('cardOkBtn');
+let cardModal = null;
+let cardTitle = null;
+let cardContent = null;
+let cardOkBtn = null;
 const confirmTokenBtn = document.getElementById('confirmTokenBtn');
 const themeToggle = document.getElementById('themeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
@@ -2362,6 +2362,19 @@ function payToGetOutOfJail() {
 
 // Show card modal
 function showCardModal(cardType, message, action) {
+    // Initialize card modal elements if not already done
+    if (!cardModal) {
+        cardModal = document.getElementById('cardModal');
+        cardTitle = document.getElementById('cardTitle');
+        cardContent = document.getElementById('cardContent');
+        cardOkBtn = document.getElementById('cardOkBtn');
+    }
+
+    if (!cardModal || !cardTitle || !cardContent) {
+        console.error('Card modal elements not found');
+        return;
+    }
+
     cardTitle.textContent = cardType;
     cardContent.innerHTML = `
         <div class="card-display">
@@ -2627,23 +2640,41 @@ if (closeCasinoBtn) {
     });
 }
 
-sendChatBtn.addEventListener('click', () => {
-    const message = chatInputEl.value.trim();
-    if (message) {
-        socket.emit('sendChat', { message });
-        chatInputEl.value = '';
-    }
-});
+// Chat event listeners - wrapped in DOMContentLoaded to ensure elements exist
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupChatListeners);
+} else {
+    setupChatListeners();
+}
 
-chatInputEl.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        const message = chatInputEl.value.trim();
-        if (message) {
-            socket.emit('sendChat', { message });
-            chatInputEl.value = '';
-        }
+function setupChatListeners() {
+    // Initialize chat DOM elements
+    chatMessagesEl = document.getElementById('chatMessages');
+    chatInputEl = document.getElementById('chatInput');
+    sendChatBtn = document.getElementById('sendChatBtn');
+
+    if (sendChatBtn) {
+        sendChatBtn.addEventListener('click', () => {
+            const message = chatInputEl.value.trim();
+            if (message) {
+                socket.emit('sendChat', { message });
+                chatInputEl.value = '';
+            }
+        });
     }
-});
+
+    if (chatInputEl) {
+        chatInputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const message = chatInputEl.value.trim();
+                if (message) {
+                    socket.emit('sendChat', { message });
+                    chatInputEl.value = '';
+                }
+            }
+        });
+    }
+}
 
 // Roll dice button
 const rollDiceBtn = document.getElementById('rollDiceBtn');
@@ -2723,11 +2754,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Clear any stale player data from previous games
     localStorage.removeItem('playerName');
-    
-    // Card modal event listener
-cardOkBtn.addEventListener('click', () => {
-    cardModal.classList.add('hidden');
-});
+
+    // Card modal event listener - wrapped in DOMContentLoaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupCardModalListener);
+    } else {
+        setupCardModalListener();
+    }
+
+    function setupCardModalListener() {
+        // Initialize card modal elements
+        if (!cardModal) {
+            cardModal = document.getElementById('cardModal');
+            cardTitle = document.getElementById('cardTitle');
+            cardContent = document.getElementById('cardContent');
+            cardOkBtn = document.getElementById('cardOkBtn');
+        }
+
+        if (cardOkBtn) {
+            cardOkBtn.addEventListener('click', () => {
+                if (cardModal) {
+                    cardModal.classList.add('hidden');
+                }
+            });
+        }
+    }
 
     // Orbit camera in Three.js (board + tokens share this view)
     if (boardContainer) {
@@ -3536,8 +3587,20 @@ function endVideoCall() {
 
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
-    localVideo.srcObject = null;
-    remoteVideo.srcObject = null;
+    
+    // Stop and clear local video
+    if (localVideo) {
+        localVideo.pause();
+        localVideo.srcObject = null;
+        localVideo.load();
+    }
+    
+    // Stop and clear remote video
+    if (remoteVideo) {
+        remoteVideo.pause();
+        remoteVideo.srcObject = null;
+        remoteVideo.load();
+    }
 
     document.getElementById('startVideoCall').style.display = 'block';
     document.getElementById('endVideoCall').style.display = 'none';
@@ -3661,5 +3724,3 @@ if (document.readyState === 'loading') {
 } else {
     setupVideoChatUI();
 }
-    updateUI();
-});
