@@ -2036,12 +2036,17 @@ io.on('connection', (socket) => {
         if (!playerData) return;
 
         const game = games[playerData.gameId];
+        if (!game) {
+            console.error('Game not found for chat message:', playerData.gameId);
+            return;
+        }
+
         const player = game.players.find(p => p && p.id === socket.id);
-        
+
         if (!player) return;
-        
+
         const { message } = data;
-        
+
         // Add message to chat log
         addChatMessage(game.id, player.name, message);
     });
