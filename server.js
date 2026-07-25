@@ -2038,6 +2038,7 @@ io.on('connection', (socket) => {
         const game = games[playerData.gameId];
         if (!game) {
             console.error('Game not found for chat message:', playerData.gameId);
+            socket.emit('gameError', 'Game not found. Please refresh the page.');
             return;
         }
 
