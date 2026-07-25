@@ -2032,33 +2032,38 @@ io.on('connection', (socket) => {
 
     // Chat system
     socket.on('sendChat', (data) => {
-        const playerData = players[socket.id];
-        if (!playerData) {
-            console.error('sendChat: Player not found:', socket.id);
-            return;
+        try {
+            const playerData = players[socket.id];
+            if (!playerData) {
+                console.error('sendChat: Player not found:', socket.id);
+                return;
+            }
+
+            const game = games[playerData.gameId];
+            if (!game) {
+                console.error('Game not found for chat message:', playerData.gameId);
+                console.error('Available games:', Object.keys(games));
+                console.error('Player data:', playerData);
+                // Don't emit error - just log it to avoid disconnection
+                return;
+            }
+
+            const player = game.players.find(p => p && p.id === socket.id);
+
+            if (!player) {
+                console.error('sendChat: Player not found in game:', socket.id);
+                return;
+            }
+
+            const { message } = data;
+
+            console.log('Chat message received:', { player: player.name, message, gameId: game.id });
+
+            // Add message to chat log
+            addChatMessage(game.id, player.name, message);
+        } catch (error) {
+            console.error('Error in sendChat handler:', error);
         }
-
-        const game = games[playerData.gameId];
-        if (!game) {
-            console.error('Game not found for chat message:', playerData.gameId);
-            console.error('Available games:', Object.keys(games));
-            socket.emit('gameError', 'Game not found. Please refresh the page.');
-            return;
-        }
-
-        const player = game.players.find(p => p && p.id === socket.id);
-
-        if (!player) {
-            console.error('sendChat: Player not found in game:', socket.id);
-            return;
-        }
-
-        const { message } = data;
-
-        console.log('Chat message received:', { player: player.name, message, gameId: game.id });
-
-        // Add message to chat log
-        addChatMessage(game.id, player.name, message);
     });
 
     // Get game statistics
