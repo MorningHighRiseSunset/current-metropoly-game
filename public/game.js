@@ -1686,6 +1686,7 @@ function addLogEntry(message, type = 'system') {
 
 // Add chat message
 function addChatMessage(sender, message) {
+    console.log('addChatMessage called:', { sender, message, chatMessagesEl });
     if (!chatMessagesEl) {
         console.warn('chatMessagesEl not found, skipping chat message');
         return;
@@ -1697,6 +1698,7 @@ function addChatMessage(sender, message) {
 
     // Auto-scroll to bottom
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    console.log('Message added to chat, total messages:', chatMessagesEl.children.length);
 }
 
 // Update UI elements
@@ -2653,10 +2655,13 @@ function setupChatListeners() {
     chatInputEl = document.getElementById('chatInput');
     sendChatBtn = document.getElementById('sendChatBtn');
 
+    console.log('Chat elements initialized:', { chatMessagesEl, chatInputEl, sendChatBtn });
+
     if (sendChatBtn) {
         sendChatBtn.addEventListener('click', () => {
             const message = chatInputEl.value.trim();
             if (message) {
+                console.log('Sending chat message:', message);
                 socket.emit('sendChat', { message });
                 chatInputEl.value = '';
             }
@@ -2668,6 +2673,7 @@ function setupChatListeners() {
             if (e.key === 'Enter') {
                 const message = chatInputEl.value.trim();
                 if (message) {
+                    console.log('Sending chat message:', message);
                     socket.emit('sendChat', { message });
                     chatInputEl.value = '';
                 }
