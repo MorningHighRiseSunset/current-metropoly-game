@@ -27,7 +27,7 @@ const tileMediaRaw = {
     10: { name: 'JAIL', videos: [], images: [] },
     11: { name: 'Brothel', videos: ['/Videos/BrothelVid (1).mp4'], images: [] },
     12: { name: 'Electric Company', videos: [], images: [] },
-    13: { name: 'Bet MGM', videos: ['/Videos/MGMBoxing 1 (1).mp4', '/Videos/MGMBoxing 3 (1).mp4'], images: ['/images/BetMGM-Jamie-Foxx.webp'] },
+    13: { name: 'Bet MGM', videos: ['/Videos/MGMBoxing 1 (1).mp4', '/Videos/MGMBoxing 3 (1).mp4'], images: ['/images/BetMGM.jpg'] },
     14: { name: 'Las Vegas Monorail', videos: ['/Videos/Monorail (1).mp4'], images: [] },
     15: { name: 'Bellagio', videos: [], images: ['/images/bellagio.jpg'] },
     16: { name: 'Las Vegas Aces', videos: ['/Videos/WNBA (1).mp4', '/Videos/WNBAHL2 (1).mp4', '/Videos/WNBAHL3 (1).mp4', '/Videos/WNBAHL4 (1).mp4'], images: [] },

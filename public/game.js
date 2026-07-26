@@ -3309,11 +3309,45 @@ function createCenterCarousel(parentGroup) {
     imageMesh.userData.images = shuffledImages;
     imageMesh.userData.currentIndex = 0;
     imageMesh.userData.lastChange = Date.now();
+    imageMesh.userData.nextTexture = null; // Preloaded next texture
+    imageMesh.userData.nextIndex = null; // Index of next preloaded image
     
     centerCarouselGroup.add(imageMesh);
     carouselImages.push(imageMesh);
     
+    // Preload the first next image
+    preloadNextCarouselImage(imageMesh);
+    
     parentGroup.add(centerCarouselGroup);
+}
+
+function preloadNextCarouselImage(imageMesh) {
+    const imagesLength = imageMesh.userData.images.length;
+    if (imagesLength <= 1) return;
+    
+    // Pick random index different from current
+    let nextIndex;
+    do {
+        nextIndex = Math.floor(Math.random() * imagesLength);
+    } while (nextIndex === imageMesh.userData.currentIndex);
+    
+    imageMesh.userData.nextIndex = nextIndex;
+    
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(
+        imageMesh.userData.images[nextIndex],
+        (texture) => {
+            if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
+                const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
+                texture.anisotropy = Math.min(8, maxA);
+            }
+            imageMesh.userData.nextTexture = texture;
+        },
+        undefined,
+        (error) => {
+            console.error('Error preloading carousel image:', error);
+        }
+    );
 }
 
 function animateCenterCarousel() {
@@ -3326,38 +3360,50 @@ function animateCenterCarousel() {
     if (now - imageMesh.userData.lastChange > changeInterval) {
         imageMesh.userData.lastChange = now;
         
-        // Pick random index different from current to prevent back-to-back repeats
-        let newIndex;
-        const imagesLength = imageMesh.userData.images.length;
-        if (imagesLength > 1) {
-            do {
-                newIndex = Math.floor(Math.random() * imagesLength);
-            } while (newIndex === imageMesh.userData.currentIndex);
+        // Use preloaded texture if available, otherwise fall back to current
+        if (imageMesh.userData.nextTexture && imageMesh.userData.nextIndex !== null) {
+            // Seamless swap to preloaded texture
+            imageMesh.material.map = imageMesh.userData.nextTexture;
+            imageMesh.material.needsUpdate = true;
+            imageMesh.userData.currentIndex = imageMesh.userData.nextIndex;
+            carouselCurrentIndex = imageMesh.userData.nextIndex;
+            
+            // Clear preloaded texture and preload next one
+            imageMesh.userData.nextTexture = null;
+            imageMesh.userData.nextIndex = null;
+            preloadNextCarouselImage(imageMesh);
         } else {
-            newIndex = 0;
-        }
-        
-        imageMesh.userData.currentIndex = newIndex;
-        carouselCurrentIndex = newIndex;
-        
-        const textureLoader = new THREE.TextureLoader();
-        // Load texture asynchronously to prevent blue board flash
-        textureLoader.load(
-            imageMesh.userData.images[newIndex],
-            (texture) => {
-                // On load success
-                if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
-                    const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
-                    texture.anisotropy = Math.min(8, maxA);
-                }
-                imageMesh.material.map = texture;
-                imageMesh.material.needsUpdate = true;
-            },
-            undefined,
-            (error) => {
-                console.error('Error loading carousel image:', error);
+            // Fallback if preload failed - load immediately
+            let newIndex;
+            const imagesLength = imageMesh.userData.images.length;
+            if (imagesLength > 1) {
+                do {
+                    newIndex = Math.floor(Math.random() * imagesLength);
+                } while (newIndex === imageMesh.userData.currentIndex);
+            } else {
+                newIndex = 0;
             }
-        );
+            
+            imageMesh.userData.currentIndex = newIndex;
+            carouselCurrentIndex = newIndex;
+            
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load(
+                imageMesh.userData.images[newIndex],
+                (texture) => {
+                    if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
+                        const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
+                        texture.anisotropy = Math.min(8, maxA);
+                    }
+                    imageMesh.material.map = texture;
+                    imageMesh.material.needsUpdate = true;
+                },
+                undefined,
+                (error) => {
+                    console.error('Error loading carousel image:', error);
+                }
+            );
+        }
     }
 }
 
