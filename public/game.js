@@ -385,6 +385,8 @@ const token3DScene = document.getElementById('token3DScene');
 const playerMoneyEl = document.getElementById('playerMoney');
 const playerNameEl = document.getElementById('playerName');
 const gameCodeEl = document.getElementById('gameCode');
+const tokenModal = document.getElementById('tokenModal');
+const tokenSelectionEl = document.getElementById('tokenSelection');
 
 // Three.js variables for 3D tokens and board
 let scene, camera, renderer;
@@ -521,8 +523,7 @@ function setTheme(theme) {
 initThemeToggle();
 
 // Token selection state
-let selectedTokenIndex = null;
-let tokenSelectionListenerAdded = false;
+let pendingTokenSelection = null;
 
 // Board configuration - Las Vegas Monopoly themed
 const boardConfig = [
@@ -1660,7 +1661,7 @@ function addChatMessage(sender, message) {
 }
 
 // Update UI elements
-function updateUI() {
+function updateUI(options = {}) {
     if (currentPlayer) {
         playerMoneyEl.textContent = `$${currentPlayer.money || 2500}`;
         playerNameEl.textContent = currentPlayer.name;
@@ -1754,7 +1755,9 @@ function updateUI() {
         }
     }
 
-    updateTokens();
+    if (!options.skipTokenLayer) {
+        updateTokens();
+    }
     
     // Handle jail button visibility
     const myPlayerData = players.find(p => p && p.id === myPlayerId);
@@ -1849,47 +1852,43 @@ socket.on('gameJoined', (data) => {
 });
 
 socket.on('tokenSelected', (data) => {
-    const { playerId, tokenIndex, players: serverPlayers } = data;
+    const { playerId, tokenIndex, players: serverPlayers, allTokensAssigned } = data;
 
     if (serverPlayers) {
         players = serverPlayers;
+    } else if (playerId != null && tokenIndex != null) {
+        const player = players.find(p => p && p.id === playerId);
+        if (player) {
+            player.tokenIndex = tokenIndex;
+            const tokenInfo = tokenData[tokenIndex];
+            if (tokenInfo) {
+                player.tokenName = tokenInfo.name;
+                player.tokenImage = tokenInfo.image;
+            }
+        }
     }
 
+    pendingTokenSelection = null;
     currentPlayer = resolveLocalPlayer(players);
     if (currentPlayer) {
         myPlayerId = currentPlayer.id;
     }
 
-    const player = players.find(p => p && p.id === playerId);
-
-    if (player) {
-        player.tokenIndex = tokenIndex;
-        if (isTokenVisible(player.id) && !tokenModels[player.id]) {
-            loadTokenModel(tokenIndex, player);
-        }
+    if (!allTokensAssigned && playerId != null && tokenIndex != null) {
+        const player = players.find(p => p && p.id === playerId);
         const tokenInfo = tokenData[tokenIndex];
-        if (tokenInfo) {
-            player.tokenName = tokenInfo.name;
-            player.tokenImage = tokenInfo.image;
+        if (player && tokenInfo) {
+            addLogEntry(`${player.name} selected ${tokenInfo.name}`, 'system');
         }
-
-        // Add log entry for token selection
-        addLogEntry(`${player.name} selected ${tokenInfo.name}`, 'system');
-
-        updateUI();
-        updatePlayersList();
-        updateTokens();
-
-        // Update token selection modal to grey out taken tokens
-        updateTokenOptions();
-
-        // If this is an AI player token assignment, ensure the token model is loaded
-        if (player.isAI) {
-            loadTokenModel(tokenIndex, player);
-        }
-    } else {
-        console.error('TOKEN: Player not found for token selection:', playerId);
+    } else if (allTokensAssigned) {
+        addLogEntry('All players have tokens', 'system');
     }
+
+    if (currentPlayer && currentPlayer.tokenIndex !== undefined) {
+        tokenModal?.classList.add('hidden');
+    }
+
+    refreshTokenSelectionUI();
 });
 
 socket.on('gameStarted', (data) => {
@@ -2434,7 +2433,18 @@ socket.on('gameOver', (data) => {
 
 socket.on('gameError', (error) => {
     console.error('Game error:', error);
-    addLogEntry(`Game error: ${error}`, 'system');
+    const message = typeof error === 'string' ? error : String(error);
+    addLogEntry(`Game error: ${message}`, 'system');
+
+    if (message.toLowerCase().includes('token') && currentPlayer && pendingTokenSelection != null) {
+        delete currentPlayer.tokenIndex;
+        delete currentPlayer.tokenName;
+        delete currentPlayer.tokenImage;
+        pendingTokenSelection = null;
+        showTokenSelection();
+        refreshTokenSelectionUI();
+    }
+
     if (waitingForBuyResult) {
         waitingForBuyResult = false;
         activePropertyDecision = null;
@@ -2452,86 +2462,83 @@ socket.on('error', (error) => {
 function updateTokenOptions() {
     const tokenOptions = document.querySelectorAll('.token-option');
     tokenOptions.forEach(option => {
-        const tokenIndex = parseInt(option.dataset.token);
-        // Only check human players for taken tokens (AI tokens assigned after humans select)
+        const tokenIndex = parseInt(option.dataset.token, 10);
         const humanPlayers = players.filter(p => p && !p.isAI);
         const isTokenTaken = humanPlayers.some(p => p.tokenIndex === tokenIndex);
-        if (isTokenTaken) {
-            option.classList.add('disabled');
-            option.style.opacity = '0.5';
-            option.style.pointerEvents = 'none';
-        } else {
-            option.classList.remove('disabled');
-            option.style.opacity = '1';
-            option.style.pointerEvents = 'auto';
-        }
+        option.classList.toggle('disabled', isTokenTaken);
+        option.style.opacity = isTokenTaken ? '0.5' : '1';
+        option.style.pointerEvents = isTokenTaken ? 'none' : 'auto';
     });
+}
+
+function loadTokenForPlayerIfNeeded(player) {
+    if (!player || player.tokenIndex === undefined) return;
+    if (isTokenVisible(player.id) && !tokenModels[player.id] && !tokenLoading[player.id]) {
+        loadTokenModel(player.tokenIndex, player);
+    }
+    if (player.isAI && !tokenModels[player.id] && !tokenLoading[player.id]) {
+        loadTokenModel(player.tokenIndex, player);
+    }
+}
+
+function refreshTokenSelectionUI() {
+    updateTokenOptions();
+    updatePlayersList();
+    players.filter(p => p).forEach(loadTokenForPlayerIfNeeded);
+    updateUI({ skipTokenLayer: true });
+    requestAnimationFrame(() => {
+        update3DTokenPositions();
+        updateTokenVisibility();
+    });
+}
+
+function pickToken(tokenIndex) {
+    if (!currentPlayer || currentPlayer.tokenIndex !== undefined) return;
+    const humanPlayers = players.filter(p => p && !p.isAI);
+    if (humanPlayers.some(p => p.tokenIndex === tokenIndex)) return;
+
+    pendingTokenSelection = tokenIndex;
+    currentPlayer.tokenIndex = tokenIndex;
+    const tokenInfo = tokenData[tokenIndex];
+    if (tokenInfo) {
+        currentPlayer.tokenName = tokenInfo.name;
+        currentPlayer.tokenImage = tokenInfo.image;
+    }
+
+    tokenModal?.classList.add('hidden');
+    refreshTokenSelectionUI();
+    socket.emit('selectToken', { tokenIndex });
+}
+
+function initTokenSelectionUI() {
+    if (!tokenSelectionEl || tokenSelectionEl.dataset.bound === '1') return;
+    tokenSelectionEl.dataset.bound = '1';
+
+    tokenSelectionEl.addEventListener('click', (event) => {
+        const option = event.target.closest('.token-option');
+        if (!option || option.classList.contains('disabled')) return;
+        const tokenIndex = parseInt(option.dataset.token, 10);
+        if (Number.isNaN(tokenIndex)) return;
+        pickToken(tokenIndex);
+    });
+
+    if (confirmTokenBtn) {
+        confirmTokenBtn.style.display = 'none';
+    }
 }
 
 // Show token selection modal
 function showTokenSelection() {
-    try {
-        if (!tokenModal) {
-            console.error('Token modal not found');
-            return;
-        }
-
-        tokenModal.classList.remove('hidden');
-
-        // Update token options to show taken tokens as disabled
-        updateTokenOptions();
-
-        // Add token selection handlers
-        const tokenOptions = document.querySelectorAll('.token-option');
-
-        tokenOptions.forEach(option => {
-            const tokenIndex = parseInt(option.dataset.token);
-
-            // Check if this token is already taken by human players (AI tokens assigned after humans)
-            const humanPlayers = players.filter(p => p && !p.isAI);
-            const isTokenTaken = humanPlayers.some(p => p.tokenIndex === tokenIndex);
-            if (isTokenTaken) {
-                option.classList.add('disabled');
-                option.style.opacity = '0.5';
-                option.style.pointerEvents = 'none';
-                // Add visual indicator
-                const takenLabel = document.createElement('div');
-                takenLabel.textContent = 'TAKEN';
-                takenLabel.style.cssText = 'position: absolute; top: 5px; right: 5px; background: red; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;';
-                option.appendChild(takenLabel);
-            } else {
-                option.addEventListener('click', () => {
-                    // Remove selected class from all options
-                    tokenOptions.forEach(opt => opt.classList.remove('selected'));
-                    option.classList.add('selected');
-                    selectedTokenIndex = tokenIndex;
-                    if (confirmTokenBtn) {
-                        confirmTokenBtn.disabled = false;
-                    }
-                });
-            }
-        });
-    } catch (error) {
-        console.error('Error showing token selection:', error);
+    if (!tokenModal) {
+        console.error('Token modal not found');
+        return;
     }
-    
-    if (!tokenSelectionListenerAdded) {
-        confirmTokenBtn.addEventListener('click', () => {
-            if (selectedTokenIndex !== null) {
-                console.log('=== EMITTING TOKEN SELECTION ===');
-                console.log('TOKEN: Emitting selectToken with tokenIndex:', selectedTokenIndex);
-                console.log('TOKEN: My player ID:', myPlayerId);
-                console.log('TOKEN: Socket ID:', socket.id);
-                console.log('TOKEN: Current player:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
-                console.log('TOKEN: Token name:', tokenData[selectedTokenIndex] ? tokenData[selectedTokenIndex].name : 'UNKNOWN');
-                socket.emit('selectToken', { tokenIndex: selectedTokenIndex });
-                tokenModal.classList.add('hidden');
-            } else {
-                console.log('TOKEN: No token selected');
-            }
-        });
-        tokenSelectionListenerAdded = true;
+    if (currentPlayer && currentPlayer.tokenIndex !== undefined) {
+        return;
     }
+
+    updateTokenOptions();
+    tokenModal.classList.remove('hidden');
 }
 
 const confirmBuyBtn = document.getElementById('confirmBuyBtn');
@@ -2598,6 +2605,7 @@ if (document.readyState === 'loading') {
 } else {
     setupChatListeners();
 }
+initTokenSelectionUI();
 
 function setupChatListeners() {
     // Initialize chat DOM elements

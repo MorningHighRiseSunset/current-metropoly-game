@@ -633,7 +633,8 @@ io.on('connection', (socket) => {
             originalHost: socket.id, // Store original host socket ID
             hostName: playerName,    // Store host name for persistence
             status: 'lobby',
-            gameState: null
+            gameState: null,
+            chatLog: []
         };
 
         const game = games[gameId];
@@ -1022,20 +1023,17 @@ io.on('connection', (socket) => {
         if (!player) return;
         
         const { tokenIndex } = data;
-        
-        // Check if it's this player's turn to pick a token
         const humanPlayers = game.players.filter(p => p && !p.isAI);
-        const playersWhoPicked = humanPlayers.filter(p => p.tokenIndex !== undefined);
-        const playerIndex = humanPlayers.findIndex(p => p && p.id === socket.id);
-        
-        // Player can only pick if they are the next in line (or if no one has picked yet and they're first)
-        if (playersWhoPicked.length !== playerIndex) {
-            socket.emit('gameError', 'Wait for your turn to pick a token');
+
+        if (player.tokenIndex !== undefined) {
+            socket.emit('gameError', 'You already selected a token');
             return;
         }
-        
+
         // Check if token is already taken by another player
-        const takenTokens = humanPlayers.filter(p => p.tokenIndex !== undefined).map(p => p.tokenIndex);
+        const takenTokens = humanPlayers
+            .filter(p => p.tokenIndex !== undefined)
+            .map(p => p.tokenIndex);
         if (takenTokens.includes(tokenIndex)) {
             socket.emit('gameError', 'This token is already taken');
             return;
@@ -1043,7 +1041,6 @@ io.on('connection', (socket) => {
         
         // Set player's token
         player.tokenIndex = tokenIndex;
-        
 
         // Broadcast token selection to all players
         io.to(game.id).emit('tokenSelected', {
@@ -1057,28 +1054,30 @@ io.on('connection', (socket) => {
         const allHumanPlayersReady = humanPlayers.every(p => p.tokenIndex !== undefined);
         if (allHumanPlayersReady && humanPlayers.length >= 1) {
             // Assign tokens to AI players now that humans have selected
-            const takenTokens = humanPlayers.map(p => p.tokenIndex);
-            const availableTokens = [0, 1, 2].filter(token => !takenTokens.includes(token));
+            const usedTokens = game.players
+                .filter(p => p && p.tokenIndex !== undefined)
+                .map(p => p.tokenIndex);
+            const availableTokens = [0, 1, 2, 3, 4, 5, 7].filter(token => !usedTokens.includes(token));
 
-            game.players.forEach(player => {
-                if (player && player.isAI && player.tokenIndex === undefined) {
+            let assignedAiTokens = false;
+            game.players.forEach(aiPlayer => {
+                if (aiPlayer && aiPlayer.isAI && aiPlayer.tokenIndex === undefined) {
                     if (availableTokens.length > 0) {
-                        // Assign first available token and remove it from pool
-                        player.tokenIndex = availableTokens.shift();
-
-                        // Broadcast AI token selection
-                        io.to(game.id).emit('tokenSelected', {
-                            playerId: player.id,
-                            player: player.name,
-                            tokenIndex: player.tokenIndex,
-                            players: game.players
-                        });
+                        aiPlayer.tokenIndex = availableTokens.shift();
+                        assignedAiTokens = true;
                     } else {
-                        console.error(`No available tokens for AI player ${player.name}`);
+                        console.error(`No available tokens for AI player ${aiPlayer.name}`);
                     }
                 }
             });
 
+            if (assignedAiTokens) {
+                io.to(game.id).emit('tokenSelected', {
+                    playerId: null,
+                    players: game.players,
+                    allTokensAssigned: true
+                });
+            }
         }
     });
 
@@ -1959,6 +1958,9 @@ io.on('connection', (socket) => {
     function addChatMessage(gameId, sender, message) {
         const game = games[gameId];
         if (game) {
+            if (!game.chatLog) {
+                game.chatLog = [];
+            }
             const timestamp = new Date().toISOString();
             const chatMessage = { sender, message, timestamp };
             game.chatLog.push(chatMessage);
