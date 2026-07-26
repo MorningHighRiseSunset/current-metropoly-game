@@ -34,7 +34,7 @@ let waitingForBuyResult = false;
 // Token data
 const tokenData = [
     { name: 'Burger', model: getModelPath('/Models/Cheeseburger/cheeseburger.glb'), image: '/images/Burger.png', scale: 0.42 },
-    { name: 'Football', model: getModelPath('/Models/Football/football.glb'), image: '/images/football.png', scale: 0.04 },
+    { name: 'Football', model: getModelPath('/Models/Football/football.glb'), image: '/images/football.png', scale: 0.03 },
     { name: 'Helicopter', model: getModelPath('/Models/Helicopter/helicopter.glb'), image: '/images/helicopter.png', scale: 0.002 },
     { name: 'Rolls Royce', model: getModelPath('/Models/RollsRoyce/rollsRoyceCarAnim.glb'), image: '/images/rolls royce.png', scale: 0.14, facingOffset: Math.PI / 2 },
     { name: 'Shoe', model: getModelPath('/Models/Shoe/shoe.glb'), image: '/images/Shoe.png', scale: 0.25 },

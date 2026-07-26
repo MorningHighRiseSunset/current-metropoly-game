@@ -250,7 +250,6 @@ function checkAndExecuteAITurn(game) {
     if (game._aiTurnScheduled) return;
     game._aiTurnScheduled = true;
 
-    console.log(`AI turn detected for ${currentPlayer.name}, executing AI logic`);
 
     setTimeout(() => {
         game._aiTurnScheduled = false;
@@ -266,7 +265,6 @@ function executeAIRollDice(game, aiPlayer) {
     if (game.gameState.currentPlayer !== aiPlayer.id) return;
     if (game.gameState.diceRolled) return;
 
-    console.log(`AI ${aiPlayer.name} is rolling dice`);
 
     // Handle jail dice rolling for AI
     if (aiPlayer.inJail) {
@@ -386,7 +384,6 @@ function executeAIRollDice(game, aiPlayer) {
         const total = dice1 + dice2;
         const isDoubles = dice1 === dice2;
 
-        console.log(`AI JAIL ROLL: ${aiPlayer.name} rolled ${dice1} and ${dice2} (doubles: ${isDoubles})`);
 
         aiPlayer.jailTurns++;
 
@@ -608,7 +605,6 @@ function executeAIPropertyDecision(game, aiPlayer, property) {
         checkGameWinner(game);
 
         updateGameState(game);
-        console.log(`AI ${aiPlayer.name} bought ${property.name}`);
     } else {
         // Pass on the property
         io.to(game.id).emit('propertyPassed', {
@@ -617,7 +613,6 @@ function executeAIPropertyDecision(game, aiPlayer, property) {
             propertyName: property.name
         });
 
-        console.log(`AI ${aiPlayer.name} passed on ${property.name}`);
     }
 
     setTimeout(() => gameRuntime.advanceTurn(game), 500);
@@ -625,7 +620,6 @@ function executeAIPropertyDecision(game, aiPlayer, property) {
 
 // Socket connection handling
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
 
     // Create a new game lobby
     socket.on('createLobby', (data) => {
@@ -667,7 +661,6 @@ io.on('connection', (socket) => {
         
         socket.emit('gameCreated', { gameId, players: game.players, playerUid: player.uid });
         
-        console.log(`Game ${gameId} created by ${playerName}`);
     });
 
     // Join an existing game lobby
@@ -721,10 +714,6 @@ io.on('connection', (socket) => {
 
         socket.join(gameId);
 
-        console.log(`Player ${playerName} joined game ${gameId}`);
-        console.log('Current players:', game.players.filter(p => p !== null).map(p => p.name));
-        console.log('Host:', game.host);
-
         socket.emit('lobbyJoined', {
             gameId,
             playerId: socket.id,
@@ -733,7 +722,6 @@ io.on('connection', (socket) => {
             players: game.players
         });
 
-        console.log('Emitting playerJoined to all players in room including host');
         io.to(gameId).emit('playerJoined', { player, players: game.players });
     });
 
@@ -775,9 +763,6 @@ io.on('connection', (socket) => {
         }
         game.players.push(aiPlayer);
 
-        console.log(`AI player ${aiPlayer.name} added to game ${gameId}`);
-        console.log('Current players:', game.players.filter(p => p !== null).map(p => p.name));
-
         io.to(gameId).emit('aiPlayerAdded', { players: game.players });
     });
 
@@ -808,9 +793,6 @@ io.on('connection', (socket) => {
             const actualPlayers = game.players.filter(p => p !== null);
             game.players = [null, ...actualPlayers];
         }
-
-        console.log(`AI player ${lastAIPlayer.name} removed from game ${gameId}`);
-        console.log('Current players:', game.players.filter(p => p !== null).map(p => p.name));
 
         io.to(gameId).emit('aiPlayerRemoved', { players: game.players });
     });
@@ -850,8 +832,6 @@ io.on('connection', (socket) => {
             turnPhase: 'roll' // roll, action, end
         };
 
-        console.log(`GAME START: Host ${firstPlayer.name} (${firstPlayer.id}) will roll first`);
-        console.log(`GAME START: Players in order:`, actualPlayers.map(p => ({ name: p.name, id: p.id, isHost: p.isHost })));
 
         // Initialize card decks
         initializeCardDecks(game);
@@ -867,13 +847,9 @@ io.on('connection', (socket) => {
         // Auto-acknowledge AI players (they don't have socket connections)
         const aiPlayerCount = game.players.filter(p => p && p.isAI).length;
         game.acknowledgments = aiPlayerCount;
-        console.log(`Auto-acknowledged ${aiPlayerCount} AI players. Starting with ${game.acknowledgments}/${game.totalPlayers} acknowledgments`);
 
-        console.log(`Starting game with ${game.totalPlayers} players. Waiting for acknowledgments...`);
 
         // Don't send gameStarted immediately - wait for players to join game page
-        console.log('Game started, waiting for players to join game page...');
-        console.log('Players should redirect to game page and receive gameStarted there');
 
         // Mark game as ready to send gameStarted when players join game page
         game.readyToSendGameStarted = true;
@@ -881,7 +857,6 @@ io.on('connection', (socket) => {
         // Add timeout to handle cases where players don't acknowledge
         game.ackTimeout = setTimeout(() => {
             if (game.status === 'starting') {
-                console.log(`Acknowledgment timeout for game ${game.id}. Forcing game start.`);
                 game.status = 'playing';
                 game.gameState.diceRolled = false;
                 game.gameState.turnPhase = 'roll';
@@ -908,12 +883,10 @@ io.on('connection', (socket) => {
         if (!game || game.status !== 'starting') return;
 
         game.acknowledgments++;
-        console.log(`Acknowledgment received from ${socket.id}. ${game.acknowledgments}/${game.totalPlayers}`);
 
         if (game.acknowledgments === game.totalPlayers) {
             // All players acknowledged, game is ready
             game.status = 'playing';
-            console.log('All players acknowledged. Game is now ready to play!');
 
             // Clear the timeout since all players acknowledged
             if (game.ackTimeout) {
@@ -944,7 +917,6 @@ io.on('connection', (socket) => {
         const playerData = players[socket.id];
         if (!playerData || !playerData.gameId) return;
 
-        console.log(`Player ${playerData.name} acknowledged connection to game ${playerData.gameId}`);
         
         // Update game status for all players in the room
         const game = games[playerData.gameId];
@@ -980,13 +952,11 @@ io.on('connection', (socket) => {
                 if (oldSocketId !== socket.id) {
                     delete players[oldSocketId];
                 }
-                console.log(`RECONNECT: ${player.name} (${playerUid}) relinked ${oldSocketId} → ${socket.id}`);
             }
         }
 
         if (!player) {
-            console.log(`JOIN GAME: No player for socket ${socket.id}, uid=${playerUid || 'none'}`);
-            socket.emit('gameError', 'You are not in this game. Join from the lobby with the same game ID first.');
+                socket.emit('gameError', 'You are not in this game. Join from the lobby with the same game ID first.');
             return;
         }
 
@@ -1008,55 +978,30 @@ io.on('connection', (socket) => {
         }
         
         // Send updated player list to all clients to ensure UI is in sync
-        console.log('SERVER: Sending playersUpdated event with players:');
-        game.players.forEach((player, index) => {
-            if (player) {
-                console.log(`  - Player ${index}: ID=${player.id}, Name=${player.name}, isHost=${player.isHost}`);
-            } else {
-                console.log(`  - Player ${index}: null (dummy)`);
-            }
-        });
-        console.log(`  - Current socket ID: ${socket.id}`);
         
         io.to(gameId).emit('playersUpdated', {
             players: game.players,
             message: 'Player list updated'
         });
-        
+
         // Send gameStarted if game is ready and this is the first player joining game page
-        console.log('Checking gameStarted conditions:');
-        console.log('game.readyToSendGameStarted:', game.readyToSendGameStarted);
-        console.log('game.status:', game.status);
-        console.log('socket.id:', socket.id);
-        
         if (game.readyToSendGameStarted && game.status === 'starting') {
-            console.log('Sending gameStarted to player joining game page:', socket.id);
-            
             socket.emit('gameStarted', {
                 players: game.players,
                 gameState: game.gameState
             });
-            
-            console.log('gameStarted event sent successfully');
-            
+
             // Also send to lobby to redirect other players
             io.to(gameId).emit('gameStarted', {
                 players: game.players,
                 gameState: game.gameState
             });
-            console.log('gameStarted event also sent to lobby');
-        } else {
-            console.log('Conditions not met for sending gameStarted');
         }
-        
+
         // Find the actual player in the game to get their correct ID
-        console.log(`SERVER: Looking for player with socket ID ${socket.id} in game.players`);
         const actualPlayer = game.players.find(p => p && p.id === socket.id);
         const correctPlayerId = actualPlayer ? actualPlayer.id : socket.id;
-        
-        console.log(`SERVER: actualPlayer:`, actualPlayer ? actualPlayer.name : 'NOT FOUND');
-        console.log(`SERVER: Using playerId: ${correctPlayerId}`);
-        
+
         socket.emit('gameJoined', {
             gameId,
             playerId: correctPlayerId,
@@ -1064,9 +1009,6 @@ io.on('connection', (socket) => {
             players: game.players,
             gameState: game.gameState
         });
-        
-        console.log(`SERVER: Sent gameJoined to socket ${socket.id} with playerId ${correctPlayerId}`);
-        console.log('SERVER: Players in gameJoined:', game.players.filter(p => p).map(p => ({ id: p.id, name: p.name })));
     });
 
     // Select token
@@ -1102,7 +1044,6 @@ io.on('connection', (socket) => {
         // Set player's token
         player.tokenIndex = tokenIndex;
         
-        console.log(`SERVER: Player ${player.name} selected token ${tokenIndex}`);
 
         // Broadcast token selection to all players
         io.to(game.id).emit('tokenSelected', {
@@ -1115,8 +1056,6 @@ io.on('connection', (socket) => {
         // Check if all HUMAN players have selected tokens
         const allHumanPlayersReady = humanPlayers.every(p => p.tokenIndex !== undefined);
         if (allHumanPlayersReady && humanPlayers.length >= 1) {
-            console.log(`SERVER: All human players have selected tokens, assigning AI tokens`);
-
             // Assign tokens to AI players now that humans have selected
             const takenTokens = humanPlayers.map(p => p.tokenIndex);
             const availableTokens = [0, 1, 2].filter(token => !takenTokens.includes(token));
@@ -1126,7 +1065,6 @@ io.on('connection', (socket) => {
                     if (availableTokens.length > 0) {
                         // Assign first available token and remove it from pool
                         player.tokenIndex = availableTokens.shift();
-                        console.log(`AI player ${player.name} assigned token ${player.tokenIndex}`);
 
                         // Broadcast AI token selection
                         io.to(game.id).emit('tokenSelected', {
@@ -1141,7 +1079,6 @@ io.on('connection', (socket) => {
                 }
             });
 
-            console.log(`SERVER: All human players have selected tokens, AI tokens assigned`);
         }
     });
 
@@ -1373,8 +1310,6 @@ io.on('connection', (socket) => {
             const dice2 = Math.floor(Math.random() * 6) + 1;
             const total = dice1 + dice2;
             const isDoubles = dice1 === dice2;
-
-            console.log(`JAIL ROLL: Player ${currentPlayer.name} rolled ${dice1} and ${dice2} (doubles: ${isDoubles})`);
 
             currentPlayer.jailTurns++;
             
@@ -1675,7 +1610,6 @@ io.on('connection', (socket) => {
             if (game.status !== 'playing') return;
             if (game.gameState.currentPlayer !== playerId) return;
             if (!game.gameState.diceRolled) return;
-            console.log(`AUTO TURN END: ${playerId}`);
             advanceTurn(game);
         }, delayMs);
     }
@@ -1714,8 +1648,6 @@ io.on('connection', (socket) => {
         game.gameState.currentPlayer = nextPlayer.id;
         game.gameState.diceRolled = false;
         game.gameState.turnPhase = 'roll';
-
-        console.log(`TURN: ${nextPlayer.name} (index ${nextIndex})`);
 
         io.to(game.id).emit('turnChanged', {
             nextPlayer: nextPlayer.id,
@@ -2056,8 +1988,6 @@ io.on('connection', (socket) => {
             }
 
             const { message } = data;
-
-            console.log('Chat message received:', { player: player.name, message, gameId: game.id });
 
             // Add message to chat log
             addChatMessage(game.id, player.name, message);
@@ -2649,25 +2579,18 @@ io.on('connection', (socket) => {
     });
 
     socket.on('videoCallRequest', (data) => {
-        console.log('=== SERVER: videoCallRequest received ===', data);
-        
         // Find game by gameId from data, not by looking up player
         const game = games[data.gameId];
         if (!game) {
-            console.log('videoCallRequest - game not found:', data.gameId);
             return;
         }
 
-        console.log('Game found:', game.id, 'players:', game.players.length);
-        
         // Forward to other players in the game
         game.players.forEach(player => {
             if (player && player.id !== socket.id) {
-                console.log('videoCallRequest - forwarding to:', player.id, 'name:', player.name);
                 io.to(player.id).emit('videoCallRequest', data);
             }
         });
-        console.log('=== SERVER: videoCallRequest processing complete ===');
     });
 
     socket.on('videoCallEnd', (data) => {
@@ -2690,22 +2613,15 @@ io.on('connection', (socket) => {
 
     // Handle disconnection
     socket.on('disconnect', () => {
-        console.log(`DISCONNECT: User disconnected: ${socket.id}`);
-        
         const playerData = players[socket.id];
         if (playerData) {
-            console.log(`DISCONNECT: Found player data - Game: ${playerData.gameId}, Name: ${playerData.playerName}`);
             const game = games[playerData.gameId];
             if (game) {
-                console.log(`DISCONNECT: Game found - Status: ${game.status}, Players in game: ${game.players.filter(p => p).length}`);
                 // Don't immediately remove player - they might be reconnecting
                 // Just mark as disconnected and notify other players
                 const disconnectedPlayer = game.players.find(p => p && p.id === socket.id);
                 
                 if (disconnectedPlayer) {
-                    console.log(`DISCONNECT: Player ${disconnectedPlayer.name} (ID: ${socket.id}) disconnected, keeping in game for potential reconnection`);
-                    console.log(`DISCONNECT: Game players after disconnect:`, game.players.filter(p => p).map(p => ({ name: p.name, id: p.id })));
-
                     // Grace window for reconnects: avoid false "disconnected" chat noise on fast refresh/redirect.
                     disconnectTimers[socket.id] = setTimeout(() => {
                         const stillMapped = players[socket.id];
