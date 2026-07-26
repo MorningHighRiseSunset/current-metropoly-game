@@ -1301,41 +1301,6 @@ body {
     z-index: 1;
 }
 
-/* 3D Dice Container */
-.dice-3d-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 200px;
-    height: 200px;
-    z-index: 50;
-    pointer-events: none;
-    display: flex;
-    gap: 30px;
-    justify-content: center;
-    align-items: center;
-}
-
-.dice-3d-container > canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-}
-
-.dice-3d-container.dice-attention {
-    animation: diceContainerPulse 2s ease-in-out infinite;
-}
-
-.dice-3d-container.dice-rolling {
-    opacity: 1;
-    visibility: visible;
-}
-
-@keyframes diceContainerPulse {
-    0%, 100% { filter: drop-shadow(0 0 8px rgba(99, 179, 237, 0.35)); }
-    50% { filter: drop-shadow(0 0 16px rgba(99, 179, 237, 0.65)); }
-}
 
 
 /* Game Controls */

@@ -55,46 +55,28 @@ function getModelPath(localPath) {
     return localPath;
 }
 
-// Initialize 3D dice scene
-function initializeDiceScene() {
-    if (diceSceneInitialized) return;
+// Initialize 3D dice - now uses main board scene
+function initializeDice() {
+    if (diceGlbTemplate) return;
+    if (diceGlbLoading) return;
+    diceGlbLoading = true;
 
-    const diceContainer = document.getElementById('dice3DContainer');
-    if (!diceContainer) {
-        console.error('Dice container not found');
-        return;
-    }
-
-    // Create scene
-    diceScene = new THREE.Scene();
-
-    // Create camera
-    diceCamera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-    diceCamera.position.set(0, 2.4, 4.6);
-    diceCamera.lookAt(0, 0.12, 0);
-
-    // Create renderer
-    diceRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    diceRenderer.setSize(200, 200);
-    diceRenderer.setClearColor(0x000000, 0);
-    diceContainer.appendChild(diceRenderer.domElement);
-
-    // Add lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
-    diceScene.add(ambientLight);
-
-    const keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
-    keyLight.position.set(4, 8, 6);
-    diceScene.add(keyLight);
-
-    const fillLight = new THREE.DirectionalLight(0xaaccff, 0.35);
-    fillLight.position.set(-3, 2, 4);
-    diceScene.add(fillLight);
-
-    // Create dice
-    createDice();
-
-    diceSceneInitialized = true;
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+        DICE_GLB_CONFIG.modelPath,
+        function (gltf) {
+            diceGlbTemplate = prepareDiceGlbRoot(gltf.scene);
+            if (camera) {
+                autoCalibrateDiceFaces(diceGlbTemplate);
+            }
+            diceGlbLoading = false;
+        },
+        undefined,
+        function (err) {
+            diceGlbLoading = false;
+            console.error('Failed to load dice GLB:', err);
+        }
+    );
 }
 
 // Dice roll sound (Web Audio API)
@@ -153,55 +135,34 @@ function prepareDiceGlbRoot(root) {
     return root;
 }
 
-function spawnDiceFromTemplate() {
+function spawnDiceOnBoard(playerPosition) {
+    if (!diceGlbTemplate || !scene) return;
+
+    // Remove existing dice if any
+    if (dice1Mesh && scene) scene.remove(dice1Mesh);
+    if (dice2Mesh && scene) scene.remove(dice2Mesh);
+
     const sep = DICE_GLB_CONFIG.separation * 0.5;
-    const landY = getDiceLandY();
+    const coords = get3DBoardCoords(playerPosition);
+
     dice1Mesh = diceGlbTemplate.clone(true);
     dice2Mesh = diceGlbTemplate.clone(true);
-    dice1Mesh.position.set(-sep, landY, 0);
-    dice2Mesh.position.set(sep, landY, 0);
-    diceScene.add(dice1Mesh);
-    diceScene.add(dice2Mesh);
+
+    // Position dice near the player's current position on the board
+    dice1Mesh.position.set(coords.x - sep, coords.y + 0.3, coords.z);
+    dice2Mesh.position.set(coords.x + sep, coords.y + 0.3, coords.z);
+
+    scene.add(dice1Mesh);
+    scene.add(dice2Mesh);
     dice1Mesh.visible = false;
     dice2Mesh.visible = false;
 }
 
-// Load GLB dice model (two instances)
-function createDice() {
-    if (diceGlbTemplate) {
-        spawnDiceFromTemplate();
-        return;
-    }
-    if (diceGlbLoading) return;
-    diceGlbLoading = true;
-
-    const loader = new THREE.GLTFLoader();
-    loader.load(
-        DICE_GLB_CONFIG.modelPath,
-        function (gltf) {
-            diceGlbTemplate = prepareDiceGlbRoot(gltf.scene);
-            if (diceCamera) {
-                autoCalibrateDiceFaces(diceGlbTemplate);
-            }
-            diceGlbLoading = false;
-            spawnDiceFromTemplate();
-        },
-        undefined,
-        function (err) {
-            diceGlbLoading = false;
-            console.error('Failed to load dice GLB:', err);
-        }
-    );
-}
-
 /** GLB dice roll (all clients: human + AI via diceRolled socket). Optional onLand when roll finishes. */
-function roll3DDice(dice1Value, dice2Value, callbacks) {
-    if (!diceSceneInitialized) {
-        initializeDiceScene();
-    }
-    if (!dice1Mesh || !dice2Mesh) {
-        createDice();
-        setTimeout(() => roll3DDice(dice1Value, dice2Value, callbacks), 10);
+function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
+    if (!diceGlbTemplate) {
+        initializeDice();
+        setTimeout(() => roll3DDice(dice1Value, dice2Value, playerPosition, callbacks), 100);
         return;
     }
 
@@ -210,12 +171,12 @@ function roll3DDice(dice1Value, dice2Value, callbacks) {
         diceRollAnimFrame = null;
     }
 
+    // Spawn dice on board at player position
+    spawnDiceOnBoard(playerPosition);
+
     diceRolling = true;
     dice1Mesh.visible = true;
     dice2Mesh.visible = true;
-
-    const diceEl = document.getElementById('dice3DContainer');
-    if (diceEl) diceEl.classList.add('dice-rolling');
 
     // Play dice roll sound
     playDiceRollSound();
@@ -226,7 +187,6 @@ function roll3DDice(dice1Value, dice2Value, callbacks) {
         duration: getDiceRollDurationMs(),
         onComplete: () => {
             diceRolling = false;
-            if (diceEl) diceEl.classList.remove('dice-rolling');
             if (callbacks && typeof callbacks.onLand === 'function') {
                 callbacks.onLand();
             }
@@ -437,9 +397,7 @@ let scene3DInitialized = false;
 let resizeObserver = null;
 
 // 3D Dice variables
-let diceScene, diceCamera, diceRenderer;
 let dice1Mesh, dice2Mesh;
-let diceSceneInitialized = false;
 let diceRolling = false;
 let diceRollAnimFrame = null;
 const revealedPlayerIds = new Set();
@@ -1774,10 +1732,6 @@ function updateUI() {
             allHumanPlayersSelectedTokens // Can only roll if all human players have selected tokens
         );
 
-        const diceContainer = document.getElementById('dice3DContainer');
-        if (diceContainer) {
-            diceContainer.classList.toggle('dice-attention', canRollDice);
-        }
         const rollDiceBtn = document.getElementById('rollDiceBtn');
         if (rollDiceBtn) {
             rollDiceBtn.disabled = !canRollDice;
@@ -1789,10 +1743,6 @@ function updateUI() {
         }
     } else {
         canRollDice = false;
-        const diceContainer = document.getElementById('dice3DContainer');
-        if (diceContainer) {
-            diceContainer.classList.remove('dice-attention');
-        }
         const rollDiceBtn = document.getElementById('rollDiceBtn');
         if (rollDiceBtn) {
             rollDiceBtn.disabled = true;
@@ -2166,7 +2116,7 @@ socket.on('diceRolled', (data) => {
 
     markPendingRollTokenMove(playerId);
 
-    roll3DDice(serverDice1 || 1, serverDice2 || 1, {
+    roll3DDice(serverDice1 || 1, serverDice2 || 1, oldPosition, {
         onLand: () => {
             const pending = pendingRollTokenMoves[playerId];
             if (!pending || pending.cancelled) return;
@@ -2926,6 +2876,7 @@ function start3DScene() {
     scene.add(fillLight);
 
     create3DBoard();
+    initializeDice();
     updateThreeCamera();
     scene3DInitialized = true;
 
