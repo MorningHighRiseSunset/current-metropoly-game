@@ -146,9 +146,9 @@ function spawnDiceOnBoard(playerPosition) {
     dice1Mesh = diceGlbTemplate.clone(true);
     dice2Mesh = diceGlbTemplate.clone(true);
 
-    // Position dice near the player's current position on the board
-    dice1Mesh.position.set(coords.x - sep, coords.y + 0.3, coords.z);
-    dice2Mesh.position.set(coords.x + sep, coords.y + 0.3, coords.z);
+    // Position dice above the board so they fall onto it
+    dice1Mesh.position.set(coords.x - sep, coords.y + 0.5, coords.z);
+    dice2Mesh.position.set(coords.x + sep, coords.y + 0.5, coords.z);
 
     scene.add(dice1Mesh);
     scene.add(dice2Mesh);
