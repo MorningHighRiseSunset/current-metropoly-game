@@ -199,12 +199,12 @@ function updateGameState(game) {
     });
 }
 
-// Client dice roll + token step animation (must match public/dice-glb-config + game.js)
+// Client dice roll + token step animation (must match public/dice-glb-config.js + game.js)
 function getRollAnimationMs(rollTotal) {
-    const diceRollMs = 4500;
-    const tokenStartAfterDiceMs = 200;
-    const perTileMs = 320;
-    return diceRollMs + tokenStartAfterDiceMs + Math.max(0, rollTotal) * perTileMs;
+    const diceRollMs = 3200;
+    const diceSettleMs = 600;
+    const perTileMs = 150;
+    return diceRollMs + diceSettleMs + Math.max(0, rollTotal) * perTileMs;
 }
 
 // Delay before auto-ending turn (after roll + land-on-tile animations finish)

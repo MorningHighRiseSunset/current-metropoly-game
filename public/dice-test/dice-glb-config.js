@@ -19,7 +19,10 @@ const DICE_GLB_CONFIG = {
     scale: 1,
     separation: 1.65,
     restOffsetY: 0.2,
-    rollDurationMs: 1800,
+    rollDurationMs: 3200,
+    settleHoldMs: 600,
+    tossHeight: 1.15,
+    tokenStepMs: 150,
     faceEuler: {
         1: { x: 0, y: 0, z: 0 },
         2: { x: 0, y: 0, z: 0 },
@@ -126,7 +129,23 @@ function getDiceLandY() {
 }
 
 function getDiceRollDurationMs() {
-    return DICE_GLB_CONFIG.rollDurationMs || 4500;
+    return DICE_GLB_CONFIG.rollDurationMs || 3200;
+}
+
+function getDiceSettleHoldMs() {
+    return DICE_GLB_CONFIG.settleHoldMs || 600;
+}
+
+function getDiceRollTotalMs() {
+    return getDiceRollDurationMs() + getDiceSettleHoldMs();
+}
+
+function getTokenStepDurationMs() {
+    return DICE_GLB_CONFIG.tokenStepMs || 150;
+}
+
+function getRollAnimationMs(rollTotal) {
+    return getDiceRollTotalMs() + Math.max(0, rollTotal) * getTokenStepDurationMs();
 }
 
 function buildFaceEulerFromLocalPip() {
@@ -176,15 +195,18 @@ function runDiceRollAnimation(opts) {
     const meshes = opts.meshes;
     const values = opts.values;
     const duration = opts.duration ?? getDiceRollDurationMs();
-    const landY = getDiceLandY();
+    const anchor = opts.anchor || { x: 0, y: 0, z: 0 };
+    const landY = anchor.y + getDiceLandY();
+    const tossHeight = opts.tossHeight ?? DICE_GLB_CONFIG.tossHeight ?? 1.15;
     const sep = DICE_GLB_CONFIG.separation * 0.5;
     const start = performance.now();
 
     const targets = values.map((v) => getDiceQuaternionForValue(v));
     const states = meshes.map((mesh, i) => {
-        const x = i === 0 ? -sep : sep;
-        const startY = 0.95 + i * 0.05;
-        mesh.position.set(x, startY, 0);
+        const offsetX = i === 0 ? -sep : sep;
+        const offsetZ = (Math.random() - 0.5) * 0.12;
+        const startY = landY + tossHeight + i * 0.07;
+        mesh.position.set(anchor.x + offsetX, startY, anchor.z + offsetZ);
         mesh.quaternion.setFromEuler(
             new THREE.Euler(
                 Math.random() * Math.PI * 2,
@@ -196,12 +218,13 @@ function runDiceRollAnimation(opts) {
         mesh.rotation.setFromQuaternion(mesh.quaternion, 'XYZ');
         return {
             mesh,
-            x,
+            offsetX,
+            offsetZ,
             y: startY,
-            vy: -0.4 - Math.random() * 0.3,
-            wx: (Math.random() - 0.5) * 24,
-            wy: (Math.random() - 0.5) * 26,
-            wz: (Math.random() - 0.5) * 22,
+            vy: 2.8 + Math.random() * 1.4,
+            wx: (Math.random() - 0.5) * 36,
+            wy: (Math.random() - 0.5) * 38,
+            wz: (Math.random() - 0.5) * 34,
             targetQ: targets[i],
             bounceCount: 0
         };
@@ -217,7 +240,7 @@ function runDiceRollAnimation(opts) {
             states.forEach((s) => {
                 s.mesh.quaternion.copy(s.targetQ);
                 s.mesh.rotation.setFromQuaternion(s.mesh.quaternion, 'XYZ');
-                s.mesh.position.set(s.x, landY, 0);
+                s.mesh.position.set(anchor.x + s.offsetX, landY, anchor.z + s.offsetZ);
             });
             if (opts.onComplete) opts.onComplete();
             return false;
@@ -226,55 +249,61 @@ function runDiceRollAnimation(opts) {
         const dt = Math.min(0.032, Math.max(0.008, (now - lastFrame) / 1000));
         lastFrame = now;
 
-        const spinMix = 1 - _diceSmoothstep(0.12, 0.72, t);
-        const alignMix = _diceSmoothstep(0.08, 0.92, t);
+        const spinMix = 1 - _diceSmoothstep(0.06, 0.58, t);
+        const alignMix = _diceSmoothstep(0.5, 0.98, t);
 
         states.forEach((s) => {
-            s.vy -= 9.8 * dt * 0.72;
+            s.vy -= 11.5 * dt;
             s.y += s.vy * dt;
 
             const onGround = s.y <= landY;
             if (onGround) {
-                if (s.vy < 0) {
+                if (s.vy < -0.05) {
                     s.bounceCount += 1;
-                    const bounceDamp = 0.18 + Math.min(s.bounceCount, 4) * 0.06;
-                    s.vy = -s.vy * Math.max(0.12, bounceDamp - t * 0.08);
-                    if (Math.abs(s.vy) < 0.2 || t > 0.82) s.vy = 0;
+                    const bounceDamp = 0.22 + Math.min(s.bounceCount, 5) * 0.05;
+                    s.vy = -s.vy * Math.max(0.08, bounceDamp - t * 0.12);
+                    if (Math.abs(s.vy) < 0.18 || t > 0.88) s.vy = 0;
+                    if (s.bounceCount <= 3 && t < 0.75) {
+                        s.wx += (Math.random() - 0.5) * 6;
+                        s.wz += (Math.random() - 0.5) * 6;
+                    }
                 }
                 s.y = landY;
-                const groundSpinDamp = 0.82 - t * 0.2;
+                const groundSpinDamp = 0.86 - t * 0.25;
                 s.wx *= groundSpinDamp;
                 s.wy *= groundSpinDamp;
                 s.wz *= groundSpinDamp;
             } else {
-                const airDamp = 0.988;
+                const airDamp = 0.992;
                 s.wx *= airDamp;
                 s.wy *= airDamp;
                 s.wz *= airDamp;
             }
 
-            if (spinMix > 0.03) {
+            if (spinMix > 0.04) {
                 applyDiceSpin(s.mesh, s.wx * spinMix, s.wy * spinMix, s.wz * spinMix, dt);
             }
 
-            const grounded = onGround || s.y <= landY + 0.02;
-            let alignRate = alignMix * 0.05;
-            if (grounded) {
-                alignRate += 0.08 + alignMix * 0.28;
-                if (Math.abs(s.vy) < 0.15) alignRate += 0.15;
+            const grounded = onGround || s.y <= landY + 0.025;
+            let alignRate = 0;
+            if (grounded && t > 0.42) {
+                alignRate = alignMix * 0.04;
+                if (Math.abs(s.vy) < 0.2) alignRate += 0.06 + alignMix * 0.22;
             }
-            if (t > 0.55) alignRate += (t - 0.55) * 0.45;
+            if (t > 0.72) alignRate += (t - 0.72) * 0.55;
 
-            s.mesh.quaternion.slerp(s.targetQ, Math.min(0.55, alignRate));
-            s.mesh.rotation.setFromQuaternion(s.mesh.quaternion, 'XYZ');
-
-            if (t > 0.78) {
-                s.wx *= 0.75;
-                s.wy *= 0.75;
-                s.wz *= 0.75;
+            if (alignRate > 0) {
+                s.mesh.quaternion.slerp(s.targetQ, Math.min(0.42, alignRate));
+                s.mesh.rotation.setFromQuaternion(s.mesh.quaternion, 'XYZ');
             }
 
-            s.mesh.position.set(s.x, s.y, 0);
+            if (t > 0.82) {
+                s.wx *= 0.7;
+                s.wy *= 0.7;
+                s.wz *= 0.7;
+            }
+
+            s.mesh.position.set(anchor.x + s.offsetX, s.y, anchor.z + s.offsetZ);
         });
 
         return true;

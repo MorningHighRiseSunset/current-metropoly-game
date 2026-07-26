@@ -83,37 +83,34 @@ function initializeDice() {
 function playDiceRollSound() {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const duration = 0.3;
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.type = 'triangle';
-        oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + duration);
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + duration);
-        
-        // Add some random clicks for dice clatter
-        for (let i = 0; i < 5; i++) {
+        const rollMs = getDiceRollDurationMs();
+        const clatterCount = Math.max(6, Math.floor(rollMs / 280));
+
+        const rumbleOsc = audioContext.createOscillator();
+        const rumbleGain = audioContext.createGain();
+        rumbleOsc.type = 'triangle';
+        rumbleOsc.frequency.setValueAtTime(180, audioContext.currentTime);
+        rumbleOsc.frequency.exponentialRampToValueAtTime(55, audioContext.currentTime + rollMs / 1000);
+        rumbleGain.gain.setValueAtTime(0.22, audioContext.currentTime);
+        rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + rollMs / 1000);
+        rumbleOsc.connect(rumbleGain);
+        rumbleGain.connect(audioContext.destination);
+        rumbleOsc.start();
+        rumbleOsc.stop(audioContext.currentTime + rollMs / 1000);
+
+        for (let i = 0; i < clatterCount; i++) {
             setTimeout(() => {
                 const clickOsc = audioContext.createOscillator();
                 const clickGain = audioContext.createGain();
                 clickOsc.type = 'square';
-                clickOsc.frequency.setValueAtTime(200 + Math.random() * 300, audioContext.currentTime);
-                clickGain.gain.setValueAtTime(0.1, audioContext.currentTime);
-                clickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+                clickOsc.frequency.setValueAtTime(180 + Math.random() * 420, audioContext.currentTime);
+                clickGain.gain.setValueAtTime(0.08 + Math.random() * 0.06, audioContext.currentTime);
+                clickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.06);
                 clickOsc.connect(clickGain);
                 clickGain.connect(audioContext.destination);
                 clickOsc.start();
-                clickOsc.stop(audioContext.currentTime + 0.05);
-            }, i * 50);
+                clickOsc.stop(audioContext.currentTime + 0.06);
+            }, i * (rollMs / clatterCount) * 0.85);
         }
     } catch (e) {
         console.log('Could not play dice sound:', e);
@@ -171,29 +168,31 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
         diceRollAnimFrame = null;
     }
 
-    // Spawn dice on board at player position
     spawnDiceOnBoard(playerPosition);
+    const anchor = get3DBoardCoords(playerPosition);
 
     diceRolling = true;
     dice1Mesh.visible = true;
     dice2Mesh.visible = true;
 
-    // Play dice roll sound
     playDiceRollSound();
 
     let rollTick = runDiceRollAnimation({
         meshes: [dice1Mesh, dice2Mesh],
         values: [dice1Value, dice2Value],
         duration: getDiceRollDurationMs(),
+        anchor,
         onComplete: () => {
-            diceRolling = false;
-            if (callbacks && typeof callbacks.onLand === 'function') {
-                callbacks.onLand();
-            }
-            if (!diceRolling && dice1Mesh && dice2Mesh) {
-                dice1Mesh.visible = false;
-                dice2Mesh.visible = false;
-            }
+            setTimeout(() => {
+                diceRolling = false;
+                if (callbacks && typeof callbacks.onLand === 'function') {
+                    callbacks.onLand();
+                }
+                setTimeout(() => {
+                    if (dice1Mesh) dice1Mesh.visible = false;
+                    if (dice2Mesh) dice2Mesh.visible = false;
+                }, 350);
+            }, getDiceSettleHoldMs());
         }
     });
 
@@ -362,6 +361,10 @@ function update3DTokenPositions() {
             return;
         }
 
+        if (pendingRollTokenMoves[player.id]) {
+            return;
+        }
+
         const model = tokenModels[player.id];
         if (!model) {
             return;
@@ -406,7 +409,9 @@ const revealedPlayerIds = new Set();
 const tokenAnimatingIds = new Set();
 const tokenAnimationHandles = {};
 const pendingRollTokenMoves = {};
-const TOKEN_STEP_DURATION_MS = 150;
+const TOKEN_STEP_DURATION_MS = typeof getTokenStepDurationMs === 'function'
+    ? getTokenStepDurationMs()
+    : 150;
 
 function markPendingRollTokenMove(playerId) {
     if (!playerId) return;
