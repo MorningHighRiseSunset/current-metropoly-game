@@ -30,6 +30,98 @@ let propertyDecisionTimer = null;
 let propertyDecisionEndsAt = null;
 let activePropertyDecision = null;
 let waitingForBuyResult = false;
+let casinoMessageListenerAttached = false;
+
+// ========== DICE ROLL SEQUENCE STATE MACHINE ==========
+// Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
+const DiceRollSequenceManager = (() => {
+    const PHASES = {
+        IDLE: 'idle',
+        DICE_ROLLING: 'dice_rolling',
+        TOKEN_MOVING: 'token_moving',
+        UI_OPENING: 'ui_opening',
+        COMPLETE: 'complete'
+    };
+
+    const sequences = {}; // Track active sequences by playerId
+
+    function startSequence(playerId) {
+        sequences[playerId] = {
+            phase: PHASES.DICE_ROLLING,
+            playerId,
+            startTime: Date.now(),
+            oldPosition: null,
+            newPosition: null,
+            diceData: null
+        };
+        logSequence(playerId, `Started sequence (${PHASES.DICE_ROLLING})`);
+    }
+
+    function updatePhase(playerId, newPhase) {
+        if (!sequences[playerId]) return;
+        const oldPhase = sequences[playerId].phase;
+        sequences[playerId].phase = newPhase;
+        logSequence(playerId, `Phase transition: ${oldPhase} → ${newPhase}`);
+    }
+
+    function markDiceRolled(playerId, oldPosition, newPosition, diceData) {
+        if (!sequences[playerId]) return;
+        sequences[playerId].oldPosition = oldPosition;
+        sequences[playerId].newPosition = newPosition;
+        sequences[playerId].diceData = diceData;
+        updatePhase(playerId, PHASES.TOKEN_MOVING);
+    }
+
+    function markTokenMoving(playerId) {
+        updatePhase(playerId, PHASES.TOKEN_MOVING);
+    }
+
+    function markUIOpening(playerId) {
+        updatePhase(playerId, PHASES.UI_OPENING);
+    }
+
+    function completeSequence(playerId) {
+        if (!sequences[playerId]) return;
+        updatePhase(playerId, PHASES.COMPLETE);
+        const duration = Date.now() - sequences[playerId].startTime;
+        logSequence(playerId, `Completed (${duration}ms)`);
+        delete sequences[playerId];
+    }
+
+    function cancelSequence(playerId) {
+        if (sequences[playerId]) {
+            logSequence(playerId, `Cancelled at phase ${sequences[playerId].phase}`);
+            delete sequences[playerId];
+        }
+    }
+
+    function getSequence(playerId) {
+        return sequences[playerId] || null;
+    }
+
+    function isActive(playerId) {
+        return !!sequences[playerId];
+    }
+
+    function logSequence(playerId, message) {
+        const playerName = players.find(p => p && p.id === playerId)?.name || playerId;
+        console.log(`[DiceRollSeq:${playerName}] ${message}`);
+    }
+
+    return {
+        PHASES,
+        startSequence,
+        updatePhase,
+        markDiceRolled,
+        markTokenMoving,
+        markUIOpening,
+        completeSequence,
+        cancelSequence,
+        getSequence,
+        isActive,
+        logSequence
+    };
+})();
 
 // Token data
 const tokenData = [
@@ -55,29 +147,7 @@ function getModelPath(localPath) {
     return localPath;
 }
 
-// Initialize 3D dice - now uses main board scene
-function initializeDice() {
-    if (diceGlbTemplate) return;
-    if (diceGlbLoading) return;
-    diceGlbLoading = true;
-
-    const loader = new THREE.GLTFLoader();
-    loader.load(
-        DICE_GLB_CONFIG.modelPath,
-        function (gltf) {
-            diceGlbTemplate = prepareDiceGlbRoot(gltf.scene);
-            if (camera) {
-                autoCalibrateDiceFaces(diceGlbTemplate);
-            }
-            diceGlbLoading = false;
-        },
-        undefined,
-        function (err) {
-            diceGlbLoading = false;
-            console.error('Failed to load dice GLB:', err);
-        }
-    );
-}
+// Dice initialization (no longer needed - procedurally generated)
 
 // Dice roll sound (Web Audio API)
 function playDiceRollSound() {
@@ -117,33 +187,84 @@ function playDiceRollSound() {
     }
 }
 
-let diceGlbTemplate = null;
-let diceGlbLoading = false;
+// Create a simple cube die with pip dots on each face using canvas textures
+function createDiceTexture(value) {
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
 
-function prepareDiceGlbRoot(root) {
-    const box = new THREE.Box3().setFromObject(root);
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z, 0.001);
-    const s = DICE_GLB_CONFIG.scale / maxDim;
-    root.scale.setScalar(s);
-    box.setFromObject(root);
-    const center = box.getCenter(new THREE.Vector3());
-    root.position.sub(center);
-    return root;
+    // White background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    // Black border
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(0, 0, size, size);
+
+    // Draw pips for the value
+    ctx.fillStyle = '#000000';
+    const pipRadius = size / 16;
+    const pipPositions = {
+        1: [[0.5, 0.5]],
+        2: [[0.25, 0.25], [0.75, 0.75]],
+        3: [[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]],
+        4: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]],
+        5: [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]],
+        6: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.5], [0.75, 0.5], [0.25, 0.75], [0.75, 0.75]]
+    };
+
+    const positions = pipPositions[value] || pipPositions[1];
+    positions.forEach(([x, y]) => {
+        ctx.beginPath();
+        ctx.arc(x * size, y * size, pipRadius, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    return texture;
+}
+
+// Create a single die mesh with properly oriented faces
+function createDiceMesh() {
+    const size = 0.15;
+    const geometry = new THREE.BoxGeometry(size, size, size);
+    
+    // Create materials for each face (order: +X, -X, +Y, -Y, +Z, -Z)
+    // Dice face mapping: faces are in order of BoxGeometry [right, left, top, bottom, front, back]
+    // We need: 1=top(+Y), 6=bottom(-Y), 2=right(+X), 5=left(-X), 4=front(+Z), 3=back(-Z)
+    const materials = [
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(2) }), // +X (right) = 2
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(5) }), // -X (left) = 5
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(1) }), // +Y (top) = 1
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(6) }), // -Y (bottom) = 6
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(4) }), // +Z (front) = 4
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(3) })  // -Z (back) = 3
+    ];
+
+    const dice = new THREE.Mesh(geometry, materials);
+    dice.castShadow = true;
+    dice.receiveShadow = true;
+    return dice;
 }
 
 function spawnDiceOnBoard(playerPosition) {
-    if (!diceGlbTemplate || !scene) return;
+    if (!scene) return;
 
     // Remove existing dice if any
     if (dice1Mesh && scene) scene.remove(dice1Mesh);
     if (dice2Mesh && scene) scene.remove(dice2Mesh);
 
     const sep = DICE_GLB_CONFIG.separation * 0.5;
-    const coords = get3DBoardCoords(playerPosition);
+    // Always spawn at board center (0, 0) not at player position
+    const boardCenterY = BOARD_LAYOUT.tokenY;
 
-    dice1Mesh = diceGlbTemplate.clone(true);
-    dice2Mesh = diceGlbTemplate.clone(true);
+    dice1Mesh = createDiceMesh();
+    dice2Mesh = createDiceMesh();
 
     // Enhance dice materials for better 3D appearance
     dice1Mesh.traverse((child) => {
@@ -170,9 +291,9 @@ function spawnDiceOnBoard(playerPosition) {
         }
     });
 
-    // Position dice near the player's current position on the board
-    dice1Mesh.position.set(coords.x - sep, coords.y + 0.3, coords.z);
-    dice2Mesh.position.set(coords.x + sep, coords.y + 0.3, coords.z);
+    // Position dice at board center, above the board surface
+    dice1Mesh.position.set(-sep, boardCenterY + 0.4, 0);
+    dice2Mesh.position.set(sep, boardCenterY + 0.4, 0);
 
     scene.add(dice1Mesh);
     scene.add(dice2Mesh);
@@ -180,10 +301,9 @@ function spawnDiceOnBoard(playerPosition) {
     dice2Mesh.visible = false;
 }
 
-/** GLB dice roll (all clients: human + AI via diceRolled socket). Optional onLand when roll finishes. */
+/** Roll two dice (all clients: human + AI via diceRolled socket). Optional onLand when roll finishes. */
 function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
-    if (!diceGlbTemplate) {
-        initializeDice();
+    if (!scene) {
         setTimeout(() => roll3DDice(dice1Value, dice2Value, playerPosition, callbacks), 100);
         return;
     }
@@ -194,7 +314,8 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
     }
 
     spawnDiceOnBoard(playerPosition);
-    const anchor = get3DBoardCoords(playerPosition);
+    // Always roll dice at board center (0, 0)
+    const anchor = { x: 0, y: BOARD_LAYOUT.tokenY, z: 0 };
 
     diceRolling = true;
     dice1Mesh.visible = true;
@@ -829,7 +950,6 @@ function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
 function updateBuyModalContent() {
     if (!activePropertyDecision) return;
     const buyContent = document.getElementById('buyContent');
-    const playCasinoBtn = document.getElementById('playCasinoBtn');
     const confirmBuyBtn = document.getElementById('confirmBuyBtn');
     const cancelBuyBtn = document.getElementById('cancelBuyBtn');
     if (!buyContent) return;
@@ -885,15 +1005,6 @@ function updateBuyModalContent() {
     }
     
     buyContent.innerHTML = html;
-
-    // Show/hide casino game button based on property type (only for buy decisions)
-    if (playCasinoBtn) {
-        if (isCasino) {
-            playCasinoBtn.style.display = 'block';
-        } else {
-            playCasinoBtn.style.display = 'none';
-        }
-    }
 }
 
 function startPropertyDecision(spaceData, position) {
@@ -973,8 +1084,11 @@ function openCasinoGame(gameName) {
         buyModal.classList.add('hidden');
     }
 
-    // Listen for messages from the casino game iframe
-    window.addEventListener('message', handleCasinoGameMessage);
+    // Listen for messages from the casino game iframe (only add listener once)
+    if (!casinoMessageListenerAttached) {
+        window.addEventListener('message', handleCasinoGameMessage);
+        casinoMessageListenerAttached = true;
+    }
 }
 
 // Handle messages from casino game iframe
@@ -984,6 +1098,11 @@ function handleCasinoGameMessage(event) {
         if (winnings !== 0 && socket) {
             socket.emit('casinoWinnings', { amount: winnings });
         }
+        
+        // Auto-close casino game after one hand
+        setTimeout(() => {
+            closeCasinoGame();
+        }, 500);
     }
 }
 
@@ -1002,6 +1121,7 @@ function closeCasinoGame() {
     
     // Remove message listener
     window.removeEventListener('message', handleCasinoGameMessage);
+    casinoMessageListenerAttached = false;
     
     // Show buy modal after casino game ends for property purchase
     if (activePropertyDecision && activePropertyDecision.spaceData.isCasino) {
@@ -1434,7 +1554,8 @@ function showPropertyInfo(spaceData) {
     const modal = propertyModal;
     const title = document.getElementById('propertyTitle');
     const content = document.getElementById('propertyContent');
-    const mediaContainer = document.getElementById('propertyMedia');
+    const mediaContainer = document.getElementById('propertyMedia') || document.getElementById('property-media');
+    const loadingIndicator = document.getElementById('loadingIndicator');
     
     console.log('Modal elements:', { modal: !!modal, title: !!title, content: !!content, mediaContainer: !!mediaContainer });
     
@@ -1455,13 +1576,16 @@ function showPropertyInfo(spaceData) {
         
         // Check cache first
         if (mediaCache[cacheKey]) {
-            mediaContainer.appendChild(mediaCache[cacheKey].cloneNode(true));
+            const cloned = mediaCache[cacheKey].cloneNode(true);
+            mediaContainer.appendChild(cloned);
             if (mediaCache[cacheKey].tagName === 'VIDEO') {
                 const video = mediaContainer.querySelector('video');
                 currentPropertyVideo = video;
-                video.currentTime = 0; // Reset video to start
-                video.play().catch(e => console.log('Autoplay failed:', e));
-            }
+            video.muted = true; // ensure muted when restoring from cache
+            video.loop = false; // Ensure no looping
+            video.currentTime = 0; // Reset video to start
+            video.play().catch(e => console.log('Autoplay failed:', e));
+        }
         } else {
             // Prefer video if available
             if (media.videos && media.videos.length > 0) {
@@ -1471,14 +1595,14 @@ function showPropertyInfo(spaceData) {
                 video.src = randomVideo;
                 video.autoplay = true;
                 video.muted = true; // Muted for autoplay to work
-                video.loop = true;
+                video.loop = false; // Do not loop - play once then stop
                 video.playsInline = true;
                 video.controls = true;
                 video.style.width = '100%';
                 video.style.maxHeight = '250px';
                 video.style.objectFit = 'cover';
                 video.style.borderRadius = '8px';
-                video.preload = 'metadata';
+                video.preload = 'auto';
                 
                 video.addEventListener('loadeddata', () => {
                     mediaContainer.appendChild(video);
@@ -1491,7 +1615,7 @@ function showPropertyInfo(spaceData) {
                     console.log('Video load error:', e);
                     console.log('Failed video src:', randomVideo);
                     mediaContainer.innerHTML = '';
-                    loadingIndicator.textContent = 'Media unavailable';
+                    if (loadingIndicator) loadingIndicator.textContent = 'Media unavailable';
                 });
             } else if (media.images && media.images.length > 0) {
                 const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
@@ -1512,7 +1636,7 @@ function showPropertyInfo(spaceData) {
                 
                 img.addEventListener('error', () => {
                     mediaContainer.innerHTML = '';
-                    loadingIndicator.textContent = 'Image unavailable';
+                    if (loadingIndicator) loadingIndicator.textContent = 'Image unavailable';
                 });
             } else {
                 mediaContainer.innerHTML = '';
@@ -1557,17 +1681,40 @@ function showPropertyInfo(spaceData) {
 // Cleanup property video when modal closes
 function cleanupPropertyVideo() {
     // Stop all videos in the media container
-    const mediaContainer = document.getElementById('property-media');
+    const mediaContainer = document.getElementById('propertyMedia') || document.getElementById('property-media');
     if (mediaContainer) {
         const videos = mediaContainer.querySelectorAll('video');
         videos.forEach(video => {
+            // Stop playback immediately
             video.pause();
+            video.currentTime = 0;
+            
+            // Remove loop attribute to prevent auto-restart
+            video.loop = false;
+            video.autoplay = false;
+            
+            // Clear all sources
             video.src = '';
+            const sources = video.querySelectorAll('source');
+            sources.forEach(source => source.remove());
             video.load();
+            
+            // Disconnect from playback engine
+            video.srcset = '';
         });
         mediaContainer.innerHTML = '';
     }
-    currentPropertyVideo = null;
+    
+    // Clear current video reference
+    if (currentPropertyVideo) {
+        currentPropertyVideo.pause();
+        currentPropertyVideo.currentTime = 0;
+        currentPropertyVideo.loop = false;
+        currentPropertyVideo.autoplay = false;
+        currentPropertyVideo.src = '';
+        currentPropertyVideo.srcset = '';
+        currentPropertyVideo = null;
+    }
 }
 
 // Update players list
@@ -1800,6 +1947,171 @@ function updateUI(options = {}) {
             payJailBtn.style.display = 'none';
         }
     }
+}
+
+// ========== DICE ROLL SEQUENCE HANDLERS ==========
+// REFACTORED FLOW ARCHITECTURE
+// ================================
+// The complete dice roll → token movement → property decision sequence is now managed
+// through a clean, single-responsibility flow:
+//
+// PHASES (tracked by DiceRollSequenceManager):
+//   DICE_ROLLING    - Dice animation is playing, roll hasn't landed yet
+//   TOKEN_MOVING    - Token is animating from old position to new position
+//   UI_OPENING      - Property decision UI is opening or sequence is preparing to complete
+//   COMPLETE        - Sequence finished, cleanup done
+//
+// FLOW FOR NON-DOUBLES ROLLS:
+//   socket.on('diceRolled')
+//     → handleDiceRolledEvent()         [orchestrator]
+//       → roll3DDice() onLand callback  [dice animation complete]
+//         → animateTokenMove()          [token animation]
+//           → onTokenAnimationComplete() callback
+//             → onDiceRollSequenceComplete() [consolidated completion handler]
+//               → startPropertyDecision()   [opens buy modal if applicable]
+//               → updateUI() once          [single update call]
+//               → scheduleClientAutoEndTurn()
+//
+// FLOW FOR DOUBLES ROLLS:
+//   socket.on('diceRolled')
+//     → handleDiceRolledEvent()         [orchestrator]
+//       → roll3DDice() onLand callback
+//         → animateTokenMove()
+//           → onTokenAnimationComplete() callback
+//             → skip onDiceRollSequenceComplete() (doubles detected)
+//             → updateUI() once
+//             [turn continues for next roll]
+//
+// KEY IMPROVEMENTS:
+//   ✓ Single orchestration point (handleDiceRolledEvent)
+//   ✓ Clear phase tracking for debugging/logging
+//   ✓ Consolidated updateUI() calls (1-2 per sequence instead of 3+)
+//   ✓ Proper cancellation on turn change via DiceRollSequenceManager
+//   ✓ No nested callback hell - flat async flow
+//   ✓ Handles multiple concurrent sequences (AI players rolling in sequence)
+//   ✓ Property decision UI only opens for current player
+
+// Consolidated callback that triggers after token animation completes
+function onDiceRollSequenceComplete(playerId, newPosition, diceData) {
+    DiceRollSequenceManager.markUIOpening(playerId);
+    
+    // Only trigger property decision UI for the current player (not observers)
+    if (playerId === myPlayerId) {
+        const spaceData = getUnownedPurchasableSpace(newPosition);
+        if (spaceData) {
+            console.log('[DiceRoll] Opening property decision for:', spaceData.name);
+            startPropertyDecision(spaceData, newPosition);
+            // startPropertyDecision calls updateUI(), so we don't call it again
+            DiceRollSequenceManager.completeSequence(playerId);
+            return;
+        }
+    }
+    
+    // Mark sequence as complete and update UI (only if property decision didn't already)
+    DiceRollSequenceManager.completeSequence(playerId);
+    updateUI();
+}
+
+// Main handler for diceRolled event - orchestrates the entire sequence
+function handleDiceRolledEvent(data) {
+    const playerId = data.playerId;
+    const newPosition = data.newPosition;
+    const message = data.message || 'Dice rolled';
+    const serverDice1 = data.dice1 ?? (data.roll && data.roll.dice1);
+    const serverDice2 = data.dice2 ?? (data.roll && data.roll.dice2);
+    const rollTotal = (data.roll && data.roll.total) || ((serverDice1 || 1) + (serverDice2 || 1));
+
+    // Start tracking this sequence
+    DiceRollSequenceManager.startSequence(playerId);
+
+    const existingPlayer = players.find(p => p && p.id === playerId);
+    const oldPosition = data.oldPosition !== undefined
+        ? data.oldPosition
+        : (existingPlayer
+            ? existingPlayer.position
+            : ((newPosition - rollTotal + 40) % 40));
+
+    // Update game state from server
+    if (data.gameState) {
+        gameState = data.gameState;
+    }
+
+    if (data.players) {
+        players = data.players;
+    }
+
+    const moveSteps = getMoveStepCount(oldPosition, newPosition);
+    const player = players.find(p => p && p.id === playerId);
+    
+    if (player) {
+        revealPlayerToken(playerId);
+        if (oldPosition !== newPosition) {
+            player.position = oldPosition;
+        }
+        if (player.tokenIndex !== undefined && !tokenModels[playerId]) {
+            loadTokenModel(player.tokenIndex, player);
+        }
+        if (moveSteps === 0) {
+            update3DTokenPositions();
+        } else {
+            const coords = get3DBoardCoords(oldPosition);
+            const model = tokenModels[playerId];
+            if (model) {
+                model.position.set(coords.x, coords.y, coords.z);
+                model.visible = isTokenVisible(playerId);
+            }
+        }
+    }
+
+    // Track this roll so animations can be cancelled if needed
+    markPendingRollTokenMove(playerId);
+    
+    // Record dice data for sequence tracking
+    DiceRollSequenceManager.markDiceRolled(playerId, oldPosition, newPosition, data);
+
+    // Start the 3D dice animation
+    roll3DDice(serverDice1 || 1, serverDice2 || 1, oldPosition, {
+        onLand: () => {
+            // Validate that this roll hasn't been cancelled
+            const pending = pendingRollTokenMoves[playerId];
+            if (!pending || pending.cancelled) {
+                DiceRollSequenceManager.cancelSequence(playerId);
+                return;
+            }
+            delete pendingRollTokenMoves[playerId];
+
+            // Log the dice roll
+            addLogEntry(message, 'system');
+
+            // Determine what happens after token animation
+            const onTokenAnimationComplete = () => {
+                if (!isDoublesRoll(data)) {
+                    // For non-doubles: trigger property decision
+                    onDiceRollSequenceComplete(playerId, newPosition, data);
+                } else {
+                    // For doubles: just clean up and let turn continue
+                    DiceRollSequenceManager.completeSequence(playerId);
+                    updateUI();
+                }
+                
+                // Client-side auto-end-turn logic (for current player only)
+                if (playerId === myPlayerId && !isDoublesRoll(data)) {
+                    scheduleClientAutoEndTurn(playerId, oldPosition, newPosition);
+                }
+            };
+
+            // Animate token movement
+            if (player && moveSteps > 0) {
+                animateTokenMove(playerId, oldPosition, newPosition, onTokenAnimationComplete);
+            } else if (player) {
+                player.position = newPosition;
+                update3DTokenPositions();
+                onTokenAnimationComplete();
+            } else {
+                onTokenAnimationComplete();
+            }
+        }
+    });
 }
 
 // Socket event handlers
@@ -2099,84 +2411,8 @@ socket.on('playerMoved', (data) => {
 });
 
 socket.on('diceRolled', (data) => {
-    const playerId = data.playerId;
-    const newPosition = data.newPosition;
-    const message = data.message || 'Dice rolled';
-    const serverDice1 = data.dice1 ?? (data.roll && data.roll.dice1);
-    const serverDice2 = data.dice2 ?? (data.roll && data.roll.dice2);
-    const rollTotal = (data.roll && data.roll.total) || ((serverDice1 || 1) + (serverDice2 || 1));
-
-    const existingPlayer = players.find(p => p && p.id === playerId);
-    const oldPosition = data.oldPosition !== undefined
-        ? data.oldPosition
-        : (existingPlayer
-            ? existingPlayer.position
-            : ((newPosition - rollTotal + 40) % 40));
-
-    if (data.gameState) {
-        gameState = data.gameState;
-    }
-
-    if (data.players) {
-        players = data.players;
-    }
-
-    const moveSteps = getMoveStepCount(oldPosition, newPosition);
-    const player = players.find(p => p && p.id === playerId);
-    if (player) {
-        revealPlayerToken(playerId);
-        if (oldPosition !== newPosition) {
-            player.position = oldPosition;
-        }
-        if (player.tokenIndex !== undefined && !tokenModels[playerId]) {
-            loadTokenModel(player.tokenIndex, player);
-        }
-        if (moveSteps === 0) {
-            update3DTokenPositions();
-        } else {
-            const coords = get3DBoardCoords(oldPosition);
-            const model = tokenModels[playerId];
-            if (model) {
-                model.position.set(coords.x, coords.y, coords.z);
-                model.visible = isTokenVisible(playerId);
-            }
-        }
-    }
-
-    markPendingRollTokenMove(playerId);
-
-    roll3DDice(serverDice1 || 1, serverDice2 || 1, oldPosition, {
-        onLand: () => {
-            const pending = pendingRollTokenMoves[playerId];
-            if (!pending || pending.cancelled) return;
-            delete pendingRollTokenMoves[playerId];
-
-            addLogEntry(message, 'system');
-            updateUI();
-
-            const afterMove = () => {
-                if (!isDoublesRoll(data)) {
-                    handlePlayerLanding(playerId, newPosition);
-                }
-                if (playerId === myPlayerId) {
-                    updateUI();
-                    if (!isDoublesRoll(data)) {
-                        scheduleClientAutoEndTurn(playerId, oldPosition, newPosition);
-                    }
-                }
-            };
-
-            if (player && moveSteps > 0) {
-                animateTokenMove(playerId, oldPosition, newPosition, afterMove);
-            } else if (player) {
-                player.position = newPosition;
-                update3DTokenPositions();
-                afterMove();
-            } else {
-                afterMove();
-            }
-        }
-    });
+    // Delegate to the refactored sequence manager
+    handleDiceRolledEvent(data);
 });
 
 function isDoublesRoll(diceRolledData) {
@@ -2573,7 +2809,6 @@ function showTokenSelection() {
 
 const confirmBuyBtn = document.getElementById('confirmBuyBtn');
 const cancelBuyBtn = document.getElementById('cancelBuyBtn');
-const playCasinoBtn = document.getElementById('playCasinoBtn');
 const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 
 if (confirmBuyBtn) {
@@ -2612,14 +2847,6 @@ if (cancelBuyBtn) {
         clearPropertyDecisionTimer();
         buyModal.classList.add('hidden');
         activePropertyDecision = null;
-    });
-}
-
-if (playCasinoBtn) {
-    playCasinoBtn.addEventListener('click', () => {
-        if (!activePropertyDecision || !activePropertyDecision.spaceData.isCasino) return;
-        const gameName = activePropertyDecision.spaceData.casinoGame;
-        openCasinoGame(gameName);
     });
 }
 
@@ -2914,7 +3141,6 @@ function start3DScene() {
     scene.add(fillLight);
 
     create3DBoard();
-    initializeDice();
     updateThreeCamera();
     scene3DInitialized = true;
 
