@@ -3440,15 +3440,6 @@ function create3DBoard() {
 }
 
 
-// Animation loop for dice scene
-function animateDiceScene() {
-    requestAnimationFrame(animateDiceScene);
-
-    if (diceRenderer && diceScene && diceCamera) {
-        diceRenderer.render(diceScene, diceCamera);
-    }
-}
-
 // Animation loop for 3D scene
 function animate3DScene() {
     requestAnimationFrame(animate3DScene);
@@ -3486,8 +3477,6 @@ function animateFerrisWheels() {
         try {
             start3DScene();
             animate3DScene();
-            initializeDiceScene();
-            animateDiceScene();
         } catch (error) {
             console.error('3D scene initialization failed:', error);
         }
