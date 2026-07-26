@@ -1283,6 +1283,10 @@ io.on('connection', (socket) => {
         if (!playerData) return;
 
         const game = games[playerData.gameId];
+        if (!game) {
+            socket.emit('gameError', 'Game not found');
+            return;
+        }
         if (game.status !== 'playing' && game.status !== 'starting') {
             socket.emit('gameError', `Game is not ready yet (status: ${game.status})`);
             return;
