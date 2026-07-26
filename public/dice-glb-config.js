@@ -21,12 +21,12 @@ const DICE_GLB_CONFIG = {
         }
         return '/Models/Dice/dice.glb';
     },
-    scale: 0.15,
-    separation: 0.4,
-    restOffsetY: 0.05,
+    scale: 0.05,
+    separation: 0.15,
+    restOffsetY: 0.03,
     rollDurationMs: 1600,
     settleHoldMs: 300,
-    tossHeight: 0.6,
+    tossHeight: 0.3,
     /** Must match server.js getRollAnimationMs perTileMs and game.js TOKEN_STEP_DURATION_MS */
     tokenStepMs: 150,
     faceEuler: {

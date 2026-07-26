@@ -141,14 +141,15 @@ function spawnDiceOnBoard(playerPosition) {
     if (dice2Mesh && scene) scene.remove(dice2Mesh);
 
     const sep = DICE_GLB_CONFIG.separation * 0.5;
-    const coords = get3DBoardCoords(playerPosition);
+    // Always spawn at board center (0, 0) not at player position
+    const boardCenterY = BOARD_LAYOUT.tokenY;
 
     dice1Mesh = diceGlbTemplate.clone(true);
     dice2Mesh = diceGlbTemplate.clone(true);
 
-    // Position dice above the board so they fall onto it
-    dice1Mesh.position.set(coords.x - sep, coords.y + 0.5, coords.z);
-    dice2Mesh.position.set(coords.x + sep, coords.y + 0.5, coords.z);
+    // Position dice at board center, above the board surface
+    dice1Mesh.position.set(-sep, boardCenterY + 0.4, 0);
+    dice2Mesh.position.set(sep, boardCenterY + 0.4, 0);
 
     scene.add(dice1Mesh);
     scene.add(dice2Mesh);
@@ -170,7 +171,8 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
     }
 
     spawnDiceOnBoard(playerPosition);
-    const anchor = get3DBoardCoords(playerPosition);
+    // Always roll dice at board center (0, 0)
+    const anchor = { x: 0, y: BOARD_LAYOUT.tokenY, z: 0 };
 
     diceRolling = true;
     dice1Mesh.visible = true;
