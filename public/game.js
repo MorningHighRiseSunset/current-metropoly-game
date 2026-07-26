@@ -30,6 +30,7 @@ let propertyDecisionTimer = null;
 let propertyDecisionEndsAt = null;
 let activePropertyDecision = null;
 let waitingForBuyResult = false;
+let casinoMessageListenerAttached = false;
 
 // Token data
 const tokenData = [
@@ -804,7 +805,6 @@ function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
 function updateBuyModalContent() {
     if (!activePropertyDecision) return;
     const buyContent = document.getElementById('buyContent');
-    const playCasinoBtn = document.getElementById('playCasinoBtn');
     const confirmBuyBtn = document.getElementById('confirmBuyBtn');
     const cancelBuyBtn = document.getElementById('cancelBuyBtn');
     if (!buyContent) return;
@@ -860,15 +860,6 @@ function updateBuyModalContent() {
     }
     
     buyContent.innerHTML = html;
-
-    // Show/hide casino game button based on property type (only for buy decisions)
-    if (playCasinoBtn) {
-        if (isCasino) {
-            playCasinoBtn.style.display = 'block';
-        } else {
-            playCasinoBtn.style.display = 'none';
-        }
-    }
 }
 
 function startPropertyDecision(spaceData, position) {
@@ -948,8 +939,11 @@ function openCasinoGame(gameName) {
         buyModal.classList.add('hidden');
     }
 
-    // Listen for messages from the casino game iframe
-    window.addEventListener('message', handleCasinoGameMessage);
+    // Listen for messages from the casino game iframe (only add listener once)
+    if (!casinoMessageListenerAttached) {
+        window.addEventListener('message', handleCasinoGameMessage);
+        casinoMessageListenerAttached = true;
+    }
 }
 
 // Handle messages from casino game iframe
@@ -959,6 +953,11 @@ function handleCasinoGameMessage(event) {
         if (winnings !== 0 && socket) {
             socket.emit('casinoWinnings', { amount: winnings });
         }
+        
+        // Auto-close casino game after one hand
+        setTimeout(() => {
+            closeCasinoGame();
+        }, 500);
     }
 }
 
@@ -977,6 +976,7 @@ function closeCasinoGame() {
     
     // Remove message listener
     window.removeEventListener('message', handleCasinoGameMessage);
+    casinoMessageListenerAttached = false;
     
     // Show buy modal after casino game ends for property purchase
     if (activePropertyDecision && activePropertyDecision.spaceData.isCasino) {
@@ -2548,7 +2548,6 @@ function showTokenSelection() {
 
 const confirmBuyBtn = document.getElementById('confirmBuyBtn');
 const cancelBuyBtn = document.getElementById('cancelBuyBtn');
-const playCasinoBtn = document.getElementById('playCasinoBtn');
 const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 
 if (confirmBuyBtn) {
@@ -2587,14 +2586,6 @@ if (cancelBuyBtn) {
         clearPropertyDecisionTimer();
         buyModal.classList.add('hidden');
         activePropertyDecision = null;
-    });
-}
-
-if (playCasinoBtn) {
-    playCasinoBtn.addEventListener('click', () => {
-        if (!activePropertyDecision || !activePropertyDecision.spaceData.isCasino) return;
-        const gameName = activePropertyDecision.spaceData.casinoGame;
-        openCasinoGame(gameName);
     });
 }
 
