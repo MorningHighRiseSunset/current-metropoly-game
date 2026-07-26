@@ -1,54 +1,18 @@
 /**
- * Dice GLB face layout + helpers (game + dice-test).
- * Top face (+Y) = rolled value. Map tuned for Models/Dice/dice.glb.
+ * Dice configuration for procedurally generated dice (Three.js BoxGeometry).
+ * Animation and timing configuration shared between game.js and dice-test.
  */
 const DICE_GLB_CONFIG = {
-    get modelPath() {
-        const USE_CDN = window.USE_CDN || false;
-        const CDN_BASE_URL = window.CDN_BASE_URL || '';
-        
-        if (USE_CDN && CDN_BASE_URL) {
-            return `${CDN_BASE_URL}/Dice/dice.glb`;
-        }
-        
-        if (typeof window !== 'undefined' && window.location.pathname.includes('dice-test')) {
-            try {
-                return new URL('../../Models/Dice/dice.glb', window.location.href).href;
-            } catch (e) { /* fall through */ }
-        }
-        if (typeof window !== 'undefined') {
-            return `${window.location.origin}/Models/Dice/dice.glb`;
-        }
-        return '/Models/Dice/dice.glb';
-    },
-    scale: 0.05,
-    separation: 0.15,
-    restOffsetY: 0.03,
-    rollDurationMs: 1600,
-    settleHoldMs: 300,
-    tossHeight: 0.3,
-    /** Must match server.js getRollAnimationMs perTileMs and game.js TOKEN_STEP_DURATION_MS */
-    tokenStepMs: 150,
-    faceEuler: {
-        1: { x: 0, y: 0, z: 0 },
-        2: { x: 0, y: 0, z: 0 },
-        3: { x: 0, y: 0, z: 0 },
-        4: { x: 0, y: 0, z: 0 },
-        5: { x: 0, y: 0, z: 0 },
-        6: { x: 0, y: 0, z: 0 }
-    }
+    scale: 0.15,  // Size of dice mesh
+    separation: 0.15,  // Distance between two dice
+    restOffsetY: 0.08,  // Height offset when resting on board
+    rollDurationMs: 1500,  // Fast, smooth animation
+    settleHoldMs: 300,  // Pause before token moves
+    tossHeight: 0.3,  // Initial height for fall animation
+    tokenStepMs: 150  // Token animation step duration (synced with server)
 };
 
 const DICE_WORLD_UP = new THREE.Vector3(0, 1, 0);
-
-const DICE_AXIS_DIRS = [
-    new THREE.Vector3(0, 1, 0),
-    new THREE.Vector3(0, -1, 0),
-    new THREE.Vector3(0, 0, 1),
-    new THREE.Vector3(0, 0, -1),
-    new THREE.Vector3(1, 0, 0),
-    new THREE.Vector3(-1, 0, 0)
-];
 
 let DICE_LOCAL_PIP = null;
 const _pipKey = (v) => `${v.x},${v.y},${v.z}`;
@@ -59,15 +23,16 @@ const _spinAxis = new THREE.Vector3();
 const _spinQ = new THREE.Quaternion();
 const _box = new THREE.Box3();
 
-/** Pip on each local axis for dice.glb (empirically verified) */
+// Pip mapping for procedurally generated dice (BoxGeometry face order)
+// BoxGeometry: +X=2, -X=5, +Y=1, -Y=6, +Z=4, -Z=3
 function getDefaultLocalPip() {
     return {
-        '0,1,0': 1,
-        '0,-1,0': 6,
-        '0,0,1': 4,
-        '0,0,-1': 3,
-        '1,0,0': 2,
-        '-1,0,0': 5
+        '0,1,0': 1,   // +Y = top = 1
+        '0,-1,0': 6,  // -Y = bottom = 6
+        '0,0,1': 4,   // +Z = front = 4
+        '0,0,-1': 3,  // -Z = back = 3
+        '1,0,0': 2,   // +X = right = 2
+        '-1,0,0': 5   // -X = left = 5
     };
 }
 
@@ -82,7 +47,7 @@ function getLocalNormalForPip(pip) {
     return new THREE.Vector3(0, 1, 0);
 }
 
-/** Flat on table: chosen value faces +Y (no camera yaw — keeps both dice square) */
+// Compute quaternion to orient die so specified face points up (+Y)
 function getDiceQuaternionForValue(value) {
     const localN = getLocalNormalForPip(value);
     _qFaceUp.setFromUnitVectors(localN, DICE_WORLD_UP);
@@ -124,27 +89,18 @@ function applyDiceSpin(mesh, wx, wy, wz, dt) {
     mesh.rotation.setFromQuaternion(mesh.quaternion, 'XYZ');
 }
 
-function cacheDiceRestOffsetY(template) {
-    applyDiceFace(template, 1);
-    template.position.set(0, 0, 0);
-    template.updateMatrixWorld(true);
-    _box.setFromObject(template);
-    DICE_GLB_CONFIG.restOffsetY = Math.max(0.05, -_box.min.y);
-}
-
 function getDiceLandY() {
     return DICE_GLB_CONFIG.restOffsetY;
 }
 
 function getDiceRollDurationMs() {
-    return DICE_GLB_CONFIG.rollDurationMs || 3200;
+    return DICE_GLB_CONFIG.rollDurationMs || 1500;
 }
 
 function getDiceSettleHoldMs() {
-    return DICE_GLB_CONFIG.settleHoldMs || 600;
+    return DICE_GLB_CONFIG.settleHoldMs || 300;
 }
 
-/** Dice tumble + settle pause before token movement should begin */
 function getDiceRollTotalMs() {
     return getDiceRollDurationMs() + getDiceSettleHoldMs();
 }
@@ -157,42 +113,10 @@ function getRollAnimationMs(rollTotal) {
     return getDiceRollTotalMs() + Math.max(0, rollTotal) * getTokenStepDurationMs();
 }
 
-function buildFaceEulerFromLocalPip() {
-    for (let pip = 1; pip <= 6; pip++) {
-        const q = getDiceQuaternionForValue(pip);
-        _euler.setFromQuaternion(q, 'XYZ');
-        DICE_GLB_CONFIG.faceEuler[pip] = { x: _euler.x, y: _euler.y, z: _euler.z };
-    }
-}
-
 function diceEulerForValue(value) {
-    const e = DICE_GLB_CONFIG.faceEuler[value] || DICE_GLB_CONFIG.faceEuler[1];
-    return new THREE.Euler(e.x, e.y, e.z, 'XYZ');
-}
-
-function selfTestFaceMap(template) {
-    for (let pip = 1; pip <= 6; pip++) {
-        const clone = template.clone(true);
-        clone.position.set(0, 0, 0);
-        clone.quaternion.set(0, 0, 0, 1);
-        clone.rotation.set(0, 0, 0);
-        applyDiceFace(clone, pip);
-        if (detectDiceFace(clone) !== pip) return false;
-    }
-    return true;
-}
-
-function autoCalibrateDiceFaces(template) {
-    DICE_LOCAL_PIP = getDefaultLocalPip();
-    buildFaceEulerFromLocalPip();
-
-    if (selfTestFaceMap(template)) {
-        console.log('Dice face map OK for dice.glb');
-    } else {
-        console.warn('Dice face self-test failed — check Models/Dice/dice.glb');
-    }
-
-    cacheDiceRestOffsetY(template);
+    const q = getDiceQuaternionForValue(value);
+    _euler.setFromQuaternion(q, 'XYZ');
+    return new THREE.Euler(_euler.x, _euler.y, _euler.z, 'XYZ');
 }
 
 function _diceSmoothstep(edge0, edge1, x) {
@@ -206,7 +130,7 @@ function runDiceRollAnimation(opts) {
     const duration = opts.duration ?? getDiceRollDurationMs();
     const anchor = opts.anchor || { x: 0, y: 0, z: 0 };
     const landY = anchor.y + getDiceLandY();
-    const tossHeight = opts.tossHeight ?? DICE_GLB_CONFIG.tossHeight ?? 1.15;
+    const tossHeight = opts.tossHeight ?? DICE_GLB_CONFIG.tossHeight ?? 0.3;
     const sep = DICE_GLB_CONFIG.separation * 0.5;
     const start = performance.now();
 

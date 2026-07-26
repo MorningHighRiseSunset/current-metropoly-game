@@ -56,29 +56,7 @@ function getModelPath(localPath) {
     return localPath;
 }
 
-// Initialize 3D dice - now uses main board scene
-function initializeDice() {
-    if (diceGlbTemplate) return;
-    if (diceGlbLoading) return;
-    diceGlbLoading = true;
-
-    const loader = new THREE.GLTFLoader();
-    loader.load(
-        DICE_GLB_CONFIG.modelPath,
-        function (gltf) {
-            diceGlbTemplate = prepareDiceGlbRoot(gltf.scene);
-            if (camera) {
-                autoCalibrateDiceFaces(diceGlbTemplate);
-            }
-            diceGlbLoading = false;
-        },
-        undefined,
-        function (err) {
-            diceGlbLoading = false;
-            console.error('Failed to load dice GLB:', err);
-        }
-    );
-}
+// Dice initialization (no longer needed - procedurally generated)
 
 // Dice roll sound (Web Audio API)
 function playDiceRollSound() {
@@ -118,23 +96,73 @@ function playDiceRollSound() {
     }
 }
 
-let diceGlbTemplate = null;
-let diceGlbLoading = false;
+// Create a simple cube die with pip dots on each face using canvas textures
+function createDiceTexture(value) {
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
 
-function prepareDiceGlbRoot(root) {
-    const box = new THREE.Box3().setFromObject(root);
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z, 0.001);
-    const s = DICE_GLB_CONFIG.scale / maxDim;
-    root.scale.setScalar(s);
-    box.setFromObject(root);
-    const center = box.getCenter(new THREE.Vector3());
-    root.position.sub(center);
-    return root;
+    // White background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    // Black border
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(0, 0, size, size);
+
+    // Draw pips for the value
+    ctx.fillStyle = '#000000';
+    const pipRadius = size / 16;
+    const pipPositions = {
+        1: [[0.5, 0.5]],
+        2: [[0.25, 0.25], [0.75, 0.75]],
+        3: [[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]],
+        4: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]],
+        5: [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]],
+        6: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.5], [0.75, 0.5], [0.25, 0.75], [0.75, 0.75]]
+    };
+
+    const positions = pipPositions[value] || pipPositions[1];
+    positions.forEach(([x, y]) => {
+        ctx.beginPath();
+        ctx.arc(x * size, y * size, pipRadius, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    return texture;
+}
+
+// Create a single die mesh with properly oriented faces
+function createDiceMesh() {
+    const size = 0.15;
+    const geometry = new THREE.BoxGeometry(size, size, size);
+    
+    // Create materials for each face (order: +X, -X, +Y, -Y, +Z, -Z)
+    // Dice face mapping: faces are in order of BoxGeometry [right, left, top, bottom, front, back]
+    // We need: 1=top(+Y), 6=bottom(-Y), 2=right(+X), 5=left(-X), 4=front(+Z), 3=back(-Z)
+    const materials = [
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(2) }), // +X (right) = 2
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(5) }), // -X (left) = 5
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(1) }), // +Y (top) = 1
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(6) }), // -Y (bottom) = 6
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(4) }), // +Z (front) = 4
+        new THREE.MeshLambertMaterial({ map: createDiceTexture(3) })  // -Z (back) = 3
+    ];
+
+    const dice = new THREE.Mesh(geometry, materials);
+    dice.castShadow = true;
+    dice.receiveShadow = true;
+    return dice;
 }
 
 function spawnDiceOnBoard(playerPosition) {
-    if (!diceGlbTemplate || !scene) return;
+    if (!scene) return;
 
     // Remove existing dice if any
     if (dice1Mesh && scene) scene.remove(dice1Mesh);
@@ -144,8 +172,8 @@ function spawnDiceOnBoard(playerPosition) {
     // Always spawn at board center (0, 0) not at player position
     const boardCenterY = BOARD_LAYOUT.tokenY;
 
-    dice1Mesh = diceGlbTemplate.clone(true);
-    dice2Mesh = diceGlbTemplate.clone(true);
+    dice1Mesh = createDiceMesh();
+    dice2Mesh = createDiceMesh();
 
     // Position dice at board center, above the board surface
     dice1Mesh.position.set(-sep, boardCenterY + 0.4, 0);
@@ -157,10 +185,9 @@ function spawnDiceOnBoard(playerPosition) {
     dice2Mesh.visible = false;
 }
 
-/** GLB dice roll (all clients: human + AI via diceRolled socket). Optional onLand when roll finishes. */
+/** Roll two dice (all clients: human + AI via diceRolled socket). Optional onLand when roll finishes. */
 function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
-    if (!diceGlbTemplate) {
-        initializeDice();
+    if (!scene) {
         setTimeout(() => roll3DDice(dice1Value, dice2Value, playerPosition, callbacks), 100);
         return;
     }
@@ -2882,7 +2909,6 @@ function start3DScene() {
     scene.add(fillLight);
 
     create3DBoard();
-    initializeDice();
     updateThreeCamera();
     scene3DInitialized = true;
 
