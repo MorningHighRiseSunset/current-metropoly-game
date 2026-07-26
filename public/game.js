@@ -1550,10 +1550,12 @@ function showPropertyInfo(spaceData) {
         
         // Check cache first
         if (mediaCache[cacheKey]) {
-            mediaContainer.appendChild(mediaCache[cacheKey].cloneNode(true));
+            const cloned = mediaCache[cacheKey].cloneNode(true);
+            mediaContainer.appendChild(cloned);
             if (mediaCache[cacheKey].tagName === 'VIDEO') {
                 const video = mediaContainer.querySelector('video');
                 currentPropertyVideo = video;
+                video.loop = false; // Ensure no looping
                 video.currentTime = 0; // Reset video to start
                 video.play().catch(e => console.log('Autoplay failed:', e));
             }
@@ -1566,14 +1568,14 @@ function showPropertyInfo(spaceData) {
                 video.src = randomVideo;
                 video.autoplay = true;
                 video.muted = true; // Muted for autoplay to work
-                video.loop = true;
+                video.loop = false; // Do not loop - play once then stop
                 video.playsInline = true;
                 video.controls = true;
                 video.style.width = '100%';
                 video.style.maxHeight = '250px';
                 video.style.objectFit = 'cover';
                 video.style.borderRadius = '8px';
-                video.preload = 'metadata';
+                video.preload = 'auto';
                 
                 video.addEventListener('loadeddata', () => {
                     mediaContainer.appendChild(video);
@@ -1656,13 +1658,36 @@ function cleanupPropertyVideo() {
     if (mediaContainer) {
         const videos = mediaContainer.querySelectorAll('video');
         videos.forEach(video => {
+            // Stop playback immediately
             video.pause();
+            video.currentTime = 0;
+            
+            // Remove loop attribute to prevent auto-restart
+            video.loop = false;
+            video.autoplay = false;
+            
+            // Clear all sources
             video.src = '';
+            const sources = video.querySelectorAll('source');
+            sources.forEach(source => source.remove());
             video.load();
+            
+            // Disconnect from playback engine
+            video.srcset = '';
         });
         mediaContainer.innerHTML = '';
     }
-    currentPropertyVideo = null;
+    
+    // Clear current video reference
+    if (currentPropertyVideo) {
+        currentPropertyVideo.pause();
+        currentPropertyVideo.currentTime = 0;
+        currentPropertyVideo.loop = false;
+        currentPropertyVideo.autoplay = false;
+        currentPropertyVideo.src = '';
+        currentPropertyVideo.srcset = '';
+        currentPropertyVideo = null;
+    }
 }
 
 // Update players list
