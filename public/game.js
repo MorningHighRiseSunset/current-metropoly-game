@@ -3231,6 +3231,16 @@ let centerCarouselGroup = null;
 let carouselImages = [];
 let carouselCurrentIndex = 0;
 
+// Fisher-Yates shuffle for randomizing carousel images
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
 function createCenterCarousel(parentGroup) {
     if (centerCarouselGroup) {
         parentGroup.remove(centerCarouselGroup);
@@ -3239,24 +3249,47 @@ function createCenterCarousel(parentGroup) {
     centerCarouselGroup = new THREE.Group();
     carouselImages = [];
     
-    // Collect all images from tileMedia (exclude FREE PARKING)
-    const allImages = [];
-    if (typeof tileMedia !== 'undefined') {
-        Object.entries(tileMedia).forEach(([position, media]) => {
-            // Skip FREE PARKING (position 20) from carousel
-            if (position === '20') return;
-            if (media.images && media.images.length > 0) {
-                media.images.forEach(img => allImages.push(img));
-            }
-        });
-    }
+    // All images from Images folder (excluding tokens and utilities)
+    const allImages = [
+        '/Images/County fair.png',
+        '/Images/Screenshot 2024-12-12 033702.png',
+        '/Images/raidersimage.png',
+        '/Images/230613231941-04-knights-stanley-cup-061323.jpg',
+        '/Images/9b.jpg',
+        '/Images/HelicopterRidesNight.jpg',
+        '/Images/LVACES.jpg',
+        '/Images/LVTheater.jpg',
+        '/Images/LasVegasSphere.jpg',
+        '/Images/Las_Vegas_Strip_Map_Blog.jpg',
+        '/Images/PIX-1-Exosphere-Architecture.jpg',
+        '/Images/ResortsWorldTheater.jpg',
+        '/Images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg',
+        '/Images/ShrinersChildrens-18-hole-2022.jpg',
+        '/Images/SpeedVegasOffroading.jpg',
+        '/Images/Welcome-to-Fabulous-Las-Vegas-Sign.jpg',
+        '/Images/Wynn_2_(2).jpg',
+        '/Images/bellagio.jpg',
+        '/Images/cityracing.jpg',
+        '/Images/cosmopolitan.jpg',
+        '/Images/eater_vegas_large.jpg',
+        '/Images/hq720.jpg',
+        '/Images/santafecasino.jpg',
+        '/Images/themirage.jpg',
+        '/Images/thesphere.jpg',
+        '/Images/welcome-to-caesars-palace.jpg',
+        '/Images/yellow light bulb image.jpg'
+    ];
     
-    if (allImages.length === 0) return;
+    // Shuffle images for randomization
+    const shuffledImages = shuffleArray(allImages);
+    console.log(`Total carousel images: ${shuffledImages.length}`);
+    
+    if (shuffledImages.length === 0) return;
     
     const textureLoader = new THREE.TextureLoader();
     
     // Create single image mesh for slideshow
-    const tex = textureLoader.load(allImages[0]);
+    const tex = textureLoader.load(shuffledImages[0]);
     if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
         const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
         tex.anisotropy = Math.min(8, maxA);
@@ -3273,7 +3306,7 @@ function createCenterCarousel(parentGroup) {
     
     imageMesh.position.set(0, 0.16, 0);
     imageMesh.rotation.x = -Math.PI / 2;
-    imageMesh.userData.images = allImages;
+    imageMesh.userData.images = shuffledImages;
     imageMesh.userData.currentIndex = 0;
     imageMesh.userData.lastChange = Date.now();
     
@@ -3292,18 +3325,39 @@ function animateCenterCarousel() {
     
     if (now - imageMesh.userData.lastChange > changeInterval) {
         imageMesh.userData.lastChange = now;
-        imageMesh.userData.currentIndex = (imageMesh.userData.currentIndex + 1) % imageMesh.userData.images.length;
-        carouselCurrentIndex = imageMesh.userData.currentIndex;
         
-        const textureLoader = new THREE.TextureLoader();
-        const newTex = textureLoader.load(imageMesh.userData.images[imageMesh.userData.currentIndex]);
-        if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
-            const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
-            newTex.anisotropy = Math.min(8, maxA);
+        // Pick random index different from current to prevent back-to-back repeats
+        let newIndex;
+        const imagesLength = imageMesh.userData.images.length;
+        if (imagesLength > 1) {
+            do {
+                newIndex = Math.floor(Math.random() * imagesLength);
+            } while (newIndex === imageMesh.userData.currentIndex);
+        } else {
+            newIndex = 0;
         }
         
-        imageMesh.material.map = newTex;
-        imageMesh.material.needsUpdate = true;
+        imageMesh.userData.currentIndex = newIndex;
+        carouselCurrentIndex = newIndex;
+        
+        const textureLoader = new THREE.TextureLoader();
+        // Load texture asynchronously to prevent blue board flash
+        textureLoader.load(
+            imageMesh.userData.images[newIndex],
+            (texture) => {
+                // On load success
+                if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
+                    const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
+                    texture.anisotropy = Math.min(8, maxA);
+                }
+                imageMesh.material.map = texture;
+                imageMesh.material.needsUpdate = true;
+            },
+            undefined,
+            (error) => {
+                console.error('Error loading carousel image:', error);
+            }
+        );
     }
 }
 

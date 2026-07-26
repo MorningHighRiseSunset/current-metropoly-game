@@ -1168,8 +1168,8 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // Check if property is already owned
-        const existingOwner = game.players.find(p => p && p.properties && p.properties.includes(player.position));
+        // Check if property is already owned by another player
+        const existingOwner = game.players.find(p => p && p.id !== player.id && p.properties && p.properties.includes(player.position));
         if (existingOwner) {
             socket.emit('gameError', 'Property is already owned');
             return;
