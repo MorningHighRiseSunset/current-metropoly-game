@@ -145,6 +145,31 @@ function spawnDiceOnBoard(playerPosition) {
     dice1Mesh = diceGlbTemplate.clone(true);
     dice2Mesh = diceGlbTemplate.clone(true);
 
+    // Enhance dice materials for better 3D appearance
+    dice1Mesh.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.material) {
+                child.material.envMapIntensity = 1.2;
+                child.material.roughness = 0.3;
+                child.material.metalness = 0.1;
+            }
+        }
+    });
+
+    dice2Mesh.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.material) {
+                child.material.envMapIntensity = 1.2;
+                child.material.roughness = 0.3;
+                child.material.metalness = 0.1;
+            }
+        }
+    });
+
     // Position dice near the player's current position on the board
     dice1Mesh.position.set(coords.x - sep, coords.y + 0.3, coords.z);
     dice2Mesh.position.set(coords.x + sep, coords.y + 0.3, coords.z);

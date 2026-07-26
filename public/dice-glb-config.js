@@ -21,12 +21,12 @@ const DICE_GLB_CONFIG = {
         }
         return '/Models/Dice/dice.glb';
     },
-    scale: 1,
-    separation: 1.65,
+    scale: 1.8,
+    separation: 2.2,
     restOffsetY: 0.2,
     rollDurationMs: 3200,
     settleHoldMs: 600,
-    tossHeight: 1.15,
+    tossHeight: 1.8,
     /** Must match server.js getRollAnimationMs perTileMs and game.js TOKEN_STEP_DURATION_MS */
     tokenStepMs: 150,
     faceEuler: {
@@ -230,10 +230,10 @@ function runDiceRollAnimation(opts) {
             offsetX,
             offsetZ,
             y: startY,
-            vy: 2.8 + Math.random() * 1.4,
-            wx: (Math.random() - 0.5) * 36,
-            wy: (Math.random() - 0.5) * 38,
-            wz: (Math.random() - 0.5) * 34,
+            vy: 3.5 + Math.random() * 2.0,
+            wx: (Math.random() - 0.5) * 55,
+            wy: (Math.random() - 0.5) * 58,
+            wz: (Math.random() - 0.5) * 52,
             targetQ: targets[i],
             bounceCount: 0
         };
@@ -262,28 +262,32 @@ function runDiceRollAnimation(opts) {
         const alignMix = _diceSmoothstep(0.5, 0.98, t);
 
         states.forEach((s) => {
-            s.vy -= 11.5 * dt;
+            s.vy -= 13.5 * dt;
             s.y += s.vy * dt;
 
             const onGround = s.y <= landY;
             if (onGround) {
                 if (s.vy < -0.05) {
                     s.bounceCount += 1;
-                    const bounceDamp = 0.22 + Math.min(s.bounceCount, 5) * 0.05;
-                    s.vy = -s.vy * Math.max(0.08, bounceDamp - t * 0.12);
-                    if (Math.abs(s.vy) < 0.18 || t > 0.88) s.vy = 0;
-                    if (s.bounceCount <= 3 && t < 0.75) {
-                        s.wx += (Math.random() - 0.5) * 6;
-                        s.wz += (Math.random() - 0.5) * 6;
+                    const bounceDamp = 0.28 + Math.min(s.bounceCount, 5) * 0.06;
+                    s.vy = -s.vy * Math.max(0.12, bounceDamp - t * 0.15);
+                    if (Math.abs(s.vy) < 0.25 || t > 0.88) s.vy = 0;
+                    if (s.bounceCount <= 4 && t < 0.75) {
+                        s.wx += (Math.random() - 0.5) * 12;
+                        s.wy += (Math.random() - 0.5) * 10;
+                        s.wz += (Math.random() - 0.5) * 12;
+                        // Add scatter on bounce
+                        s.offsetX += (Math.random() - 0.5) * 0.15;
+                        s.offsetZ += (Math.random() - 0.5) * 0.15;
                     }
                 }
                 s.y = landY;
-                const groundSpinDamp = 0.86 - t * 0.25;
+                const groundSpinDamp = 0.82 - t * 0.28;
                 s.wx *= groundSpinDamp;
                 s.wy *= groundSpinDamp;
                 s.wz *= groundSpinDamp;
             } else {
-                const airDamp = 0.992;
+                const airDamp = 0.995;
                 s.wx *= airDamp;
                 s.wy *= airDamp;
                 s.wz *= airDamp;
