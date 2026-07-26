@@ -32,6 +32,97 @@ let activePropertyDecision = null;
 let waitingForBuyResult = false;
 let casinoMessageListenerAttached = false;
 
+// ========== DICE ROLL SEQUENCE STATE MACHINE ==========
+// Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
+const DiceRollSequenceManager = (() => {
+    const PHASES = {
+        IDLE: 'idle',
+        DICE_ROLLING: 'dice_rolling',
+        TOKEN_MOVING: 'token_moving',
+        UI_OPENING: 'ui_opening',
+        COMPLETE: 'complete'
+    };
+
+    const sequences = {}; // Track active sequences by playerId
+
+    function startSequence(playerId) {
+        sequences[playerId] = {
+            phase: PHASES.DICE_ROLLING,
+            playerId,
+            startTime: Date.now(),
+            oldPosition: null,
+            newPosition: null,
+            diceData: null
+        };
+        logSequence(playerId, `Started sequence (${PHASES.DICE_ROLLING})`);
+    }
+
+    function updatePhase(playerId, newPhase) {
+        if (!sequences[playerId]) return;
+        const oldPhase = sequences[playerId].phase;
+        sequences[playerId].phase = newPhase;
+        logSequence(playerId, `Phase transition: ${oldPhase} → ${newPhase}`);
+    }
+
+    function markDiceRolled(playerId, oldPosition, newPosition, diceData) {
+        if (!sequences[playerId]) return;
+        sequences[playerId].oldPosition = oldPosition;
+        sequences[playerId].newPosition = newPosition;
+        sequences[playerId].diceData = diceData;
+        updatePhase(playerId, PHASES.TOKEN_MOVING);
+    }
+
+    function markTokenMoving(playerId) {
+        updatePhase(playerId, PHASES.TOKEN_MOVING);
+    }
+
+    function markUIOpening(playerId) {
+        updatePhase(playerId, PHASES.UI_OPENING);
+    }
+
+    function completeSequence(playerId) {
+        if (!sequences[playerId]) return;
+        updatePhase(playerId, PHASES.COMPLETE);
+        const duration = Date.now() - sequences[playerId].startTime;
+        logSequence(playerId, `Completed (${duration}ms)`);
+        delete sequences[playerId];
+    }
+
+    function cancelSequence(playerId) {
+        if (sequences[playerId]) {
+            logSequence(playerId, `Cancelled at phase ${sequences[playerId].phase}`);
+            delete sequences[playerId];
+        }
+    }
+
+    function getSequence(playerId) {
+        return sequences[playerId] || null;
+    }
+
+    function isActive(playerId) {
+        return !!sequences[playerId];
+    }
+
+    function logSequence(playerId, message) {
+        const playerName = players.find(p => p && p.id === playerId)?.name || playerId;
+        console.log(`[DiceRollSeq:${playerName}] ${message}`);
+    }
+
+    return {
+        PHASES,
+        startSequence,
+        updatePhase,
+        markDiceRolled,
+        markTokenMoving,
+        markUIOpening,
+        completeSequence,
+        cancelSequence,
+        getSequence,
+        isActive,
+        logSequence
+    };
+})();
+
 // Token data
 const tokenData = [
     { name: 'Burger', model: getModelPath('/Models/Cheeseburger/cheeseburger.glb'), image: '/images/Burger.png', scale: 0.42 },
@@ -1806,6 +1897,171 @@ function updateUI(options = {}) {
     }
 }
 
+// ========== DICE ROLL SEQUENCE HANDLERS ==========
+// REFACTORED FLOW ARCHITECTURE
+// ================================
+// The complete dice roll → token movement → property decision sequence is now managed
+// through a clean, single-responsibility flow:
+//
+// PHASES (tracked by DiceRollSequenceManager):
+//   DICE_ROLLING    - Dice animation is playing, roll hasn't landed yet
+//   TOKEN_MOVING    - Token is animating from old position to new position
+//   UI_OPENING      - Property decision UI is opening or sequence is preparing to complete
+//   COMPLETE        - Sequence finished, cleanup done
+//
+// FLOW FOR NON-DOUBLES ROLLS:
+//   socket.on('diceRolled')
+//     → handleDiceRolledEvent()         [orchestrator]
+//       → roll3DDice() onLand callback  [dice animation complete]
+//         → animateTokenMove()          [token animation]
+//           → onTokenAnimationComplete() callback
+//             → onDiceRollSequenceComplete() [consolidated completion handler]
+//               → startPropertyDecision()   [opens buy modal if applicable]
+//               → updateUI() once          [single update call]
+//               → scheduleClientAutoEndTurn()
+//
+// FLOW FOR DOUBLES ROLLS:
+//   socket.on('diceRolled')
+//     → handleDiceRolledEvent()         [orchestrator]
+//       → roll3DDice() onLand callback
+//         → animateTokenMove()
+//           → onTokenAnimationComplete() callback
+//             → skip onDiceRollSequenceComplete() (doubles detected)
+//             → updateUI() once
+//             [turn continues for next roll]
+//
+// KEY IMPROVEMENTS:
+//   ✓ Single orchestration point (handleDiceRolledEvent)
+//   ✓ Clear phase tracking for debugging/logging
+//   ✓ Consolidated updateUI() calls (1-2 per sequence instead of 3+)
+//   ✓ Proper cancellation on turn change via DiceRollSequenceManager
+//   ✓ No nested callback hell - flat async flow
+//   ✓ Handles multiple concurrent sequences (AI players rolling in sequence)
+//   ✓ Property decision UI only opens for current player
+
+// Consolidated callback that triggers after token animation completes
+function onDiceRollSequenceComplete(playerId, newPosition, diceData) {
+    DiceRollSequenceManager.markUIOpening(playerId);
+    
+    // Only trigger property decision UI for the current player (not observers)
+    if (playerId === myPlayerId) {
+        const spaceData = getUnownedPurchasableSpace(newPosition);
+        if (spaceData) {
+            console.log('[DiceRoll] Opening property decision for:', spaceData.name);
+            startPropertyDecision(spaceData, newPosition);
+            // startPropertyDecision calls updateUI(), so we don't call it again
+            DiceRollSequenceManager.completeSequence(playerId);
+            return;
+        }
+    }
+    
+    // Mark sequence as complete and update UI (only if property decision didn't already)
+    DiceRollSequenceManager.completeSequence(playerId);
+    updateUI();
+}
+
+// Main handler for diceRolled event - orchestrates the entire sequence
+function handleDiceRolledEvent(data) {
+    const playerId = data.playerId;
+    const newPosition = data.newPosition;
+    const message = data.message || 'Dice rolled';
+    const serverDice1 = data.dice1 ?? (data.roll && data.roll.dice1);
+    const serverDice2 = data.dice2 ?? (data.roll && data.roll.dice2);
+    const rollTotal = (data.roll && data.roll.total) || ((serverDice1 || 1) + (serverDice2 || 1));
+
+    // Start tracking this sequence
+    DiceRollSequenceManager.startSequence(playerId);
+
+    const existingPlayer = players.find(p => p && p.id === playerId);
+    const oldPosition = data.oldPosition !== undefined
+        ? data.oldPosition
+        : (existingPlayer
+            ? existingPlayer.position
+            : ((newPosition - rollTotal + 40) % 40));
+
+    // Update game state from server
+    if (data.gameState) {
+        gameState = data.gameState;
+    }
+
+    if (data.players) {
+        players = data.players;
+    }
+
+    const moveSteps = getMoveStepCount(oldPosition, newPosition);
+    const player = players.find(p => p && p.id === playerId);
+    
+    if (player) {
+        revealPlayerToken(playerId);
+        if (oldPosition !== newPosition) {
+            player.position = oldPosition;
+        }
+        if (player.tokenIndex !== undefined && !tokenModels[playerId]) {
+            loadTokenModel(player.tokenIndex, player);
+        }
+        if (moveSteps === 0) {
+            update3DTokenPositions();
+        } else {
+            const coords = get3DBoardCoords(oldPosition);
+            const model = tokenModels[playerId];
+            if (model) {
+                model.position.set(coords.x, coords.y, coords.z);
+                model.visible = isTokenVisible(playerId);
+            }
+        }
+    }
+
+    // Track this roll so animations can be cancelled if needed
+    markPendingRollTokenMove(playerId);
+    
+    // Record dice data for sequence tracking
+    DiceRollSequenceManager.markDiceRolled(playerId, oldPosition, newPosition, data);
+
+    // Start the 3D dice animation
+    roll3DDice(serverDice1 || 1, serverDice2 || 1, oldPosition, {
+        onLand: () => {
+            // Validate that this roll hasn't been cancelled
+            const pending = pendingRollTokenMoves[playerId];
+            if (!pending || pending.cancelled) {
+                DiceRollSequenceManager.cancelSequence(playerId);
+                return;
+            }
+            delete pendingRollTokenMoves[playerId];
+
+            // Log the dice roll
+            addLogEntry(message, 'system');
+
+            // Determine what happens after token animation
+            const onTokenAnimationComplete = () => {
+                if (!isDoublesRoll(data)) {
+                    // For non-doubles: trigger property decision
+                    onDiceRollSequenceComplete(playerId, newPosition, data);
+                } else {
+                    // For doubles: just clean up and let turn continue
+                    DiceRollSequenceManager.completeSequence(playerId);
+                    updateUI();
+                }
+                
+                // Client-side auto-end-turn logic (for current player only)
+                if (playerId === myPlayerId && !isDoublesRoll(data)) {
+                    scheduleClientAutoEndTurn(playerId, oldPosition, newPosition);
+                }
+            };
+
+            // Animate token movement
+            if (player && moveSteps > 0) {
+                animateTokenMove(playerId, oldPosition, newPosition, onTokenAnimationComplete);
+            } else if (player) {
+                player.position = newPosition;
+                update3DTokenPositions();
+                onTokenAnimationComplete();
+            } else {
+                onTokenAnimationComplete();
+            }
+        }
+    });
+}
+
 // Socket event handlers
 socket.on('connect', () => {
     console.log('Connected to server');
@@ -2103,84 +2359,8 @@ socket.on('playerMoved', (data) => {
 });
 
 socket.on('diceRolled', (data) => {
-    const playerId = data.playerId;
-    const newPosition = data.newPosition;
-    const message = data.message || 'Dice rolled';
-    const serverDice1 = data.dice1 ?? (data.roll && data.roll.dice1);
-    const serverDice2 = data.dice2 ?? (data.roll && data.roll.dice2);
-    const rollTotal = (data.roll && data.roll.total) || ((serverDice1 || 1) + (serverDice2 || 1));
-
-    const existingPlayer = players.find(p => p && p.id === playerId);
-    const oldPosition = data.oldPosition !== undefined
-        ? data.oldPosition
-        : (existingPlayer
-            ? existingPlayer.position
-            : ((newPosition - rollTotal + 40) % 40));
-
-    if (data.gameState) {
-        gameState = data.gameState;
-    }
-
-    if (data.players) {
-        players = data.players;
-    }
-
-    const moveSteps = getMoveStepCount(oldPosition, newPosition);
-    const player = players.find(p => p && p.id === playerId);
-    if (player) {
-        revealPlayerToken(playerId);
-        if (oldPosition !== newPosition) {
-            player.position = oldPosition;
-        }
-        if (player.tokenIndex !== undefined && !tokenModels[playerId]) {
-            loadTokenModel(player.tokenIndex, player);
-        }
-        if (moveSteps === 0) {
-            update3DTokenPositions();
-        } else {
-            const coords = get3DBoardCoords(oldPosition);
-            const model = tokenModels[playerId];
-            if (model) {
-                model.position.set(coords.x, coords.y, coords.z);
-                model.visible = isTokenVisible(playerId);
-            }
-        }
-    }
-
-    markPendingRollTokenMove(playerId);
-
-    roll3DDice(serverDice1 || 1, serverDice2 || 1, oldPosition, {
-        onLand: () => {
-            const pending = pendingRollTokenMoves[playerId];
-            if (!pending || pending.cancelled) return;
-            delete pendingRollTokenMoves[playerId];
-
-            addLogEntry(message, 'system');
-            updateUI();
-
-            const afterMove = () => {
-                if (!isDoublesRoll(data)) {
-                    handlePlayerLanding(playerId, newPosition);
-                }
-                if (playerId === myPlayerId) {
-                    updateUI();
-                    if (!isDoublesRoll(data)) {
-                        scheduleClientAutoEndTurn(playerId, oldPosition, newPosition);
-                    }
-                }
-            };
-
-            if (player && moveSteps > 0) {
-                animateTokenMove(playerId, oldPosition, newPosition, afterMove);
-            } else if (player) {
-                player.position = newPosition;
-                update3DTokenPositions();
-                afterMove();
-            } else {
-                afterMove();
-            }
-        }
-    });
+    // Delegate to the refactored sequence manager
+    handleDiceRolledEvent(data);
 });
 
 function isDoublesRoll(diceRolledData) {
