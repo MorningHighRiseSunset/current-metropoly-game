@@ -1529,7 +1529,8 @@ function showPropertyInfo(spaceData) {
     const modal = propertyModal;
     const title = document.getElementById('propertyTitle');
     const content = document.getElementById('propertyContent');
-    const mediaContainer = document.getElementById('propertyMedia');
+    const mediaContainer = document.getElementById('propertyMedia') || document.getElementById('property-media');
+    const loadingIndicator = document.getElementById('loadingIndicator');
     
     console.log('Modal elements:', { modal: !!modal, title: !!title, content: !!content, mediaContainer: !!mediaContainer });
     
@@ -1555,10 +1556,11 @@ function showPropertyInfo(spaceData) {
             if (mediaCache[cacheKey].tagName === 'VIDEO') {
                 const video = mediaContainer.querySelector('video');
                 currentPropertyVideo = video;
-                video.loop = false; // Ensure no looping
-                video.currentTime = 0; // Reset video to start
-                video.play().catch(e => console.log('Autoplay failed:', e));
-            }
+            video.muted = true; // ensure muted when restoring from cache
+            video.loop = false; // Ensure no looping
+            video.currentTime = 0; // Reset video to start
+            video.play().catch(e => console.log('Autoplay failed:', e));
+        }
         } else {
             // Prefer video if available
             if (media.videos && media.videos.length > 0) {
@@ -1588,7 +1590,7 @@ function showPropertyInfo(spaceData) {
                     console.log('Video load error:', e);
                     console.log('Failed video src:', randomVideo);
                     mediaContainer.innerHTML = '';
-                    loadingIndicator.textContent = 'Media unavailable';
+                    if (loadingIndicator) loadingIndicator.textContent = 'Media unavailable';
                 });
             } else if (media.images && media.images.length > 0) {
                 const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
@@ -1609,7 +1611,7 @@ function showPropertyInfo(spaceData) {
                 
                 img.addEventListener('error', () => {
                     mediaContainer.innerHTML = '';
-                    loadingIndicator.textContent = 'Image unavailable';
+                    if (loadingIndicator) loadingIndicator.textContent = 'Image unavailable';
                 });
             } else {
                 mediaContainer.innerHTML = '';
@@ -1654,7 +1656,7 @@ function showPropertyInfo(spaceData) {
 // Cleanup property video when modal closes
 function cleanupPropertyVideo() {
     // Stop all videos in the media container
-    const mediaContainer = document.getElementById('property-media');
+    const mediaContainer = document.getElementById('propertyMedia') || document.getElementById('property-media');
     if (mediaContainer) {
         const videos = mediaContainer.querySelectorAll('video');
         videos.forEach(video => {
