@@ -1708,39 +1708,39 @@ io.on('connection', (socket) => {
 
     // Card decks
     const chanceCards = [
-        { type: 'money', amount: 4000, message: 'Bank pays you dividend of $4000' },
-        { type: 'money', amount: -1000, message: 'Pay poor tax of $1000' },
+        { type: 'money', amount: 400, message: 'Bank pays you dividend of $400' },
+        { type: 'money', amount: -100, message: 'Pay poor tax of $100' },
         { type: 'move', position: 0, message: 'Advance to GO' },
         { type: 'jail', message: 'Go to Jail' },
-        { type: 'money', amount: 2000, message: 'Your building loan matures - collect $2000' },
-        { type: 'money', amount: -2000, message: 'Pay hospital $2000' },
-        { type: 'money', amount: 1000, message: 'You have won a competition - collect $1000' },
-        { type: 'money', amount: -3000, message: 'Pay school tax of $3000' },
+        { type: 'money', amount: 200, message: 'Your building loan matures - collect $200' },
+        { type: 'money', amount: -200, message: 'Pay hospital $200' },
+        { type: 'money', amount: 100, message: 'You have won a competition - collect $100' },
+        { type: 'money', amount: -300, message: 'Pay school tax of $300' },
         { type: 'move', position: 5, message: 'Advance to nearest Railroad' },
         { type: 'moveRelative', delta: -3, message: 'Go back 3 spaces' },
         { type: 'money', amount: -400, message: 'Pay doctor fee $400' },
         { type: 'money', amount: 500, message: 'Receive for services $500' },
         { type: 'jail-free', message: 'Get Out of Jail Free' },
         { type: 'move', position: 15, message: 'Advance to nearest Railroad' },
-        { type: 'money', amount: 2000, message: 'Interest on 7% preference shares - collect $2000' },
-        { type: 'money', amount: -1600, message: 'Pay insurance premium $1600' }
+        { type: 'money', amount: 200, message: 'Interest on 7% preference shares - collect $200' },
+        { type: 'money', amount: -160, message: 'Pay insurance premium $160' }
     ];
 
     const communityCards = [
-        { type: 'money', amount: 2000, message: 'You have won second prize in a beauty contest - collect $2000' },
-        { type: 'money', amount: -1000, message: 'Doctor fees - pay $1000' },
-        { type: 'money', amount: 4000, message: 'From sale of stock you get $4000' },
-        { type: 'money', amount: -2000, message: 'Pay school tax of $2000' },
-        { type: 'money', amount: 1000, message: 'You inherit $1000' },
+        { type: 'money', amount: 200, message: 'You have won second prize in a beauty contest - collect $200' },
+        { type: 'money', amount: -100, message: 'Doctor fees - pay $100' },
+        { type: 'money', amount: 400, message: 'From sale of stock you get $400' },
+        { type: 'money', amount: -200, message: 'Pay school tax of $200' },
+        { type: 'money', amount: 100, message: 'You inherit $100' },
         { type: 'jail-free', message: 'Get out of jail free - keep this card' },
         { type: 'money', amount: 500, message: 'Receive $500 consultation fee' },
         { type: 'money', amount: -800, message: 'Pay hospital $800' },
         { type: 'money', amount: 400, message: 'Bank error in your favor - collect $400' },
-        { type: 'money', amount: 2000, message: 'Life insurance matures - collect $2000' },
-        { type: 'money', amount: -1000, message: 'Pay hospital $1000' },
+        { type: 'money', amount: 200, message: 'Life insurance matures - collect $200' },
+        { type: 'money', amount: -100, message: 'Pay hospital $100' },
         { type: 'money', amount: 400, message: 'You have won $400 in a contest' },
-        { type: 'money', amount: -1600, message: 'Pay for repairs $1600' },
-        { type: 'money', amount: 2000, message: 'Holiday fund matures - collect $2000' },
+        { type: 'money', amount: -160, message: 'Pay for repairs $160' },
+        { type: 'money', amount: 200, message: 'Holiday fund matures - collect $200' },
         { type: 'money', amount: -300, message: 'Pay tax of $300' },
         { type: 'money', amount: 500, message: 'Receive $500 from sale' }
     ];
