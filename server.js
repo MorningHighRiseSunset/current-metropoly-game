@@ -1741,7 +1741,7 @@ io.on('connection', (socket) => {
         { type: 'money', amount: 400, message: 'You have won $400 in a contest' },
         { type: 'money', amount: -1600, message: 'Pay for repairs $1600' },
         { type: 'money', amount: 2000, message: 'Holiday fund matures - collect $2000' },
-        { type: 'money', amount: -3000, message: 'Pay tax of $3000' },
+        { type: 'money', amount: -300, message: 'Pay tax of $300' },
         { type: 'money', amount: 500, message: 'Receive $500 from sale' }
     ];
 
