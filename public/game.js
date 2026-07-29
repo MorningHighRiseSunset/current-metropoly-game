@@ -189,24 +189,31 @@ function playDiceRollSound() {
 
 // Create a simple cube die with pip dots on each face using canvas textures
 function createDiceTexture(value) {
-    const size = 256;
+    const size = 512;
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
 
-    // White background
-    ctx.fillStyle = '#ffffff';
+    // White background with subtle gradient for depth
+    const gradient = ctx.createLinearGradient(0, 0, size, size);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(1, '#f0f0f0');
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, size, size);
 
-    // Black border
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(0, 0, size, size);
+    // Black border with rounded corners effect
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(4, 4, size - 8, size - 8);
 
-    // Draw pips for the value
-    ctx.fillStyle = '#000000';
-    const pipRadius = size / 16;
+    // Inner border for depth
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(12, 12, size - 24, size - 24);
+
+    // Draw pips for the value with shading
+    const pipRadius = size / 14;
     const pipPositions = {
         1: [[0.5, 0.5]],
         2: [[0.25, 0.25], [0.75, 0.75]],
@@ -218,32 +225,54 @@ function createDiceTexture(value) {
 
     const positions = pipPositions[value] || pipPositions[1];
     positions.forEach(([x, y]) => {
+        const px = x * size;
+        const py = y * size;
+        
+        // Shadow for depth
         ctx.beginPath();
-        ctx.arc(x * size, y * size, pipRadius, 0, Math.PI * 2);
+        ctx.arc(px + 3, py + 3, pipRadius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fill();
+        
+        // Main pip with gradient
+        const pipGradient = ctx.createRadialGradient(px - pipRadius * 0.3, py - pipRadius * 0.3, 0, px, py, pipRadius);
+        pipGradient.addColorStop(0, '#444444');
+        pipGradient.addColorStop(1, '#000000');
+        ctx.beginPath();
+        ctx.arc(px, py, pipRadius, 0, Math.PI * 2);
+        ctx.fillStyle = pipGradient;
+        ctx.fill();
+        
+        // Highlight
+        ctx.beginPath();
+        ctx.arc(px - pipRadius * 0.3, py - pipRadius * 0.3, pipRadius * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.fill();
     });
 
     const texture = new THREE.CanvasTexture(canvas);
-    texture.magFilter = THREE.NearestFilter;
-    texture.minFilter = THREE.NearestFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.anisotropy = 4;
     return texture;
 }
 
 // Create a single die mesh with properly oriented faces
 function createDiceMesh() {
     const size = 0.15;
-    const geometry = new THREE.BoxGeometry(size, size, size);
+    // Use higher segment count for smoother appearance
+    const geometry = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
     
     // Create materials for each face (order: +X, -X, +Y, -Y, +Z, -Z)
     // Dice face mapping: faces are in order of BoxGeometry [right, left, top, bottom, front, back]
     // We need: 1=top(+Y), 6=bottom(-Y), 2=right(+X), 5=left(-X), 4=front(+Z), 3=back(-Z)
     const materials = [
-        new THREE.MeshLambertMaterial({ map: createDiceTexture(2) }), // +X (right) = 2
-        new THREE.MeshLambertMaterial({ map: createDiceTexture(5) }), // -X (left) = 5
-        new THREE.MeshLambertMaterial({ map: createDiceTexture(1) }), // +Y (top) = 1
-        new THREE.MeshLambertMaterial({ map: createDiceTexture(6) }), // -Y (bottom) = 6
-        new THREE.MeshLambertMaterial({ map: createDiceTexture(4) }), // +Z (front) = 4
-        new THREE.MeshLambertMaterial({ map: createDiceTexture(3) })  // -Z (back) = 3
+        new THREE.MeshStandardMaterial({ map: createDiceTexture(2), roughness: 0.2, metalness: 0.15 }), // +X (right) = 2
+        new THREE.MeshStandardMaterial({ map: createDiceTexture(5), roughness: 0.2, metalness: 0.15 }), // -X (left) = 5
+        new THREE.MeshStandardMaterial({ map: createDiceTexture(1), roughness: 0.2, metalness: 0.15 }), // +Y (top) = 1
+        new THREE.MeshStandardMaterial({ map: createDiceTexture(6), roughness: 0.2, metalness: 0.15 }), // -Y (bottom) = 6
+        new THREE.MeshStandardMaterial({ map: createDiceTexture(4), roughness: 0.2, metalness: 0.15 }), // +Z (front) = 4
+        new THREE.MeshStandardMaterial({ map: createDiceTexture(3), roughness: 0.2, metalness: 0.15 })  // -Z (back) = 3
     ];
 
     const dice = new THREE.Mesh(geometry, materials);
@@ -272,9 +301,9 @@ function spawnDiceOnBoard(playerPosition) {
             child.castShadow = true;
             child.receiveShadow = true;
             if (child.material) {
-                child.material.envMapIntensity = 1.2;
-                child.material.roughness = 0.3;
-                child.material.metalness = 0.1;
+                child.material.envMapIntensity = 1.5;
+                child.material.roughness = 0.15;
+                child.material.metalness = 0.25;
             }
         }
     });
@@ -284,9 +313,9 @@ function spawnDiceOnBoard(playerPosition) {
             child.castShadow = true;
             child.receiveShadow = true;
             if (child.material) {
-                child.material.envMapIntensity = 1.2;
-                child.material.roughness = 0.3;
-                child.material.metalness = 0.1;
+                child.material.envMapIntensity = 1.5;
+                child.material.roughness = 0.15;
+                child.material.metalness = 0.25;
             }
         }
     });
