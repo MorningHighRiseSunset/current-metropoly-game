@@ -1153,9 +1153,18 @@ function closeCasinoGame() {
     casinoMessageListenerAttached = false;
     
     // Show buy modal after casino game ends for property purchase
-    if (activePropertyDecision && activePropertyDecision.spaceData.isCasino) {
+    // Only if it's still the current player's turn and the property decision is still active
+    if (activePropertyDecision && 
+        activePropertyDecision.spaceData.isCasino && 
+        gameState && 
+        gameState.currentPlayer === myPlayerId) {
         updateBuyModalContent();
         buyModal.classList.remove('hidden');
+    } else {
+        // Clean up stale property decision state
+        if (activePropertyDecision) {
+            dismissPropertyDecisionUI();
+        }
     }
 }
 
@@ -2453,6 +2462,12 @@ function isDoublesRoll(diceRolledData) {
 socket.on('turnChanged', (data) => {
     cancelClientAutoEndTurn();
     Object.keys(pendingRollTokenMoves).forEach((id) => cancelPendingRollTokenMove(id));
+    
+    // Clean up property decision state when turn changes
+    if (activePropertyDecision) {
+        dismissPropertyDecisionUI();
+    }
+    
     if (data.gameState) {
         gameState = data.gameState;
     } else if (gameState) {

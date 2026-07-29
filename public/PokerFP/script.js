@@ -380,9 +380,15 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('PokerFP/script.js')) {
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function() {
-			window.initPokerMinigame();
+			const container = document.querySelector('.poker-container');
+			if (container) {
+				window.initPokerMinigame(container, window.playerMoney, window.updateMainGameBalance);
+			}
 		});
 	} else {
-		window.initPokerMinigame();
+		const container = document.querySelector('.poker-container');
+		if (container) {
+			window.initPokerMinigame(container, window.playerMoney, window.updateMainGameBalance);
+		}
 	}
 }
