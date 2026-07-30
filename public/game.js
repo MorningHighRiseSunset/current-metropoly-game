@@ -651,10 +651,23 @@ const confirmTokenBtn = document.getElementById('confirmTokenBtn');
 const themeToggle = document.getElementById('themeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
-const settingsModalClose = document.querySelector('.modal-close');
+const settingsModalClose = document.querySelector('#settingsModal .modal-close');
 
 // Video cleanup
 let currentPropertyVideo = null;
+let pendingPropertyVideo = null;
+let propertyMediaSession = 0;
+
+function stopVideoElement(video) {
+    if (!video) return;
+    video.pause();
+    video.currentTime = 0;
+    video.loop = false;
+    video.autoplay = false;
+    video.removeAttribute('src');
+    video.querySelectorAll('source').forEach(source => source.remove());
+    video.load();
+}
 
 // Theme toggle functionality
 function initThemeToggle() {
@@ -1586,9 +1599,19 @@ function updateTokens() {
 // Cache for loaded media to prevent re-loading
 const mediaCache = {};
 
+function closePropertyModal() {
+    cleanupPropertyVideo();
+    if (propertyModal) {
+        propertyModal.classList.add('hidden');
+    }
+}
+
 // Show property information
 function showPropertyInfo(spaceData) {
     console.log('showPropertyInfo called for:', spaceData.name, 'position:', spaceData.position);
+    cleanupPropertyVideo();
+    const mediaSession = propertyMediaSession;
+
     const modal = propertyModal;
     const title = document.getElementById('propertyTitle');
     const content = document.getElementById('propertyContent');
@@ -1619,11 +1642,11 @@ function showPropertyInfo(spaceData) {
             if (mediaCache[cacheKey].tagName === 'VIDEO') {
                 const video = mediaContainer.querySelector('video');
                 currentPropertyVideo = video;
-            video.muted = true; // ensure muted when restoring from cache
-            video.loop = false; // Ensure no looping
-            video.currentTime = 0; // Reset video to start
-            video.play().catch(e => console.log('Autoplay failed:', e));
-        }
+                video.muted = true; // ensure muted when restoring from cache
+                video.loop = false; // Ensure no looping
+                video.currentTime = 0; // Reset video to start
+                video.play().catch(e => console.log('Autoplay failed:', e));
+            }
         } else {
             // Prefer video if available
             if (media.videos && media.videos.length > 0) {
@@ -1641,8 +1664,14 @@ function showPropertyInfo(spaceData) {
                 video.style.objectFit = 'cover';
                 video.style.borderRadius = '8px';
                 video.preload = 'auto';
+                pendingPropertyVideo = video;
                 
                 video.addEventListener('loadeddata', () => {
+                    if (mediaSession !== propertyMediaSession) {
+                        stopVideoElement(video);
+                        return;
+                    }
+                    pendingPropertyVideo = null;
                     mediaContainer.appendChild(video);
                     mediaCache[cacheKey] = video.cloneNode(true);
                     currentPropertyVideo = video;
@@ -1650,6 +1679,8 @@ function showPropertyInfo(spaceData) {
                 });
                 
                 video.addEventListener('error', (e) => {
+                    if (mediaSession !== propertyMediaSession) return;
+                    pendingPropertyVideo = null;
                     console.log('Video load error:', e);
                     console.log('Failed video src:', randomVideo);
                     mediaContainer.innerHTML = '';
@@ -1718,40 +1749,23 @@ function showPropertyInfo(spaceData) {
 
 // Cleanup property video when modal closes
 function cleanupPropertyVideo() {
+    propertyMediaSession += 1;
+
+    stopVideoElement(pendingPropertyVideo);
+    pendingPropertyVideo = null;
+
+    stopVideoElement(currentPropertyVideo);
+    currentPropertyVideo = null;
+
     // Stop all videos in the media container
     const mediaContainer = document.getElementById('propertyMedia') || document.getElementById('property-media');
     if (mediaContainer) {
-        const videos = mediaContainer.querySelectorAll('video');
-        videos.forEach(video => {
-            // Stop playback immediately
-            video.pause();
-            video.currentTime = 0;
-            
-            // Remove loop attribute to prevent auto-restart
-            video.loop = false;
-            video.autoplay = false;
-            
-            // Clear all sources
-            video.src = '';
-            const sources = video.querySelectorAll('source');
-            sources.forEach(source => source.remove());
-            video.load();
-            
-            // Disconnect from playback engine
-            video.srcset = '';
-        });
+        mediaContainer.querySelectorAll('video').forEach(stopVideoElement);
         mediaContainer.innerHTML = '';
     }
-    
-    // Clear current video reference
-    if (currentPropertyVideo) {
-        currentPropertyVideo.pause();
-        currentPropertyVideo.currentTime = 0;
-        currentPropertyVideo.loop = false;
-        currentPropertyVideo.autoplay = false;
-        currentPropertyVideo.src = '';
-        currentPropertyVideo.srcset = '';
-        currentPropertyVideo = null;
+
+    if (propertyModal) {
+        propertyModal.querySelectorAll('video').forEach(stopVideoElement);
     }
 }
 
@@ -2975,7 +2989,8 @@ document.querySelectorAll('.modal-close').forEach(closeBtn => {
             waitingForBuyResult = false;
         }
         if (modal === propertyModal) {
-            cleanupPropertyVideo();
+            closePropertyModal();
+            return;
         }
         modal.classList.add('hidden');
     });
@@ -2992,7 +3007,8 @@ document.querySelectorAll('.modal').forEach(modal => {
                 waitingForBuyResult = false;
             }
             if (modal === propertyModal) {
-                cleanupPropertyVideo();
+                closePropertyModal();
+                return;
             }
             modal.classList.add('hidden');
         }
