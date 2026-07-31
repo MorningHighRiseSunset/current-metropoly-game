@@ -10,8 +10,5 @@
       "src": "/(.*)",
       "dest": "/server.js"
     }
-  ],
-  "features": {
-    "analytics": true
-  }
+  ]
 }
