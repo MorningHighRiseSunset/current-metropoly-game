@@ -2758,7 +2758,20 @@ socket.on('gameOver', (data) => {
 socket.on('gameError', (error) => {
     console.error('Game error:', error);
     const message = typeof error === 'string' ? error : String(error);
+    
+    // Silently ignore "Not your turn" errors (can happen during reconnection)
+    if (message.toLowerCase().includes('not your turn')) {
+        return;
+    }
+    
     addLogEntry(`Game error: ${message}`, 'system');
+
+    // Handle "Game not found" - redirect to lobby
+    if (message.toLowerCase().includes('game not found')) {
+        alert('Game not found. Redirecting to lobby...');
+        window.location.href = '/lobby.html';
+        return;
+    }
 
     if (message.toLowerCase().includes('token') && currentPlayer && pendingTokenSelection != null) {
         delete currentPlayer.tokenIndex;
