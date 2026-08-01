@@ -3373,35 +3373,35 @@ function createMonopolyFaceTexture(spaceData, row, col) {
 
     if (spaceData.type === 'chance') {
         ctx.fillStyle = '#f8fbff';
-        ctx.font = '800 40px "Segoe UI", Tahoma, sans-serif';
-        ctx.fillText('CHANCE', W / 2, H / 2 - 52);
-        ctx.font = '800 118px "Segoe UI", sans-serif';
+        ctx.font = '800 52px "Segoe UI", Tahoma, sans-serif';
+        ctx.fillText('CHANCE', W / 2, H / 2 - 65);
+        ctx.font = '800 140px "Segoe UI", sans-serif';
         ctx.fillStyle = '#ffc107';
         ctx.shadowColor = 'rgba(255, 193, 7, 0.45)';
         ctx.shadowBlur = 18;
-        ctx.fillText('?', W / 2, H / 2 + 42);
+        ctx.fillText('?', W / 2, H / 2 + 50);
     } else if (spaceData.type === 'community-chest') {
         ctx.fillStyle = '#f8fbff';
-        ctx.font = '800 32px "Segoe UI", Tahoma, sans-serif';
-        ctx.fillText('COMMUNITY', W / 2, H / 2 - 28);
-        ctx.fillText('CHEST', W / 2, H / 2 + 18);
+        ctx.font = '800 42px "Segoe UI", Tahoma, sans-serif';
+        ctx.fillText('COMMUNITY', W / 2, H / 2 - 36);
+        ctx.fillText('CHEST', W / 2, H / 2 + 24);
     } else {
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#f5f8fc';
-        ctx.font = '700 26px "Segoe UI", Tahoma, sans-serif';
+        ctx.font = '700 34px "Segoe UI", Tahoma, sans-serif';
         const bodyLines = wrapCanvasLines(ctx, spaceData.name, inner.w - 32, 4);
         const sub = tileSubLabel(spaceData);
-        const lineH = 28;
+        const lineH = 36;
         const extra = sub ? 1 : 0;
-        let ty = H / 2 - ((bodyLines.length + extra - 1) * lineH) / 2 + 6;
+        let ty = H / 2 - ((bodyLines.length + extra - 1) * lineH) / 2 + 8;
         bodyLines.forEach((ln) => {
             ctx.fillText(ln, W / 2, ty);
             ty += lineH;
         });
         if (sub) {
-            ctx.font = '600 24px "Segoe UI", Tahoma, sans-serif';
+            ctx.font = '600 30px "Segoe UI", Tahoma, sans-serif';
             ctx.fillStyle = 'rgba(190, 210, 235, 0.95)';
-            ctx.fillText(sub, W / 2, ty + 4);
+            ctx.fillText(sub, W / 2, ty + 5);
         }
     }
 
@@ -3565,59 +3565,138 @@ function createCenterCarousel(parentGroup) {
         '/Images/themirage.jpg',
         '/Images/thesphere.jpg',
         '/Images/welcome-to-caesars-palace.jpg',
-        '/Images/yellow light bulb image.jpg'
+        '/Images/01je2cjc09h0eq0z3pgh.webp',
+        '/Images/17509129_web1_INMATE-WHISPERER-FEB28-23__001-1.webp',
+        '/Images/11929141633_b4ab5fd45e_k.webp',
+        '/Images/Adele-Slams-Fan-Who-Yelled-Pride-Sucks-During-Concert-02.webp',
+        '/Images/BetMGM.jpg',
+        '/Images/man with rolls royce.png',
+        '/Images/p-las-vegas-motor-speedway_55_660x440_201404181828.webp',
+        '/Images/tigetwoods.avif',
+        '/Images/unnamed.jpg',
     ];
     
-    // Shuffle images for randomization
-    const shuffledImages = shuffleArray(allImages);
-    console.log(`Total carousel images: ${shuffledImages.length}`);
+    // Use sequential track-based ordering instead of randomization
+    console.log(`Total carousel images: ${allImages.length}`);
     
-    if (shuffledImages.length === 0) return;
+    if (allImages.length === 0) return;
     
     const textureLoader = new THREE.TextureLoader();
     
-    // Create single image mesh for slideshow
-    const tex = textureLoader.load(shuffledImages[0]);
-    if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
-        const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
-        tex.anisotropy = Math.min(8, maxA);
-    }
-    
-    const imageMesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(9, 9),
-        new THREE.MeshBasicMaterial({
-            map: tex,
-            transparent: true,
-            side: THREE.DoubleSide
-        })
+    // Create single image mesh for slideshow with error handling
+    textureLoader.load(
+        allImages[0],
+        (texture) => {
+            if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
+                const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
+                texture.anisotropy = Math.min(8, maxA);
+            }
+            
+            const imageMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(9, 9),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    side: THREE.DoubleSide
+                })
+            );
+            
+            imageMesh.position.set(0, 0.16, 0);
+            imageMesh.rotation.x = -Math.PI / 2;
+            imageMesh.userData.images = allImages;
+            imageMesh.userData.currentIndex = 0;
+            imageMesh.userData.lastChange = Date.now();
+            imageMesh.userData.nextTexture = null;
+            imageMesh.userData.nextIndex = null;
+            imageMesh.userData.failedImages = new Set(); // Track failed images
+            
+            centerCarouselGroup.add(imageMesh);
+            carouselImages.push(imageMesh);
+            
+            // Preload the first next image
+            preloadNextCarouselImage(imageMesh);
+        },
+        undefined,
+        (error) => {
+            console.error('Error loading initial carousel image:', error);
+            // Try next image as fallback
+            if (allImages.length > 1) {
+                console.log('Trying fallback image...');
+                const fallbackImages = allImages.slice(1);
+                createCenterCarouselWithFallback(parentGroup, fallbackImages);
+            }
+        }
     );
     
-    imageMesh.position.set(0, 0.16, 0);
-    imageMesh.rotation.x = -Math.PI / 2;
-    imageMesh.userData.images = shuffledImages;
-    imageMesh.userData.currentIndex = 0;
-    imageMesh.userData.lastChange = Date.now();
-    imageMesh.userData.nextTexture = null; // Preloaded next texture
-    imageMesh.userData.nextIndex = null; // Index of next preloaded image
-    
-    centerCarouselGroup.add(imageMesh);
-    carouselImages.push(imageMesh);
-    
-    // Preload the first next image
-    preloadNextCarouselImage(imageMesh);
-    
     parentGroup.add(centerCarouselGroup);
+}
+
+// Fallback function for carousel loading
+function createCenterCarouselWithFallback(parentGroup, images) {
+    if (images.length === 0) {
+        console.error('All carousel images failed to load');
+        return;
+    }
+    
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(
+        images[0],
+        (texture) => {
+            if (typeof renderer !== 'undefined' && renderer && renderer.capabilities) {
+                const maxA = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
+                texture.anisotropy = Math.min(8, maxA);
+            }
+            
+            const imageMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(9, 9),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    side: THREE.DoubleSide
+                })
+            );
+            
+            imageMesh.position.set(0, 0.16, 0);
+            imageMesh.rotation.x = -Math.PI / 2;
+            imageMesh.userData.images = images;
+            imageMesh.userData.currentIndex = 0;
+            imageMesh.userData.lastChange = Date.now();
+            imageMesh.userData.nextTexture = null;
+            imageMesh.userData.nextIndex = null;
+            imageMesh.userData.failedImages = new Set();
+            
+            centerCarouselGroup.add(imageMesh);
+            carouselImages.push(imageMesh);
+            
+            preloadNextCarouselImage(imageMesh);
+        },
+        undefined,
+        (error) => {
+            console.error('Fallback image also failed:', error);
+            createCenterCarouselWithFallback(parentGroup, images.slice(1));
+        }
+    );
 }
 
 function preloadNextCarouselImage(imageMesh) {
     const imagesLength = imageMesh.userData.images.length;
     if (imagesLength <= 1) return;
     
-    // Pick random index different from current
-    let nextIndex;
-    do {
-        nextIndex = Math.floor(Math.random() * imagesLength);
-    } while (nextIndex === imageMesh.userData.currentIndex);
+    // Use sequential track-based ordering
+    let nextIndex = (imageMesh.userData.currentIndex + 1) % imagesLength;
+    
+    // Skip failed images
+    let attempts = 0;
+    const maxAttempts = imagesLength;
+    while (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(nextIndex) && attempts < maxAttempts) {
+        nextIndex = (nextIndex + 1) % imagesLength;
+        attempts++;
+    }
+    
+    if (attempts >= maxAttempts) {
+        console.warn('All carousel images failed to load');
+        return;
+    }
     
     imageMesh.userData.nextIndex = nextIndex;
     
@@ -3634,6 +3713,12 @@ function preloadNextCarouselImage(imageMesh) {
         undefined,
         (error) => {
             console.error('Error preloading carousel image:', error);
+            if (!imageMesh.userData.failedImages) {
+                imageMesh.userData.failedImages = new Set();
+            }
+            imageMesh.userData.failedImages.add(nextIndex);
+            // Try next image
+            preloadNextCarouselImage(imageMesh);
         }
     );
 }
@@ -3661,15 +3746,21 @@ function animateCenterCarousel() {
             imageMesh.userData.nextIndex = null;
             preloadNextCarouselImage(imageMesh);
         } else {
-            // Fallback if preload failed - load immediately
-            let newIndex;
+            // Fallback if preload failed - load immediately with error handling
             const imagesLength = imageMesh.userData.images.length;
-            if (imagesLength > 1) {
-                do {
-                    newIndex = Math.floor(Math.random() * imagesLength);
-                } while (newIndex === imageMesh.userData.currentIndex);
-            } else {
-                newIndex = 0;
+            let newIndex = (imageMesh.userData.currentIndex + 1) % imagesLength;
+            
+            // Skip failed images
+            let attempts = 0;
+            const maxAttempts = imagesLength;
+            while (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(newIndex) && attempts < maxAttempts) {
+                newIndex = (newIndex + 1) % imagesLength;
+                attempts++;
+            }
+            
+            if (attempts >= maxAttempts) {
+                console.warn('All carousel images failed to load, staying on current');
+                return;
             }
             
             imageMesh.userData.currentIndex = newIndex;
@@ -3689,6 +3780,10 @@ function animateCenterCarousel() {
                 undefined,
                 (error) => {
                     console.error('Error loading carousel image:', error);
+                    if (!imageMesh.userData.failedImages) {
+                        imageMesh.userData.failedImages = new Set();
+                    }
+                    imageMesh.userData.failedImages.add(newIndex);
                 }
             );
         }
