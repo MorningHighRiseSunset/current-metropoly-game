@@ -3250,12 +3250,12 @@ function tileSubLabel(spaceData) {
     return '';
 }
 
-// Y rotation so tile face (and color strip) point toward board center
+// Y rotation so tile face (and color strip) point outward from board center
 function getTileFacingRotationY(row, col) {
-    if (row === 0) return Math.PI; // Top row: face south (toward center)
-    if (row === 10) return 0; // Bottom row: face north (toward center)
-    if (col === 10) return -Math.PI / 2; // Right column: face west (toward center)
-    if (col === 0) return Math.PI / 2; // Left column: face east (toward center)
+    if (row === 0) return 0; // Top row: face north (away from center)
+    if (row === 10) return Math.PI; // Bottom row: face south (away from center)
+    if (col === 10) return Math.PI / 2; // Right column: face east (away from center)
+    if (col === 0) return -Math.PI / 2; // Left column: face west (away from center)
     return 0;
 }
 
@@ -3369,35 +3369,35 @@ function createMonopolyFaceTexture(spaceData, row, col) {
 
     if (spaceData.type === 'chance') {
         ctx.fillStyle = '#f8fbff';
-        ctx.font = '900 70px "Arial Black", "Impact", sans-serif';
-        ctx.fillText('CHANCE', W / 2, H / 2 - 85);
-        ctx.font = '900 180px "Arial Black", "Impact", sans-serif';
+        ctx.font = '900 85px "Arial Black", "Impact", sans-serif';
+        ctx.fillText('CHANCE', W / 2, H / 2 - 100);
+        ctx.font = '900 220px "Arial Black", "Impact", sans-serif';
         ctx.fillStyle = '#ffc107';
         ctx.shadowColor = 'rgba(255, 193, 7, 0.45)';
         ctx.shadowBlur = 18;
-        ctx.fillText('?', W / 2, H / 2 + 65);
+        ctx.fillText('?', W / 2, H / 2 + 80);
     } else if (spaceData.type === 'community-chest') {
         ctx.fillStyle = '#f8fbff';
-        ctx.font = '900 58px "Arial Black", "Impact", sans-serif';
-        ctx.fillText('COMMUNITY', W / 2, H / 2 - 50);
-        ctx.fillText('CHEST', W / 2, H / 2 + 35);
+        ctx.font = '900 72px "Arial Black", "Impact", sans-serif';
+        ctx.fillText('COMMUNITY', W / 2, H / 2 - 60);
+        ctx.fillText('CHEST', W / 2, H / 2 + 45);
     } else {
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#f5f8fc';
-        ctx.font = '900 48px "Arial Black", "Impact", sans-serif';
-        const bodyLines = wrapCanvasLines(ctx, spaceData.name, inner.w - 20, 3);
+        ctx.font = '900 58px "Arial Black", "Impact", sans-serif';
+        const bodyLines = wrapCanvasLines(ctx, spaceData.name, inner.w - 15, 3);
         const sub = tileSubLabel(spaceData);
-        const lineH = 52;
+        const lineH = 62;
         const extra = sub ? 1 : 0;
-        let ty = H / 2 - ((bodyLines.length + extra - 1) * lineH) / 2 + 10;
+        let ty = H / 2 - ((bodyLines.length + extra - 1) * lineH) / 2 + 12;
         bodyLines.forEach((ln) => {
             ctx.fillText(ln, W / 2, ty);
             ty += lineH;
         });
         if (sub) {
-            ctx.font = '900 42px "Arial Black", "Impact", sans-serif';
+            ctx.font = '900 50px "Arial Black", "Impact", sans-serif';
             ctx.fillStyle = 'rgba(190, 210, 235, 0.95)';
-            ctx.fillText(sub, W / 2, ty + 8);
+            ctx.fillText(sub, W / 2, ty + 10);
         }
     }
 
