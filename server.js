@@ -2642,8 +2642,9 @@ io.on('connection', (socket) => {
                     }, 5000);
                 }
                 
-                // Only remove player if game is not active (lobby stage) or if they've been gone for a while
+                // Handle player removal based on game status
                 if (game.status === 'lobby') {
+                    // In lobby: immediately remove player and potentially delete game
                     game.players = game.players.filter(p => p && p.id !== socket.id);
                     
                     if (game.host === socket.id && game.players.length > 0) {
@@ -2654,9 +2655,8 @@ io.on('connection', (socket) => {
                         }
                     }
 
-                    // Only delete game if it's in lobby status and has no players
-                    // Active games (playing/starting) should not be deleted to allow reconnection
-                    if (game.players.length === 0 && game.status === 'lobby') {
+                    if (game.players.length === 0) {
+                        console.log(`Deleting lobby game ${playerData.gameId} - no players left`);
                         delete games[playerData.gameId];
                     } else {
                         io.to(playerData.gameId).emit('playerLeft', {
@@ -2665,6 +2665,16 @@ io.on('connection', (socket) => {
                             newHost: game.host
                         });
                     }
+                } else {
+                    // In active game (starting/playing): preserve game for reconnection
+                    console.log(`Active game ${playerData.gameId} (status: ${game.status}) - preserving for reconnection`);
+                    // Don't delete the game, don't remove from players array
+                    // Just notify other players about disconnection
+                    io.to(playerData.gameId).emit('playerDisconnected', {
+                        playerId: socket.id,
+                        playerName: disconnectedPlayer.name,
+                        players: game.players
+                    });
                 }
             }
             

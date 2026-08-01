@@ -2769,7 +2769,7 @@ socket.on('gameError', (error) => {
     // Handle "Game not found" - redirect to lobby
     if (message.toLowerCase().includes('game not found')) {
         alert('Game not found. Redirecting to lobby...');
-        window.location.href = '/lobby.html';
+        window.location.href = '/';
         return;
     }
 
