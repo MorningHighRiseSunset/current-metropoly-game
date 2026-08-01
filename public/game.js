@@ -3574,6 +3574,14 @@ function createCenterCarousel(parentGroup) {
         '/Images/las_vegas_motor_speedway.webp',
         '/Images/tigetwoods.avif',
         '/Images/unnamed.jpg',
+        '/Images/minus_1x_1.webp',
+        '/Images/berry_1.webp',
+        '/Images/las_vegas_elopement_wedding_champagne_pop.webp',
+        '/Images/unnamed_1.png',
+        '/Images/rolls_royce_2.png',
+        '/Images/helicopters.webp',
+        '/Images/house_of_blues_sunset.webp',
+        '/Images/unnamed.gif',
     ];
     
     // Use sequential track-based ordering instead of randomization
