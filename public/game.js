@@ -3369,35 +3369,35 @@ function createMonopolyFaceTexture(spaceData, row, col) {
 
     if (spaceData.type === 'chance') {
         ctx.fillStyle = '#f8fbff';
-        ctx.font = '800 52px "Segoe UI", Tahoma, sans-serif';
-        ctx.fillText('CHANCE', W / 2, H / 2 - 65);
-        ctx.font = '800 140px "Segoe UI", sans-serif';
+        ctx.font = '900 70px "Arial Black", "Impact", sans-serif';
+        ctx.fillText('CHANCE', W / 2, H / 2 - 85);
+        ctx.font = '900 180px "Arial Black", "Impact", sans-serif';
         ctx.fillStyle = '#ffc107';
         ctx.shadowColor = 'rgba(255, 193, 7, 0.45)';
         ctx.shadowBlur = 18;
-        ctx.fillText('?', W / 2, H / 2 + 50);
+        ctx.fillText('?', W / 2, H / 2 + 65);
     } else if (spaceData.type === 'community-chest') {
         ctx.fillStyle = '#f8fbff';
-        ctx.font = '800 42px "Segoe UI", Tahoma, sans-serif';
-        ctx.fillText('COMMUNITY', W / 2, H / 2 - 36);
-        ctx.fillText('CHEST', W / 2, H / 2 + 24);
+        ctx.font = '900 58px "Arial Black", "Impact", sans-serif';
+        ctx.fillText('COMMUNITY', W / 2, H / 2 - 50);
+        ctx.fillText('CHEST', W / 2, H / 2 + 35);
     } else {
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#f5f8fc';
-        ctx.font = '700 34px "Segoe UI", Tahoma, sans-serif';
-        const bodyLines = wrapCanvasLines(ctx, spaceData.name, inner.w - 32, 4);
+        ctx.font = '900 48px "Arial Black", "Impact", sans-serif';
+        const bodyLines = wrapCanvasLines(ctx, spaceData.name, inner.w - 20, 3);
         const sub = tileSubLabel(spaceData);
-        const lineH = 36;
+        const lineH = 52;
         const extra = sub ? 1 : 0;
-        let ty = H / 2 - ((bodyLines.length + extra - 1) * lineH) / 2 + 8;
+        let ty = H / 2 - ((bodyLines.length + extra - 1) * lineH) / 2 + 10;
         bodyLines.forEach((ln) => {
             ctx.fillText(ln, W / 2, ty);
             ty += lineH;
         });
         if (sub) {
-            ctx.font = '600 30px "Segoe UI", Tahoma, sans-serif';
+            ctx.font = '900 42px "Arial Black", "Impact", sans-serif';
             ctx.fillStyle = 'rgba(190, 210, 235, 0.95)';
-            ctx.fillText(sub, W / 2, ty + 5);
+            ctx.fillText(sub, W / 2, ty + 8);
         }
     }
 
