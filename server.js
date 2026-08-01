@@ -2654,7 +2654,9 @@ io.on('connection', (socket) => {
                         }
                     }
 
-                    if (game.players.length === 0) {
+                    // Only delete game if it's in lobby status and has no players
+                    // Active games (playing/starting) should not be deleted to allow reconnection
+                    if (game.players.length === 0 && game.status === 'lobby') {
                         delete games[playerData.gameId];
                     } else {
                         io.to(playerData.gameId).emit('playerLeft', {
