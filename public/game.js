@@ -3307,10 +3307,6 @@ function createMonopolyFaceTexture(spaceData, row, col) {
     canvas.height = H;
     const ctx = canvas.getContext('2d');
 
-    // Flip canvas horizontally to fix text reversal
-    ctx.translate(W, 0);
-    ctx.scale(-1, 1);
-
     const inner = { x: pad + 4, y: pad + 4, w: W - (pad + 4) * 2, h: H - (pad + 4) * 2 };
 
     roundRectPath(ctx, pad, pad, W - pad * 2, H - pad * 2, cornerR);
