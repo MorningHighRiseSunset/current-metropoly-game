@@ -3539,8 +3539,8 @@ function createCenterCarousel(parentGroup) {
     
     // All images from Images folder (excluding tokens and utilities)
     const allImages = [
-        '/Images/County fair.png',
-        '/Images/Screenshot 2024-12-12 033702.png',
+        '/Images/County%20fair.png',
+        '/Images/Screenshot%202024-12-12%20033702.png',
         '/Images/raidersimage.png',
         '/Images/230613231941-04-knights-stanley-cup-061323.jpg',
         '/Images/9b.jpg',
@@ -3570,7 +3570,7 @@ function createCenterCarousel(parentGroup) {
         '/Images/11929141633_b4ab5fd45e_k.webp',
         '/Images/Adele-Slams-Fan-Who-Yelled-Pride-Sucks-During-Concert-02.webp',
         '/Images/BetMGM.jpg',
-        '/Images/rolls royce.png',
+        '/Images/rolls%20royce.png',
         '/Images/p-las-vegas-motor-speedway_55_660x440_201404181828.webp',
         '/Images/tigetwoods.avif',
         '/Images/unnamed.jpg',
