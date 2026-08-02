@@ -125,12 +125,12 @@ const DiceRollSequenceManager = (() => {
 
 // Token data
 const tokenData = [
-    { name: 'Burger', model: getModelPath('/Models/Cheeseburger/cheeseburger.glb'), image: '/Images/Burger.png', scale: 0.42 },
-    { name: 'Football', model: getModelPath('/Models/Football/football.glb'), image: '/Images/football.png', scale: 0.03 },
-    { name: 'Helicopter', model: getModelPath('/Models/Helicopter/helicopter.glb'), image: '/Images/helicopter.png', scale: 0.002 },
-    { name: 'Rolls Royce', model: getModelPath('/Models/RollsRoyce/rollsRoyceCarAnim.glb'), image: '/Images/man_rolls_royce.png', scale: 0.14, facingOffset: Math.PI / 2 },
-    { name: 'Shoe', model: getModelPath('/Models/Shoe/shoe.glb'), image: '/Images/Shoe.png', scale: 0.25 },
-    { name: 'Top Hat', model: getModelPath('/Models/TopHat/tophat.glb'), image: '/Images/top_hat.png', scale: 0.22 },
+    { name: 'Burger', model: getModelPath('/Models/Cheeseburger/cheeseburger.glb'), image: '/tokenimages/burger.png', scale: 0.42 },
+    { name: 'Football', model: getModelPath('/Models/Football/football.glb'), image: '/tokenimages/football.png', scale: 0.03 },
+    { name: 'Helicopter', model: getModelPath('/Models/Helicopter/helicopter.glb'), image: '/tokenimages/helicopter.png', scale: 0.002 },
+    { name: 'Rolls Royce', model: getModelPath('/Models/RollsRoyce/rollsRoyceCarAnim.glb'), image: '/tokenimages/rolls_royce.png', scale: 0.14, facingOffset: Math.PI / 2 },
+    { name: 'Shoe', model: getModelPath('/Models/Shoe/shoe.glb'), image: '/tokenimages/shoe.png', scale: 0.25 },
+    { name: 'Top Hat', model: getModelPath('/Models/TopHat/tophat.glb'), image: '/tokenimages/top_hat.png', scale: 0.22 },
     { name: 'White Girl', model: getModelPath('/Models/WhiteGirlIdle/Standing Idle.fbx'), walkModel: getModelPath('/Models/WhiteGirlWalk/Walking.fbx'), image: '/tokenimages/woman_model.png', scale: 0.06 },
     { name: 'Coffee Cup', model: getModelPath('/Models/CoffeeCup/coffee.gltf'), image: '/tokenimages/coffee.png', scale: 0.25 }
 ];
