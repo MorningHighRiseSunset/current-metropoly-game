@@ -11,6 +11,15 @@ const server = http.createServer(app);
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve Images directory explicitly
+app.use('/Images', express.static(path.join(__dirname, 'public', 'Images')));
+
+// Serve tokenimages directory explicitly
+app.use('/tokenimages', express.static(path.join(__dirname, 'public', 'tokenimages')));
+
+// Serve Models directory explicitly
+app.use('/Models', express.static(path.join(__dirname, 'Models')));
+
 const allowedOrigins = (process.env.CLIENT_ORIGINS || 'https://vegas-metropoly.vercel.app,http://localhost:3000,http://127.0.0.1:3000')
     .split(',')
     .map(origin => origin.trim())
