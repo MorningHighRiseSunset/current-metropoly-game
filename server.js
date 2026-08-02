@@ -7,6 +7,10 @@ const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 const allowedOrigins = (process.env.CLIENT_ORIGINS || 'https://vegas-metropoly.vercel.app,http://localhost:3000,http://127.0.0.1:3000')
     .split(',')
     .map(origin => origin.trim())

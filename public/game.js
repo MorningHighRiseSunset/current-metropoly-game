@@ -3577,10 +3577,8 @@ function createCenterCarousel(parentGroup) {
         '/Images/berry_1.webp',
         '/Images/las_vegas_elopement_wedding_champagne_pop.webp',
         '/Images/unnamed_1.png',
-        '/Images/rolls_royce_2.png',
         '/Images/helicopters.webp',
         '/Images/house_of_blues_sunset.webp',
-        '/Images/unnamed.gif',
         '/Images/yellow_light_bulb.jpg',
     ];
     
