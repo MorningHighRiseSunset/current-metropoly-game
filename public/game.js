@@ -3582,6 +3582,7 @@ function createCenterCarousel(parentGroup) {
         '/Images/helicopters.webp',
         '/Images/house_of_blues_sunset.webp',
         '/Images/unnamed.gif',
+        '/Images/yellow_light_bulb.jpg',
     ];
     
     // Use sequential track-based ordering instead of randomization
