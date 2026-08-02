@@ -3551,7 +3551,6 @@ function createCenterCarousel(parentGroup) {
         '/Images/las_vegas_strip_map_blog.jpg',
         '/Images/PIX-1-Exosphere-Architecture.jpg',
         '/Images/ResortsWorldTheater.jpg',
-        '/Images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg',
         '/Images/ShrinersChildrens-18-hole-2022.jpg',
         '/Images/SpeedVegasOffroading.jpg',
         '/Images/welcome_fabulous_las_vegas_sign.jpg',
