@@ -7,16 +7,7 @@
   ],
   "routes": [
     {
-      "src": "/Images/(.*)",
-      "dest": "/public/Images/$1"
-    },
-    {
-      "src": "/tokenimages/(.*)",
-      "dest": "/public/tokenimages/$1"
-    },
-    {
-      "src": "/Models/(.*)",
-      "dest": "/Models/$1"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
