@@ -1,10 +1,6 @@
 # Dependencies
 node_modules/
 
-# Media files (too large for deployment)
-Images/
-Models/
-
 # Logs
 *.log
 error-logs.txt
