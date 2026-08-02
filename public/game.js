@@ -3569,7 +3569,7 @@ function createCenterCarousel(parentGroup) {
         '/Images/11929141633_b4ab5fd45e_k.webp',
         '/Images/Adele-Slams-Fan-Who-Yelled-Pride-Sucks-During-Concert-02.webp',
         '/Images/BetMGM.jpg',
-        '/Images/man_rolls_royce.png',
+        '/tokenimages/rolls_royce.png',
         '/Images/las_vegas_motor_speedway.webp',
         '/Images/tigetwoods.avif',
         '/Images/unnamed.jpg',
