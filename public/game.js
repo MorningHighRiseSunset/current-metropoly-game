@@ -2141,7 +2141,11 @@ function handleDiceRolledEvent(data) {
                     // For non-doubles: trigger property decision
                     onDiceRollSequenceComplete(playerId, newPosition, data);
                 } else {
-                    // For doubles: just clean up and let turn continue
+                    // For doubles: show notification and let turn continue
+                    const player = players.find(p => p && p.id === playerId);
+                    if (player) {
+                        showDoublesNotification(player.name);
+                    }
                     DiceRollSequenceManager.completeSequence(playerId);
                     updateUI();
                 }
@@ -3965,7 +3969,11 @@ function initializePeerJS() {
             }).then(stream => {
                 localStream = stream;
                 const localVideo = document.getElementById('localVideo');
-                localVideo.srcObject = localStream;
+                if (localVideo) {
+                    localVideo.srcObject = localStream;
+                    localVideo.muted = true;
+                    localVideo.play().catch(e => console.log('Local video play error:', e));
+                }
                 call.answer(stream);
             }).catch(err => {
                 console.error('Error getting media for incoming call:', err);
@@ -4013,7 +4021,13 @@ async function startVideoCall() {
 
         // Display local video
         const localVideo = document.getElementById('localVideo');
-        localVideo.srcObject = localStream;
+        if (localVideo) {
+            localVideo.srcObject = localStream;
+            localVideo.muted = true;
+            localVideo.play().catch(e => console.log('Local video play error:', e));
+        } else {
+            console.error('localVideo element not found');
+        }
 
         updateConnectionStatus('Calling...');
 
@@ -4042,7 +4056,12 @@ function handleCall(call) {
         console.log('Received remote stream');
         remoteStream = stream;
         const remoteVideo = document.getElementById('remoteVideo');
-        remoteVideo.srcObject = stream;
+        if (remoteVideo) {
+            remoteVideo.srcObject = stream;
+            remoteVideo.play().catch(e => console.log('Remote video play error:', e));
+        } else {
+            console.error('remoteVideo element not found');
+        }
         updateConnectionStatus('Connected');
     });
 
@@ -4151,7 +4170,13 @@ socket.on('videoCallRequest', async (data) => {
             });
 
             const localVideo = document.getElementById('localVideo');
-            localVideo.srcObject = localStream;
+            if (localVideo) {
+                localVideo.srcObject = localStream;
+                localVideo.muted = true;
+                localVideo.play().catch(e => console.log('Local video play error:', e));
+            } else {
+                console.error('localVideo element not found');
+            }
 
             updateConnectionStatus('Connecting...');
 

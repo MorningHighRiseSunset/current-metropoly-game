@@ -68,6 +68,30 @@
             <aside class="sidebar players-sidebar">
                 <h3 class="sidebar-panel-title">Players</h3>
                 <div id="playersList" class="players-list panel-scroll"></div>
+                
+                <div class="sidebar-panel sidebar-panel--chat">
+                    <h3 class="sidebar-panel-title">Chat</h3>
+                    <div id="chatMessages" class="chat-messages panel-scroll"></div>
+                    <div class="chat-compose">
+                        <input type="text" id="chatInput" placeholder="Message..." maxlength="100">
+                        <button id="sendChatBtn" class="btn btn-small btn-send">Send</button>
+                    </div>
+                </div>
+                
+                <div class="sidebar-panel sidebar-panel--video">
+                    <h3 class="sidebar-panel-title">Video Chat</h3>
+                    <div class="video-chat-content">
+                        <div class="video-container">
+                            <video id="localVideo" class="local-video" muted playsinline autoplay></video>
+                            <video id="remoteVideo" class="remote-video" playsinline autoplay></video>
+                        </div>
+                        <div class="video-controls">
+                            <div id="connectionStatus" class="connection-status">Not connected</div>
+                            <button id="startVideoCall" class="btn btn-primary btn-block">Start Call</button>
+                            <button id="endVideoCall" class="btn btn-danger btn-block" style="display: none;">End Call</button>
+                        </div>
+                    </div>
+                </div>
             </aside>
 
             <!-- Center - Game Board -->
@@ -84,30 +108,6 @@
                 <div class="sidebar-panel sidebar-panel--properties">
                     <h3 class="sidebar-panel-title">My Properties</h3>
                     <div id="myProperties" class="properties-list panel-scroll"></div>
-                </div>
-
-                <div class="sidebar-panel sidebar-panel--chat">
-                    <h3 class="sidebar-panel-title">Chat</h3>
-                    <div id="chatMessages" class="chat-messages panel-scroll"></div>
-                    <div class="chat-compose">
-                        <input type="text" id="chatInput" placeholder="Message..." maxlength="100">
-                        <button id="sendChatBtn" class="btn btn-small btn-send">Send</button>
-                    </div>
-                </div>
-
-                <div class="sidebar-panel sidebar-panel--video">
-                    <h3 class="sidebar-panel-title">Video Chat</h3>
-                    <div class="video-chat-content">
-                        <div class="video-container">
-                            <video id="localVideo" class="local-video" muted playsinline autoplay></video>
-                            <video id="remoteVideo" class="remote-video" playsinline autoplay></video>
-                        </div>
-                        <div class="video-controls">
-                            <div id="connectionStatus" class="connection-status">Not connected</div>
-                            <button id="startVideoCall" class="btn btn-primary btn-block">Start Call</button>
-                            <button id="endVideoCall" class="btn btn-danger btn-block" style="display: none;">End Call</button>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="sidebar-panel sidebar-panel--actions">
