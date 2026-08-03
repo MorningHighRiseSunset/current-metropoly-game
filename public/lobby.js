@@ -32,7 +32,7 @@ const settingsModalClose = document.querySelector('.modal-close');
 const refreshLobbiesBtn = document.getElementById('refreshLobbiesBtn');
 const lobbiesList = document.getElementById('lobbiesList');
 
-const gameMenu = document.querySelector('.game-menu');
+const gameMenu = document.querySelector('.lobby-container');
 const gameCreatedSection = document.getElementById('gameCreatedSection');
 const lobbySection = document.getElementById('lobbySection');
 const messageModal = document.getElementById('messageModal');
@@ -459,8 +459,8 @@ socket.on('gameCreated', (data) => {
     persistLobbyIdentity(gameId, playerUid);
     
     // Hide menu and lobby, show game created section
-    gameMenu.classList.add('hidden');
-    lobbySection.classList.add('hidden');
+    if (gameMenu) gameMenu.classList.add('hidden');
+    if (lobbySection) lobbySection.classList.add('hidden');
     gameCreatedSection.classList.remove('hidden');
     document.getElementById('generatedGameId').textContent = gameId;
     updatePlayersList(players, document.getElementById('playersList'));
@@ -484,11 +484,11 @@ socket.on('lobbyJoined', (data) => {
     persistLobbyIdentity(gameId, playerUid);
     
     // Hide menu
-    gameMenu.classList.add('hidden');
+    if (gameMenu) gameMenu.classList.add('hidden');
     
     if (isHost) {
         // Hide lobby and show game created section
-        lobbySection.classList.add('hidden');
+        if (lobbySection) lobbySection.classList.add('hidden');
         gameCreatedSection.classList.remove('hidden');
         document.getElementById('generatedGameId').textContent = gameId;
         updatePlayersList(players, document.getElementById('playersList'));
