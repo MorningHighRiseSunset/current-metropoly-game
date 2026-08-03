@@ -152,6 +152,7 @@ if (process.env.USE_VIDEO_CDN === 'true' && process.env.VIDEO_CDN_BASE_URL) {
         const originalPath = req.path;
         const decodedPath = decodeURIComponent(originalPath);
         req.url = decodedPath;
+        console.log(`Video request: ${originalPath} -> ${decodedPath}`);
         next();
     }, express.static(path.join(__dirname, 'Videos')));
 }
