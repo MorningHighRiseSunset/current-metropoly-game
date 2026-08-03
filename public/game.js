@@ -1800,7 +1800,7 @@ function updatePlayersList() {
         const isActiveTurn = gameState && gameState.currentPlayer === player.id;
         playerEl.className = `player-card${isActiveTurn ? ' is-active' : ''}${player.isBankrupt ? ' is-bankrupt' : ''}`;
 
-        const displayName = isCurrentPlayer ? 'You' : (player.name || 'Unknown Player');
+        const displayName = isCurrentPlayer ? 'You' : `Player ${playerNumber}`;
         const aiBadge = player.isAI ? '<span class="player-card-badge ai">AI</span>' : '';
         const turnBadge = isActiveTurn ? '<span class="player-card-badge turn">Turn</span>' : '';
         const jailBadge = player.inJail ? '<span class="player-card-badge jail">Jail</span>' : (player.position === 10 ? '<span class="player-card-badge visiting">Visiting</span>' : '');
@@ -1889,12 +1889,19 @@ function addChatMessage(sender, message) {
     console.log('Message added to chat, total messages:', chatMessagesEl.children.length);
 }
 
+// Helper function to get display name for a player
+function getPlayerDisplayName(player) {
+    if (!player) return 'Unknown Player';
+    const playerNumber = players.findIndex(p => p && p.id === player.id);
+    const displayNumber = playerNumber > 0 ? playerNumber : '?';
+    return `Player ${displayNumber}`;
+}
+
 // Update UI elements
 function updateUI(options = {}) {
     if (currentPlayer) {
         playerMoneyEl.textContent = `$${currentPlayer.money || 2500}`;
-        playerNameEl.textContent = currentPlayer.name;
-        localStorage.setItem('playerName', currentPlayer.name);
+        playerNameEl.textContent = getPlayerDisplayName(currentPlayer);
     } else {
         // Set defaults when currentPlayer is not available
         playerMoneyEl.textContent = '$2500';
@@ -2144,7 +2151,7 @@ function handleDiceRolledEvent(data) {
                     // For doubles: show notification and let turn continue
                     const player = players.find(p => p && p.id === playerId);
                     if (player) {
-                        showDoublesNotification(player.name);
+                        showDoublesNotification(getPlayerDisplayName(player));
                     }
                     DiceRollSequenceManager.completeSequence(playerId);
                     updateUI();
@@ -2276,7 +2283,7 @@ socket.on('tokenSelected', (data) => {
         const player = players.find(p => p && p.id === playerId);
         const tokenInfo = tokenData[tokenIndex];
         if (player && tokenInfo) {
-            addLogEntry(`${player.name} selected ${tokenInfo.name}`, 'system');
+            addLogEntry(`${getPlayerDisplayName(player)} selected ${tokenInfo.name}`, 'system');
         }
     } else if (allTokensAssigned) {
         addLogEntry('All players have tokens', 'system');
@@ -2359,7 +2366,7 @@ socket.on('propertyPurchased', (data) => {
         player.properties.push(position);
         
         updateUI();
-        addLogEntry(`${player.name} bought ${propertyName} for $${boardConfig[position].price}`, 'property');
+        addLogEntry(`${getPlayerDisplayName(player)} bought ${propertyName} for $${boardConfig[position].price}`, 'property');
         
         // Update property display on board
         if (boardSpaces[position]) {
@@ -2462,7 +2469,7 @@ socket.on('playerMoved', (data) => {
         updateTokens();
 
         const spaceName = boardConfig[newPosition]?.name || 'unknown space';
-        addLogEntry(`${player.name} moved to ${spaceName}`, 'player');
+        addLogEntry(`${getPlayerDisplayName(player)} moved to ${spaceName}`, 'player');
     }
 });
 
@@ -2507,7 +2514,7 @@ socket.on('cardDrawn', (data) => {
         if (data.playerId === myPlayerId) {
             showCardModal(data.cardType, data.card.message, data.action);
         }
-        addLogEntry(`${player.name} drew ${data.cardType}: ${data.card.message}`, 'system');
+        addLogEntry(`${getPlayerDisplayName(player)} drew ${data.cardType}: ${data.card.message}`, 'system');
     }
 });
 
@@ -2517,7 +2524,7 @@ socket.on('taxPaid', (data) => {
     if (player) {
         player.money = data.newMoney;
         updateUI();
-        addLogEntry(`${player.name} paid $${data.amount} for ${data.taxName}`, 'system');
+        addLogEntry(`${getPlayerDisplayName(player)} paid $${data.amount} for ${data.taxName}`, 'system');
     }
 });
 
@@ -2587,7 +2594,7 @@ socket.on('playerSentToJail', (data) => {
         }
         updateTokens();
         updateUI();
-        addLogEntry(`${player.name} was sent to jail!`, 'system');
+        addLogEntry(`${getPlayerDisplayName(player)} was sent to jail!`, 'system');
     }
 });
 
@@ -2597,7 +2604,7 @@ socket.on('playerOutOfJail', (data) => {
         player.inJail = false;
         player.jailTurns = 0;
         updateUI();
-        addLogEntry(`${player.name} got out of jail (${data.method})`, 'system');
+        addLogEntry(`${getPlayerDisplayName(player)} got out of jail (${data.method})`, 'system');
     }
 });
 
@@ -2630,7 +2637,7 @@ socket.on('passedGo', (data) => {
     if (player) {
         player.money = data.newMoney;
         updateUI();
-        addLogEntry(`${player.name} collected $${data.amount} for passing GO!`, 'system');
+        addLogEntry(`${getPlayerDisplayName(player)} collected $${data.amount} for passing GO!`, 'system');
     }
 });
 
