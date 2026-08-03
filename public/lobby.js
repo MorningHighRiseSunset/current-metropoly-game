@@ -19,7 +19,6 @@ const socket = io(SOCKET_SERVER_URL, {
 
 // DOM Elements
 const createGameBtn = document.getElementById('createGameBtn');
-const copyIdBtn = document.getElementById('copyIdBtn');
 const startGameBtn = document.getElementById('startGameBtn');
 const modalOkBtn = document.getElementById('modalOkBtn');
 const modalClose = document.querySelector('.close');
@@ -239,10 +238,10 @@ function updatePlayersList(players, listElement) {
         }
 
         const badgeText = player.isAI ? '🤖 AI' : (player.id === socket.id ? 'You' : '');
-        const playerName = player.isAI ? `AI ${playerNumber}` : player.name;
+        const playerName = player.isAI ? `AI ${playerNumber}` : `Player ${playerNumber}`;
 
         playerDiv.innerHTML = `
-            <span class="player-name">Player ${playerNumber}: ${playerName}</span>
+            <span class="player-name">${playerName}</span>
             <span class="player-badge">${badgeText}</span>
         `;
 
@@ -263,17 +262,7 @@ createGameBtn.addEventListener('click', () => {
 
 
 
-// Copy game ID
-copyIdBtn.addEventListener('click', () => {
-    const gameIdText = document.getElementById('generatedGameId').textContent;
-    copyToClipboard(gameIdText, copyIdBtn);
-});
 
-// Copy lobby game ID
-copyLobbyIdBtn.addEventListener('click', () => {
-    const gameIdText = document.getElementById('lobbyGameId').textContent;
-    copyToClipboard(gameIdText, copyLobbyIdBtn);
-});
 
 // Fallback copy function for browsers without clipboard API
 function copyToClipboard(text, button) {
@@ -341,63 +330,6 @@ function showCopyError(button) {
     }, 2000);
 }
 
-// Online build: only share the public invite link (no LAN / local network URLs).
-function loadServerInfo() {
-    const connectionUrlsDiv = document.getElementById('connectionUrls');
-    if (!connectionUrlsDiv) {
-        console.warn('connectionUrls element not found, skipping loadServerInfo');
-        return;
-    }
-    connectionUrlsDiv.innerHTML = '';
-
-    if (PUBLIC_SHARE_ORIGIN) {
-        connectionUrlsDiv.appendChild(createUrlItem('Online', PUBLIC_SHARE_ORIGIN));
-    }
-
-    if (currentGameId) {
-        connectionUrlsDiv.appendChild(createUrlItem('Join Link', buildJoinLink(currentGameId)));
-    }
-}
-
-function createUrlItem(label, url) {
-    const item = document.createElement('div');
-    item.className = 'url-item';
-    
-    const labelSpan = document.createElement('span');
-    labelSpan.className = 'url-label';
-    labelSpan.textContent = label;
-    
-    const urlSpan = document.createElement('span');
-    urlSpan.className = 'url-text';
-    urlSpan.textContent = url;
-    urlSpan.style.cursor = 'pointer';
-    urlSpan.addEventListener('click', () => {
-        navigator.clipboard.writeText(url).then(() => {
-            urlSpan.style.color = '#28a745';
-            setTimeout(() => {
-                urlSpan.style.color = '';
-            }, 2000);
-        });
-    });
-    
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-url-btn';
-    copyBtn.textContent = 'Copy';
-    copyBtn.type = 'button'; // Ensure it's treated as a button
-    copyBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Copy button clicked for URL:', url);
-        copyToClipboard(url, copyBtn);
-    });
-    
-    item.appendChild(labelSpan);
-    item.appendChild(urlSpan);
-    item.appendChild(copyBtn);
-    
-    return item;
-}
-
 // Start game
 startGameBtn.addEventListener('click', () => {
     console.log('Start game button clicked!');
@@ -462,11 +394,7 @@ socket.on('gameCreated', (data) => {
     if (gameMenu) gameMenu.classList.add('hidden');
     if (lobbySection) lobbySection.classList.add('hidden');
     gameCreatedSection.classList.remove('hidden');
-    document.getElementById('generatedGameId').textContent = gameId;
     updatePlayersList(players, document.getElementById('playersList'));
-    
-    // Load and display connection URLs
-    loadServerInfo();
     
     // Show start game button if there are at least 2 players OR 1 player + AI
     const actualPlayerCount = players.filter(p => p !== null).length;
@@ -490,11 +418,7 @@ socket.on('lobbyJoined', (data) => {
         // Hide lobby and show game created section
         if (lobbySection) lobbySection.classList.add('hidden');
         gameCreatedSection.classList.remove('hidden');
-        document.getElementById('generatedGameId').textContent = gameId;
         updatePlayersList(players, document.getElementById('playersList'));
-        
-        // Load and display connection URLs
-        loadServerInfo();
 
         // Show start game button if there are at least 2 players OR 1 player + AI
         const actualPlayerCount = players.filter(p => p !== null).length;
@@ -506,7 +430,6 @@ socket.on('lobbyJoined', (data) => {
         // Hide game created section and show lobby
         gameCreatedSection.classList.add('hidden');
         lobbySection.classList.remove('hidden');
-        document.getElementById('lobbyGameId').textContent = gameId;
         updatePlayersList(players, document.getElementById('lobbyPlayersList'));
     }
 });
