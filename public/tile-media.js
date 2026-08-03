@@ -4,9 +4,12 @@ function getVideoUrl(localPath) {
     const VIDEO_CDN_BASE_URL = window.VIDEO_CDN_BASE_URL || '';
 
     if (USE_VIDEO_CDN && VIDEO_CDN_BASE_URL) {
-        // Extract filename from local path and construct CDN URL
-        const filename = localPath.split('/').pop();
-        return `${VIDEO_CDN_BASE_URL}/${encodeURIComponent(filename)}`;
+        // Preserve the full path including Videos/ folder, just encode the filename
+        const parts = localPath.split('/');
+        const filename = parts.pop();
+        const encodedFilename = encodeURIComponent(filename);
+        const path = parts.join('/');
+        return `${VIDEO_CDN_BASE_URL}${path}/${encodedFilename}`;
     }
     // For local paths, encode the filename to handle spaces
     const parts = localPath.split('/');
