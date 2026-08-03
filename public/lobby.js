@@ -56,12 +56,7 @@ function persistLobbyIdentity(gameId, playerUid) {
 }
 
 function saveLastPlayerName() {
-    const createName = document.getElementById('playerName').value.trim();
-    const joinName = document.getElementById('joinPlayerName').value.trim();
-    const preferred = joinName || createName;
-    if (preferred) {
-        localStorage.setItem('metropoly_player_name', preferred);
-    }
+    // No longer needed since names are auto-generated
 }
 
 function autoJoinFromUrlIfPresent() {
@@ -70,16 +65,7 @@ function autoJoinFromUrlIfPresent() {
     if (!gameIdFromUrl) return;
 
     const gameIdInput = document.getElementById('gameId');
-    const joinNameInput = document.getElementById('joinPlayerName');
-    const savedName = localStorage.getItem('metropoly_player_name') || '';
-    const nameFromUrl = (params.get('name') || '').trim();
-
     gameIdInput.value = gameIdFromUrl;
-    if (!joinNameInput.value) {
-        // Make the invite link truly one-click even when the user didn't provide a name.
-        joinNameInput.value = nameFromUrl || savedName || 'Player';
-    }
-
     joinGameBtn.click();
 }
 
@@ -134,6 +120,16 @@ function generateGameId() {
     return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
+// Generate random player name
+function generateRandomPlayerName() {
+    const adjectives = ['Swift', 'Brave', 'Clever', 'Bold', 'Quick', 'Wise', 'Lucky', 'Happy', 'Epic', 'Royal'];
+    const nouns = ['Tiger', 'Dragon', 'Phoenix', 'Knight', 'Wizard', 'Hero', 'Champion', 'Legend', 'Star', 'Master'];
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    const randomNum = Math.floor(Math.random() * 1000);
+    return `${randomAdjective}${randomNoun}${randomNoun}`;
+}
+
 // Show modal message
 function showModal(message) {
     modalMessage.textContent = message;
@@ -177,13 +173,7 @@ function updatePlayersList(players, listElement) {
 
 // Create game
 createGameBtn.addEventListener('click', () => {
-    const playerName = document.getElementById('playerName').value.trim();
-    
-    if (!playerName) {
-        showModal('Please enter your name');
-        return;
-    }
-    saveLastPlayerName();
+    const playerName = generateRandomPlayerName();
     currentGameId = generateGameId();
     
     socket.emit('createLobby', {
@@ -195,13 +185,13 @@ createGameBtn.addEventListener('click', () => {
 // Join game
 joinGameBtn.addEventListener('click', () => {
     const gameId = document.getElementById('gameId').value.trim().toUpperCase();
-    const playerName = document.getElementById('joinPlayerName').value.trim();
     
-    if (!gameId || !playerName) {
-        showModal('Please enter both game ID and your name');
+    if (!gameId) {
+        showModal('Please enter game ID');
         return;
     }
-    saveLastPlayerName();
+    
+    const playerName = generateRandomPlayerName();
     currentGameId = gameId;
     
     socket.emit('joinLobby', {
