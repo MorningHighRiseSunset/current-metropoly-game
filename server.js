@@ -146,7 +146,14 @@ if (process.env.USE_VIDEO_CDN === 'true' && process.env.VIDEO_CDN_BASE_URL) {
     // Videos served from CDN - no local static serving needed
     console.log('Videos will be served from CDN:', process.env.VIDEO_CDN_BASE_URL);
 } else {
-    app.use('/Videos', express.static(path.join(__dirname, 'Videos')));
+    // Custom middleware to handle URL-encoded filenames
+    app.use('/Videos', (req, res, next) => {
+        // Decode the URL-encoded filename
+        const originalPath = req.path;
+        const decodedPath = decodeURIComponent(originalPath);
+        req.url = decodedPath;
+        next();
+    }, express.static(path.join(__dirname, 'Videos')));
 }
 
 // Serve Models from CDN if configured, otherwise from local directory

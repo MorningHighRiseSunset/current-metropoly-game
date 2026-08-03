@@ -6,9 +6,13 @@ function getVideoUrl(localPath) {
     if (USE_VIDEO_CDN && VIDEO_CDN_BASE_URL) {
         // Extract filename from local path and construct CDN URL
         const filename = localPath.split('/').pop();
-        return `${VIDEO_CDN_BASE_URL}/${filename}`;
+        return `${VIDEO_CDN_BASE_URL}/${encodeURIComponent(filename)}`;
     }
-    return localPath;
+    // For local paths, URL-encode the filename to handle spaces and special characters
+    const parts = localPath.split('/');
+    const filename = parts.pop();
+    const path = parts.join('/');
+    return `${path}/${encodeURIComponent(filename)}`;
 }
 
 // Tile media mapping (videos and images for each tile)
@@ -23,7 +27,7 @@ const tileMediaRaw = {
     6: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1 (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] },
     7: { name: 'Chance', videos: [], images: [] },
     8: { name: 'Las Vegas Golden Knights', videos: ['/Videos/LV GKnights 1 (1).mp4', '/Videos/LV GKnights 2 (1).mp4', '/Videos/LV Golden Knights (1).mp4'], images: ['/images/230613231941-04-knights-stanley-cup-061323.jpg'] },
-    9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/MavHeli 1.mp4 (1).mp4', '/Videos/MavHeli 2 (1).mp4', '/Videos/MavHeli 3 (1).mp4'], images: ['/images/HelicopterRidesNight.jpg', '/images/702-helicopters.webp'] },
+    9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/MavHeli 2 (1).mp4', '/Videos/MavHeli 3 (1).mp4'], images: ['/images/HelicopterRidesNight.jpg', '/images/702-helicopters.webp'] },
     10: { name: 'JAIL', videos: [], images: [] },
     11: { name: 'Brothel', videos: ['/Videos/BrothelVid (1).mp4'], images: [] },
     12: { name: 'Electric Company', videos: [], images: [] },
