@@ -261,6 +261,24 @@ function getNextPlayerIndex(game, fromIndex) {
     return fromIndex;
 }
 
+// Helper function to roll dice with rare doubles
+function rollDiceWithRareDoubles() {
+    const dice1 = Math.floor(Math.random() * 6) + 1;
+    const dice2 = Math.floor(Math.random() * 6) + 1;
+    
+    // Only 5% chance of allowing doubles (very rare)
+    if (dice1 === dice2 && Math.random() > 0.05) {
+        // Reroll dice2 to avoid doubles
+        let newDice2 = Math.floor(Math.random() * 6) + 1;
+        while (newDice2 === dice1) {
+            newDice2 = Math.floor(Math.random() * 6) + 1;
+        }
+        return { dice1, dice2: newDice2, isDoubles: false };
+    }
+    
+    return { dice1, dice2, isDoubles: dice1 === dice2 };
+}
+
 // AI Helper Functions
 function checkAndExecuteAITurn(game) {
     if (!game || !game.gameState || game.status !== 'playing') return;
@@ -306,10 +324,11 @@ function executeAIRollDice(game, aiPlayer) {
 
             // Roll dice and move after using card
             setTimeout(() => {
-                const dice1 = Math.floor(Math.random() * 6) + 1;
-                const dice2 = Math.floor(Math.random() * 6) + 1;
+                const roll = rollDiceWithRareDoubles();
+                const dice1 = roll.dice1;
+                const dice2 = roll.dice2;
                 const total = dice1 + dice2;
-                const isDoubles = dice1 === dice2;
+                const isDoubles = roll.isDoubles;
 
                 game.gameState.diceRolled = true;
                 game.gameState.lastRoll = { dice1, dice2, total };
@@ -403,10 +422,11 @@ function executeAIRollDice(game, aiPlayer) {
         }
 
         // No jail-free card, try rolling or paying
-        const dice1 = Math.floor(Math.random() * 6) + 1;
-        const dice2 = Math.floor(Math.random() * 6) + 1;
+        const roll = rollDiceWithRareDoubles();
+        const dice1 = roll.dice1;
+        const dice2 = roll.dice2;
         const total = dice1 + dice2;
-        const isDoubles = dice1 === dice2;
+        const isDoubles = roll.isDoubles;
 
 
         aiPlayer.jailTurns++;
@@ -501,10 +521,11 @@ function executeAIRollDice(game, aiPlayer) {
     }
 
     // Normal dice roll for AI
-    const dice1 = Math.floor(Math.random() * 6) + 1;
-    const dice2 = Math.floor(Math.random() * 6) + 1;
+    const roll = rollDiceWithRareDoubles();
+    const dice1 = roll.dice1;
+    const dice2 = roll.dice2;
     const total = dice1 + dice2;
-    const isDoubles = dice1 === dice2;
+    const isDoubles = roll.isDoubles;
 
     game.gameState.diceRolled = true;
     game.gameState.lastRoll = { dice1, dice2, total };
@@ -1352,10 +1373,11 @@ io.on('connection', (socket) => {
         
         // Handle jail dice rolling
         if (currentPlayer.inJail) {
-            const dice1 = Math.floor(Math.random() * 6) + 1;
-            const dice2 = Math.floor(Math.random() * 6) + 1;
+            const roll = rollDiceWithRareDoubles();
+            const dice1 = roll.dice1;
+            const dice2 = roll.dice2;
             const total = dice1 + dice2;
-            const isDoubles = dice1 === dice2;
+            const isDoubles = roll.isDoubles;
 
             currentPlayer.jailTurns++;
             
@@ -1451,10 +1473,11 @@ io.on('connection', (socket) => {
         }
 
         // Normal dice roll
-        const dice1 = Math.floor(Math.random() * 6) + 1;
-        const dice2 = Math.floor(Math.random() * 6) + 1;
+        const roll = rollDiceWithRareDoubles();
+        const dice1 = roll.dice1;
+        const dice2 = roll.dice2;
         const total = dice1 + dice2;
-        const isDoubles = dice1 === dice2;
+        const isDoubles = roll.isDoubles;
 
         game.gameState.diceRolled = true;
         game.gameState.lastRoll = { dice1, dice2, total };
