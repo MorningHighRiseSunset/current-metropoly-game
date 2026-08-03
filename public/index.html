@@ -27,19 +27,34 @@
         </div>
 
         <main>
-            <div class="game-menu">
-                <div class="menu-section">
+            <div class="lobby-header">
+                <h1 class="main-title">🎰 Vegas Metropoly</h1>
+                <p class="subtitle">Create or join a game lobby</p>
+            </div>
+
+            <div class="lobby-container">
+                <!-- Create Game Section -->
+                <div class="create-game-card">
+                    <div class="card-icon">🎲</div>
                     <h2>Create New Game</h2>
-                    <button id="createGameBtn" class="btn btn-primary">Create Game</button>
+                    <p class="card-description">Start a new game lobby and invite friends</p>
+                    <button id="createGameBtn" class="btn btn-primary btn-large">
+                        <span class="btn-icon">➕</span>
+                        Create Game
+                    </button>
                 </div>
 
-                <div class="menu-section">
-                    <h2>Join Existing Game</h2>
-                    <div class="form-group">
-                        <label for="gameId">Game ID:</label>
-                        <input type="text" id="gameId" maxlength="8" placeholder="Enter game ID">
+                <!-- Available Lobbies Section -->
+                <div class="lobbies-section">
+                    <div class="lobbies-header">
+                        <h2>🎮 Available Lobbies</h2>
+                        <button id="refreshLobbiesBtn" class="btn btn-refresh">
+                            <span class="refresh-icon">🔄</span>
+                        </button>
                     </div>
-                    <button id="joinGameBtn" class="btn btn-secondary">Join Game</button>
+                    <div id="lobbiesList" class="lobbies-list">
+                        <div class="loading-lobbies">Loading lobbies...</div>
+                    </div>
                 </div>
             </div>
 

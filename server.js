@@ -175,6 +175,19 @@ function countGamePlayers(game) {
     return game.players.filter(p => p !== null).length;
 }
 
+function broadcastLobbies() {
+    const lobbies = Object.values(games)
+        .filter(game => game.status === 'lobby')
+        .map(game => ({
+            gameId: game.id,
+            hostName: game.hostName,
+            players: game.players.filter(p => p !== null),
+            maxPlayers: 4,
+            status: game.status
+        }));
+    io.emit('lobbiesList', lobbies);
+}
+
 /** After lobby → game page redirect, socket id changes; keep the same logical player. */
 function relinkPlayerSocket(game, existingPlayer, newSocketId) {
     const oldSocketId = existingPlayer.id;
@@ -632,6 +645,20 @@ function executeAIPropertyDecision(game, aiPlayer, property) {
 // Socket connection handling
 io.on('connection', (socket) => {
 
+    // Get available lobbies
+    socket.on('getLobbies', () => {
+        const lobbies = Object.values(games)
+            .filter(game => game.status === 'lobby')
+            .map(game => ({
+                gameId: game.id,
+                hostName: game.hostName,
+                players: game.players.filter(p => p !== null),
+                maxPlayers: 4,
+                status: game.status
+            }));
+        socket.emit('lobbiesList', lobbies);
+    });
+
     // Create a new game lobby
     socket.on('createLobby', (data) => {
         const { gameId, playerName } = data;
@@ -673,6 +700,8 @@ io.on('connection', (socket) => {
         
         socket.emit('gameCreated', { gameId, players: game.players, playerUid: player.uid });
         
+        // Broadcast updated lobbies list to all clients
+        broadcastLobbies();
     });
 
     // Join an existing game lobby
@@ -735,6 +764,9 @@ io.on('connection', (socket) => {
         });
 
         io.to(gameId).emit('playerJoined', { player, players: game.players });
+        
+        // Broadcast updated lobbies list to all clients
+        broadcastLobbies();
     });
 
     // Add AI player
@@ -2669,12 +2701,14 @@ io.on('connection', (socket) => {
                     if (game.players.length === 0) {
                         console.log(`Deleting lobby game ${playerData.gameId} - no players left`);
                         delete games[playerData.gameId];
+                        broadcastLobbies();
                     } else {
                         io.to(playerData.gameId).emit('playerLeft', {
                             playerId: socket.id,
                             players: game.players,
                             newHost: game.host
                         });
+                        broadcastLobbies();
                     }
                 } else {
                     // In active game (starting/playing): preserve game for reconnection

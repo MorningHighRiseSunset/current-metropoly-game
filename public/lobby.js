@@ -19,7 +19,6 @@ const socket = io(SOCKET_SERVER_URL, {
 
 // DOM Elements
 const createGameBtn = document.getElementById('createGameBtn');
-const joinGameBtn = document.getElementById('joinGameBtn');
 const copyIdBtn = document.getElementById('copyIdBtn');
 const startGameBtn = document.getElementById('startGameBtn');
 const modalOkBtn = document.getElementById('modalOkBtn');
@@ -30,6 +29,8 @@ const themeToggle = document.getElementById('themeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
 const settingsModalClose = document.querySelector('.modal-close');
+const refreshLobbiesBtn = document.getElementById('refreshLobbiesBtn');
+const lobbiesList = document.getElementById('lobbiesList');
 
 const gameMenu = document.querySelector('.game-menu');
 const gameCreatedSection = document.getElementById('gameCreatedSection');
@@ -39,6 +40,7 @@ const modalMessage = document.getElementById('modalMessage');
 
 let currentGameId = null;
 let isHost = false;
+let availableLobbies = [];
 const PUBLIC_SHARE_ORIGIN = 'https://vegas-metropoly.vercel.app';
 
 function buildJoinLink(gameId) {
@@ -115,6 +117,17 @@ function setTheme(theme) {
 // Initialize theme toggle on page load
 initThemeToggle();
 
+// Fetch lobbies on page load
+fetchLobbies();
+
+// Refresh lobbies button
+refreshLobbiesBtn.addEventListener('click', () => {
+    fetchLobbies();
+});
+
+// Make joinLobby available globally for onclick handlers
+window.joinLobby = joinLobby;
+
 // Generate random game ID
 function generateGameId() {
     return Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -128,6 +141,72 @@ function generateRandomPlayerName() {
     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
     const randomNum = Math.floor(Math.random() * 1000);
     return `${randomAdjective}${randomNoun}${randomNoun}`;
+}
+
+// Fetch available lobbies
+function fetchLobbies() {
+    socket.emit('getLobbies');
+}
+
+// Render lobby list
+function renderLobbies(lobbies) {
+    availableLobbies = lobbies;
+    
+    if (!lobbies || lobbies.length === 0) {
+        lobbiesList.innerHTML = `
+            <div class="no-lobbies">
+                <div class="no-lobbies-icon">🎯</div>
+                <p>No active lobbies</p>
+                <p class="no-lobbies-subtitle">Be the first to create a game!</p>
+            </div>
+        `;
+        return;
+    }
+
+    lobbiesList.innerHTML = lobbies.map(lobby => {
+        const playerCount = lobby.players ? lobby.players.length : 0;
+        const maxPlayers = lobby.maxPlayers || 8;
+        const isFull = playerCount >= maxPlayers;
+        const statusText = isFull ? 'Full' : 'Open';
+        const statusClass = isFull ? 'status-full' : 'status-open';
+        
+        return `
+            <div class="lobby-card ${isFull ? 'lobby-full' : ''}" data-game-id="${lobby.gameId}">
+                <div class="lobby-card-header">
+                    <span class="lobby-game-id">${lobby.gameId}</span>
+                    <span class="lobby-status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="lobby-card-body">
+                    <div class="lobby-info">
+                        <div class="lobby-info-item">
+                            <span class="lobby-info-icon">👥</span>
+                            <span class="lobby-info-text">${playerCount}/${maxPlayers} Players</span>
+                        </div>
+                        <div class="lobby-info-item">
+                            <span class="lobby-info-icon">👑</span>
+                            <span class="lobby-info-text">Host: ${lobby.hostName || 'Unknown'}</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-join ${isFull ? 'btn-disabled' : ''}" 
+                            ${isFull ? 'disabled' : ''} 
+                            onclick="joinLobby('${lobby.gameId}')">
+                        ${isFull ? 'Full' : 'Join Lobby'}
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Join lobby from list
+function joinLobby(gameId) {
+    const playerName = generateRandomPlayerName();
+    currentGameId = gameId;
+    
+    socket.emit('joinLobby', {
+        gameId: gameId,
+        playerName: playerName
+    });
 }
 
 // Show modal message
@@ -182,23 +261,7 @@ createGameBtn.addEventListener('click', () => {
     });
 });
 
-// Join game
-joinGameBtn.addEventListener('click', () => {
-    const gameId = document.getElementById('gameId').value.trim().toUpperCase();
-    
-    if (!gameId) {
-        showModal('Please enter game ID');
-        return;
-    }
-    
-    const playerName = generateRandomPlayerName();
-    currentGameId = gameId;
-    
-    socket.emit('joinLobby', {
-        gameId: gameId,
-        playerName: playerName
-    });
-});
+
 
 // Copy game ID
 copyIdBtn.addEventListener('click', () => {
@@ -564,6 +627,11 @@ socket.on('connect_error', () => {
 
 socket.on('disconnect', () => {
     showModal('Disconnected from server. Please refresh the page.');
+});
+
+// Handle lobbies list
+socket.on('lobbiesList', (lobbies) => {
+    renderLobbies(lobbies);
 });
 
 // Wait for socket to connect before auto-joining
