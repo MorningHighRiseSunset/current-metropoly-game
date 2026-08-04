@@ -3,8 +3,8 @@
  * Animation and timing configuration shared between game.js and dice-test.
  */
 const DICE_GLB_CONFIG = {
-    scale: 6.0,
-    separation: 1.2,
+    scale: 3.0,
+    separation: 0.8,
     restOffsetY: 0.2,
     rollDurationMs: 3500,
     settleHoldMs: 2500,
