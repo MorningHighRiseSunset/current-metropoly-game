@@ -3,11 +3,11 @@
  * Animation and timing configuration shared between game.js and dice-test.
  */
 const DICE_GLB_CONFIG = {
-    scale: 10.0,
-    separation: 1.5,
+    scale: 6.0,
+    separation: 1.2,
     restOffsetY: 0.2,
     rollDurationMs: 3500,
-    settleHoldMs: 800,
+    settleHoldMs: 2500,
     tossHeight: 1.8,
     /** Must match server.js getRollAnimationMs perTileMs and game.js TOKEN_STEP_DURATION_MS */
     tokenStepMs: 80,
