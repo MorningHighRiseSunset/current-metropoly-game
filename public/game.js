@@ -1211,19 +1211,6 @@ function closeCasinoGame() {
         activePropertyDecision = null;
     }
 }
-    if (activePropertyDecision && 
-        activePropertyDecision.spaceData.isCasino && 
-        gameState && 
-        gameState.currentPlayer === myPlayerId) {
-        updateBuyModalContent();
-        buyModal.classList.remove('hidden');
-    } else {
-        // Clean up stale property decision state
-        if (activePropertyDecision) {
-            dismissPropertyDecisionUI();
-        }
-    }
-}
 
 function lerpCoords(from, to, t) {
     return {
