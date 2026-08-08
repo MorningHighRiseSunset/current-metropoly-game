@@ -909,6 +909,12 @@ io.on('connection', (socket) => {
 
         // NOTE: AI tokens will be assigned AFTER human players select theirs
         // This is done in the selectToken handler when all human players have selected
+        
+        // Track token selection turn (start with first human player)
+        const firstHumanPlayer = game.players.find(p => p && !p.isAI);
+        if (firstHumanPlayer) {
+            game.tokenSelectionTurn = firstHumanPlayer.id;
+        }
 
         // Auto-acknowledge AI players (they don't have socket connections)
         const aiPlayerCount = game.players.filter(p => p && p.isAI).length;
@@ -1054,13 +1060,15 @@ io.on('connection', (socket) => {
         if (game.readyToSendGameStarted && game.status === 'starting') {
             socket.emit('gameStarted', {
                 players: game.players,
-                gameState: game.gameState
+                gameState: game.gameState,
+                tokenSelectionTurn: game.tokenSelectionTurn
             });
 
             // Also send to lobby to redirect other players
             io.to(gameId).emit('gameStarted', {
                 players: game.players,
-                gameState: game.gameState
+                gameState: game.gameState,
+                tokenSelectionTurn: game.tokenSelectionTurn
             });
         }
 
@@ -1084,11 +1092,17 @@ io.on('connection', (socket) => {
 
         const game = games[playerData.gameId];
         const player = game.players.find(p => p && p.id === socket.id);
-        
+
         if (!player) return;
-        
+
         const { tokenIndex } = data;
         const humanPlayers = game.players.filter(p => p && !p.isAI);
+
+        // Check if it's this player's turn to select a token
+        if (game.tokenSelectionTurn && game.tokenSelectionTurn !== socket.id) {
+            socket.emit('gameError', 'It is not your turn to select a token');
+            return;
+        }
 
         if (player.tokenIndex !== undefined) {
             socket.emit('gameError', 'You already selected a token');
@@ -1103,16 +1117,21 @@ io.on('connection', (socket) => {
             socket.emit('gameError', 'This token is already taken');
             return;
         }
-        
+
         // Set player's token
         player.tokenIndex = tokenIndex;
+
+        // Find next human player for token selection turn
+        const nextHumanPlayer = humanPlayers.find(p => p.tokenIndex === undefined);
+        game.tokenSelectionTurn = nextHumanPlayer ? nextHumanPlayer.id : null;
 
         // Broadcast token selection to all players
         io.to(game.id).emit('tokenSelected', {
             playerId: socket.id,
             player: player.name,
             tokenIndex: tokenIndex,
-            players: game.players
+            players: game.players,
+            tokenSelectionTurn: game.tokenSelectionTurn
         });
         
         // Check if all HUMAN players have selected tokens

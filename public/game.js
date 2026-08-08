@@ -2280,7 +2280,17 @@ socket.on('gameJoined', (data) => {
     
     // Show token selection if player doesn't have a token
     if (currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
-        showTokenSelection();
+        // Check if this is the first human player (should start with host)
+        const humanPlayers = players.filter(p => p && !p.isAI);
+        const isFirstHumanPlayer = humanPlayers.length > 0 && humanPlayers[0].id === myPlayerId;
+        
+        if (isFirstHumanPlayer) {
+            showTokenSelection();
+        } else {
+            // Not this player's turn - show greyed out modal
+            tokenModal?.classList.remove('hidden');
+            greyOutTokenSelection(true);
+        }
     }
     
     addLogEntry(`${currentPlayer ? currentPlayer.name : 'Player'} joined the game`, 'player');
@@ -2290,7 +2300,7 @@ socket.on('gameJoined', (data) => {
 });
 
 socket.on('tokenSelected', (data) => {
-    const { playerId, tokenIndex, players: serverPlayers, allTokensAssigned } = data;
+    const { playerId, tokenIndex, players: serverPlayers, allTokensAssigned, tokenSelectionTurn } = data;
 
     if (serverPlayers) {
         players = serverPlayers;
@@ -2324,6 +2334,13 @@ socket.on('tokenSelected', (data) => {
 
     if (currentPlayer && currentPlayer.tokenIndex !== undefined) {
         tokenModal?.classList.add('hidden');
+    } else if (tokenSelectionTurn === myPlayerId) {
+        // It's this player's turn to select
+        showTokenSelection();
+    } else {
+        // Not this player's turn - grey out the modal
+        tokenModal?.classList.remove('hidden');
+        greyOutTokenSelection(true);
     }
 
     refreshTokenSelectionUI();
@@ -2332,6 +2349,7 @@ socket.on('tokenSelected', (data) => {
 socket.on('gameStarted', (data) => {
     gameState = data.gameState;
     players = data.players;
+    const tokenSelectionTurn = data.tokenSelectionTurn;
 
     currentPlayer = resolveLocalPlayer(players);
     if (currentPlayer) {
@@ -2354,6 +2372,16 @@ socket.on('gameStarted', (data) => {
     updateTokenVisibility();
 
     addLogEntry('Game started!', 'system');
+
+    // Handle token selection turn
+    if (currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
+        if (tokenSelectionTurn === myPlayerId) {
+            showTokenSelection();
+        } else {
+            tokenModal?.classList.remove('hidden');
+            greyOutTokenSelection(true);
+        }
+    }
 });
 
 socket.on('gameReady', (data) => {
@@ -2923,6 +2951,46 @@ function showTokenSelection() {
 
     updateTokenOptions();
     tokenModal.classList.remove('hidden');
+    greyOutTokenSelection(false);
+}
+
+// Grey out token selection when it's not the player's turn
+function greyOutTokenSelection(greyOut) {
+    const tokenOptions = document.querySelectorAll('.token-option');
+    const modalContent = tokenModal?.querySelector('.modal-content');
+    
+    if (greyOut) {
+        // Grey out all token options
+        tokenOptions.forEach(option => {
+            option.classList.add('disabled');
+            option.style.opacity = '0.3';
+            option.style.pointerEvents = 'none';
+        });
+        
+        // Add waiting message
+        if (modalContent && !modalContent.querySelector('.turn-waiting-message')) {
+            const waitingMsg = document.createElement('div');
+            waitingMsg.className = 'turn-waiting-message';
+            waitingMsg.textContent = 'Waiting for other player to select token...';
+            waitingMsg.style.cssText = 'text-align: center; padding: 20px; color: #888; font-style: italic;';
+            modalContent.insertBefore(waitingMsg, modalContent.firstChild);
+        }
+    } else {
+        // Remove grey out
+        tokenOptions.forEach(option => {
+            option.classList.remove('disabled');
+            const humanPlayers = players.filter(p => p && !p.isAI);
+            const isTokenTaken = humanPlayers.some(p => p.tokenIndex === parseInt(option.dataset.token, 10));
+            option.style.opacity = isTokenTaken ? '0.5' : '1';
+            option.style.pointerEvents = isTokenTaken ? 'none' : 'auto';
+        });
+        
+        // Remove waiting message
+        const waitingMsg = modalContent?.querySelector('.turn-waiting-message');
+        if (waitingMsg) {
+            waitingMsg.remove();
+        }
+    }
 }
 
 const confirmBuyBtn = document.getElementById('confirmBuyBtn');
