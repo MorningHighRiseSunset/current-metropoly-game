@@ -1117,8 +1117,9 @@ function openCasinoGame(gameName) {
 
     casinoTitle.textContent = `Play ${gameName}`;
 
-    // Load casino game in iframe
+    // Load casino game in iframe with initialization parameters
     const gamePath = `/${gameName}/index.html`;
+    const playerMoney = currentPlayer ? currentPlayer.money : 2500;
     casinoContainer.innerHTML = `<iframe src="${gamePath}" class="casino-iframe" frameborder="0"></iframe>`;
 
     casinoModal.classList.remove('hidden');
@@ -1132,6 +1133,46 @@ function openCasinoGame(gameName) {
     if (!casinoMessageListenerAttached) {
         window.addEventListener('message', handleCasinoGameMessage);
         casinoMessageListenerAttached = true;
+    }
+
+    // Initialize the casino game with player money after iframe loads
+    const iframe = casinoContainer.querySelector('iframe');
+    if (iframe) {
+        iframe.onload = function() {
+            try {
+                // Get the appropriate initialization function name based on game
+                const initFunctionNames = {
+                    'Baccarat': 'initBaccaratMinigame',
+                    'BlackJack': 'initBlackjackMinigame',
+                    'Craps': 'initCrapsMinigame',
+                    'PokerFP': 'initPokerMinigame',
+                    'Roulette': 'initRouletteMinigame',
+                    'slotMachine': 'initSlotMachine'
+                };
+
+                const initFunctionName = initFunctionNames[gameName];
+                if (initFunctionName && iframe.contentWindow[initFunctionName]) {
+                    // Create a callback to update the main game balance
+                    const updateMainGameBalance = function(balance) {
+                        if (currentPlayer && socket) {
+                            const moneyDiff = balance - playerMoney;
+                            if (moneyDiff !== 0) {
+                                socket.emit('casinoWinnings', { amount: moneyDiff });
+                            }
+                        }
+                    };
+
+                    // Initialize the casino game
+                    iframe.contentWindow[initFunctionName](
+                        iframe.contentWindow.document,
+                        playerMoney,
+                        updateMainGameBalance
+                    );
+                }
+            } catch (e) {
+                console.log('Could not initialize casino game:', e);
+            }
+        };
     }
 }
 
@@ -1831,11 +1872,13 @@ function updatePlayersList() {
 // Update my properties
 function updateMyProperties() {
     if (!currentPlayer) return;
-    
+
     myPropertiesEl.innerHTML = '';
-    
+
     if (currentPlayer.properties && currentPlayer.properties.length > 0) {
-        currentPlayer.properties.forEach(propPosition => {
+        // Remove duplicates by using Set
+        const uniqueProperties = [...new Set(currentPlayer.properties)];
+        uniqueProperties.forEach(propPosition => {
             const spaceData = boardConfig[propPosition];
             if (spaceData) {
                 const propDiv = document.createElement('div');
@@ -2361,15 +2404,18 @@ socket.on('updateGameStatus', (data) => {
 socket.on('propertyPurchased', (data) => {
     const { playerId, position, propertyName, newMoney } = data;
     const player = players.find(p => p && p.id === playerId);
-    
+
     if (player) {
         player.money = newMoney;
         if (!player.properties) player.properties = [];
-        player.properties.push(position);
-        
+        // Only add property if it doesn't already exist
+        if (!player.properties.includes(position)) {
+            player.properties.push(position);
+        }
+
         updateUI();
         addLogEntry(`${getPlayerDisplayName(player)} bought ${propertyName} for $${boardConfig[position].price}`, 'property');
-        
+
         // Update property display on board
         if (boardSpaces[position]) {
             boardSpaces[position].style.borderLeft = `4px solid ${player.color || '#4a9eff'}`;

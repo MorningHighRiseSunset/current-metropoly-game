@@ -853,3 +853,20 @@ function renderChipStack(area, amount) {
 
 // TODO: Add bet validation, continuous play logic, and chip return
 // ===================== END INTERACTIVE CRAPS GAME =====================
+
+// Auto-initialize for standalone usage
+if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('Craps/script.js')) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.craps-table-container');
+            if (container) {
+                window.initCrapsMinigame(container, window.playerMoney, window.updateMainGameBalance);
+            }
+        });
+    } else {
+        const container = document.querySelector('.craps-table-container');
+        if (container) {
+            window.initCrapsMinigame(container, window.playerMoney, window.updateMainGameBalance);
+        }
+    }
+}
