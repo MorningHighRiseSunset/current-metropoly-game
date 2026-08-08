@@ -261,7 +261,7 @@ function createDiceTexture(value) {
 
 // Create a single die mesh with properly oriented faces
 function createDiceMesh() {
-    const size = 0.15 * DICE_GLB_CONFIG.scale;
+    const size = DICE_GLB_CONFIG.scale;
     // Use higher segment count for smoother appearance
     const geometry = new THREE.BoxGeometry(size, size, size, 4, 4, 4);
     

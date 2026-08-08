@@ -52,7 +52,7 @@
     <button onclick="rollDice()">Roll Dice</button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="/dice-glb-config.js"></script>
+    <script src="dice-glb-config.js"></script>
     
     <script>
         let scene, camera, renderer;
@@ -98,7 +98,7 @@
         }
 
         function createDiceMesh() {
-            const size = 0.15;
+            const size = 0.15 * DICE_GLB_CONFIG.scale;
             const geometry = new THREE.BoxGeometry(size, size, size);
             
             const materials = [
@@ -121,7 +121,8 @@
             scene.background = new THREE.Color(0x333333);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0.5, 0.4);
+            camera.position.set(0, 3, 2);
+            camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
