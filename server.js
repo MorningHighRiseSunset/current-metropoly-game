@@ -225,6 +225,7 @@ function broadcastLobbies() {
             status: game.status
         }));
     io.emit('lobbiesList', lobbies);
+    console.log('Broadcasting lobbies:', lobbies);
 }
 
 /** After lobby → game page redirect, socket id changes; keep the same logical player. */
@@ -716,6 +717,7 @@ io.on('connection', (socket) => {
                 maxPlayers: 4,
                 status: game.status
             }));
+        console.log('Sending lobbies to client:', lobbies);
         socket.emit('lobbiesList', lobbies);
     });
 

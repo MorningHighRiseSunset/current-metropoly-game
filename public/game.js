@@ -2280,26 +2280,20 @@ socket.on('gameJoined', (data) => {
         }
     }
 
-    // Handle token selection turn
+    // Handle token selection turn (only use server's tokenSelectionTurn)
     if (currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
+        console.log('Token selection check:', {
+            myPlayerId,
+            tokenSelectionTurn,
+            isMyTurn: tokenSelectionTurn === myPlayerId,
+            currentPlayerName: currentPlayer.name
+        });
+
         if (tokenSelectionTurn === myPlayerId) {
+            console.log('Showing token selection for my turn');
             showTokenSelection();
         } else {
-            tokenModal?.classList.remove('hidden');
-            greyOutTokenSelection(true);
-        }
-    }
-    
-    // Show token selection if player doesn't have a token
-    if (currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
-        // Check if this is the first human player (should start with host)
-        const humanPlayers = players.filter(p => p && !p.isAI);
-        const isFirstHumanPlayer = humanPlayers.length > 0 && humanPlayers[0].id === myPlayerId;
-        
-        if (isFirstHumanPlayer) {
-            showTokenSelection();
-        } else {
-            // Not this player's turn - show greyed out modal
+            console.log('Greyed out token selection, waiting for:', tokenSelectionTurn);
             tokenModal?.classList.remove('hidden');
             greyOutTokenSelection(true);
         }

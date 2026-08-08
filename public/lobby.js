@@ -183,7 +183,7 @@ function renderLobbies(lobbies) {
                         </div>
                         <div class="lobby-info-item">
                             <span class="lobby-info-icon">👑</span>
-                            <span class="lobby-info-text">Host: ${lobby.hostName || 'Unknown'}</span>
+                            <span class="lobby-info-text">Host: ${lobby.players && lobby.players[0] ? lobby.players[0].name : 'Player 1'}</span>
                         </div>
                     </div>
                     <button class="btn btn-join ${isFull ? 'btn-disabled' : ''}" 
