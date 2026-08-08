@@ -1183,6 +1183,9 @@ function handleCasinoGameMessage(event) {
         if (winnings !== 0 && socket) {
             socket.emit('casinoWinnings', { amount: winnings });
         }
+    } else if (event.data && event.data.type === 'casinoGameClose') {
+        // Casino game is requesting to close
+        closeCasinoGame();
     }
 }
 
