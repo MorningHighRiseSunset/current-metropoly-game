@@ -2237,7 +2237,6 @@ socket.on('gameJoined', (data) => {
     console.log('GAME: Game State:', data.gameState);
     console.log('GAME: Players array:', data.players);
     console.log('GAME: Available player IDs:', data.players.filter(p => p).map(p => ({ id: p.id, name: p.name })));
-    console.log('GAME: Token Selection Turn:', data.tokenSelectionTurn);
 
     if (data.playerUid) {
         persistPlayerIdentity(data.gameId, data.playerUid);
@@ -2247,7 +2246,6 @@ socket.on('gameJoined', (data) => {
     myPlayerId = currentPlayer ? currentPlayer.id : data.playerId;
 
     gameState = data.gameState;
-    const tokenSelectionTurn = data.tokenSelectionTurn;
 
     console.log('GAME: Current player found:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
     console.log('GAME: Final myPlayerId:', myPlayerId);
@@ -2280,23 +2278,9 @@ socket.on('gameJoined', (data) => {
         }
     }
 
-    // Handle token selection turn (only use server's tokenSelectionTurn)
+    // Show token selection if player doesn't have a token
     if (currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
-        console.log('Token selection check:', {
-            myPlayerId,
-            tokenSelectionTurn,
-            isMyTurn: tokenSelectionTurn === myPlayerId,
-            currentPlayerName: currentPlayer.name
-        });
-
-        if (tokenSelectionTurn === myPlayerId) {
-            console.log('Showing token selection for my turn');
-            showTokenSelection();
-        } else {
-            console.log('Greyed out token selection, waiting for:', tokenSelectionTurn);
-            tokenModal?.classList.remove('hidden');
-            greyOutTokenSelection(true);
-        }
+        showTokenSelection();
     }
     
     addLogEntry(`${currentPlayer ? currentPlayer.name : 'Player'} joined the game`, 'player');
@@ -2306,7 +2290,7 @@ socket.on('gameJoined', (data) => {
 });
 
 socket.on('tokenSelected', (data) => {
-    const { playerId, tokenIndex, players: serverPlayers, allTokensAssigned, tokenSelectionTurn } = data;
+    const { playerId, tokenIndex, players: serverPlayers, allTokensAssigned } = data;
 
     if (serverPlayers) {
         players = serverPlayers;
@@ -2340,13 +2324,6 @@ socket.on('tokenSelected', (data) => {
 
     if (currentPlayer && currentPlayer.tokenIndex !== undefined) {
         tokenModal?.classList.add('hidden');
-    } else if (tokenSelectionTurn === myPlayerId) {
-        // It's this player's turn to select
-        showTokenSelection();
-    } else {
-        // Not this player's turn - grey out the modal
-        tokenModal?.classList.remove('hidden');
-        greyOutTokenSelection(true);
     }
 
     refreshTokenSelectionUI();
@@ -2355,7 +2332,6 @@ socket.on('tokenSelected', (data) => {
 socket.on('gameStarted', (data) => {
     gameState = data.gameState;
     players = data.players;
-    const tokenSelectionTurn = data.tokenSelectionTurn;
 
     currentPlayer = resolveLocalPlayer(players);
     if (currentPlayer) {
@@ -2379,14 +2355,9 @@ socket.on('gameStarted', (data) => {
 
     addLogEntry('Game started!', 'system');
 
-    // Handle token selection turn
+    // Show token selection if player doesn't have a token
     if (currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
-        if (tokenSelectionTurn === myPlayerId) {
-            showTokenSelection();
-        } else {
-            tokenModal?.classList.remove('hidden');
-            greyOutTokenSelection(true);
-        }
+        showTokenSelection();
     }
 });
 
@@ -2957,46 +2928,6 @@ function showTokenSelection() {
 
     updateTokenOptions();
     tokenModal.classList.remove('hidden');
-    greyOutTokenSelection(false);
-}
-
-// Grey out token selection when it's not the player's turn
-function greyOutTokenSelection(greyOut) {
-    const tokenOptions = document.querySelectorAll('.token-option');
-    const modalContent = tokenModal?.querySelector('.modal-content');
-    
-    if (greyOut) {
-        // Grey out all token options
-        tokenOptions.forEach(option => {
-            option.classList.add('disabled');
-            option.style.opacity = '0.3';
-            option.style.pointerEvents = 'none';
-        });
-        
-        // Add waiting message
-        if (modalContent && !modalContent.querySelector('.turn-waiting-message')) {
-            const waitingMsg = document.createElement('div');
-            waitingMsg.className = 'turn-waiting-message';
-            waitingMsg.textContent = 'Waiting for other player to select token...';
-            waitingMsg.style.cssText = 'text-align: center; padding: 20px; color: #888; font-style: italic;';
-            modalContent.insertBefore(waitingMsg, modalContent.firstChild);
-        }
-    } else {
-        // Remove grey out
-        tokenOptions.forEach(option => {
-            option.classList.remove('disabled');
-            const humanPlayers = players.filter(p => p && !p.isAI);
-            const isTokenTaken = humanPlayers.some(p => p.tokenIndex === parseInt(option.dataset.token, 10));
-            option.style.opacity = isTokenTaken ? '0.5' : '1';
-            option.style.pointerEvents = isTokenTaken ? 'none' : 'auto';
-        });
-        
-        // Remove waiting message
-        const waitingMsg = modalContent?.querySelector('.turn-waiting-message');
-        if (waitingMsg) {
-            waitingMsg.remove();
-        }
-    }
 }
 
 const confirmBuyBtn = document.getElementById('confirmBuyBtn');
