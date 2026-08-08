@@ -4,6 +4,7 @@ const socketIo = require('socket.io');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const os = require('os');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -171,6 +172,43 @@ app.use('/tokenimages', express.static(path.join(__dirname, 'tokenimages')));
 const games = {};
 const players = {};
 const disconnectTimers = {};
+const GAMES_FILE = path.join(__dirname, 'games.json');
+
+// Game persistence functions
+function saveGames() {
+    try {
+        const gamesData = {};
+        for (const [gameId, game] of Object.entries(games)) {
+            gamesData[gameId] = {
+                ...game,
+                // Don't save socket references
+                players: game.players.map(p => p ? { ...p, socket: undefined } : null)
+            };
+        }
+        fs.writeFileSync(GAMES_FILE, JSON.stringify(gamesData, null, 2));
+    } catch (err) {
+        console.error('Error saving games:', err);
+    }
+}
+
+function loadGames() {
+    try {
+        if (fs.existsSync(GAMES_FILE)) {
+            const data = fs.readFileSync(GAMES_FILE, 'utf8');
+            const gamesData = JSON.parse(data);
+            for (const [gameId, gameData] of Object.entries(gamesData)) {
+                games[gameId] = gameData;
+                // Clear socket references on load
+                if (games[gameId].players) {
+                    games[gameId].players = games[gameId].players.map(p => p ? { ...p, socket: undefined } : null);
+                }
+            }
+            console.log(`Loaded ${Object.keys(games).length} games from disk`);
+        }
+    } catch (err) {
+        console.error('Error loading games:', err);
+    }
+}
 
 function countGamePlayers(game) {
     return game.players.filter(p => p !== null).length;
@@ -684,7 +722,7 @@ io.on('connection', (socket) => {
     // Create a new game lobby
     socket.on('createLobby', (data) => {
         const { gameId, playerName } = data;
-        
+
         // Create new game
         games[gameId] = {
             id: gameId,
@@ -696,6 +734,8 @@ io.on('connection', (socket) => {
             gameState: null,
             chatLog: []
         };
+
+        saveGames();
 
         const game = games[gameId];
         
@@ -719,7 +759,9 @@ io.on('connection', (socket) => {
         game.players.push(player);
         players[socket.id] = { gameId, playerName, playerUid: player.uid };
         socket.join(gameId);
-        
+
+        saveGames();
+
         socket.emit('gameCreated', { gameId, players: game.players, playerUid: player.uid });
         
         // Broadcast updated lobbies list to all clients
@@ -775,6 +817,8 @@ io.on('connection', (socket) => {
             game.host = socket.id;
         }
 
+        saveGames();
+
         socket.join(gameId);
 
         socket.emit('lobbyJoined', {
@@ -829,6 +873,8 @@ io.on('connection', (socket) => {
         }
         game.players.push(aiPlayer);
 
+        saveGames();
+
         io.to(gameId).emit('aiPlayerAdded', { players: game.players });
     });
 
@@ -859,6 +905,8 @@ io.on('connection', (socket) => {
             const actualPlayers = game.players.filter(p => p !== null);
             game.players = [null, ...actualPlayers];
         }
+
+        saveGames();
 
         io.to(gameId).emit('aiPlayerRemoved', { players: game.players });
     });
@@ -898,6 +946,8 @@ io.on('connection', (socket) => {
             turnPhase: 'roll' // roll, action, end
         };
 
+        saveGames();
+
 
         // Initialize card decks
         initializeCardDecks(game);
@@ -906,6 +956,8 @@ io.on('connection', (socket) => {
         game.status = 'starting';
         game.acknowledgments = 0;
         game.totalPlayers = actualPlayerCount;
+
+        saveGames();
 
         // NOTE: AI tokens will be assigned AFTER human players select theirs
         // This is done in the selectToken handler when all human players have selected
@@ -932,6 +984,8 @@ io.on('connection', (socket) => {
                 game.status = 'playing';
                 game.gameState.diceRolled = false;
                 game.gameState.turnPhase = 'roll';
+
+                saveGames();
                 
                 io.to(playerData.gameId).emit('gameReady', {
                     message: 'Game started (timeout)',
@@ -959,6 +1013,8 @@ io.on('connection', (socket) => {
         if (game.acknowledgments === game.totalPlayers) {
             // All players acknowledged, game is ready
             game.status = 'playing';
+
+            saveGames();
 
             // Clear the timeout since all players acknowledged
             if (game.ackTimeout) {
@@ -1765,6 +1821,8 @@ io.on('connection', (socket) => {
             if (player.money >= WINNING_MONEY_THRESHOLD) {
                 game.status = 'finished';
                 game.winner = player.id;
+
+                saveGames();
                 
                 io.to(game.id).emit('gameWon', {
                     winnerId: player.id,
@@ -1782,6 +1840,8 @@ io.on('connection', (socket) => {
             const winner = activePlayers[0];
             game.status = 'finished';
             game.winner = winner.id;
+
+            saveGames();
             
             io.to(game.id).emit('gameWon', {
                 winnerId: winner.id,
@@ -1935,6 +1995,8 @@ io.on('connection', (socket) => {
             direction: 'forward',
             players: game.players
         });
+
+        saveGames();
 
         setTimeout(() => {
             checkRentPayment(game, player, oldPosition);
@@ -2755,6 +2817,7 @@ io.on('connection', (socket) => {
                     if (game.players.length === 0) {
                         console.log(`Deleting lobby game ${playerData.gameId} - no players left`);
                         delete games[playerData.gameId];
+                        saveGames();
                         broadcastLobbies();
                     } else {
                         io.to(playerData.gameId).emit('playerLeft', {
@@ -2808,6 +2871,9 @@ app.get('/server-info', (req, res) => {
         externalIPs: localIPs.map(ip => `http://${ip}:${PORT}`)
     });
 });
+
+// Load games from disk on server start
+loadGames();
 
 server.listen(PORT, HOST, () => {
     const localIPs = getLocalIPAddresses();
