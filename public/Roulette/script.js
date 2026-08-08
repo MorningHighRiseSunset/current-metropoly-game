@@ -439,6 +439,8 @@ function updatePlayerInfo() {
 		if (winnings !== 0) {
 			window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
 		}
+		// Send close message to parent
+		window.parent.postMessage({ type: 'casinoGameClose' }, '*');
 	}
 }
 window.updatePlayerInfo = updatePlayerInfo;

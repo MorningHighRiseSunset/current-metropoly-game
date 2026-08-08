@@ -226,9 +226,9 @@ function updateGameState(game) {
 
 // Client dice roll + token step animation (must match public/dice-glb-config.js + game.js)
 function getRollAnimationMs(rollTotal) {
-    const diceRollMs = 3200;
-    const diceSettleMs = 600;
-    const perTileMs = 150;
+    const diceRollMs = 2000;
+    const diceSettleMs = 1500;
+    const perTileMs = 40;
     return diceRollMs + diceSettleMs + Math.max(0, rollTotal) * perTileMs;
 }
 

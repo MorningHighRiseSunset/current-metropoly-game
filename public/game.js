@@ -588,7 +588,7 @@ const tokenAnimationHandles = {};
 const pendingRollTokenMoves = {};
 const TOKEN_STEP_DURATION_MS = typeof getTokenStepDurationMs === 'function'
     ? getTokenStepDurationMs()
-    : 150;
+    : 40;
 
 function markPendingRollTokenMove(playerId) {
     if (!playerId) return;
@@ -1183,11 +1183,6 @@ function handleCasinoGameMessage(event) {
         if (winnings !== 0 && socket) {
             socket.emit('casinoWinnings', { amount: winnings });
         }
-        
-        // Auto-close casino game after one hand
-        setTimeout(() => {
-            closeCasinoGame();
-        }, 500);
     }
 }
 
@@ -1195,21 +1190,24 @@ function handleCasinoGameMessage(event) {
 function closeCasinoGame() {
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoContainer = document.getElementById('casinoGameContainer');
-    
+
     if (casinoModal) {
         casinoModal.classList.add('hidden');
     }
-    
+
     if (casinoContainer) {
         casinoContainer.innerHTML = '';
     }
-    
+
     // Remove message listener
     window.removeEventListener('message', handleCasinoGameMessage);
     casinoMessageListenerAttached = false;
-    
-    // Show buy modal after casino game ends for property purchase
-    // Only if it's still the current player's turn and the property decision is still active
+
+    // Clear active property decision when casino closes
+    if (activePropertyDecision && activePropertyDecision.spaceData.isCasino) {
+        activePropertyDecision = null;
+    }
+}
     if (activePropertyDecision && 
         activePropertyDecision.spaceData.isCasino && 
         gameState && 
@@ -3062,6 +3060,10 @@ document.querySelectorAll('.modal-close').forEach(closeBtn => {
         }
         if (modal === propertyModal) {
             closePropertyModal();
+            return;
+        }
+        if (modal.id === 'casinoGameModal') {
+            closeCasinoGame();
             return;
         }
         modal.classList.add('hidden');
