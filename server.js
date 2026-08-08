@@ -961,12 +961,14 @@ io.on('connection', (socket) => {
 
         // NOTE: AI tokens will be assigned AFTER human players select theirs
         // This is done in the selectToken handler when all human players have selected
-        
+
         // Track token selection turn (start with first human player)
         const firstHumanPlayer = game.players.find(p => p && !p.isAI);
         if (firstHumanPlayer) {
             game.tokenSelectionTurn = firstHumanPlayer.id;
         }
+
+        saveGames();
 
         // Auto-acknowledge AI players (they don't have socket connections)
         const aiPlayerCount = game.players.filter(p => p && p.isAI).length;
@@ -1137,7 +1139,8 @@ io.on('connection', (socket) => {
             playerId: correctPlayerId,
             playerUid: player.uid,
             players: game.players,
-            gameState: game.gameState
+            gameState: game.gameState,
+            tokenSelectionTurn: game.tokenSelectionTurn
         });
     });
 
@@ -1156,6 +1159,7 @@ io.on('connection', (socket) => {
 
         // Check if it's this player's turn to select a token
         if (game.tokenSelectionTurn && game.tokenSelectionTurn !== socket.id) {
+            console.log(`Token selection rejected: Player ${socket.id} tried to select, but turn belongs to ${game.tokenSelectionTurn}`);
             socket.emit('gameError', 'It is not your turn to select a token');
             return;
         }
@@ -1180,6 +1184,8 @@ io.on('connection', (socket) => {
         // Find next human player for token selection turn
         const nextHumanPlayer = humanPlayers.find(p => p.tokenIndex === undefined);
         game.tokenSelectionTurn = nextHumanPlayer ? nextHumanPlayer.id : null;
+
+        saveGames();
 
         // Broadcast token selection to all players
         io.to(game.id).emit('tokenSelected', {

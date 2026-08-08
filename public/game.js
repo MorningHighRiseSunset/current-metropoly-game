@@ -2237,7 +2237,8 @@ socket.on('gameJoined', (data) => {
     console.log('GAME: Game State:', data.gameState);
     console.log('GAME: Players array:', data.players);
     console.log('GAME: Available player IDs:', data.players.filter(p => p).map(p => ({ id: p.id, name: p.name })));
-    
+    console.log('GAME: Token Selection Turn:', data.tokenSelectionTurn);
+
     if (data.playerUid) {
         persistPlayerIdentity(data.gameId, data.playerUid);
     }
@@ -2246,16 +2247,17 @@ socket.on('gameJoined', (data) => {
     myPlayerId = currentPlayer ? currentPlayer.id : data.playerId;
 
     gameState = data.gameState;
-    
+    const tokenSelectionTurn = data.tokenSelectionTurn;
+
     console.log('GAME: Current player found:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
     console.log('GAME: Final myPlayerId:', myPlayerId);
     console.log('GAME: Socket ID:', socket.id);
     console.log('GAME: Do they match?', myPlayerId === socket.id);
-    
+
     // Acknowledge connection to server
     socket.emit('gameJoinedAck');
     console.log('GAME: Sent gameJoinedAck');
-    
+
     try {
         initializeBoard();
         updateUI();
@@ -2263,7 +2265,7 @@ socket.on('gameJoined', (data) => {
     } catch (error) {
         console.error('GAME: Error initializing board:', error);
     }
-    
+
     // Update status immediately
     const gameCodeEl = document.getElementById('gameCode');
     if (gameCodeEl) {
@@ -2275,6 +2277,16 @@ socket.on('gameJoined', (data) => {
             gameCodeEl.textContent = 'Select Your Token';
         } else {
             gameCodeEl.textContent = 'Waiting for Players...';
+        }
+    }
+
+    // Handle token selection turn
+    if (currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
+        if (tokenSelectionTurn === myPlayerId) {
+            showTokenSelection();
+        } else {
+            tokenModal?.classList.remove('hidden');
+            greyOutTokenSelection(true);
         }
     }
     
