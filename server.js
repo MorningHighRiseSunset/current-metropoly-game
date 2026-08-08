@@ -1898,6 +1898,17 @@ io.on('connection', (socket) => {
         const oldPosition = player.position;
         player.position = position;
 
+        // Check if player passed GO and award $200
+        if (oldPosition > position) {
+            player.money += 200;
+            io.to(game.id).emit('passedGo', {
+                playerId: player.id,
+                amount: 200,
+                newMoney: player.money,
+                players: game.players
+            });
+        }
+
         io.to(game.id).emit('playerMoved', {
             playerId: player.id,
             oldPosition: oldPosition,

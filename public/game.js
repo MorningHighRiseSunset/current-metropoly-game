@@ -1057,15 +1057,15 @@ function startPropertyDecision(spaceData, position) {
     clearPropertyDecisionTimer();
     waitingForBuyResult = false;
     activePropertyDecision = { spaceData, position, isRent: false };
-    
-    // Auto-open casino if this is a casino property
-    if (spaceData.isCasino) {
+
+    // Auto-open casino if this is a casino property (only for human players)
+    if (spaceData.isCasino && !currentPlayer.isAI) {
         openCasinoGame(spaceData.casinoGame);
     } else {
         updateBuyModalContent();
         buyModal.classList.remove('hidden');
     }
-    
+
     updateUI();
 }
 
