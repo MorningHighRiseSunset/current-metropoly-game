@@ -3252,10 +3252,16 @@ function start3DScene() {
     scene = new THREE.Scene();
 
     camera = new THREE.PerspectiveCamera(64, containerWidth / containerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer = new THREE.WebGLRenderer({ 
+        antialias: true, 
+        alpha: true,
+        powerPreference: "high-performance"
+    });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(containerWidth, containerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Suppress warnings
+    renderer.debug.checkShaderErrors = false;
     token3DScene.innerHTML = '';
     token3DScene.appendChild(renderer.domElement);
     renderer.domElement.style.display = 'block';

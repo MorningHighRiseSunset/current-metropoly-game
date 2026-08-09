@@ -4,7 +4,7 @@
  */
 const DICE_GLB_CONFIG = {
     scale: 0.45,
-    separation: 1.2,
+    separation: 2.0,
     restOffsetY: 0.2,
     rollDurationMs: 2000,
     settleHoldMs: 1500,

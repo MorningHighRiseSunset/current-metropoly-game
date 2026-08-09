@@ -124,9 +124,10 @@
             camera.position.set(0, 3, 2);
             camera.lookAt(0, 0, 0);
 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
+            renderer.debug.checkShaderErrors = false;
             document.body.appendChild(renderer.domElement);
 
             // Lighting
