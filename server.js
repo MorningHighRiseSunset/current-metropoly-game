@@ -2590,8 +2590,8 @@ io.on('connection', (socket) => {
         const player = game.players.find(p => p && p.id === socket.id);
         if (!player || !player.inJail) return;
 
-        if (player.money >= 50) {
-            player.money -= 50;
+        if (player.money >= 150) {
+            player.money -= 150;
             player.inJail = false;
             player.jailTurns = 0;
             
@@ -2609,8 +2609,32 @@ io.on('connection', (socket) => {
             });
             
             updateGameState(game);
+            
+            // Automatically roll dice after paying to leave jail
+            // Only if it's still the player's turn
+            if (game.gameState.currentPlayer === socket.id) {
+                // Set rolling state to prevent multiple rolls
+                game.gameState.rolling = true;
+                
+                // Generate dice roll
+                const dice1 = Math.floor(Math.random() * 6) + 1;
+                const dice2 = Math.floor(Math.random() * 6) + 1;
+                const total = dice1 + dice2;
+                
+                // Emit dice roll result
+                io.to(game.id).emit('diceRolled', {
+                    playerId: socket.id,
+                    dice1: dice1,
+                    dice2: dice2,
+                    total: total,
+                    double: dice1 === dice2
+                });
+                
+                // Move player token
+                movePlayerToken(game, player, total);
+            }
         } else {
-            socket.emit('gameError', 'Not enough money to pay $50 to get out of jail');
+            socket.emit('gameError', 'Not enough money to pay $150 to get out of jail');
         }
     });
 
@@ -2649,7 +2673,8 @@ io.on('connection', (socket) => {
 
         io.to(game.id).emit('playerMoneyUpdate', {
             playerId: player.id,
-            money: player.money
+            money: player.money,
+            players: game.players
         });
     });
 

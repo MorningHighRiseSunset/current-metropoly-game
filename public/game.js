@@ -1206,9 +1206,19 @@ function closeCasinoGame() {
     window.removeEventListener('message', handleCasinoGameMessage);
     casinoMessageListenerAttached = false;
 
-    // Clear active property decision when casino closes
-    if (activePropertyDecision && activePropertyDecision.spaceData.isCasino) {
-        activePropertyDecision = null;
+    // Show buy modal after casino game ends for property purchase
+    // Only if it's still the current player's turn and the property decision is still active
+    if (activePropertyDecision && 
+        activePropertyDecision.spaceData.isCasino && 
+        gameState && 
+        gameState.currentPlayer === myPlayerId) {
+        updateBuyModalContent();
+        buyModal.classList.remove('hidden');
+    } else {
+        // Clean up stale property decision state
+        if (activePropertyDecision) {
+            dismissPropertyDecisionUI();
+        }
     }
 }
 
@@ -2034,7 +2044,8 @@ function updateUI(options = {}) {
     if (payJailBtn && myPlayerData) {
         if (myPlayerData.inJail && gameState.currentPlayer === myPlayerId) {
             payJailBtn.style.display = 'block';
-            payJailBtn.disabled = myPlayerData.money < 50;
+            payJailBtn.textContent = 'Pay $150 to Leave Jail';
+            payJailBtn.disabled = myPlayerData.money < 150;
         } else {
             payJailBtn.style.display = 'none';
         }
@@ -2586,6 +2597,10 @@ socket.on('playerMoneyUpdate', (data) => {
     const player = players.find(p => p && p.id === data.playerId);
     if (player) {
         player.money = data.money;
+        // Update the local player money variable for casino games
+        if (data.playerId === myPlayerId) {
+            playerMoney = data.money;
+        }
         updateUI();
     }
 });
@@ -2646,6 +2661,14 @@ socket.on('playerOutOfJail', (data) => {
         player.jailTurns = 0;
         updateUI();
         addLogEntry(`${getPlayerDisplayName(player)} got out of jail (${data.method})`, 'system');
+        
+        // If this is the current player and they paid to leave jail, disable the pay jail button
+        if (data.playerId === myPlayerId) {
+            const payJailBtn = document.getElementById('payJailBtn');
+            if (payJailBtn) {
+                payJailBtn.style.display = 'none';
+            }
+        }
     }
 });
 
@@ -3027,6 +3050,14 @@ if (rollDiceBtn) {
         if (canRollDice) {
             socket.emit('rollDice');
         }
+    });
+}
+
+// Pay jail button
+const payJailBtn = document.getElementById('payJailBtn');
+if (payJailBtn) {
+    payJailBtn.addEventListener('click', () => {
+        payToGetOutOfJail();
     });
 }
 
