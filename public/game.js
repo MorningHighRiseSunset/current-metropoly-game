@@ -105,7 +105,7 @@ const DiceRollSequenceManager = (() => {
 
     function logSequence(playerId, message) {
         const playerName = players.find(p => p && p.id === playerId)?.name || playerId;
-        console.log(`[DiceRollSeq:${playerName}] ${message}`);
+        // console.log(`[DiceRollSeq:${playerName}] ${message}`);
     }
 
     return {
@@ -185,7 +185,7 @@ function playDiceRollSound() {
             }, i * (rollMs / clatterCount) * (0.7 + Math.random() * 0.3));
         }
     } catch (e) {
-        console.log('Could not play dice sound:', e);
+        // console.log('Could not play dice sound:', e);
     }
 }
 
@@ -888,13 +888,13 @@ function tileHasLandingMedia(position) {
 }
 
 function handlePlayerLanding(playerId, newPosition) {
-    console.log('handlePlayerLanding called:', { playerId, newPosition, myPlayerId, isCurrentPlayer: playerId === myPlayerId });
+    // console.log('handlePlayerLanding called:', { playerId, newPosition, myPlayerId, isCurrentPlayer: playerId === myPlayerId });
     
     // Show buy modal for unowned properties (this will show after property modal)
     if (playerId === myPlayerId) {
         const spaceData = getUnownedPurchasableSpace(newPosition);
         if (spaceData) {
-            console.log('Starting property decision for:', spaceData.name);
+            // console.log('Starting property decision for:', spaceData.name);
             startPropertyDecision(spaceData, newPosition);
         }
         // Rent payment UI is now handled by server via showRentPayment event
@@ -1017,7 +1017,7 @@ function updateBuyModalContent() {
             confirmBuyBtn.onclick = () => {
                 if (currentPlayer && currentPlayer.money >= rent) {
                     socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
-                    closeBuyModal();
+                    dismissPropertyDecisionUI();
                     endTurnNow();
                 } else {
                     alert('Not enough money to pay rent!');
@@ -1170,7 +1170,7 @@ function openCasinoGame(gameName) {
                     );
                 }
             } catch (e) {
-                console.log('Could not initialize casino game:', e);
+                // console.log('Could not initialize casino game:', e);
             }
         };
     }
@@ -1453,7 +1453,7 @@ function loadTokenModel(tokenIndex, player) {
     }
 
     tokenLoading[player.id] = true;
-    console.log(`Loading 3D model for ${player.name} from: ${tokenInfo.model}`);
+    // console.log(`Loading 3D model for ${player.name} from: ${tokenInfo.model}`);
 
     // Check file extension to determine loader
     const isFBX = tokenInfo.model.toLowerCase().endsWith('.fbx');
@@ -2091,7 +2091,7 @@ function onDiceRollSequenceComplete(playerId, newPosition, diceData) {
     if (playerId === myPlayerId) {
         const spaceData = getUnownedPurchasableSpace(newPosition);
         if (spaceData) {
-            console.log('[DiceRoll] Opening property decision for:', spaceData.name);
+            // console.log('[DiceRoll] Opening property decision for:', spaceData.name);
             startPropertyDecision(spaceData, newPosition);
             // startPropertyDecision calls updateUI(), so we don't call it again
             DiceRollSequenceManager.completeSequence(playerId);
@@ -2212,7 +2212,7 @@ function handleDiceRolledEvent(data) {
 
 // Socket event handlers
 socket.on('connect', () => {
-    console.log('Connected to server');
+    // console.log('Connected to server');
 
     const urlParts = window.location.pathname.split('/');
     const gameId = urlParts[urlParts.length - 1];
@@ -2229,14 +2229,14 @@ socket.on('connect', () => {
 });
 
 socket.on('gameJoined', (data) => {
-    console.log('=== GAME JOINED ===');
-    console.log('GAME: Received gameJoined event:', data);
-    console.log('GAME: Socket ID:', socket.id);
-    console.log('GAME: Server sent playerId:', data.playerId);
-    console.log('GAME: My Player ID (before):', myPlayerId);
-    console.log('GAME: Game State:', data.gameState);
-    console.log('GAME: Players array:', data.players);
-    console.log('GAME: Available player IDs:', data.players.filter(p => p).map(p => ({ id: p.id, name: p.name })));
+    // console.log('=== GAME JOINED ===');
+    // console.log('GAME: Received gameJoined event:', data);
+    // console.log('GAME: Socket ID:', socket.id);
+    // console.log('GAME: Server sent playerId:', data.playerId);
+    // console.log('GAME: My Player ID (before):', myPlayerId);
+    // console.log('GAME: Game State:', data.gameState);
+    // console.log('GAME: Players array:', data.players);
+    // console.log('GAME: Available player IDs:', data.players.filter(p => p).map(p => ({ id: p.id, name: p.name })));
 
     if (data.playerUid) {
         persistPlayerIdentity(data.gameId, data.playerUid);
@@ -2247,19 +2247,19 @@ socket.on('gameJoined', (data) => {
 
     gameState = data.gameState;
 
-    console.log('GAME: Current player found:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
-    console.log('GAME: Final myPlayerId:', myPlayerId);
-    console.log('GAME: Socket ID:', socket.id);
-    console.log('GAME: Do they match?', myPlayerId === socket.id);
+    // console.log('GAME: Current player found:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
+    // console.log('GAME: Final myPlayerId:', myPlayerId);
+    // console.log('GAME: Socket ID:', socket.id);
+    // console.log('GAME: Do they match?', myPlayerId === socket.id);
 
     // Acknowledge connection to server
     socket.emit('gameJoinedAck');
-    console.log('GAME: Sent gameJoinedAck');
+    // console.log('GAME: Sent gameJoinedAck');
 
     try {
         initializeBoard();
         updateUI();
-        console.log('GAME: Board and UI initialized');
+        // console.log('GAME: Board and UI initialized');
     } catch (error) {
         console.error('GAME: Error initializing board:', error);
     }
@@ -2384,7 +2384,7 @@ socket.on('gameReady', (data) => {
 });
 
 socket.on('updateGameStatus', (data) => {
-    console.log('Game status updated:', data);
+    // console.log('Game status updated:', data);
     const gameCodeEl = document.getElementById('gameCode');
     if (gameCodeEl) {
         const count = data.playerCount != null
@@ -2444,7 +2444,7 @@ socket.on('playerJoined', (data) => {
 });
 
 socket.on('playersUpdated', (data) => {
-    console.log('PLAYERS: Received playersUpdated event:', data);
+    // console.log('PLAYERS: Received playersUpdated event:', data);
     players = data.players;
     if (data.gameState) {
         gameState = data.gameState;
@@ -2455,10 +2455,10 @@ socket.on('playersUpdated', (data) => {
         myPlayerId = currentPlayer.id;
     }
     
-    console.log('PLAYERS: Updated players array:', players);
-    console.log('PLAYERS: Current player:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
-    console.log('PLAYERS: My Player ID:', myPlayerId);
-    console.log('PLAYERS: Socket ID:', socket.id);
+    // console.log('PLAYERS: Updated players array:', players);
+    // console.log('PLAYERS: Current player:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
+    // console.log('PLAYERS: My Player ID:', myPlayerId);
+    // console.log('PLAYERS: Socket ID:', socket.id);
     
     updateUI();
     updatePlayersList();
@@ -2469,7 +2469,7 @@ socket.on('playersUpdated', (data) => {
 });
 
 socket.on('playerDisconnected', (data) => {
-    console.log('DISCONNECT: Received playerDisconnected event:', data);
+    // console.log('DISCONNECT: Received playerDisconnected event:', data);
     
     // Update UI to show disconnected status (but keep player in list)
     updateUI();
