@@ -588,7 +588,7 @@ const tokenAnimationHandles = {};
 const pendingRollTokenMoves = {};
 const TOKEN_STEP_DURATION_MS = typeof getTokenStepDurationMs === 'function'
     ? getTokenStepDurationMs()
-    : 40;
+    : 80;
 
 function markPendingRollTokenMove(playerId) {
     if (!playerId) return;
