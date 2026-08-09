@@ -7,6 +7,83 @@
     <script src="https://cdn.vercel-insights.com/v1/script.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+        }
+        
+        .main-title {
+            background: linear-gradient(90deg, #e94560, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(233, 69, 96, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 5px rgba(233, 69, 96, 0.5));
+            }
+            to {
+                filter: drop-shadow(0 0 20px rgba(233, 69, 96, 0.8));
+            }
+        }
+        
+        .create-game-card {
+            background: linear-gradient(145deg, rgba(233, 69, 96, 0.1), rgba(15, 52, 96, 0.3));
+            border: 1px solid rgba(233, 69, 96, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .create-game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(233, 69, 96, 0.3);
+            border-color: rgba(233, 69, 96, 0.6);
+        }
+        
+        .card-icon {
+            font-size: 4rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .lobby-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .lobby-card:hover {
+            transform: scale(1.02);
+            border-color: rgba(233, 69, 96, 0.5);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #ff6b6b, #e94560);
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+            margin-top: 0.5rem;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -29,7 +106,7 @@
         <main>
             <div class="lobby-header">
                 <h1 class="main-title">🎰 Vegas Metropoly</h1>
-                <p class="subtitle">Create or join a game lobby</p>
+                <p class="subtitle">The Ultimate Multiplayer Monopoly Experience</p>
             </div>
 
             <div class="lobby-container">
@@ -37,7 +114,7 @@
                 <div class="create-game-card">
                     <div class="card-icon">🎲</div>
                     <h2>Create New Game</h2>
-                    <p class="card-description">Start a new game lobby and invite friends</p>
+                    <p class="card-description">Start a new game lobby and invite friends to play</p>
                     <button id="createGameBtn" class="btn btn-primary btn-large">
                         <span class="btn-icon">➕</span>
                         Create Game
