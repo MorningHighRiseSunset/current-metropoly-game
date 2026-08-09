@@ -4,7 +4,7 @@
  */
 const DICE_GLB_CONFIG = {
     scale: 0.45,
-    separation: 2.0,
+    separation: 3.0,
     restOffsetY: 0.2,
     rollDurationMs: 2000,
     settleHoldMs: 1500,
@@ -209,9 +209,9 @@ function runDiceRollAnimation(opts) {
                         s.wx += (Math.random() - 0.5) * 12;
                         s.wy += (Math.random() - 0.5) * 10;
                         s.wz += (Math.random() - 0.5) * 12;
-                        // Add scatter on bounce
-                        s.offsetX += (Math.random() - 0.5) * 0.15;
-                        s.offsetZ += (Math.random() - 0.5) * 0.15;
+                        // Add scatter on bounce (reduced to prevent overlap)
+                        s.offsetX += (Math.random() - 0.5) * 0.08;
+                        s.offsetZ += (Math.random() - 0.5) * 0.08;
                     }
                 }
                 s.y = landY;
