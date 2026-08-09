@@ -14,34 +14,34 @@
         }
         
         .main-title {
-            background: linear-gradient(90deg, #e94560, #ff6b6b, #feca57);
+            background: linear-gradient(90deg, #9b59b6, #8e44ad, #9b59b6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 30px rgba(233, 69, 96, 0.3);
+            text-shadow: 0 0 30px rgba(155, 89, 182, 0.3);
             animation: glow 2s ease-in-out infinite alternate;
         }
         
         @keyframes glow {
             from {
-                filter: drop-shadow(0 0 5px rgba(233, 69, 96, 0.5));
+                filter: drop-shadow(0 0 5px rgba(155, 89, 182, 0.5));
             }
             to {
-                filter: drop-shadow(0 0 20px rgba(233, 69, 96, 0.8));
+                filter: drop-shadow(0 0 20px rgba(155, 89, 182, 0.8));
             }
         }
         
         .create-game-card {
-            background: linear-gradient(145deg, rgba(233, 69, 96, 0.1), rgba(15, 52, 96, 0.3));
-            border: 1px solid rgba(233, 69, 96, 0.3);
+            background: linear-gradient(145deg, rgba(155, 89, 182, 0.1), rgba(15, 52, 96, 0.3));
+            border: 1px solid rgba(155, 89, 182, 0.3);
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
         }
         
         .create-game-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(233, 69, 96, 0.3);
-            border-color: rgba(233, 69, 96, 0.6);
+            box-shadow: 0 20px 40px rgba(155, 89, 182, 0.3);
+            border-color: rgba(155, 89, 182, 0.6);
         }
         
         .card-icon {
@@ -63,25 +63,19 @@
         
         .lobby-card:hover {
             transform: scale(1.02);
-            border-color: rgba(233, 69, 96, 0.5);
+            border-color: rgba(155, 89, 182, 0.5);
         }
         
         .btn-primary {
-            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            background: linear-gradient(90deg, #9b59b6, #8e44ad);
             border: none;
             transition: all 0.3s ease;
         }
         
         .btn-primary:hover {
-            background: linear-gradient(90deg, #ff6b6b, #e94560);
+            background: linear-gradient(90deg, #8e44ad, #9b59b6);
             transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
-        }
-        
-        .subtitle {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1.2rem;
-            margin-top: 0.5rem;
+            box-shadow: 0 10px 30px rgba(155, 89, 182, 0.4);
         }
     </style>
 </head>
@@ -106,7 +100,6 @@
         <main>
             <div class="lobby-header">
                 <h1 class="main-title">🎰 Vegas Metropoly</h1>
-                <p class="subtitle">The Ultimate Multiplayer Monopoly Experience</p>
             </div>
 
             <div class="lobby-container">
