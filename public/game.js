@@ -1400,14 +1400,14 @@ function loadWalkModel(tokenInfo, player, idleModel) {
     const loader = new THREE.FBXLoader();
     loader.load(tokenInfo.walkModel,
         function(fbx) {
-            console.log(`Walk model loaded for ${player.name}`);
+            // console.log(`Walk model loaded for ${player.name}`);
             idleModel.walkModel = fbx;
             idleModel.walkAnimations = fbx.animations;
         },
         function(xhr) {
             if (xhr.lengthComputable) {
                 const percentComplete = xhr.loaded / xhr.total * 100;
-                console.log(`Loading walk model: ${percentComplete.toFixed(2)}%`);
+    // console.log(`Loading walk model: ${percentComplete.toFixed(2)}%`);
             }
         },
         function(error) {
@@ -1442,13 +1442,13 @@ function setTokenAnimation(playerId, animType) {
 function loadTokenModel(tokenIndex, player) {
     const tokenInfo = tokenData[tokenIndex];
     if (!tokenInfo || !tokenInfo.model) {
-        console.log(`No model found for token ${tokenIndex} - ${player.name}`);
+        // console.log(`No model found for token ${tokenIndex} - ${player.name}`);
         return;
     }
 
     // Check if already loading or loaded
     if (tokenLoading[player.id] || tokenModels[player.id]) {
-        console.log(`Model already loading or loaded for ${player.name}, skipping`);
+        // console.log(`Model already loading or loaded for ${player.name}, skipping`);
         return;
     }
 
@@ -1463,7 +1463,7 @@ function loadTokenModel(tokenIndex, player) {
         const loader = new THREE.FBXLoader();
         loader.load(tokenInfo.model,
             function(fbx) {
-                console.log(`FBX model loaded for ${player.name}:`, fbx);
+            // console.log(`FBX model loaded for ${player.name}:`, fbx);
 
                 const model = fbx;
                 const scale = tokenInfo.scale || 0.08;
@@ -1478,7 +1478,7 @@ function loadTokenModel(tokenIndex, player) {
                     scene.add(model);
                     model.visible = isTokenVisible(player.id);
                     applyTokenFacing(model, player.position || 0, 'forward', player);
-                    console.log(`3D Token loaded and added to scene for ${player.name}`);
+                    // console.log(`3D Token loaded and added to scene for ${player.name}`);
 
                     update3DTokenPositions();
                     updateTokenVisibility();
@@ -1486,7 +1486,7 @@ function loadTokenModel(tokenIndex, player) {
 
                 // Check if model has animations
                 if (fbx.animations && fbx.animations.length > 0) {
-                    console.log(`FBX model has ${fbx.animations.length} animations`);
+                    // console.log(`FBX model has ${fbx.animations.length} animations`);
                     // Set up animation mixer
                     const mixer = new THREE.AnimationMixer(model);
                     model.mixer = mixer;
@@ -1519,7 +1519,7 @@ function loadTokenModel(tokenIndex, player) {
                 tokenMeshes[player.id] = fallbackModel;
                 scene.add(fallbackModel);
                 fallbackModel.visible = isTokenVisible(player.id);
-                console.log(`Created fallback token for ${player.name}`);
+                // console.log(`Created fallback token for ${player.name}`);
                 update3DTokenPositions();
                 updateTokenVisibility();
             }
@@ -1563,7 +1563,7 @@ function loadTokenModel(tokenIndex, player) {
             function(xhr) {
                 if (xhr.lengthComputable) {
                     const percentComplete = xhr.loaded / xhr.total * 100;
-                    console.log(`Loading ${tokenInfo.model}: ${percentComplete.toFixed(2)}%`);
+    // console.log(`Loading ${tokenInfo.model}: ${percentComplete.toFixed(2)}%`);
                 }
             },
             function(error) {
@@ -1639,7 +1639,7 @@ function closePropertyModal() {
 
 // Show property information
 function showPropertyInfo(spaceData) {
-    console.log('showPropertyInfo called for:', spaceData.name, 'position:', spaceData.position);
+    // console.log('showPropertyInfo called for:', spaceData.name, 'position:', spaceData.position);
     cleanupPropertyVideo();
     const mediaSession = propertyMediaSession;
 
@@ -1649,7 +1649,7 @@ function showPropertyInfo(spaceData) {
     const mediaContainer = document.getElementById('propertyMedia') || document.getElementById('property-media');
     const loadingIndicator = document.getElementById('loadingIndicator');
     
-    console.log('Modal elements:', { modal: !!modal, title: !!title, content: !!content, mediaContainer: !!mediaContainer });
+    // console.log('Modal elements:', { modal: !!modal, title: !!title, content: !!content, mediaContainer: !!mediaContainer });
     
     if (!modal || !title || !content || !mediaContainer) {
         console.error('Modal elements not found!');
@@ -1676,7 +1676,7 @@ function showPropertyInfo(spaceData) {
                 video.muted = true; // ensure muted when restoring from cache
                 video.loop = false; // Ensure no looping
                 video.currentTime = 0; // Reset video to start
-                video.play().catch(e => console.log('Autoplay failed:', e));
+                video.play().catch(e => {});
             }
         } else {
             // Prefer video if available
@@ -1706,14 +1706,14 @@ function showPropertyInfo(spaceData) {
                     mediaContainer.appendChild(video);
                     mediaCache[cacheKey] = video.cloneNode(true);
                     currentPropertyVideo = video;
-                    video.play().catch(e => console.log('Autoplay failed:', e));
+                    video.play().catch(e => {});
                 });
                 
                 video.addEventListener('error', (e) => {
                     if (mediaSession !== propertyMediaSession) return;
                     pendingPropertyVideo = null;
-                    console.log('Video load error:', e);
-                    console.log('Failed video src:', randomVideo);
+                    // console.log('Video load error:', e);
+                    // console.log('Failed video src:', randomVideo);
                     mediaContainer.innerHTML = '';
                     if (loadingIndicator) loadingIndicator.textContent = 'Media unavailable';
                 });
@@ -1774,7 +1774,7 @@ function showPropertyInfo(spaceData) {
     
     content.innerHTML = html;
     
-    console.log('Removing hidden class from modal');
+    // console.log('Removing hidden class from modal');
     modal.classList.remove('hidden');
 }
 
@@ -1804,8 +1804,8 @@ function cleanupPropertyVideo() {
 function updatePlayersList() {
     if (!playersListEl) return;
     
-    console.log('updatePlayersList - players array:', players);
-    console.log('updatePlayersList - players.length:', players.length);
+    // console.log('updatePlayersList - players array:', players);
+    // console.log('updatePlayersList - players.length:', players.length);
     
     playersListEl.innerHTML = '';
     
@@ -1819,12 +1819,12 @@ function updatePlayersList() {
     
     actualPlayers.forEach((player, index) => {
         const playerNumber = index + 1; // Convert to 1-based
-        console.log(`updatePlayersList - processing player ${playerNumber}:`, player);
-        console.log(`  - Player ID: ${player.id}`);
-        console.log(`  - Player Name: ${player.name}`);
-        console.log(`  - My Player ID: ${myPlayerId}`);
-        console.log(`  - Socket ID: ${socket.id}`);
-        console.log(`  - Is Current Player: ${player.id === myPlayerId || player.id === socket.id}`);
+        // console.log(`updatePlayersList - processing player ${playerNumber}:`, player);
+        // console.log(`  - Player ID: ${player.id}`);
+        // console.log(`  - Player Name: ${player.name}`);
+        // console.log(`  - My Player ID: ${myPlayerId}`);
+        // console.log(`  - Socket ID: ${socket.id}`);
+        // console.log(`  - Is Current Player: ${player.id === myPlayerId || player.id === socket.id}`);
         
         const playerEl = document.createElement('div');
         const isCurrentPlayer = player.id === myPlayerId || player.id === socket.id;
@@ -1907,9 +1907,9 @@ function addLogEntry(message, type = 'system') {
 
 // Add chat message
 function addChatMessage(sender, message) {
-    console.log('addChatMessage called:', { sender, message, chatMessagesEl });
+    // console.log('addChatMessage called:', { sender, message, chatMessagesEl });
     if (!chatMessagesEl) {
-        console.warn('chatMessagesEl not found, skipping chat message');
+        // console.warn('chatMessagesEl not found, skipping chat message');
         return;
     }
     const messageEl = document.createElement('div');
@@ -1919,7 +1919,7 @@ function addChatMessage(sender, message) {
 
     // Auto-scroll to bottom
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-    console.log('Message added to chat, total messages:', chatMessagesEl.children.length);
+    // console.log('Message added to chat, total messages:', chatMessagesEl.children.length);
 }
 
 // Helper function to get display name for a player
@@ -2993,7 +2993,7 @@ function setupChatListeners() {
     chatInputEl = document.getElementById('chatInput');
     sendChatBtn = document.getElementById('sendChatBtn');
 
-    console.log('Chat elements initialized:', { chatMessagesEl, chatInputEl, sendChatBtn });
+    // console.log('Chat elements initialized:', { chatMessagesEl, chatInputEl, sendChatBtn });
 
     if (sendChatBtn) {
         sendChatBtn.addEventListener('click', () => {
