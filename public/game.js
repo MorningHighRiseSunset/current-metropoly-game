@@ -1725,6 +1725,15 @@ function showPropertyInfo(spaceData) {
                 video.preload = 'auto';
                 pendingPropertyVideo = video;
                 
+                // Stop video at 10 seconds
+                video.addEventListener('timeupdate', () => {
+                    if (video.currentTime >= 10) {
+                        video.pause();
+                        video.currentTime = 0; // Reset to beginning
+                        video.play(); // Loop from beginning
+                    }
+                });
+                
                 video.addEventListener('loadeddata', () => {
                     if (mediaSession !== propertyMediaSession) {
                         stopVideoElement(video);

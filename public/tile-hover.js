@@ -64,7 +64,7 @@ function showTileHover(tilePosition) {
         video.src = randomVideo;
         video.autoplay = true;
         video.muted = true;
-        video.loop = true;
+        video.loop = false; // Changed to false to allow 10-second limit
         video.playsInline = true;
         video.controls = true;
         video.style.width = '100%';
@@ -74,6 +74,15 @@ function showTileHover(tilePosition) {
         video.style.backgroundColor = '#000'; // Add black background for letterboxing
         currentVideo = video;
         tileHoverMedia.appendChild(video);
+        
+        // Stop video at 10 seconds
+        video.addEventListener('timeupdate', () => {
+            if (video.currentTime >= 10) {
+                video.pause();
+                video.currentTime = 0; // Reset to beginning
+                video.play(); // Loop from beginning
+            }
+        });
     } else if (media.images.length > 0) {
         const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
         const img = document.createElement('img');
