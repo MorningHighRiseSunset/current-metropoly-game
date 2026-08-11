@@ -65,7 +65,7 @@ function showTileHover(tilePosition) {
         video.crossOrigin = 'anonymous'; // Add CORS support for R2 bucket
         video.autoplay = true;
         video.muted = true;
-        video.loop = false; // Changed to false to allow 10-second limit
+        video.loop = true;
         video.playsInline = true;
         video.controls = true;
         video.style.width = '100%';
@@ -96,15 +96,6 @@ function showTileHover(tilePosition) {
         video.addEventListener('error', (e) => {
             console.error(`[Video Error] ${media.name} - Error code: ${video.error?.code}, message: ${video.error?.message}`);
             console.error(`[Video Error] Failed URL: ${randomVideo}`);
-        });
-        
-        // Stop video at 10 seconds
-        video.addEventListener('timeupdate', () => {
-            if (video.currentTime >= 10) {
-                video.pause();
-                video.currentTime = 0; // Reset to beginning
-                video.play(); // Loop from beginning
-            }
         });
     } else if (media.images.length > 0) {
         const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
