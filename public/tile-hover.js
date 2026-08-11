@@ -62,6 +62,7 @@ function showTileHover(tilePosition) {
         
         const video = document.createElement('video');
         video.src = randomVideo;
+        video.crossOrigin = 'anonymous'; // Add CORS support for R2 bucket
         video.autoplay = true;
         video.muted = true;
         video.loop = false; // Changed to false to allow 10-second limit
@@ -78,8 +79,17 @@ function showTileHover(tilePosition) {
         // Debug video loading
         video.addEventListener('loadedmetadata', () => {
             console.log(`[Video Debug] ${media.name} - Loaded: ${video.videoWidth}x${video.videoHeight}, duration: ${video.duration}s`);
+            console.log(`[Video Debug] ${media.name} - MIME type: ${video.type || 'unknown'}`);
             if (video.videoWidth === 0 || video.videoHeight === 0) {
                 console.error(`[Video Error] ${media.name} - No video track detected, audio only!`);
+                console.error(`[Video Error] URL: ${randomVideo}`);
+                // Try to fetch the video to check headers
+                fetch(randomVideo, { method: 'HEAD' })
+                    .then(response => {
+                        console.log(`[Video Debug] ${media.name} - Content-Type: ${response.headers.get('Content-Type')}`);
+                        console.log(`[Video Debug] ${media.name} - Content-Length: ${response.headers.get('Content-Length')}`);
+                    })
+                    .catch(err => console.error(`[Video Error] ${media.name} - Fetch failed:`, err));
             }
         });
         
