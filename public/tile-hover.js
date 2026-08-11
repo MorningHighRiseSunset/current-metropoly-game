@@ -5,6 +5,7 @@ const tileHoverName = document.getElementById('tileHoverName');
 const tileHoverType = document.getElementById('tileHoverType');
 let currentVideo = null;
 let hoverTimeout = null;
+const lastPlayedVideos = {}; // Track last played video for each tile to prevent repeats
 
 // Function to hide tile hover immediately (for when modals open)
 function hideTileHoverImmediately() {
@@ -44,7 +45,21 @@ function showTileHover(tilePosition) {
     
     // Show media (prefer video if available)
     if (media.videos.length > 0) {
-        const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
+        // Get a random video that's different from the last played one
+        let randomVideo;
+        const lastVideo = lastPlayedVideos[tilePosition];
+        
+        if (media.videos.length === 1) {
+            randomVideo = media.videos[0];
+        } else {
+            // Filter out the last played video
+            const availableVideos = media.videos.filter(v => v !== lastVideo);
+            randomVideo = availableVideos[Math.floor(Math.random() * availableVideos.length)];
+        }
+        
+        // Track this video as the last played for this tile
+        lastPlayedVideos[tilePosition] = randomVideo;
+        
         const video = document.createElement('video');
         video.src = randomVideo;
         video.autoplay = true;

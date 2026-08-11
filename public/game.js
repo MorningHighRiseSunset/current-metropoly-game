@@ -135,6 +135,9 @@ const tokenData = [
     { name: 'Coffee Cup', model: getModelPath('/Models/CoffeeCup/coffee.gltf'), image: '/tokenimages/coffee.png', scale: 0.25 }
 ];
 
+// Track last played videos for each tile to prevent repeats
+const lastPlayedPropertyVideos = {};
+
 // Helper function to get model path (supports CDN)
 function getModelPath(localPath) {
     const USE_CDN = window.USE_CDN || false;
@@ -1691,7 +1694,21 @@ function showPropertyInfo(spaceData) {
         } else {
             // Prefer video if available
             if (media.videos && media.videos.length > 0) {
-                const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
+                // Get a random video that's different from the last played one
+                let randomVideo;
+                const lastVideo = lastPlayedPropertyVideos[spaceData.position];
+                
+                if (media.videos.length === 1) {
+                    randomVideo = media.videos[0];
+                } else {
+                    // Filter out the last played video
+                    const availableVideos = media.videos.filter(v => v !== lastVideo);
+                    randomVideo = availableVideos[Math.floor(Math.random() * availableVideos.length)];
+                }
+                
+                // Track this video as the last played for this tile
+                lastPlayedPropertyVideos[spaceData.position] = randomVideo;
+                
                 const video = document.createElement('video');
                 // Don't encode - browser handles spaces in URLs automatically
                 video.src = randomVideo;
