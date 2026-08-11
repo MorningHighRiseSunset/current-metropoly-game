@@ -16,7 +16,12 @@ function getConfiguredSocketServerUrl() {
 
 const SOCKET_SERVER_URL = getConfiguredSocketServerUrl();
 const socket = io(SOCKET_SERVER_URL, {
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 10000
 });
 let gameState = null;
 let myPlayerId = null;

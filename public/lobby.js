@@ -14,7 +14,12 @@ function getConfiguredSocketServerUrl() {
 const SOCKET_SERVER_URL = getConfiguredSocketServerUrl();
 console.log('Connecting to socket server:', SOCKET_SERVER_URL);
 const socket = io(SOCKET_SERVER_URL, {
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 10000
 });
 
 // DOM Elements
@@ -543,9 +548,22 @@ socket.on('aiPlayerRemoved', (data) => {
     }
 });
 
-// Handle connection errors
-socket.on('connect_error', () => {
-    showModal('Failed to connect to server. Please refresh the page.');
+// Handle connection errors - allow reconnection attempts before showing error
+let connectionErrorCount = 0;
+socket.on('connect_error', (error) => {
+    connectionErrorCount++;
+    console.log(`Connection attempt ${connectionErrorCount} failed:`, error.message);
+    // Only show modal after multiple failed attempts
+    if (connectionErrorCount >= 3) {
+        showModal('Failed to connect to server. Please refresh the page.');
+    }
+});
+
+// Reset error count on successful connection
+socket.on('connect', () => {
+    connectionErrorCount = 0;
+    console.log('Socket connected, checking for auto-join...');
+    autoJoinFromUrlIfPresent();
 });
 
 socket.on('disconnect', () => {
@@ -555,10 +573,4 @@ socket.on('disconnect', () => {
 // Handle lobbies list
 socket.on('lobbiesList', (lobbies) => {
     renderLobbies(lobbies);
-});
-
-// Wait for socket to connect before auto-joining
-socket.on('connect', () => {
-    console.log('Socket connected, checking for auto-join...');
-    autoJoinFromUrlIfPresent();
 });
