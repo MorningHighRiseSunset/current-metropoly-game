@@ -1725,6 +1725,19 @@ function showPropertyInfo(spaceData) {
                 video.preload = 'auto';
                 pendingPropertyVideo = video;
                 
+                // Debug video loading
+                video.addEventListener('loadedmetadata', () => {
+                    console.log(`[Video Debug] ${media.name} - Loaded: ${video.videoWidth}x${video.videoHeight}, duration: ${video.duration}s`);
+                    if (video.videoWidth === 0 || video.videoHeight === 0) {
+                        console.error(`[Video Error] ${media.name} - No video track detected, audio only!`);
+                    }
+                });
+                
+                video.addEventListener('error', (e) => {
+                    console.error(`[Video Error] ${media.name} - Error code: ${video.error?.code}, message: ${video.error?.message}`);
+                    console.error(`[Video Error] Failed URL: ${randomVideo}`);
+                });
+                
                 // Stop video at 10 seconds
                 video.addEventListener('timeupdate', () => {
                     if (video.currentTime >= 10) {
