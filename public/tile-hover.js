@@ -69,8 +69,9 @@ function showTileHover(tilePosition) {
         video.controls = true;
         video.style.width = '100%';
         video.style.maxHeight = '200px';
-        video.style.objectFit = 'cover';
+        video.style.objectFit = 'contain'; // Changed from 'cover' to handle portrait videos
         video.style.borderRadius = '8px';
+        video.style.backgroundColor = '#000'; // Add black background for letterboxing
         currentVideo = video;
         tileHoverMedia.appendChild(video);
     } else if (media.images.length > 0) {

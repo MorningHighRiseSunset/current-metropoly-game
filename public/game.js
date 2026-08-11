@@ -1719,8 +1719,9 @@ function showPropertyInfo(spaceData) {
                 video.controls = true;
                 video.style.width = '100%';
                 video.style.maxHeight = '250px';
-                video.style.objectFit = 'cover';
+                video.style.objectFit = 'contain'; // Changed from 'cover' to handle portrait videos
                 video.style.borderRadius = '8px';
+                video.style.backgroundColor = '#000'; // Add black background for letterboxing
                 video.preload = 'auto';
                 pendingPropertyVideo = video;
                 
