@@ -1,5 +1,6 @@
 // Get video CDN base URL from environment or use local path
 
+/*
 // TEMP DEBUG — remove after diagnosing video load failures
 window.__VIDEO_DEBUG__ = window.__VIDEO_DEBUG__ || {
     configFromApi: null,
@@ -32,6 +33,7 @@ function logVideoUrlConstruction(localPath, result, context) {
     console.groupEnd();
     return result;
 }
+*/
 
 function getVideoUrl(localPath) {
     const USE_VIDEO_CDN = window.USE_VIDEO_CDN || false;
@@ -56,10 +58,7 @@ function getVideoUrl(localPath) {
         const encodedFilename = encodeURIComponent(filename);
         result = parts.join('/') + '/' + encodedFilename;
     }
-    return logVideoUrlConstruction(localPath, result, {
-        filename: localPath.split('/').pop(),
-        encodedFilename: encodeURIComponent(localPath.split('/').pop())
-    });
+    return result;
 }
 
 // Tile media mapping (videos and images for each tile)

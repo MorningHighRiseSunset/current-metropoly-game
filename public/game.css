@@ -1984,7 +1984,7 @@ body {
 }
 
 #propertyModal .property-modal-content {
-    max-width: 400px;
+    max-width: 460px;
     width: 92%;
     padding: 0;
     overflow: hidden;
@@ -2044,11 +2044,11 @@ body {
 }
 
 .property-modal-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    display: flex;
+    flex-direction: column;
     gap: 12px;
     padding: 12px 14px 14px;
-    align-items: start;
+    align-items: stretch;
 }
 
 .property-details {
@@ -2196,18 +2196,22 @@ body {
 
 .property-media .media-frame--landscape {
     aspect-ratio: 16 / 9;
-    max-width: 100%;
+    width: 100%;
+    min-height: 190px;
 }
 
 .property-media .media-frame--square {
     aspect-ratio: 1 / 1;
-    max-width: 100%;
+    width: 100%;
+    max-height: 280px;
 }
 
 .property-media .media-frame--portrait {
     aspect-ratio: 9 / 16;
-    max-width: 100%;
-    max-height: 180px;
+    width: auto;
+    max-width: 170px;
+    max-height: 260px;
+    margin: 0 auto;
 }
 
 .property-media .media-frame video,
@@ -2220,14 +2224,13 @@ body {
 }
 
 @media (max-width: 520px) {
-    .property-modal-body {
-        grid-template-columns: 1fr;
+    .property-media .media-frame--landscape {
+        min-height: 160px;
     }
 
     .property-media .media-frame--portrait {
         max-height: 220px;
-        max-width: min(100%, 160px);
-        margin: 0 auto;
+        max-width: 150px;
     }
 }
 

@@ -351,6 +351,10 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
         cancelAnimationFrame(diceRollAnimFrame);
         diceRollAnimFrame = null;
     }
+    if (diceFadeAnimFrame) {
+        cancelAnimationFrame(diceFadeAnimFrame);
+        diceFadeAnimFrame = null;
+    }
 
     spawnDiceOnBoard(playerPosition);
     // Always roll dice at board center (0, 0)
@@ -373,10 +377,21 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
                 if (callbacks && typeof callbacks.onLand === 'function') {
                     callbacks.onLand();
                 }
-                setTimeout(() => {
-                    if (dice1Mesh) dice1Mesh.visible = false;
-                    if (dice2Mesh) dice2Mesh.visible = false;
-                }, 350);
+                const fadeTick = runDiceFadeOutAnimation(
+                    [dice1Mesh, dice2Mesh],
+                    280,
+                    () => { diceFadeAnimFrame = null; }
+                );
+                if (fadeTick) {
+                    function animateFade(now) {
+                        if (fadeTick && fadeTick(now)) {
+                            diceFadeAnimFrame = requestAnimationFrame(animateFade);
+                        } else {
+                            diceFadeAnimFrame = null;
+                        }
+                    }
+                    diceFadeAnimFrame = requestAnimationFrame(animateFade);
+                }
             }, getDiceSettleHoldMs());
         }
     });
@@ -590,6 +605,7 @@ let resizeObserver = null;
 let dice1Mesh, dice2Mesh;
 let diceRolling = false;
 let diceRollAnimFrame = null;
+let diceFadeAnimFrame = null;
 const revealedPlayerIds = new Set();
 const tokenAnimatingIds = new Set();
 const tokenAnimationHandles = {};
@@ -1706,78 +1722,16 @@ function createMediaFrame(element) {
     return frame;
 }
 
+/*
 // TEMP DEBUG — remove after diagnosing video load failures
-function debugVideoAssignment(video, context) {
-    const parseUrl = (url) => {
-        try {
-            return new URL(url, window.location.href);
-        } catch (e) {
-            return { href: url, protocol: '(unparseable)', pathname: '(unparseable)', error: e.message };
-        }
-    };
-    const parsed = parseUrl(video.src);
-    const entry = {
-        at: new Date().toISOString(),
-        ...context,
-        videoSrc: video.src,
-        videoCurrentSrc: video.currentSrc || '(empty until load starts)',
-        protocol: parsed.protocol || parsed.error,
-        pathname: parsed.pathname,
-        fullHref: parsed.href || video.src,
-        crossOrigin: video.crossOrigin,
-        cdnBaseUrlNow: window.VIDEO_CDN_BASE_URL,
-        configFromApi: window.__VIDEO_DEBUG__?.configFromApi
-    };
-    window.__VIDEO_DEBUG__ = window.__VIDEO_DEBUG__ || { assignments: [] };
-    window.__VIDEO_DEBUG__.assignments.push(entry);
-    console.group(`[Video Debug] ${context.phase || 'assignment'} — ${context.propertyName || 'unknown'}`);
-    console.log('original CDN URL from /api/config:', window.__VIDEO_DEBUG__?.configFromApi?.VIDEO_CDN_BASE_URL);
-    console.log('final constructed video URL (before assign):', context.intendedSrc);
-    console.log('video.src (after assign):', video.src);
-    console.log('video.currentSrc:', video.currentSrc || '(empty until load starts)');
-    console.log('new URL(video.src).protocol:', parsed.protocol || parsed.error);
-    console.log('filename/path:', parsed.pathname || context.intendedSrc);
-    console.log('from mediaCache:', !!context.fromCache);
-    console.log('crossOrigin:', video.crossOrigin);
-    console.groupEnd();
-    return entry;
-}
-
-function watchVideoSrcMutations(video, propertyName) {
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
-                console.warn('[Video Debug] video.src MODIFIED after assignment', {
-                    propertyName,
-                    newSrc: video.src,
-                    newCurrentSrc: video.currentSrc,
-                    protocol: (() => { try { return new URL(video.src).protocol; } catch (e) { return e.message; } })()
-                });
-            }
-        });
-    });
-    observer.observe(video, { attributes: true, attributeFilter: ['src'] });
-    return observer;
-}
-
+function debugVideoAssignment(video, context) { ... }
+function watchVideoSrcMutations(video, propertyName) { ... }
+function logVideoLoadError(video, context) { ... }
+*/
+function debugVideoAssignment() {}
+function watchVideoSrcMutations() { return { disconnect() {} }; }
 function logVideoLoadError(video, context) {
-    const mediaError = video.error;
-    console.group(`[Video Error] ${context.propertyName} — debug detail`);
     console.error(`[Video Error] ${context.propertyName} - Failed to load video`);
-    console.log('intended src:', context.intendedSrc);
-    console.log('video.src at error:', video.src);
-    console.log('video.currentSrc at error:', video.currentSrc);
-    try {
-        console.log('protocol at error:', new URL(video.currentSrc || video.src).protocol);
-    } catch (e) {
-        console.log('protocol at error: (unparseable)', e.message);
-    }
-    console.log('MediaError code:', mediaError?.code, '(1=ABORTED,2=NETWORK,3=DECODE,4=SRC_NOT_SUPPORTED)');
-    console.log('MediaError message:', mediaError?.message);
-    console.log('crossOrigin:', video.crossOrigin);
-    console.log('networkState:', video.networkState, '(3=NETWORK_NO_SOURCE on failure)');
-    console.log('→ Check DevTools Network tab for the exact Request URL of the failed .mp4');
-    console.groupEnd();
 }
 
 function closePropertyModal() {
@@ -1887,13 +1841,6 @@ function showPropertyInfo(spaceData, options = {}) {
             mediaContainer.appendChild(cloned);
             const video = cloned.querySelector('video');
             if (video) {
-                debugVideoAssignment(video, {
-                    phase: 'cache-restore',
-                    propertyName: media.name,
-                    position: spaceData.position,
-                    intendedSrc: video.src,
-                    fromCache: true
-                });
                 currentPropertyVideo = video;
                 video.muted = true; // ensure muted when restoring from cache
                 video.loop = false; // Ensure no looping
@@ -1921,27 +1868,7 @@ function showPropertyInfo(spaceData, options = {}) {
                 const video = document.createElement('video');
                 const frame = createMediaFrame(video);
                 const srcObserver = watchVideoSrcMutations(video, media.name);
-                console.group(`[Video Debug] pre-assign — ${media.name}`);
-                console.log('original CDN URL from /api/config:', window.__VIDEO_DEBUG__?.configFromApi?.VIDEO_CDN_BASE_URL);
-                console.log('final constructed video URL:', randomVideo);
-                try {
-                    console.log('protocol (intended):', new URL(randomVideo, window.location.href).protocol);
-                } catch (e) {
-                    console.log('protocol (intended): unparseable', e.message);
-                }
-                console.log('filename/path:', randomVideo.split('/').slice(-2).join('/'));
-                console.groupEnd();
-                // TEMP TEST: crossOrigin disabled — R2 r2.dev has no CORS headers, which causes
-                // MediaError 4 (SRC_NOT_SUPPORTED) even when Network shows 206 Partial Content.
-                // video.crossOrigin = 'anonymous';
                 video.src = randomVideo;
-                debugVideoAssignment(video, {
-                    phase: 'post-assign',
-                    propertyName: media.name,
-                    position: spaceData.position,
-                    intendedSrc: randomVideo,
-                    fromCache: false
-                });
                 video.autoplay = true;
                 video.muted = true; // Muted for autoplay to work
                 video.loop = false; // Do not loop - play once then stop
@@ -3309,39 +3236,14 @@ document.querySelectorAll('.modal').forEach(modal => {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', async () => {
-    // TEMP DEBUG — log loaded script URLs to detect stale cache
-    window.__VIDEO_DEBUG__ = window.__VIDEO_DEBUG__ || {};
-    window.__VIDEO_DEBUG__.scriptSources = {};
-    document.querySelectorAll('script[src]').forEach((script) => {
-        const src = script.getAttribute('src');
-        if (src && (src.includes('runtime-config') || src.includes('tile-media') || src.includes('game.js'))) {
-            window.__VIDEO_DEBUG__.scriptSources[src.split('?')[0].split('/').pop()] = script.src;
-        }
-    });
-    window.__VIDEO_DEBUG__.configFromRuntime = {
-        USE_VIDEO_CDN: window.USE_VIDEO_CDN,
-        VIDEO_CDN_BASE_URL: window.VIDEO_CDN_BASE_URL
-    };
-    console.group('[Video Debug] startup');
-    console.log('loaded script URLs:', window.__VIDEO_DEBUG__.scriptSources);
-    console.log('runtime-config values (before /api/config):', window.__VIDEO_DEBUG__.configFromRuntime);
-    console.groupEnd();
-
     // Fetch CDN configuration from server
     try {
         const configResponse = await fetch('/api/config');
         const config = await configResponse.json();
-        window.__VIDEO_DEBUG__.configFromApi = { ...config };
         window.USE_VIDEO_CDN = config.USE_VIDEO_CDN;
         window.VIDEO_CDN_BASE_URL = (config.VIDEO_CDN_BASE_URL || '').replace(/^http:\/\//, 'https://');
         window.USE_CDN = config.USE_CDN;
         window.CDN_BASE_URL = config.CDN_BASE_URL;
-        console.group('[Video Debug] /api/config loaded');
-        console.log('raw /api/config response:', config);
-        console.log('VIDEO_CDN_BASE_URL after normalize:', window.VIDEO_CDN_BASE_URL);
-        console.log('page protocol:', window.location.protocol);
-        console.groupEnd();
-        console.log('CDN Config loaded:', config);
     } catch (error) {
         console.error('Failed to load CDN config:', error);
         // Fallback to local paths
