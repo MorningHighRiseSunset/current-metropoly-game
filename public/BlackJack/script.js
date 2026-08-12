@@ -795,19 +795,19 @@ function offerInsurance() {
 }
 }
 
-// Auto-initialize for standalone usage
-if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('BlackJack/script.js')) {
+// Auto-initialize for standalone usage (skip when embedded in main game iframe)
+if (window.parent === window && document.currentScript && document.currentScript.src && document.currentScript.src.includes('BlackJack/script.js')) {
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function() {
-			window.initBlackjackMinigame();
+			const container = document.querySelector('#game-ui');
+			if (container) {
+				window.initBlackjackMinigame(container, window.playerMoney, window.updateMainGameBalance);
+			}
 		});
 	} else {
-		window.initBlackjackMinigame();
+		const container = document.querySelector('#game-ui');
+		if (container) {
+			window.initBlackjackMinigame(container, window.playerMoney, window.updateMainGameBalance);
+		}
 	}
 }
-
-// Initial state
-dealBtn.disabled = true;
-hitBtn.disabled = true;
-standBtn.disabled = true;
-updateBalance();

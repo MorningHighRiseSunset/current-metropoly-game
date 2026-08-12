@@ -257,8 +257,8 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 	updateBalanceDisplay();
 };
 
-// Auto-initialize for standalone usage
-if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('slotMachine/script.js')) {
+// Auto-initialize for standalone usage (skip when embedded in main game iframe)
+if (window.parent === window && document.currentScript && document.currentScript.src && document.currentScript.src.includes('slotMachine/script.js')) {
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function() {
 			window.initSlotMachine(document);

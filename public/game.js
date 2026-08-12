@@ -1021,6 +1021,13 @@ function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
     }, delay);
 }
 
+function getSpaceTypeLabel(type) {
+    if (type === 'railroad') return 'Railroad';
+    if (type === 'utility') return 'Utility';
+    if (type === 'property') return 'Property';
+    return type.charAt(0).toUpperCase() + type.slice(1).replace(/-/g, ' ');
+}
+
 function updatePropertyDecisionUI() {
     if (!activePropertyDecision) return;
     const propertyActions = document.getElementById('propertyActions');
@@ -1033,10 +1040,13 @@ function updatePropertyDecisionUI() {
     const canAfford = currentPlayer && currentPlayer.money >= activePropertyDecision.spaceData.price;
     const isCasino = activePropertyDecision.spaceData.isCasino;
     const spaceData = activePropertyDecision.spaceData;
+    const typeLabel = getSpaceTypeLabel(spaceData.type);
 
-    let confirmLabel = 'Buy Property';
+    let confirmLabel = `Buy ${typeLabel}`;
     let passLabel = 'Pass';
-    let promptText = canAfford ? 'Buy this property or pass.' : 'Not enough money to buy. Pass to continue.';
+    let promptText = canAfford
+        ? `Buy this ${typeLabel.toLowerCase()} or pass.`
+        : 'Not enough money to buy. Pass to continue.';
     let confirmHandler = null;
 
     if (isRentDecision) {
@@ -1068,7 +1078,7 @@ function updatePropertyDecisionUI() {
                     }, 500);
                 }
             } else {
-                alert('Not enough money to buy this property.');
+                alert(`Not enough money to buy this ${typeLabel.toLowerCase()}.`);
             }
         };
     }
@@ -1167,6 +1177,22 @@ function calculateRentAmount(spaceData, owner) {
     return rent;
 }
 
+// Root element each casino minigame expects when embedded in the main game iframe
+const CASINO_GAME_CONTAINERS = {
+    Baccarat: '.container',
+    BlackJack: '#game-ui',
+    Craps: '.craps-table-container',
+    PokerFP: '.poker-container',
+    Roulette: 'body',
+    slotMachine: '#slot-machine-root'
+};
+
+function getCasinoGameContainer(doc, gameName) {
+    const selector = CASINO_GAME_CONTAINERS[gameName];
+    if (!selector || selector === 'body') return doc.body;
+    return doc.querySelector(selector) || doc.body;
+}
+
 // Open casino game modal
 function openCasinoGame(gameName) {
     const casinoModal = document.getElementById('casinoGameModal');
@@ -1209,26 +1235,33 @@ function openCasinoGame(gameName) {
                 };
 
                 const initFunctionName = initFunctionNames[gameName];
-                if (initFunctionName && iframe.contentWindow[initFunctionName]) {
-                    // Create a callback to update the main game balance
-                    const updateMainGameBalance = function(balance) {
-                        if (currentPlayer && socket) {
-                            const moneyDiff = balance - playerMoney;
-                            if (moneyDiff !== 0) {
-                                socket.emit('casinoWinnings', { amount: moneyDiff });
-                            }
-                        }
-                    };
-
-                    // Initialize the casino game
-                    iframe.contentWindow[initFunctionName](
-                        iframe.contentWindow.document,
-                        playerMoney,
-                        updateMainGameBalance
-                    );
+                const initFn = initFunctionName && iframe.contentWindow[initFunctionName];
+                if (!initFn) {
+                    console.error('[Casino] Init function not found:', gameName, initFunctionName);
+                    return;
                 }
+
+                const iframeDoc = iframe.contentWindow.document;
+                const container = getCasinoGameContainer(iframeDoc, gameName);
+                if (!container) {
+                    console.error('[Casino] Container not found for:', gameName);
+                    return;
+                }
+
+                let lastSyncedBalance = playerMoney;
+                const updateMainGameBalance = function(balance) {
+                    if (currentPlayer && socket) {
+                        const moneyDiff = balance - lastSyncedBalance;
+                        if (moneyDiff !== 0) {
+                            socket.emit('casinoWinnings', { amount: moneyDiff });
+                            lastSyncedBalance = balance;
+                        }
+                    }
+                };
+
+                initFn(container, playerMoney, updateMainGameBalance);
             } catch (e) {
-                // console.log('Could not initialize casino game:', e);
+                console.error('[Casino] Could not initialize casino game:', gameName, e);
             }
         };
     }
@@ -1806,7 +1839,7 @@ function showPropertyInfo(spaceData, options = {}) {
     title.textContent = spaceData.name;
 
     if (subtitle) {
-        const typeLabel = spaceData.type === 'property' ? 'Property' : spaceData.type.replace(/-/g, ' ');
+        const typeLabel = getSpaceTypeLabel(spaceData.type);
         subtitle.textContent = `${typeLabel}${spaceData.isCasino ? ' · Casino' : ''}`;
     }
 
