@@ -1,4 +1,38 @@
 // Get video CDN base URL from environment or use local path
+
+// TEMP DEBUG — remove after diagnosing video load failures
+window.__VIDEO_DEBUG__ = window.__VIDEO_DEBUG__ || {
+    configFromApi: null,
+    configFromRuntime: null,
+    scriptSources: {},
+    urlConstructions: [],
+    assignments: []
+};
+
+function logVideoUrlConstruction(localPath, result, context) {
+    const entry = {
+        at: new Date().toISOString(),
+        localPath,
+        result,
+        useVideoCdn: window.USE_VIDEO_CDN,
+        cdnBaseUrl: window.VIDEO_CDN_BASE_URL,
+        ...context
+    };
+    window.__VIDEO_DEBUG__.urlConstructions.push(entry);
+    console.group('[Video Debug] getVideoUrl');
+    console.log('localPath:', localPath);
+    console.log('USE_VIDEO_CDN:', window.USE_VIDEO_CDN);
+    console.log('VIDEO_CDN_BASE_URL (at construction):', window.VIDEO_CDN_BASE_URL);
+    console.log('constructed URL:', result);
+    try {
+        console.log('protocol:', new URL(result, window.location.href).protocol);
+    } catch (e) {
+        console.log('protocol: (could not parse URL)', e.message);
+    }
+    console.groupEnd();
+    return result;
+}
+
 function getVideoUrl(localPath) {
     const USE_VIDEO_CDN = window.USE_VIDEO_CDN || false;
     let VIDEO_CDN_BASE_URL = window.VIDEO_CDN_BASE_URL || '';
@@ -7,19 +41,25 @@ function getVideoUrl(localPath) {
         VIDEO_CDN_BASE_URL = VIDEO_CDN_BASE_URL.replace(/^http:\/\//, 'https://');
     }
 
+    let result;
     if (USE_VIDEO_CDN && VIDEO_CDN_BASE_URL) {
         // Preserve the full path including Videos/ folder, just encode the filename
         const parts = localPath.split('/');
         const filename = parts.pop();
         const encodedFilename = encodeURIComponent(filename);
         const path = parts.join('/');
-        return `${VIDEO_CDN_BASE_URL}${path}/${encodedFilename}`;
+        result = `${VIDEO_CDN_BASE_URL}${path}/${encodedFilename}`;
+    } else {
+        // For local paths, encode the filename to handle spaces
+        const parts = localPath.split('/');
+        const filename = parts.pop();
+        const encodedFilename = encodeURIComponent(filename);
+        result = parts.join('/') + '/' + encodedFilename;
     }
-    // For local paths, encode the filename to handle spaces
-    const parts = localPath.split('/');
-    const filename = parts.pop();
-    const encodedFilename = encodeURIComponent(filename);
-    return parts.join('/') + '/' + encodedFilename;
+    return logVideoUrlConstruction(localPath, result, {
+        filename: localPath.split('/').pop(),
+        encodedFilename: encodeURIComponent(localPath.split('/').pop())
+    });
 }
 
 // Tile media mapping (videos and images for each tile)
