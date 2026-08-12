@@ -3150,7 +3150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const configResponse = await fetch('/api/config');
         const config = await configResponse.json();
         window.USE_VIDEO_CDN = config.USE_VIDEO_CDN;
-        window.VIDEO_CDN_BASE_URL = config.VIDEO_CDN_BASE_URL;
+        window.VIDEO_CDN_BASE_URL = (config.VIDEO_CDN_BASE_URL || '').replace(/^http:\/\//, 'https://');
         window.USE_CDN = config.USE_CDN;
         window.CDN_BASE_URL = config.CDN_BASE_URL;
         console.log('CDN Config loaded:', config);

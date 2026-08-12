@@ -1,7 +1,11 @@
 // Get video CDN base URL from environment or use local path
 function getVideoUrl(localPath) {
     const USE_VIDEO_CDN = window.USE_VIDEO_CDN || false;
-    const VIDEO_CDN_BASE_URL = window.VIDEO_CDN_BASE_URL || '';
+    let VIDEO_CDN_BASE_URL = window.VIDEO_CDN_BASE_URL || '';
+    // R2 public URLs must use HTTPS on HTTPS pages (avoid mixed-content blocking)
+    if (VIDEO_CDN_BASE_URL.startsWith('http://')) {
+        VIDEO_CDN_BASE_URL = VIDEO_CDN_BASE_URL.replace(/^http:\/\//, 'https://');
+    }
 
     if (USE_VIDEO_CDN && VIDEO_CDN_BASE_URL) {
         // Preserve the full path including Videos/ folder, just encode the filename
