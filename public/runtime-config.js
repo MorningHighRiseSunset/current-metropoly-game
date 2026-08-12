@@ -12,5 +12,5 @@ window.RUNTIME_CONFIG = window.RUNTIME_CONFIG || {
 
 // Video CDN configuration for R2 bucket storage
 window.USE_VIDEO_CDN = true;
-window.VIDEO_CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/metropoly-videos';
+window.VIDEO_CDN_BASE_URL = 'http://pub-7e0044f8048c45d0a1c328e210708508.r2.dev';
 
