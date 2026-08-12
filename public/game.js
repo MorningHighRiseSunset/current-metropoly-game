@@ -1648,6 +1648,43 @@ function updateTokens() {
 // Cache for loaded media to prevent re-loading
 const mediaCache = {};
 
+function applyMediaFrameOrientation(frame, element) {
+    const w = element.videoWidth || element.naturalWidth;
+    const h = element.videoHeight || element.naturalHeight;
+    if (!w || !h) return;
+
+    const ratio = w / h;
+    frame.classList.remove('media-frame--portrait', 'media-frame--landscape', 'media-frame--square');
+
+    if (ratio < 0.85) {
+        frame.classList.add('media-frame--portrait');
+    } else if (ratio > 1.15) {
+        frame.classList.add('media-frame--landscape');
+    } else {
+        frame.classList.add('media-frame--square');
+    }
+}
+
+function bindMediaFrameOrientation(frame, element) {
+    const apply = () => applyMediaFrameOrientation(frame, element);
+    if (element.tagName === 'VIDEO') {
+        if (element.readyState >= 1) apply();
+        else element.addEventListener('loadedmetadata', apply, { once: true });
+    } else if (element.complete && element.naturalWidth) {
+        apply();
+    } else {
+        element.addEventListener('load', apply, { once: true });
+    }
+}
+
+function createMediaFrame(element) {
+    const frame = document.createElement('div');
+    frame.className = 'media-frame media-frame--landscape';
+    frame.appendChild(element);
+    bindMediaFrameOrientation(frame, element);
+    return frame;
+}
+
 // TEMP DEBUG — remove after diagnosing video load failures
 function debugVideoAssignment(video, context) {
     const parseUrl = (url) => {
@@ -1762,8 +1799,8 @@ function showPropertyInfo(spaceData) {
         if (mediaCache[cacheKey]) {
             const cloned = mediaCache[cacheKey].cloneNode(true);
             mediaContainer.appendChild(cloned);
-            if (mediaCache[cacheKey].tagName === 'VIDEO') {
-                const video = mediaContainer.querySelector('video');
+            const video = cloned.querySelector('video');
+            if (video) {
                 debugVideoAssignment(video, {
                     phase: 'cache-restore',
                     propertyName: media.name,
@@ -1796,6 +1833,7 @@ function showPropertyInfo(spaceData) {
                 lastPlayedPropertyVideos[spaceData.position] = randomVideo;
                 
                 const video = document.createElement('video');
+                const frame = createMediaFrame(video);
                 const srcObserver = watchVideoSrcMutations(video, media.name);
                 console.group(`[Video Debug] pre-assign — ${media.name}`);
                 console.log('original CDN URL from /api/config:', window.__VIDEO_DEBUG__?.configFromApi?.VIDEO_CDN_BASE_URL);
@@ -1823,11 +1861,6 @@ function showPropertyInfo(spaceData) {
                 video.loop = false; // Do not loop - play once then stop
                 video.playsInline = true;
                 video.controls = true;
-                video.style.width = '100%';
-                video.style.maxHeight = '250px';
-                video.style.objectFit = 'contain'; // Changed from 'cover' to handle portrait videos
-                video.style.borderRadius = '8px';
-                video.style.backgroundColor = '#000'; // Add black background for letterboxing
                 video.preload = 'auto';
                 pendingPropertyVideo = video;
                 
@@ -1847,8 +1880,8 @@ function showPropertyInfo(spaceData) {
                         return;
                     }
                     pendingPropertyVideo = null;
-                    mediaContainer.appendChild(video);
-                    mediaCache[cacheKey] = video.cloneNode(true);
+                    mediaContainer.appendChild(frame);
+                    mediaCache[cacheKey] = frame.cloneNode(true);
                     currentPropertyVideo = video;
                     video.play().catch(e => {});
                 });
@@ -1872,16 +1905,13 @@ function showPropertyInfo(spaceData) {
                 const img = document.createElement('img');
                 img.src = randomImage;
                 img.alt = media.name;
-                img.style.width = '100%';
-                img.style.maxHeight = '250px';
-                img.style.objectFit = 'cover';
-                img.style.borderRadius = '8px';
                 img.loading = 'lazy';
+                const imgFrame = createMediaFrame(img);
                 
                 img.addEventListener('load', () => {
                     mediaContainer.innerHTML = '';
-                    mediaContainer.appendChild(img);
-                    mediaCache[cacheKey] = img.cloneNode(true);
+                    mediaContainer.appendChild(imgFrame);
+                    mediaCache[cacheKey] = imgFrame.cloneNode(true);
                 });
                 
                 img.addEventListener('error', () => {

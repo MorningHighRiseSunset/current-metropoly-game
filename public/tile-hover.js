@@ -61,6 +61,9 @@ function showTileHover(tilePosition) {
         lastPlayedVideos[tilePosition] = randomVideo;
         
         const video = document.createElement('video');
+        const frame = document.createElement('div');
+        frame.className = 'media-frame media-frame--landscape';
+        frame.appendChild(video);
         // TEMP TEST: crossOrigin disabled — see game.js showPropertyInfo
         // video.crossOrigin = 'anonymous';
         video.src = randomVideo;
@@ -69,13 +72,11 @@ function showTileHover(tilePosition) {
         video.loop = true;
         video.playsInline = true;
         video.controls = true;
-        video.style.width = '100%';
-        video.style.maxHeight = '200px';
-        video.style.objectFit = 'contain'; // Changed from 'cover' to handle portrait videos
-        video.style.borderRadius = '8px';
-        video.style.backgroundColor = '#000'; // Add black background for letterboxing
+        if (typeof bindMediaFrameOrientation === 'function') {
+            bindMediaFrameOrientation(frame, video);
+        }
         currentVideo = video;
-        tileHoverMedia.appendChild(video);
+        tileHoverMedia.appendChild(frame);
         
         video.addEventListener('error', (e) => {
             console.error(`[Video Error] ${media.name} - Failed to load video`);
