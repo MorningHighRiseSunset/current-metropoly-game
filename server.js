@@ -135,8 +135,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Endpoint to provide CDN configuration to frontend
 app.get('/api/config', (req, res) => {
     res.json({
-        USE_VIDEO_CDN: process.env.USE_VIDEO_CDN === 'true',
-        VIDEO_CDN_BASE_URL: process.env.VIDEO_CDN_BASE_URL || '',
+        USE_VIDEO_CDN: process.env.USE_VIDEO_CDN === 'true' || true,
+        VIDEO_CDN_BASE_URL: process.env.VIDEO_CDN_BASE_URL || 'http://pub-7e0044f8048c45d0a1c328e210708508.r2.dev',
         USE_CDN: process.env.USE_CDN === 'true',
         CDN_BASE_URL: process.env.CDN_BASE_URL || ''
     });
