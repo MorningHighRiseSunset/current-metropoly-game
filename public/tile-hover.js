@@ -61,8 +61,9 @@ function showTileHover(tilePosition) {
         lastPlayedVideos[tilePosition] = randomVideo;
         
         const video = document.createElement('video');
+        // TEMP TEST: crossOrigin disabled — see game.js showPropertyInfo
+        // video.crossOrigin = 'anonymous';
         video.src = randomVideo;
-        video.crossOrigin = 'anonymous'; // Add CORS support for R2 bucket
         video.autoplay = true;
         video.muted = true;
         video.loop = true;

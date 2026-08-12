@@ -1807,6 +1807,9 @@ function showPropertyInfo(spaceData) {
                 }
                 console.log('filename/path:', randomVideo.split('/').slice(-2).join('/'));
                 console.groupEnd();
+                // TEMP TEST: crossOrigin disabled — R2 r2.dev has no CORS headers, which causes
+                // MediaError 4 (SRC_NOT_SUPPORTED) even when Network shows 206 Partial Content.
+                // video.crossOrigin = 'anonymous';
                 video.src = randomVideo;
                 debugVideoAssignment(video, {
                     phase: 'post-assign',
@@ -1815,7 +1818,6 @@ function showPropertyInfo(spaceData) {
                     intendedSrc: randomVideo,
                     fromCache: false
                 });
-                video.crossOrigin = 'anonymous'; // Add CORS support for R2 bucket
                 video.autoplay = true;
                 video.muted = true; // Muted for autoplay to work
                 video.loop = false; // Do not loop - play once then stop
