@@ -288,18 +288,18 @@ body {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 /* Player cards */
 .player-card {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 11px;
+    gap: 8px;
+    padding: 6px 8px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
+    border-radius: 8px;
     transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     min-width: 0;
 }
@@ -320,9 +320,9 @@ body {
 
 .player-card-avatar {
     flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -358,7 +358,7 @@ body {
 
 .player-card-name {
     font-weight: 600;
-    font-size: 0.88rem;
+    font-size: 0.75rem;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -373,13 +373,13 @@ body {
 }
 
 .player-card-badge {
-    font-size: 0.58rem;
+    font-size: 0.5rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    padding: 2px 5px;
-    border-radius: 4px;
-    line-height: 1.2;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1.1;
 }
 
 .player-card-badge.turn {
@@ -398,7 +398,7 @@ body {
 }
 
 .player-card-money {
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: #3dd68c;
     font-variant-numeric: tabular-nums;

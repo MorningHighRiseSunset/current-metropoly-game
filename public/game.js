@@ -3639,6 +3639,7 @@ function createPremiumBoardTile(spaceData, row, col) {
 let centerCarouselGroup = null;
 let carouselImages = [];
 let carouselCurrentIndex = 0;
+let hotelCasinoImages = new Set();
 
 // Fisher-Yates shuffle for randomizing carousel images
 function shuffleArray(array) {
@@ -3701,6 +3702,19 @@ function createCenterCarousel(parentGroup) {
         '/Images/house_of_blues_sunset.webp',
         '/Images/yellow_light_bulb.jpg',
     ];
+    
+    // Define hotel/casino images to prevent back-to-back display
+    hotelCasinoImages = new Set([
+        '/Images/santafecasino.jpg',
+        '/Images/themirage.jpg',
+        '/Images/bellagio.jpg',
+        '/Images/cosmopolitan.jpg',
+        '/Images/wynn_2_2.jpg',
+        '/Images/welcome_caesars_palace.jpg',
+        '/Images/BetMGM.jpg',
+        '/Images/LasVegasSphere.jpg',
+        '/Images/thesphere.jpg',
+    ]);
     
     // Use sequential track-based ordering instead of randomization
     console.log(`Total carousel images: ${allImages.length}`);
@@ -3811,16 +3825,33 @@ function preloadNextCarouselImage(imageMesh) {
     // Use sequential track-based ordering
     let nextIndex = (imageMesh.userData.currentIndex + 1) % imagesLength;
     
-    // Skip failed images
+    // Skip failed images and prevent hotel/casino images back-to-back
     let attempts = 0;
     const maxAttempts = imagesLength;
-    while (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(nextIndex) && attempts < maxAttempts) {
-        nextIndex = (nextIndex + 1) % imagesLength;
-        attempts++;
+    const currentImage = imageMesh.userData.images[imageMesh.userData.currentIndex];
+    const isCurrentHotelCasino = hotelCasinoImages.has(currentImage);
+    
+    while (attempts < maxAttempts) {
+        // Skip failed images
+        if (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(nextIndex)) {
+            nextIndex = (nextIndex + 1) % imagesLength;
+            attempts++;
+            continue;
+        }
+        
+        // Skip hotel/casino images if current is also hotel/casino
+        const nextImage = imageMesh.userData.images[nextIndex];
+        if (isCurrentHotelCasino && hotelCasinoImages.has(nextImage)) {
+            nextIndex = (nextIndex + 1) % imagesLength;
+            attempts++;
+            continue;
+        }
+        
+        break;
     }
     
     if (attempts >= maxAttempts) {
-        console.warn('All carousel images failed to load');
+        console.warn('All carousel images failed to load or are hotel/casino');
         return;
     }
     
@@ -3876,16 +3907,33 @@ function animateCenterCarousel() {
             const imagesLength = imageMesh.userData.images.length;
             let newIndex = (imageMesh.userData.currentIndex + 1) % imagesLength;
             
-            // Skip failed images
+            // Skip failed images and prevent hotel/casino images back-to-back
             let attempts = 0;
             const maxAttempts = imagesLength;
-            while (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(newIndex) && attempts < maxAttempts) {
-                newIndex = (newIndex + 1) % imagesLength;
-                attempts++;
+            const currentImage = imageMesh.userData.images[imageMesh.userData.currentIndex];
+            const isCurrentHotelCasino = hotelCasinoImages.has(currentImage);
+            
+            while (attempts < maxAttempts) {
+                // Skip failed images
+                if (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(newIndex)) {
+                    newIndex = (newIndex + 1) % imagesLength;
+                    attempts++;
+                    continue;
+                }
+                
+                // Skip hotel/casino images if current is also hotel/casino
+                const nextImage = imageMesh.userData.images[newIndex];
+                if (isCurrentHotelCasino && hotelCasinoImages.has(nextImage)) {
+                    newIndex = (newIndex + 1) % imagesLength;
+                    attempts++;
+                    continue;
+                }
+                
+                break;
             }
             
             if (attempts >= maxAttempts) {
-                console.warn('All carousel images failed to load, staying on current');
+                console.warn('All carousel images failed to load or are hotel/casino, staying on current');
                 return;
             }
             
