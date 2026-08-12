@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Metropoly - Online Multiplayer</title>
-    <link rel="stylesheet" href="/game.css?v=20250812-media-frame">
+    <link rel="stylesheet" href="/game.css?v=20250812-combined-modal">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fflate/0.8.0/fflate.min.js"></script>
@@ -128,22 +128,25 @@
 
     <!-- Modals -->
     <div id="propertyModal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content property-modal-content">
             <span class="modal-close">&times;</span>
-            <h3 id="propertyTitle">Property</h3>
-            <div id="propertyMedia" class="property-media"></div>
-            <div id="propertyContent"></div>
-        </div>
-    </div>
-
-    <div id="buyModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <h3>Buy Property</h3>
-            <div id="buyContent"></div>
-            <div class="modal-actions">
-                <button id="confirmBuyBtn" class="btn btn-success">Buy</button>
-                <button id="cancelBuyBtn" class="btn btn-secondary">Cancel</button>
+            <div class="property-modal-header">
+                <span id="propertyColorBar" class="property-color-bar" aria-hidden="true"></span>
+                <div class="property-modal-heading">
+                    <h3 id="propertyTitle">Property</h3>
+                    <p id="propertySubtitle" class="property-subtitle"></p>
+                </div>
+            </div>
+            <div class="property-modal-body">
+                <div id="propertyMedia" class="property-media"></div>
+                <div class="property-details-panel">
+                    <div id="propertyContent" class="property-details"></div>
+                    <p id="propertyDecisionPrompt" class="property-decision-prompt hidden"></p>
+                </div>
+            </div>
+            <div id="propertyActions" class="property-actions hidden">
+                <button id="propertyConfirmBtn" class="btn btn-success">Buy Property</button>
+                <button id="propertyPassBtn" class="btn btn-secondary">Pass</button>
             </div>
         </div>
     </div>

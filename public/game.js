@@ -649,7 +649,6 @@ let lastMouseY = 0;
 
 // Modal elements
 const propertyModal = document.getElementById('propertyModal');
-const buyModal = document.getElementById('buyModal');
 const gameOverModal = document.getElementById('gameOverModal');
 const gameOverTitle = document.getElementById('gameOverTitle');
 const gameOverContent = document.getElementById('gameOverContent');
@@ -966,7 +965,14 @@ function dismissPropertyDecisionUI() {
     clearPropertyDecisionTimer();
     activePropertyDecision = null;
     waitingForBuyResult = false;
-    if (buyModal) buyModal.classList.add('hidden');
+    const propertyActions = document.getElementById('propertyActions');
+    const decisionPrompt = document.getElementById('propertyDecisionPrompt');
+    if (propertyActions) propertyActions.classList.add('hidden');
+    if (decisionPrompt) {
+        decisionPrompt.classList.add('hidden');
+        decisionPrompt.textContent = '';
+    }
+    closePropertyModal();
 }
 
 let clientAutoEndTurnTimer = null;
@@ -999,94 +1005,124 @@ function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
     }, delay);
 }
 
-function updateBuyModalContent() {
+function updatePropertyDecisionUI() {
     if (!activePropertyDecision) return;
-    const buyContent = document.getElementById('buyContent');
-    const confirmBuyBtn = document.getElementById('confirmBuyBtn');
-    const cancelBuyBtn = document.getElementById('cancelBuyBtn');
-    if (!buyContent) return;
+    const propertyActions = document.getElementById('propertyActions');
+    const propertyConfirmBtn = document.getElementById('propertyConfirmBtn');
+    const propertyPassBtn = document.getElementById('propertyPassBtn');
+    const decisionPrompt = document.getElementById('propertyDecisionPrompt');
+    if (!propertyActions || !propertyConfirmBtn || !propertyPassBtn) return;
 
     const isRentDecision = activePropertyDecision.isRent;
     const canAfford = currentPlayer && currentPlayer.money >= activePropertyDecision.spaceData.price;
     const isCasino = activePropertyDecision.spaceData.isCasino;
+    const spaceData = activePropertyDecision.spaceData;
 
-    let html = `<p><strong>${activePropertyDecision.spaceData.name}</strong></p>`;
-    
+    let confirmLabel = 'Buy Property';
+    let passLabel = 'Pass';
+    let promptText = canAfford ? 'Buy this property or pass.' : 'Not enough money to buy. Pass to continue.';
+    let confirmHandler = null;
+
     if (isRentDecision) {
         const owner = activePropertyDecision.owner;
-        const rent = calculateRentAmount(activePropertyDecision.spaceData, owner);
-        html += `<p>Owned by: <strong>${owner.name}</strong></p>`;
-        html += `<p>Rent due: <strong>$${rent}</strong></p>`;
-        html += `<p>You must pay rent to continue.</p>`;
-        
-        // Update button text for rent
-        if (confirmBuyBtn) {
-            confirmBuyBtn.textContent = 'Pay Rent';
-            confirmBuyBtn.onclick = () => {
-                if (currentPlayer && currentPlayer.money >= rent) {
-                    socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
-                    dismissPropertyDecisionUI();
-                    endTurnNow();
-                } else {
-                    alert('Not enough money to pay rent!');
-                }
-            };
-        }
+        const rent = calculateRentAmount(spaceData, owner);
+        confirmLabel = 'Pay Rent';
+        passLabel = 'Pass';
+        promptText = `Owned by ${owner.name}. Pay $${rent} to continue.`;
+        confirmHandler = () => {
+            if (currentPlayer && currentPlayer.money >= rent) {
+                socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
+                dismissPropertyDecisionUI();
+                endTurnNow();
+            } else {
+                alert('Not enough money to pay rent!');
+            }
+        };
     } else {
-        html += `<p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>`;
-        html += `<p>Rent: <strong>$${activePropertyDecision.spaceData.rent ? activePropertyDecision.spaceData.rent[0] : 0}</strong></p>`;
-        html += `<p>${canAfford ? 'Buy this property or click End Turn when you are done.' : 'Not enough money to buy. Click End Turn.'}</p>`;
-        
-        // Reset button text for buy
-        if (confirmBuyBtn) {
-            confirmBuyBtn.textContent = 'Buy Property';
-            confirmBuyBtn.onclick = () => {
-                if (canAfford) {
-                    waitingForBuyResult = true;
-                    socket.emit('buyProperty', { position: activePropertyDecision.position });
-                    if (!isCasino) {
-                        setTimeout(() => {
-                            if (gameState && gameState.currentPlayer === myPlayerId) {
-                                endTurnNow();
-                            }
-                        }, 500);
-                    }
+        confirmHandler = () => {
+            if (canAfford) {
+                waitingForBuyResult = true;
+                socket.emit('buyProperty', { position: activePropertyDecision.position });
+                dismissPropertyDecisionUI();
+                if (!isCasino) {
+                    setTimeout(() => {
+                        if (gameState && gameState.currentPlayer === myPlayerId) {
+                            endTurnNow();
+                        }
+                    }, 500);
                 }
-            };
-        }
+            } else {
+                alert('Not enough money to buy this property.');
+            }
+        };
     }
-    
-    buyContent.innerHTML = html;
+
+    if (decisionPrompt) {
+        decisionPrompt.textContent = promptText;
+        decisionPrompt.classList.remove('hidden');
+    }
+
+    propertyConfirmBtn.textContent = confirmLabel;
+    propertyPassBtn.textContent = passLabel;
+    propertyConfirmBtn.onclick = confirmHandler;
+    propertyPassBtn.onclick = () => {
+        if (!activePropertyDecision) return;
+        if (isRentDecision) {
+            alert('You must pay rent to continue.');
+            return;
+        }
+        socket.emit('passProperty', { position: activePropertyDecision.position });
+        dismissPropertyDecisionUI();
+    };
+    propertyActions.classList.remove('hidden');
+}
+
+function finishLandingDecisionUI() {
+    if (!activePropertyDecision || !gameState || gameState.currentPlayer !== myPlayerId) {
+        if (activePropertyDecision) dismissPropertyDecisionUI();
+        return;
+    }
+
+    showPropertyInfo(activePropertyDecision.spaceData, { showDecisionActions: true });
+    updatePropertyDecisionUI();
+}
+
+function openLandingPropertyModal(spaceData) {
+    showPropertyInfo(spaceData, { showDecisionActions: true });
+    updatePropertyDecisionUI();
+}
+
+function beginLandingDecision({ spaceData, position, isRent = false, owner = null }) {
+    if (!spaceData || !currentPlayer) return;
+    cancelClientAutoEndTurn();
+    clearPropertyDecisionTimer();
+    waitingForBuyResult = false;
+    activePropertyDecision = { spaceData, position, isRent, owner };
+
+    if (spaceData.isCasino && !currentPlayer.isAI) {
+        if (propertyModal) propertyModal.classList.add('hidden');
+        cleanupPropertyVideo();
+        openCasinoGame(spaceData.casinoGame);
+    } else {
+        openLandingPropertyModal(spaceData);
+    }
+
+    updateUI();
 }
 
 function startPropertyDecision(spaceData, position) {
-    if (!spaceData || !buyModal || !currentPlayer) return;
-    cancelClientAutoEndTurn();
-    clearPropertyDecisionTimer();
-    waitingForBuyResult = false;
-    activePropertyDecision = { spaceData, position, isRent: false };
-
-    // Auto-open casino if this is a casino property (only for human players)
-    if (spaceData.isCasino && !currentPlayer.isAI) {
-        openCasinoGame(spaceData.casinoGame);
-    } else {
-        updateBuyModalContent();
-        buyModal.classList.remove('hidden');
-    }
-
-    updateUI();
+    if (!spaceData || !currentPlayer) return;
+    beginLandingDecision({ spaceData, position, isRent: false });
 }
 
 function startRentDecision(ownedData, position) {
-    if (!ownedData || !buyModal || !currentPlayer) return;
-    cancelClientAutoEndTurn();
-    clearPropertyDecisionTimer();
-    waitingForBuyResult = false;
-    activePropertyDecision = { spaceData: ownedData.spaceData, position, owner: ownedData.owner, isRent: true };
-    updateBuyModalContent();
-    
-    buyModal.classList.remove('hidden');
-    updateUI();
+    if (!ownedData || !currentPlayer) return;
+    beginLandingDecision({
+        spaceData: ownedData.spaceData,
+        position,
+        isRent: true,
+        owner: ownedData.owner
+    });
 }
 
 function calculateRentAmount(spaceData, owner) {
@@ -1132,10 +1168,8 @@ function openCasinoGame(gameName) {
 
     casinoModal.classList.remove('hidden');
 
-    // Hide buy modal
-    if (buyModal) {
-        buyModal.classList.add('hidden');
-    }
+    if (propertyModal) propertyModal.classList.add('hidden');
+    cleanupPropertyVideo();
 
     // Listen for messages from the casino game iframe (only add listener once)
     if (!casinoMessageListenerAttached) {
@@ -1214,20 +1248,7 @@ function closeCasinoGame() {
     window.removeEventListener('message', handleCasinoGameMessage);
     casinoMessageListenerAttached = false;
 
-    // Show buy modal after casino game ends for property purchase
-    // Only if it's still the current player's turn and the property decision is still active
-    if (activePropertyDecision && 
-        activePropertyDecision.spaceData.isCasino && 
-        gameState && 
-        gameState.currentPlayer === myPlayerId) {
-        updateBuyModalContent();
-        buyModal.classList.remove('hidden');
-    } else {
-        // Clean up stale property decision state
-        if (activePropertyDecision) {
-            dismissPropertyDecisionUI();
-        }
-    }
+    finishLandingDecisionUI();
 }
 
 function lerpCoords(from, to, t) {
@@ -1761,24 +1782,67 @@ function logVideoLoadError(video, context) {
 
 function closePropertyModal() {
     cleanupPropertyVideo();
+    const propertyActions = document.getElementById('propertyActions');
+    const decisionPrompt = document.getElementById('propertyDecisionPrompt');
+    if (propertyActions && !activePropertyDecision) {
+        propertyActions.classList.add('hidden');
+    }
+    if (decisionPrompt && !activePropertyDecision) {
+        decisionPrompt.classList.add('hidden');
+        decisionPrompt.textContent = '';
+    }
     if (propertyModal) {
         propertyModal.classList.add('hidden');
     }
 }
 
+function buildPropertyDetailsHtml(spaceData) {
+    const owner = players.find(p => p && p.properties && p.properties.includes(spaceData.position));
+    const isPurchasable = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
+    const isRentDecision = activePropertyDecision
+        && activePropertyDecision.position === spaceData.position
+        && activePropertyDecision.isRent;
+    let html = '';
+
+    if (isPurchasable) {
+        html += '<div class="property-stat-grid">';
+        if (isRentDecision) {
+            const rent = calculateRentAmount(spaceData, activePropertyDecision.owner);
+            html += `<div class="property-stat"><span class="property-stat-label">Rent Due</span><span class="property-stat-value property-stat-value--accent">$${rent}</span></div>`;
+            html += `<div class="property-stat"><span class="property-stat-label">Owner</span><span class="property-stat-value">${activePropertyDecision.owner.name}</span></div>`;
+        } else {
+            html += `<div class="property-stat"><span class="property-stat-label">Price</span><span class="property-stat-value property-stat-value--accent">$${spaceData.price}</span></div>`;
+            html += `<div class="property-stat"><span class="property-stat-label">Base Rent</span><span class="property-stat-value">$${spaceData.rent ? spaceData.rent[0] : 0}</span></div>`;
+        }
+        html += `<div class="property-stat"><span class="property-stat-label">Tile</span><span class="property-stat-value">#${spaceData.position}</span></div>`;
+        html += `<div class="property-stat"><span class="property-stat-label">Status</span><span class="property-stat-value">${owner ? owner.name : 'Available'}</span></div>`;
+        html += '</div>';
+    } else if (spaceData.type === 'tax') {
+        html += `<div class="property-stat"><span class="property-stat-label">Tax</span><span class="property-stat-value property-stat-value--accent">$${spaceData.amount}</span></div>`;
+    }
+
+    if (spaceData.address) {
+        html += `<p class="property-detail-line">${spaceData.address}</p>`;
+    }
+
+    return html;
+}
+
 // Show property information
-function showPropertyInfo(spaceData) {
-    // console.log('showPropertyInfo called for:', spaceData.name, 'position:', spaceData.position);
+function showPropertyInfo(spaceData, options = {}) {
+    const { showDecisionActions = false } = options;
     cleanupPropertyVideo();
     const mediaSession = propertyMediaSession;
 
     const modal = propertyModal;
     const title = document.getElementById('propertyTitle');
+    const subtitle = document.getElementById('propertySubtitle');
+    const colorBar = document.getElementById('propertyColorBar');
     const content = document.getElementById('propertyContent');
     const mediaContainer = document.getElementById('propertyMedia') || document.getElementById('property-media');
     const loadingIndicator = document.getElementById('loadingIndicator');
-    
-    // console.log('Modal elements:', { modal: !!modal, title: !!title, content: !!content, mediaContainer: !!mediaContainer });
+    const propertyActions = document.getElementById('propertyActions');
+    const decisionPrompt = document.getElementById('propertyDecisionPrompt');
     
     if (!modal || !title || !content || !mediaContainer) {
         console.error('Modal elements not found!');
@@ -1786,6 +1850,28 @@ function showPropertyInfo(spaceData) {
     }
     
     title.textContent = spaceData.name;
+
+    if (subtitle) {
+        const typeLabel = spaceData.type === 'property' ? 'Property' : spaceData.type.replace(/-/g, ' ');
+        subtitle.textContent = `${typeLabel}${spaceData.isCasino ? ' · Casino' : ''}`;
+    }
+
+    if (colorBar) {
+        colorBar.style.background = spaceData.color || '#888';
+    }
+
+    if (propertyActions) {
+        if (showDecisionActions) {
+            propertyActions.classList.remove('hidden');
+        } else {
+            propertyActions.classList.add('hidden');
+        }
+    }
+
+    if (decisionPrompt && !showDecisionActions) {
+        decisionPrompt.classList.add('hidden');
+        decisionPrompt.textContent = '';
+    }
     
     // Clear previous media
     mediaContainer.innerHTML = '';
@@ -1926,35 +2012,7 @@ function showPropertyInfo(spaceData) {
         mediaContainer.innerHTML = '';
     }
     
-    let html = `<p><strong>Position:</strong> ${spaceData.position}</p>`;
-    html += `<p><strong>Type:</strong> ${spaceData.type}</p>`;
-    
-    if (spaceData.address) {
-        html += `<p><strong>Address:</strong> ${spaceData.address}</p>`;
-    }
-    
-    if (spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility') {
-        html += `<p><strong>Price:</strong> $${spaceData.price}</p>`;
-
-        if (spaceData.rent) {
-            html += `<p><strong>Rent:</strong> $${spaceData.rent[0]}</p>`;
-        }
-
-        if (spaceData.position !== undefined && spaceData.position !== null) {
-            const owner = players.find(p => p && p.properties && p.properties.includes(spaceData.position));
-            if (owner) {
-                html += `<p><strong>Owner:</strong> ${owner.name}</p>`;
-            } else {
-                html += `<p><strong>Status:</strong> Available</p>`;
-            }
-        }
-    } else if (spaceData.type === 'tax') {
-        html += `<p><strong>Tax Amount:</strong> $${spaceData.amount}</p>`;
-    }
-    
-    content.innerHTML = html;
-    
-    // console.log('Removing hidden class from modal');
+    content.innerHTML = buildPropertyDetailsHtml(spaceData);
     modal.classList.remove('hidden');
 }
 
@@ -2599,7 +2657,7 @@ socket.on('propertyPurchased', (data) => {
             waitingForBuyResult = false;
             activePropertyDecision = null;
             clearPropertyDecisionTimer();
-            if (buyModal) buyModal.classList.add('hidden');
+            dismissPropertyDecisionUI();
             updateUI();
             endTurnNow();
         }
@@ -2612,9 +2670,8 @@ socket.on('propertyPassed', (data) => {
     
     if (playerId === myPlayerId) {
         waitingForBuyResult = false;
-        activePropertyDecision = null;
         clearPropertyDecisionTimer();
-        if (buyModal) buyModal.classList.add('hidden');
+        dismissPropertyDecisionUI();
         updateUI();
     }
 });
@@ -3031,7 +3088,7 @@ socket.on('gameError', (error) => {
         waitingForBuyResult = false;
         activePropertyDecision = null;
         clearPropertyDecisionTimer();
-        if (buyModal) buyModal.classList.add('hidden');
+        dismissPropertyDecisionUI();
     }
 });
 
@@ -3123,48 +3180,7 @@ function showTokenSelection() {
     tokenModal.classList.remove('hidden');
 }
 
-const confirmBuyBtn = document.getElementById('confirmBuyBtn');
-const cancelBuyBtn = document.getElementById('cancelBuyBtn');
 const closeCasinoBtn = document.getElementById('closeCasinoBtn');
-
-if (confirmBuyBtn) {
-    confirmBuyBtn.addEventListener('click', () => {
-        if (!activePropertyDecision) return;
-        const { position, spaceData } = activePropertyDecision;
-        const canAfford = currentPlayer && currentPlayer.money >= spaceData.price;
-        const isCasino = spaceData.isCasino;
-        clearPropertyDecisionTimer();
-        buyModal.classList.add('hidden');
-
-        if (canAfford) {
-            waitingForBuyResult = true;
-            socket.emit('buyProperty', { position });
-            
-            // Auto-end turn for non-casino properties
-            if (!isCasino) {
-                setTimeout(() => {
-                    if (gameState && gameState.currentPlayer === myPlayerId) {
-                        endTurnNow();
-                    }
-                }, 500);
-            }
-        } else {
-            socket.emit('passProperty', { position });
-            addLogEntry(`Cannot afford ${spaceData.name}. Passing.`, 'system');
-            activePropertyDecision = null;
-        }
-    });
-}
-
-if (cancelBuyBtn) {
-    cancelBuyBtn.addEventListener('click', () => {
-        if (!activePropertyDecision) return;
-        socket.emit('passProperty', { position: activePropertyDecision.position });
-        clearPropertyDecisionTimer();
-        buyModal.classList.add('hidden');
-        activePropertyDecision = null;
-    });
-}
 
 if (closeCasinoBtn) {
     closeCasinoBtn.addEventListener('click', () => {
@@ -3248,14 +3264,17 @@ if (endTurnBtn) {
 document.querySelectorAll('.modal-close').forEach(closeBtn => {
     closeBtn.addEventListener('click', (e) => {
         const modal = e.target.closest('.modal');
-        if (modal === buyModal && activePropertyDecision) {
-            socket.emit('passProperty', { position: activePropertyDecision.position });
-            clearPropertyDecisionTimer();
-            activePropertyDecision = null;
-            waitingForBuyResult = false;
-        }
         if (modal === propertyModal) {
-            closePropertyModal();
+            if (activePropertyDecision) {
+                if (activePropertyDecision.isRent) {
+                    alert('You must pay rent to continue.');
+                } else {
+                    socket.emit('passProperty', { position: activePropertyDecision.position });
+                    dismissPropertyDecisionUI();
+                }
+            } else {
+                closePropertyModal();
+            }
             return;
         }
         if (modal.id === 'casinoGameModal') {
@@ -3270,14 +3289,17 @@ document.querySelectorAll('.modal-close').forEach(closeBtn => {
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
-            if (modal === buyModal && activePropertyDecision) {
-                socket.emit('passProperty', { position: activePropertyDecision.position });
-                clearPropertyDecisionTimer();
-                activePropertyDecision = null;
-                waitingForBuyResult = false;
-            }
             if (modal === propertyModal) {
-                closePropertyModal();
+                if (activePropertyDecision) {
+                    if (activePropertyDecision.isRent) {
+                        alert('You must pay rent to continue.');
+                    } else {
+                        socket.emit('passProperty', { position: activePropertyDecision.position });
+                        dismissPropertyDecisionUI();
+                    }
+                } else {
+                    closePropertyModal();
+                }
                 return;
             }
             modal.classList.add('hidden');

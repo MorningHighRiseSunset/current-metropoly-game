@@ -126,9 +126,7 @@ function initializeTileHover() {
         if (!isNaN(position) && tileMedia && tileMedia[position]) {
             space.addEventListener('mouseenter', () => {
                 // Don't show hover if any modal is open
-                const buyModal = document.getElementById('buyModal');
                 const propertyModal = document.getElementById('propertyModal');
-                if (buyModal && !buyModal.classList.contains('hidden')) return;
                 if (propertyModal && !propertyModal.classList.contains('hidden')) return;
                 
                 if (hoverTimeout) {

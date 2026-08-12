@@ -1978,12 +1978,213 @@ body {
     transform: translateY(-2px);
 }
 
+/* Property Modal — compact card layout */
+#propertyModal {
+    z-index: 2100;
+}
+
+#propertyModal .property-modal-content {
+    max-width: 400px;
+    width: 92%;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 4px 24px var(--shadow-color);
+    animation: modalSlideIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+#propertyModal .modal-close {
+    top: 10px;
+    right: 12px;
+    z-index: 2;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.35);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.property-modal-header {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.property-color-bar {
+    width: 5px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    background: #888;
+}
+
+.property-modal-heading {
+    min-width: 0;
+    padding-right: 24px;
+}
+
+.property-modal-heading h3 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--text-primary);
+}
+
+.property-subtitle {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.3;
+}
+
+.property-modal-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 12px;
+    padding: 12px 14px 14px;
+    align-items: start;
+}
+
+.property-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.property-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.property-stat {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 10px;
+}
+
+.property-stat-label {
+    display: block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.property-stat-value {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.property-stat-value--accent {
+    color: #4a9eff;
+}
+
+.property-detail-line {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+.property-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(74, 158, 255, 0.15);
+    color: #4a9eff;
+    border: 1px solid rgba(74, 158, 255, 0.25);
+}
+
+.property-badge--casino {
+    background: rgba(255, 215, 0, 0.12);
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.25);
+}
+
+.property-details-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.property-decision-prompt {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.75);
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(74, 158, 255, 0.08);
+    border: 1px solid rgba(74, 158, 255, 0.15);
+}
+
+.property-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 14px 14px;
+}
+
+.property-actions .btn {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+#propertyConfirmBtn {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(39, 174, 96, 0.25);
+}
+
+#propertyConfirmBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(39, 174, 96, 0.35);
+}
+
+#propertyPassBtn {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+#propertyPassBtn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+#casinoGameModal {
+    z-index: 2200;
+}
+
 /* Property Modal Media */
 .property-media {
     width: 100%;
-    margin-bottom: 15px;
+    margin-bottom: 0;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
 }
 
 .property-media .media-frame {
@@ -2000,14 +2201,13 @@ body {
 
 .property-media .media-frame--square {
     aspect-ratio: 1 / 1;
-    max-width: min(100%, 320px);
+    max-width: 100%;
 }
 
-/* Portrait / TikTok-style: tall narrow frame, crops with cover instead of letterboxing */
 .property-media .media-frame--portrait {
     aspect-ratio: 9 / 16;
-    max-width: min(100%, 200px);
-    max-height: 300px;
+    max-width: 100%;
+    max-height: 180px;
 }
 
 .property-media .media-frame video,
@@ -2017,6 +2217,18 @@ body {
     display: block;
     object-fit: cover;
     object-position: center;
+}
+
+@media (max-width: 520px) {
+    .property-modal-body {
+        grid-template-columns: 1fr;
+    }
+
+    .property-media .media-frame--portrait {
+        max-height: 220px;
+        max-width: min(100%, 160px);
+        margin: 0 auto;
+    }
 }
 
 /* Responsive Design */
