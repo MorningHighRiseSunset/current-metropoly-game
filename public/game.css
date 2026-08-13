@@ -1986,8 +1986,10 @@ body {
 #propertyModal .property-modal-content {
     max-width: 460px;
     width: 92%;
+    max-height: min(92vh, 720px);
     padding: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     border: 1px solid var(--card-border);
     box-shadow: 0 4px 24px var(--shadow-color);
     animation: modalSlideIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -2208,11 +2210,12 @@ body {
 
 .property-media .media-frame--portrait {
     aspect-ratio: 9 / 16;
-    width: min(100%, 300px);
-    max-width: 300px;
-    min-height: 340px;
-    max-height: 480px;
+    height: min(320px, 36vh);
+    width: auto;
+    max-width: min(100%, 220px);
+    min-height: 0;
     margin: 0 auto;
+    flex-shrink: 0;
 }
 
 .property-media .media-frame video,
@@ -2230,9 +2233,8 @@ body {
     }
 
     .property-media .media-frame--portrait {
-        max-width: 260px;
-        min-height: 300px;
-        max-height: 420px;
+        height: min(280px, 32vh);
+        max-width: min(100%, 200px);
     }
 }
 
