@@ -112,14 +112,6 @@ window.initBaccaratMinigame = function(container, playerMoneyInit, updateMainGam
         } else if (container && typeof CustomEvent === 'function') {
             container.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance: playerMoney}}));
         }
-        // Send winnings to parent window via postMessage
-        if (window.parent !== window) {
-            const initialBalance = typeof playerMoneyInit === 'number' ? playerMoneyInit : 2500;
-            const winnings = playerMoney - initialBalance;
-            if (winnings !== 0) {
-                window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-            }
-        }
     }
     function resetGame() {
         deck = createDeck();

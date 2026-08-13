@@ -2208,9 +2208,10 @@ body {
 
 .property-media .media-frame--portrait {
     aspect-ratio: 9 / 16;
-    width: auto;
-    max-width: 170px;
-    max-height: 260px;
+    width: min(100%, 300px);
+    max-width: 300px;
+    min-height: 340px;
+    max-height: 480px;
     margin: 0 auto;
 }
 
@@ -2229,8 +2230,9 @@ body {
     }
 
     .property-media .media-frame--portrait {
-        max-height: 220px;
-        max-width: 150px;
+        max-width: 260px;
+        min-height: 300px;
+        max-height: 420px;
     }
 }
 

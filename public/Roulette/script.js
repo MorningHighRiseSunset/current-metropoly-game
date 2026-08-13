@@ -432,14 +432,6 @@ function updatePlayerInfo() {
 	} else if (root && typeof CustomEvent === 'function') {
 		root.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance: window.playerBalance}}));
 	}
-	// Send winnings to parent window via postMessage
-	if (window.parent !== window) {
-		const initialBalance = typeof playerMoney === 'number' ? playerMoney : 2500;
-		const winnings = window.playerBalance - initialBalance;
-		if (winnings !== 0) {
-			window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-		}
-	}
 }
 window.updatePlayerInfo = updatePlayerInfo;
 

@@ -92,39 +92,15 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
 			playerBankroll += bet.amount * (payout - 1);
 			showStatus(msg + ` +$${bet.amount * (payout - 1)}`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
-			// Send winnings to parent window via postMessage
-			if (window.parent !== window) {
-				const initialBalance = bankroll || 2500;
-				const winnings = playerBankroll - initialBalance;
-				if (winnings !== 0) {
-					window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-				}
-			}
 		}
 		function loseBet(bet, msg) {
 			showStatus(msg + ` -$${bet.amount}`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
-			// Send winnings to parent window via postMessage
-			if (window.parent !== window) {
-				const initialBalance = bankroll || 2500;
-				const winnings = playerBankroll - initialBalance;
-				if (winnings !== 0) {
-					window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-				}
-			}
 		}
 		function pushBet(bet, msg) {
 			playerBankroll += bet.amount;
 			showStatus(msg + ` (push)`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
-			// Send winnings to parent window via postMessage
-			if (window.parent !== window) {
-				const initialBalance = bankroll || 2500;
-				const winnings = playerBankroll - initialBalance;
-				if (winnings !== 0) {
-					window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-				}
-			}
 		}
 		function endRound() {
 			setTimeout(() => {

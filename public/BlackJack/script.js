@@ -226,14 +226,6 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
 			// Fallback: dispatch event for loader to catch
 			container.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance}}));
 		}
-		// Send winnings to parent window via postMessage
-		if (window.parent !== window) {
-			const initialBalance = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 2500;
-			const winnings = balance - initialBalance;
-			if (winnings !== 0) {
-				window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-			}
-		}
 	}
 	function showAceChoiceDialog(cardIdx, callback) {
 		const dialog = document.createElement('div');

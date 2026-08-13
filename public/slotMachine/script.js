@@ -105,14 +105,6 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 		} else if (container && typeof CustomEvent === 'function') {
 			container.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance}}));
 		}
-		// Send winnings to parent window via postMessage
-		if (window.parent !== window) {
-			const initialBalance = typeof playerMoney === 'number' ? playerMoney : 2500;
-			const winnings = balance - initialBalance;
-			if (winnings !== 0) {
-				window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-			}
-		}
 	}
 
 	function getRandomSymbol() {

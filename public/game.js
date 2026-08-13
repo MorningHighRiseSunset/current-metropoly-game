@@ -36,6 +36,7 @@ let propertyDecisionEndsAt = null;
 let activePropertyDecision = null;
 let waitingForBuyResult = false;
 let casinoMessageListenerAttached = false;
+let activeCasinoBalanceSync = null;
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -1104,11 +1105,49 @@ function updatePropertyDecisionUI() {
     propertyActions.classList.remove('hidden');
 }
 
-function finishLandingDecisionUI() {
-    if (!activePropertyDecision || !gameState || gameState.currentPlayer !== myPlayerId) {
-        if (activePropertyDecision) dismissPropertyDecisionUI();
-        return;
+function createCasinoBalanceSync(startingMoney) {
+    let lastSyncedBalance = startingMoney;
+    return function syncCasinoBalance(balance) {
+        if (!socket || typeof balance !== 'number' || Number.isNaN(balance)) return;
+
+        const moneyDiff = balance - lastSyncedBalance;
+        if (moneyDiff === 0) return;
+
+        lastSyncedBalance = balance;
+        socket.emit('casinoWinnings', { amount: moneyDiff });
+
+        const localPlayer = resolveLocalPlayer(players);
+        if (localPlayer) {
+            localPlayer.money = (localPlayer.money ?? startingMoney) + moneyDiff;
+            if (currentPlayer && currentPlayer.id === localPlayer.id) {
+                currentPlayer.money = localPlayer.money;
+            }
+        }
+
+        const label = moneyDiff > 0 ? `Casino win: +$${moneyDiff}` : `Casino loss: -$${Math.abs(moneyDiff)}`;
+        addLogEntry(label, 'system');
+        updateUI();
+    };
+}
+
+function flushCasinoBalanceFromIframe(casinoContainer) {
+    if (!activeCasinoBalanceSync || !casinoContainer) return;
+    try {
+        const iframe = casinoContainer.querySelector('iframe');
+        const win = iframe?.contentWindow;
+        if (!win) return;
+
+        const exposedBalance = win.__casinoBalance ?? win.playerBalance ?? win.playerMoney ?? win.playerBankroll;
+        if (typeof exposedBalance === 'number' && !Number.isNaN(exposedBalance)) {
+            activeCasinoBalanceSync(exposedBalance);
+        }
+    } catch (e) {
+        // Cross-origin or teardown race — balance already synced via callback when possible
     }
+}
+
+function finishLandingDecisionUI() {
+    if (!activePropertyDecision) return;
 
     showPropertyInfo(activePropertyDecision.spaceData, { showDecisionActions: true });
     updatePropertyDecisionUI();
@@ -1249,18 +1288,14 @@ function openCasinoGame(gameName) {
                     return;
                 }
 
-                let lastSyncedBalance = playerMoney;
-                const updateMainGameBalance = function(balance) {
-                    if (currentPlayer && socket) {
-                        const moneyDiff = balance - lastSyncedBalance;
-                        if (moneyDiff !== 0) {
-                            socket.emit('casinoWinnings', { amount: moneyDiff });
-                            lastSyncedBalance = balance;
-                        }
-                    }
-                };
+                activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
 
-                initFn(container, playerMoney, updateMainGameBalance);
+                initFn(container, playerMoney, function syncCasinoBalance(balance) {
+                    activeCasinoBalanceSync(balance);
+                    try {
+                        iframe.contentWindow.__casinoBalance = balance;
+                    } catch (e) {}
+                });
             } catch (e) {
                 console.error('[Casino] Could not initialize casino game:', gameName, e);
             }
@@ -1270,13 +1305,7 @@ function openCasinoGame(gameName) {
 
 // Handle messages from casino game iframe
 function handleCasinoGameMessage(event) {
-    if (event.data && event.data.type === 'casinoWinnings') {
-        const winnings = event.data.amount || 0;
-        if (winnings !== 0 && socket) {
-            socket.emit('casinoWinnings', { amount: winnings });
-        }
-    } else if (event.data && event.data.type === 'casinoGameClose') {
-        // Casino game is requesting to close
+    if (event.data && event.data.type === 'casinoGameClose') {
         closeCasinoGame();
     }
 }
@@ -1286,6 +1315,9 @@ function closeCasinoGame() {
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoContainer = document.getElementById('casinoGameContainer');
 
+    flushCasinoBalanceFromIframe(casinoContainer);
+    activeCasinoBalanceSync = null;
+
     if (casinoModal) {
         casinoModal.classList.add('hidden');
     }
@@ -1293,10 +1325,6 @@ function closeCasinoGame() {
     if (casinoContainer) {
         casinoContainer.innerHTML = '';
     }
-
-    // Remove message listener
-    window.removeEventListener('message', handleCasinoGameMessage);
-    casinoMessageListenerAttached = false;
 
     finishLandingDecisionUI();
 }
