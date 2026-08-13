@@ -685,6 +685,7 @@ let propertyMediaSession = 0;
 
 function stopVideoElement(video) {
     if (!video) return;
+    video._intentionalStop = true;
     video.pause();
     video.currentTime = 0;
     video.loop = false;
@@ -1718,6 +1719,16 @@ function updateTokens() {
 // Cache for loaded media to prevent re-loading
 const mediaCache = {};
 
+function pickAlternatePropertyVideo(videos, position) {
+    if (!videos || videos.length === 0) return null;
+    if (videos.length === 1) return videos[0];
+
+    const lastVideo = lastPlayedPropertyVideos[position];
+    const alternatives = lastVideo ? videos.filter(v => v !== lastVideo) : videos;
+    const pool = alternatives.length > 0 ? alternatives : videos;
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function applyMediaFrameOrientation(frame, element) {
     const w = element.videoWidth || element.naturalWidth;
     const h = element.videoHeight || element.naturalHeight;
@@ -1764,7 +1775,28 @@ function logVideoLoadError(video, context) { ... }
 function debugVideoAssignment() {}
 function watchVideoSrcMutations() { return { disconnect() {} }; }
 function logVideoLoadError(video, context) {
-    console.error(`[Video Error] ${context.propertyName} - Failed to load video`);
+    if (video && video._intentionalStop) return;
+    const src = context.intendedSrc || video?.currentSrc || video?.src || 'unknown';
+    console.error(`[Video Error] ${context.propertyName} - Failed to load video`, src);
+}
+
+function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
+    if (!media.images || media.images.length === 0) return false;
+    const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+    const img = document.createElement('img');
+    img.src = randomImage;
+    img.alt = media.name;
+    img.loading = 'lazy';
+    const imgFrame = createMediaFrame(img);
+    img.addEventListener('load', () => {
+        mediaContainer.innerHTML = '';
+        mediaContainer.appendChild(imgFrame);
+        mediaCache[cacheKey] = imgFrame.cloneNode(true);
+    });
+    img.addEventListener('error', () => {
+        mediaContainer.innerHTML = '';
+    });
+    return true;
 }
 
 function closePropertyModal() {
@@ -1866,107 +1898,88 @@ function showPropertyInfo(spaceData, options = {}) {
     // Load media from tileMedia if available
     if (tileMedia && tileMedia[spaceData.position]) {
         const media = tileMedia[spaceData.position];
-        const cacheKey = `${spaceData.position}_${media.name}`;
-        
-        // Check cache first
-        if (mediaCache[cacheKey]) {
+        const selectedVideo = (media.videos && media.videos.length > 0)
+            ? pickAlternatePropertyVideo(media.videos, spaceData.position)
+            : null;
+        const cacheKey = selectedVideo
+            ? `${spaceData.position}_${selectedVideo}`
+            : `${spaceData.position}_${media.name}`;
+
+        if (selectedVideo && mediaCache[cacheKey]) {
+            lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
             const cloned = mediaCache[cacheKey].cloneNode(true);
             mediaContainer.appendChild(cloned);
             const video = cloned.querySelector('video');
             if (video) {
                 currentPropertyVideo = video;
-                video.muted = true; // ensure muted when restoring from cache
-                video.loop = false; // Ensure no looping
-                video.currentTime = 0; // Reset video to start
-                video.play().catch(e => {});
+                video.muted = true;
+                video.loop = false;
+                video.currentTime = 0;
+                video.play().catch(() => {});
             }
-        } else {
-            // Prefer video if available
-            if (media.videos && media.videos.length > 0) {
-                // Get a random video that's different from the last played one
-                let randomVideo;
-                const lastVideo = lastPlayedPropertyVideos[spaceData.position];
-                
-                if (media.videos.length === 1) {
-                    randomVideo = media.videos[0];
-                } else {
-                    // Filter out the last played video
-                    const availableVideos = media.videos.filter(v => v !== lastVideo);
-                    randomVideo = availableVideos[Math.floor(Math.random() * availableVideos.length)];
+        } else if (selectedVideo) {
+            lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
+
+            const video = document.createElement('video');
+            const frame = createMediaFrame(video);
+            video.src = selectedVideo;
+            video.autoplay = true;
+            video.muted = true;
+            video.loop = false;
+            video.playsInline = true;
+            video.controls = true;
+            video.preload = 'auto';
+            pendingPropertyVideo = video;
+            mediaContainer.appendChild(frame);
+
+            video.addEventListener('error', () => {
+                if (video._intentionalStop || mediaSession !== propertyMediaSession) return;
+                pendingPropertyVideo = null;
+                logVideoLoadError(video, {
+                    propertyName: media.name,
+                    position: spaceData.position,
+                    intendedSrc: selectedVideo,
+                    fromCache: false
+                });
+                if (!showPropertyImages(media, spaceData, mediaContainer, cacheKey) && loadingIndicator) {
+                    mediaContainer.innerHTML = '';
+                    loadingIndicator.textContent = 'Media unavailable';
                 }
-                
-                // Track this video as the last played for this tile
-                lastPlayedPropertyVideos[spaceData.position] = randomVideo;
-                
-                const video = document.createElement('video');
-                const frame = createMediaFrame(video);
-                const srcObserver = watchVideoSrcMutations(video, media.name);
-                video.src = randomVideo;
-                video.autoplay = true;
-                video.muted = true; // Muted for autoplay to work
-                video.loop = false; // Do not loop - play once then stop
-                video.playsInline = true;
-                video.controls = true;
-                video.preload = 'auto';
-                pendingPropertyVideo = video;
-                
-                video.addEventListener('error', (e) => {
-                    logVideoLoadError(video, {
-                        propertyName: media.name,
-                        position: spaceData.position,
-                        intendedSrc: randomVideo,
-                        fromCache: false
-                    });
-                    srcObserver.disconnect();
-                });
-                
-                video.addEventListener('loadeddata', () => {
-                    if (mediaSession !== propertyMediaSession) {
-                        stopVideoElement(video);
-                        return;
-                    }
-                    pendingPropertyVideo = null;
-                    mediaContainer.appendChild(frame);
-                    mediaCache[cacheKey] = frame.cloneNode(true);
-                    currentPropertyVideo = video;
-                    video.play().catch(e => {});
-                });
-                
-                video.addEventListener('error', (e) => {
-                    if (mediaSession !== propertyMediaSession) return;
-                    pendingPropertyVideo = null;
-                    logVideoLoadError(video, {
-                        propertyName: media.name,
-                        position: spaceData.position,
-                        intendedSrc: randomVideo,
-                        fromCache: false,
-                        phase: 'second error handler (modal cleanup)'
-                    });
-                    srcObserver.disconnect();
-                    mediaContainer.innerHTML = '';
-                    if (loadingIndicator) loadingIndicator.textContent = 'Media unavailable';
-                });
-            } else if (media.images && media.images.length > 0) {
-                const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
-                const img = document.createElement('img');
-                img.src = randomImage;
-                img.alt = media.name;
-                img.loading = 'lazy';
-                const imgFrame = createMediaFrame(img);
-                
-                img.addEventListener('load', () => {
-                    mediaContainer.innerHTML = '';
-                    mediaContainer.appendChild(imgFrame);
-                    mediaCache[cacheKey] = imgFrame.cloneNode(true);
-                });
-                
-                img.addEventListener('error', () => {
-                    mediaContainer.innerHTML = '';
-                    if (loadingIndicator) loadingIndicator.textContent = 'Image unavailable';
-                });
-            } else {
+            });
+
+            video.addEventListener('loadeddata', () => {
+                if (mediaSession !== propertyMediaSession) {
+                    stopVideoElement(video);
+                    return;
+                }
+                pendingPropertyVideo = null;
+                mediaCache[cacheKey] = frame.cloneNode(true);
+                currentPropertyVideo = video;
+                video.play().catch(() => {});
+            });
+        } else if (mediaCache[cacheKey]) {
+            const cloned = mediaCache[cacheKey].cloneNode(true);
+            mediaContainer.appendChild(cloned);
+        } else if (media.images && media.images.length > 0) {
+            const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+            const img = document.createElement('img');
+            img.src = randomImage;
+            img.alt = media.name;
+            img.loading = 'lazy';
+            const imgFrame = createMediaFrame(img);
+
+            img.addEventListener('load', () => {
                 mediaContainer.innerHTML = '';
-            }
+                mediaContainer.appendChild(imgFrame);
+                mediaCache[cacheKey] = imgFrame.cloneNode(true);
+            });
+
+            img.addEventListener('error', () => {
+                mediaContainer.innerHTML = '';
+                if (loadingIndicator) loadingIndicator.textContent = 'Image unavailable';
+            });
+        } else {
+            mediaContainer.innerHTML = '';
         }
     } else {
         mediaContainer.innerHTML = '';

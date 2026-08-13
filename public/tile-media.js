@@ -103,7 +103,7 @@ const tileMediaRaw = {
     36: { name: 'Venetian', videos: [], images: [] },
     37: { name: 'The Cosmopolitan', videos: ['/Videos/The Cosmopolitan1.mp4', '/Videos/The Cosmopolitan2.mp4', '/Videos/The Cosmopolitan3.mp4'], images: ['/images/cosmopolitan.jpg'] },
     38: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
-    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Vegas_Off-Road_Experience_at_Speed_Vegas_Motorsport_Park_(1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] }
+    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] }
 };
 
 // Proxy to convert URLs on access
