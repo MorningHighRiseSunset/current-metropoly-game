@@ -1981,15 +1981,22 @@ body {
 /* Property Modal — compact card layout */
 #propertyModal {
     z-index: 2100;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1.25vh 0 2vh;
+    overflow-y: auto;
 }
 
 #propertyModal .property-modal-content {
     max-width: 460px;
     width: 92%;
-    max-height: min(92vh, 720px);
+    max-height: none;
+    margin-top: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: visible;
     border: 1px solid var(--card-border);
     box-shadow: 0 4px 24px var(--shadow-color);
     animation: modalSlideIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -2013,9 +2020,10 @@ body {
 .property-modal-header {
     display: flex;
     align-items: stretch;
-    gap: 12px;
-    padding: 14px 16px 12px;
+    gap: 10px;
+    padding: 10px 14px 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
 }
 
 .property-color-bar {
@@ -2048,9 +2056,11 @@ body {
 .property-modal-body {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 12px 14px 14px;
+    gap: 8px;
+    padding: 8px 12px 10px;
     align-items: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .property-details {
@@ -2139,7 +2149,8 @@ body {
 .property-actions {
     display: flex;
     gap: 8px;
-    padding: 0 14px 14px;
+    padding: 0 12px 12px;
+    flex-shrink: 0;
 }
 
 .property-actions .btn {
@@ -2210,9 +2221,9 @@ body {
 
 .property-media .media-frame--portrait {
     aspect-ratio: 9 / 16;
-    height: min(320px, 36vh);
+    height: min(400px, 44vh);
     width: auto;
-    max-width: min(100%, 220px);
+    max-width: min(100%, 260px);
     min-height: 0;
     margin: 0 auto;
     flex-shrink: 0;
@@ -2233,8 +2244,8 @@ body {
     }
 
     .property-media .media-frame--portrait {
-        height: min(280px, 32vh);
-        max-width: min(100%, 200px);
+        height: min(360px, 40vh);
+        max-width: min(100%, 240px);
     }
 }
 
