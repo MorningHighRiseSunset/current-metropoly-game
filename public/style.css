@@ -288,6 +288,61 @@ body::before {
     border: 1px solid rgba(231, 76, 60, 0.3);
 }
 
+.status-live {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.lobby-section-label {
+    grid-column: 1 / -1;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin: 8px 0 4px;
+}
+
+.lobby-section-label--live {
+    color: #2ecc71;
+    margin-top: 16px;
+}
+
+.lobbies-subtitle {
+    margin: -8px 0 12px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.lobby-card--live {
+    border-color: rgba(46, 204, 113, 0.25);
+}
+
+.lobby-card--live:hover {
+    border-color: rgba(46, 204, 113, 0.45);
+    box-shadow: 0 8px 24px rgba(46, 204, 113, 0.12);
+}
+
+.btn-watch {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-watch:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.35);
+}
+
 .lobby-card-body {
     display: flex;
     flex-direction: column;

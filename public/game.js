@@ -37,6 +37,8 @@ let activePropertyDecision = null;
 let waitingForBuyResult = false;
 let casinoMessageListenerAttached = false;
 let activeCasinoBalanceSync = null;
+let isSpectator = false;
+let spectatorName = null;
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -943,6 +945,51 @@ function clearPropertyDecisionTimer() {
     propertyDecisionEndsAt = null;
 }
 
+function getStoredSpectatorUid() {
+    return sessionStorage.getItem('metropoly_spectator_uid');
+}
+
+function isSpectatorSession() {
+    return sessionStorage.getItem('metropoly_is_spectator') === '1'
+        || new URLSearchParams(window.location.search).get('spectate') === '1';
+}
+
+function persistSpectatorIdentity(gameId, uid, name) {
+    sessionStorage.setItem('metropoly_is_spectator', '1');
+    sessionStorage.removeItem('metropoly_player_uid');
+    if (gameId) sessionStorage.setItem('metropoly_game_id', gameId);
+    if (uid) sessionStorage.setItem('metropoly_spectator_uid', uid);
+    if (name) sessionStorage.setItem('metropoly_spectator_name', name);
+}
+
+function applySpectatorModeUI() {
+    document.body.classList.add('spectator-mode');
+    const label = spectatorName || 'Spectator';
+    if (playerNameEl) playerNameEl.textContent = `${label} (Watching)`;
+    if (playerMoneyEl) playerMoneyEl.textContent = '—';
+
+    const rollDiceBtn = document.getElementById('rollDiceBtn');
+    const endTurnBtn = document.getElementById('endTurnBtn');
+    const payJailBtn = document.getElementById('payJailBtn');
+    if (rollDiceBtn) rollDiceBtn.disabled = true;
+    if (endTurnBtn) endTurnBtn.disabled = true;
+    if (payJailBtn) payJailBtn.style.display = 'none';
+}
+
+function hydrateSpectatorFromJoinData(data) {
+    isSpectator = true;
+    myPlayerId = null;
+    currentPlayer = null;
+    spectatorName = data.spectatorName || sessionStorage.getItem('metropoly_spectator_name') || 'Spectator';
+    players = data.players || [];
+    gameState = data.gameState || null;
+    if (data.gameId) currentGameId = data.gameId;
+    if (data.spectatorUid) {
+        persistSpectatorIdentity(data.gameId, data.spectatorUid, spectatorName);
+    }
+    applySpectatorModeUI();
+}
+
 function getStoredPlayerUid() {
     return sessionStorage.getItem('metropoly_player_uid');
 }
@@ -1159,7 +1206,8 @@ function openLandingPropertyModal(spaceData) {
 }
 
 function beginLandingDecision({ spaceData, position, isRent = false, owner = null }) {
-    if (!spaceData || !currentPlayer) return;
+    if (!spaceData || isSpectator) return;
+    if (!currentPlayer) return;
     cancelClientAutoEndTurn();
     clearPropertyDecisionTimer();
     waitingForBuyResult = false;
@@ -2171,6 +2219,16 @@ function getPlayerDisplayName(player) {
 
 // Update UI elements
 function updateUI(options = {}) {
+    if (isSpectator) {
+        applySpectatorModeUI();
+        updatePlayersList();
+        if (myPropertiesEl) myPropertiesEl.innerHTML = '<div class="no-properties">Spectating — no properties</div>';
+        const gameCodeEl = document.getElementById('gameCode');
+        if (gameCodeEl) gameCodeEl.textContent = 'Spectating';
+        if (!options.skipTokenLayer) updateTokens();
+        return;
+    }
+
     if (currentPlayer) {
         playerMoneyEl.textContent = `$${currentPlayer.money || 2500}`;
         playerNameEl.textContent = getPlayerDisplayName(currentPlayer);
@@ -2452,23 +2510,53 @@ function handleDiceRolledEvent(data) {
 
 // Socket event handlers
 socket.on('connect', () => {
-    // console.log('Connected to server');
-
     const urlParts = window.location.pathname.split('/');
     const gameId = urlParts[urlParts.length - 1];
     currentGameId = gameId;
-    const playerUid = getStoredPlayerUid();
+    const spectating = isSpectatorSession();
 
     if (gameId && gameCodeEl) {
         gameCodeEl.textContent = gameId;
     }
 
-    if (gameId) {
+    if (!gameId) return;
+
+    if (spectating) {
+        isSpectator = true;
+        socket.emit('joinAsSpectator', {
+            gameId,
+            spectatorUid: getStoredSpectatorUid(),
+            spectatorName: sessionStorage.getItem('metropoly_spectator_name') || undefined
+        });
+    } else {
+        const playerUid = getStoredPlayerUid();
         socket.emit('joinGame', { gameId, playerUid });
     }
 });
 
+socket.on('spectatorJoined', (data) => {
+    hydrateSpectatorFromJoinData(data);
+
+    if (data.chatLog && Array.isArray(data.chatLog) && chatMessagesEl) {
+        chatMessagesEl.innerHTML = '';
+        data.chatLog.forEach((entry) => {
+            addChatMessage(entry.sender, entry.message);
+        });
+    }
+
+    try {
+        initializeBoard();
+        updateUI();
+    } catch (error) {
+        console.error('GAME: Error initializing spectator view:', error);
+    }
+
+    addLogEntry(`You are watching as ${spectatorName}`, 'system');
+    updateTokens();
+});
+
 socket.on('gameJoined', (data) => {
+    if (isSpectator) return;
     // console.log('=== GAME JOINED ===');
     // console.log('GAME: Received gameJoined event:', data);
     // console.log('GAME: Socket ID:', socket.id);
@@ -2573,13 +2661,13 @@ socket.on('gameStarted', (data) => {
     gameState = data.gameState;
     players = data.players;
 
-    currentPlayer = resolveLocalPlayer(players);
-    if (currentPlayer) {
-        myPlayerId = currentPlayer.id;
+    if (!isSpectator) {
+        currentPlayer = resolveLocalPlayer(players);
+        if (currentPlayer) {
+            myPlayerId = currentPlayer.id;
+        }
+        socket.emit('gameStartedAck');
     }
-
-    // Acknowledge receipt to server
-    socket.emit('gameStartedAck');
 
     // Force status update
     const gameCodeEl = document.getElementById('gameCode');
@@ -2595,8 +2683,7 @@ socket.on('gameStarted', (data) => {
 
     addLogEntry('Game started!', 'system');
 
-    // Show token selection if player doesn't have a token
-    if (currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
+    if (!isSpectator && currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
         showTokenSelection();
     }
 });
@@ -2683,21 +2770,17 @@ socket.on('playerJoined', (data) => {
 });
 
 socket.on('playersUpdated', (data) => {
-    // console.log('PLAYERS: Received playersUpdated event:', data);
     players = data.players;
     if (data.gameState) {
         gameState = data.gameState;
     }
 
-    currentPlayer = resolveLocalPlayer(players);
-    if (currentPlayer) {
-        myPlayerId = currentPlayer.id;
+    if (!isSpectator) {
+        currentPlayer = resolveLocalPlayer(players);
+        if (currentPlayer) {
+            myPlayerId = currentPlayer.id;
+        }
     }
-    
-    // console.log('PLAYERS: Updated players array:', players);
-    // console.log('PLAYERS: Current player:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
-    // console.log('PLAYERS: My Player ID:', myPlayerId);
-    // console.log('PLAYERS: Socket ID:', socket.id);
     
     updateUI();
     updatePlayersList();
@@ -3072,6 +3155,12 @@ socket.on('gameError', (error) => {
     // Handle "Game not found" - redirect to lobby
     if (message.toLowerCase().includes('game not found')) {
         alert('Game not found. Redirecting to lobby...');
+        window.location.href = '/';
+        return;
+    }
+
+    if (message.toLowerCase().includes('not in progress') || message.toLowerCase().includes('join the lobby')) {
+        alert(message);
         window.location.href = '/';
         return;
     }

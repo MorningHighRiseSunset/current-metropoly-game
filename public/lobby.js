@@ -53,6 +53,7 @@ function buildJoinLink(gameId) {
 }
 
 function persistLobbyIdentity(gameId, playerUid) {
+    clearSpectatorIdentity();
     if (gameId) {
         sessionStorage.setItem('metropoly_game_id', gameId);
     }
@@ -152,54 +153,106 @@ function fetchLobbies() {
     socket.emit('getLobbies');
 }
 
-// Render lobby list
-function renderLobbies(lobbies) {
-    availableLobbies = lobbies;
-    
-    if (!lobbies || lobbies.length === 0) {
+// Render lobby list (open lobbies + live games to watch)
+function renderLobbies(gameList) {
+    availableLobbies = gameList || [];
+
+    const openLobbies = availableLobbies.filter(g => g.isJoinable);
+    const liveGames = availableLobbies.filter(g => g.isWatchable);
+
+    if (openLobbies.length === 0 && liveGames.length === 0) {
         lobbiesList.innerHTML = `
             <div class="no-lobbies">
                 <div class="no-lobbies-icon">🎯</div>
-                <p>No active lobbies</p>
+                <p>No active games</p>
                 <p class="no-lobbies-subtitle">Be the first to create a game!</p>
             </div>
         `;
         return;
     }
 
-    lobbiesList.innerHTML = lobbies.map(lobby => {
-        const playerCount = lobby.players ? lobby.players.length : 0;
-        const maxPlayers = lobby.maxPlayers || 8;
-        const isFull = playerCount >= maxPlayers;
-        const statusText = isFull ? 'Full' : 'Open';
-        const statusClass = isFull ? 'status-full' : 'status-open';
-        
-        return `
-            <div class="lobby-card ${isFull ? 'lobby-full' : ''}" data-game-id="${lobby.gameId}">
-                <div class="lobby-card-header">
-                    <span class="lobby-game-id">${lobby.gameId}</span>
-                    <span class="lobby-status ${statusClass}">${statusText}</span>
-                </div>
-                <div class="lobby-card-body">
-                    <div class="lobby-info">
-                        <div class="lobby-info-item">
-                            <span class="lobby-info-icon">👥</span>
-                            <span class="lobby-info-text">${playerCount}/${maxPlayers} Players</span>
-                        </div>
-                        <div class="lobby-info-item">
-                            <span class="lobby-info-icon">👑</span>
-                            <span class="lobby-info-text">Host: ${lobby.players && lobby.players[0] ? lobby.players[0].name : 'Player 1'}</span>
-                        </div>
-                    </div>
-                    <button class="btn btn-join ${isFull ? 'btn-disabled' : ''}" 
-                            ${isFull ? 'disabled' : ''} 
-                            onclick="joinLobby('${lobby.gameId}')">
-                        ${isFull ? 'Full' : 'Join Lobby'}
-                    </button>
-                </div>
+    let html = '';
+
+    if (openLobbies.length > 0) {
+        html += `<div class="lobby-section-label">Open Lobbies</div>`;
+        html += openLobbies.map(lobby => renderLobbyCard(lobby)).join('');
+    }
+
+    if (liveGames.length > 0) {
+        html += `<div class="lobby-section-label lobby-section-label--live">Games In Progress</div>`;
+        html += liveGames.map(game => renderLiveGameCard(game)).join('');
+    }
+
+    lobbiesList.innerHTML = html;
+}
+
+function renderLobbyCard(lobby) {
+    const playerCount = lobby.players ? lobby.players.length : 0;
+    const maxPlayers = lobby.maxPlayers || 4;
+    const isFull = playerCount >= maxPlayers;
+    const hostName = lobby.hostName || (lobby.players && lobby.players[0] ? lobby.players[0].name : 'Host');
+
+    return `
+        <div class="lobby-card ${isFull ? 'lobby-full' : ''}" data-game-id="${lobby.gameId}">
+            <div class="lobby-card-header">
+                <span class="lobby-game-id">${lobby.gameId}</span>
+                <span class="lobby-status ${isFull ? 'status-full' : 'status-open'}">${isFull ? 'Full' : 'Open'}</span>
             </div>
-        `;
-    }).join('');
+            <div class="lobby-card-body">
+                <div class="lobby-info">
+                    <div class="lobby-info-item">
+                        <span class="lobby-info-icon">👥</span>
+                        <span class="lobby-info-text">${playerCount}/${maxPlayers} Players</span>
+                    </div>
+                    <div class="lobby-info-item">
+                        <span class="lobby-info-icon">👑</span>
+                        <span class="lobby-info-text">Host: ${hostName}</span>
+                    </div>
+                </div>
+                <button class="btn btn-join ${isFull ? 'btn-disabled' : ''}"
+                        ${isFull ? 'disabled' : ''}
+                        onclick="joinLobby('${lobby.gameId}')">
+                    ${isFull ? 'Full' : 'Join Lobby'}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderLiveGameCard(game) {
+    const playerCount = game.players ? game.players.length : 0;
+    const spectatorCount = game.spectatorCount || 0;
+    const hostName = game.hostName || (game.players && game.players[0] ? game.players[0].name : 'Host');
+    const statusLabel = game.status === 'starting' ? 'Starting' : 'In Progress';
+
+    return `
+        <div class="lobby-card lobby-card--live" data-game-id="${game.gameId}">
+            <div class="lobby-card-header">
+                <span class="lobby-game-id">${game.gameId}</span>
+                <span class="lobby-status status-live">${statusLabel}</span>
+            </div>
+            <div class="lobby-card-body">
+                <div class="lobby-info">
+                    <div class="lobby-info-item">
+                        <span class="lobby-info-icon">👥</span>
+                        <span class="lobby-info-text">${playerCount} Players</span>
+                    </div>
+                    <div class="lobby-info-item">
+                        <span class="lobby-info-icon">👑</span>
+                        <span class="lobby-info-text">Host: ${hostName}</span>
+                    </div>
+                    ${spectatorCount > 0 ? `
+                    <div class="lobby-info-item">
+                        <span class="lobby-info-icon">👁️</span>
+                        <span class="lobby-info-text">${spectatorCount} Watching</span>
+                    </div>` : ''}
+                </div>
+                <button class="btn btn-watch" onclick="watchGame('${game.gameId}')">
+                    Watch Game
+                </button>
+            </div>
+        </div>
+    `;
 }
 
 // Join lobby from list
@@ -210,6 +263,34 @@ function joinLobby(gameId) {
     socket.emit('joinLobby', {
         gameId: gameId,
         playerName: playerName
+    });
+}
+
+function persistSpectatorIdentity(gameId, spectatorUid) {
+    sessionStorage.setItem('metropoly_is_spectator', '1');
+    sessionStorage.removeItem('metropoly_player_uid');
+    if (gameId) {
+        sessionStorage.setItem('metropoly_game_id', gameId);
+    }
+    if (spectatorUid) {
+        sessionStorage.setItem('metropoly_spectator_uid', spectatorUid);
+    }
+}
+
+function clearSpectatorIdentity() {
+    sessionStorage.removeItem('metropoly_is_spectator');
+    sessionStorage.removeItem('metropoly_spectator_uid');
+    sessionStorage.removeItem('metropoly_spectator_name');
+}
+
+// Watch an in-progress game as a spectator
+function watchGame(gameId) {
+    const spectatorName = generateRandomPlayerName();
+    sessionStorage.setItem('metropoly_spectator_name', spectatorName);
+    currentGameId = gameId;
+    socket.emit('joinAsSpectator', {
+        gameId,
+        spectatorName
     });
 }
 
@@ -503,6 +584,11 @@ socket.on('gameStarted', (data) => {
     } else {
         console.log('LOBBY: Host already redirected, ignoring gameStarted in lobby');
     }
+});
+
+socket.on('spectatorJoined', (data) => {
+    persistSpectatorIdentity(data.gameId, data.spectatorUid);
+    window.location.href = `/game/${data.gameId}?spectate=1`;
 });
 
 socket.on('lobbyError', (error) => {

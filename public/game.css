@@ -2249,6 +2249,21 @@ body {
     }
 }
 
+/* Spectator mode — watch-only, no player actions */
+body.spectator-mode .sidebar-panel--actions,
+body.spectator-mode .sidebar-panel--properties,
+body.spectator-mode .sidebar-panel--video {
+    display: none;
+}
+
+body.spectator-mode .game-header .player-name {
+    color: #2ecc71;
+}
+
+body.spectator-mode #propertyActions {
+    display: none !important;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .game-main {

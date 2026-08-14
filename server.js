@@ -182,7 +182,8 @@ function saveGames() {
             gamesData[gameId] = {
                 ...game,
                 // Don't save socket references
-                players: game.players.map(p => p ? { ...p, socket: undefined } : null)
+                players: game.players.map(p => p ? { ...p, socket: undefined } : null),
+                spectators: (game.spectators || []).map(s => ({ ...s, socket: undefined }))
             };
         }
         fs.writeFileSync(GAMES_FILE, JSON.stringify(gamesData, null, 2));
@@ -202,6 +203,9 @@ function loadGames() {
                 if (games[gameId].players) {
                     games[gameId].players = games[gameId].players.map(p => p ? { ...p, socket: undefined } : null);
                 }
+                if (games[gameId].spectators) {
+                    games[gameId].spectators = games[gameId].spectators.map(s => ({ ...s, socket: undefined }));
+                }
             }
             console.log(`Loaded ${Object.keys(games).length} games from disk`);
         }
@@ -214,18 +218,36 @@ function countGamePlayers(game) {
     return game.players.filter(p => p !== null).length;
 }
 
+function countSpectators(game) {
+    return (game.spectators || []).length;
+}
+
+function buildGameListEntry(game) {
+    const playerList = game.players.filter(p => p !== null);
+    const isLobby = game.status === 'lobby';
+    const isLive = game.status === 'playing' || game.status === 'starting';
+    return {
+        gameId: game.id,
+        hostName: game.hostName || (playerList.find(p => p.isHost)?.name) || 'Host',
+        players: playerList,
+        maxPlayers: 4,
+        status: game.status,
+        spectatorCount: countSpectators(game),
+        isJoinable: isLobby && playerList.length < 4,
+        isWatchable: isLive
+    };
+}
+
+function getVisibleGamesList() {
+    return Object.values(games)
+        .filter(game => game.status === 'lobby' || game.status === 'playing' || game.status === 'starting')
+        .map(buildGameListEntry);
+}
+
 function broadcastLobbies() {
-    const lobbies = Object.values(games)
-        .filter(game => game.status === 'lobby')
-        .map(game => ({
-            gameId: game.id,
-            hostName: game.hostName,
-            players: game.players.filter(p => p !== null),
-            maxPlayers: 4,
-            status: game.status
-        }));
-    io.emit('lobbiesList', lobbies);
-    console.log('Broadcasting lobbies:', lobbies);
+    const list = getVisibleGamesList();
+    io.emit('lobbiesList', list);
+    console.log('Broadcasting game list:', list);
 }
 
 /** After lobby → game page redirect, socket id changes; keep the same logical player. */
@@ -708,17 +730,9 @@ io.on('connection', (socket) => {
 
     // Get available lobbies
     socket.on('getLobbies', () => {
-        const lobbies = Object.values(games)
-            .filter(game => game.status === 'lobby')
-            .map(game => ({
-                gameId: game.id,
-                hostName: game.hostName,
-                players: game.players.filter(p => p !== null),
-                maxPlayers: 4,
-                status: game.status
-            }));
-        console.log('Sending lobbies to client:', lobbies);
-        socket.emit('lobbiesList', lobbies);
+        const list = getVisibleGamesList();
+        console.log('Sending game list to client:', list);
+        socket.emit('lobbiesList', list);
     });
 
     // Create a new game lobby
@@ -734,7 +748,8 @@ io.on('connection', (socket) => {
             hostName: playerName,    // Store host name for persistence
             status: 'lobby',
             gameState: null,
-            chatLog: []
+            chatLog: [],
+            spectators: []
         };
 
         saveGames();
@@ -975,6 +990,7 @@ io.on('connection', (socket) => {
 
         // Mark game as ready to send gameStarted when players join game page
         game.readyToSendGameStarted = true;
+        broadcastLobbies();
 
         // Add timeout to handle cases where players don't acknowledge
         game.ackTimeout = setTimeout(() => {
@@ -1135,6 +1151,89 @@ io.on('connection', (socket) => {
             players: game.players,
             gameState: game.gameState
         });
+    });
+
+    // Join an in-progress game as a spectator (watch only)
+    socket.on('joinAsSpectator', (data) => {
+        const { gameId, spectatorName, spectatorUid } = data;
+
+        if (!games[gameId]) {
+            socket.emit('gameError', 'Game not found');
+            return;
+        }
+
+        const game = games[gameId];
+        if (game.status !== 'playing' && game.status !== 'starting') {
+            socket.emit('gameError', 'This game is not in progress yet. Join the lobby instead.');
+            return;
+        }
+
+        if (!game.spectators) {
+            game.spectators = [];
+        }
+
+        let spectator = null;
+        if (spectatorUid) {
+            spectator = game.spectators.find(s => s.uid === spectatorUid);
+            if (spectator) {
+                const oldSocketId = spectator.id;
+                spectator.id = socket.id;
+                spectator.name = spectator.name || spectatorName || 'Spectator';
+                if (oldSocketId && oldSocketId !== socket.id) {
+                    delete players[oldSocketId];
+                }
+            }
+        }
+
+        if (!spectator) {
+            const baseName = (spectatorName || 'Spectator').trim();
+            let finalName = baseName;
+            let suffix = 2;
+            const takenNames = new Set([
+                ...game.players.filter(p => p).map(p => p.name.toLowerCase()),
+                ...game.spectators.map(s => s.name.toLowerCase())
+            ]);
+            while (takenNames.has(finalName.toLowerCase())) {
+                finalName = `${baseName} ${suffix++}`;
+            }
+
+            spectator = {
+                id: socket.id,
+                uid: uuidv4(),
+                name: finalName
+            };
+            game.spectators.push(spectator);
+        }
+
+        players[socket.id] = {
+            gameId,
+            role: 'spectator',
+            playerName: spectator.name,
+            spectatorUid: spectator.uid
+        };
+
+        socket.join(gameId);
+
+        if (disconnectTimers[socket.id]) {
+            clearTimeout(disconnectTimers[socket.id]);
+            delete disconnectTimers[socket.id];
+        }
+
+        socket.emit('spectatorJoined', {
+            gameId,
+            spectatorUid: spectator.uid,
+            spectatorName: spectator.name,
+            players: game.players,
+            gameState: game.gameState,
+            chatLog: game.chatLog || []
+        });
+
+        io.to(gameId).emit('spectatorConnected', {
+            spectatorName: spectator.name,
+            spectatorCount: countSpectators(game)
+        });
+
+        broadcastLobbies();
     });
 
     // Select token
@@ -2133,16 +2232,19 @@ io.on('connection', (socket) => {
             }
 
             const player = game.players.find(p => p && p.id === socket.id);
+            const senderName = player
+                ? player.name
+                : (playerData.role === 'spectator' ? playerData.playerName : null);
 
-            if (!player) {
-                console.error('sendChat: Player not found in game:', socket.id);
+            if (!senderName) {
+                console.error('sendChat: Sender not found in game:', socket.id);
                 return;
             }
 
             const { message } = data;
 
             // Add message to chat log
-            addChatMessage(game.id, player.name, message);
+            addChatMessage(game.id, senderName, message);
         } catch (error) {
             console.error('Error in sendChat handler:', error);
         }
@@ -2794,6 +2896,22 @@ io.on('connection', (socket) => {
         if (playerData) {
             const game = games[playerData.gameId];
             if (game) {
+                if (playerData.role === 'spectator') {
+                    if (game.spectators) {
+                        game.spectators = game.spectators.filter(s => s.id !== socket.id);
+                    }
+                    delete players[socket.id];
+                    if (disconnectTimers[socket.id]) {
+                        clearTimeout(disconnectTimers[socket.id]);
+                        delete disconnectTimers[socket.id];
+                    }
+                    io.to(playerData.gameId).emit('spectatorDisconnected', {
+                        spectatorCount: countSpectators(game)
+                    });
+                    broadcastLobbies();
+                    return;
+                }
+
                 // Don't immediately remove player - they might be reconnecting
                 // Just mark as disconnected and notify other players
                 const disconnectedPlayer = game.players.find(p => p && p.id === socket.id);
