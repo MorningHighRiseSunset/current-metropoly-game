@@ -75,12 +75,20 @@ window.createAiVsAiGame = function() {
                 // Start game
                 setTimeout(() => {
                     socket.emit('startGame');
-                    console.log('Game started! Spectate with:', gameId);
+                    console.log('Game started! Redirecting to game page...');
+                    
+                    // Redirect to game page as spectator
+                    setTimeout(() => {
+                        window.location.href = `/game/${gameId}`;
+                    }, 500);
                 }, 500);
             }, 500);
         }, 500);
     });
 };
+
+// Alias for common typo
+window.createAIVsAIGame = window.createAiVsAiGame;
 
 function buildJoinLink(gameId) {
     const baseOrigin = PUBLIC_SHARE_ORIGIN || `${window.location.protocol}//${window.location.host}`;
