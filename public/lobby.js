@@ -47,7 +47,7 @@ let isHost = false;
 let availableLobbies = [];
 const PUBLIC_SHARE_ORIGIN = 'https://vegas-metropoly.vercel.app';
 
-// Console command for testing: create AI vs AI game
+// Console command for testing: create AI vs AI game (2 AIs only — you spectate)
 // Usage in browser console: createAiVsAiGame()
 window.createAiVsAiGame = function() {
     if (!socket.connected) {
@@ -55,54 +55,19 @@ window.createAiVsAiGame = function() {
         return;
     }
 
-    console.log('Creating AI vs AI game for testing...');
+    console.log('Creating AI vs AI game (2 AIs, no human players)...');
 
-    const playerName = 'TestHost';
+    const spectatorName = generateRandomPlayerName();
     const gameId = generateGameId();
-    currentGameId = gameId;
+    sessionStorage.setItem('metropoly_spectator_name', spectatorName);
 
-    socket.emit('createLobby', {
-        gameId,
-        playerName
+    socket.once('aiVsAiGameCreated', (data) => {
+        console.log('AI vs AI game ready:', data.gameId);
+        persistSpectatorIdentity(data.gameId, null);
+        window.location.href = `/game/${data.gameId}?spectate=1`;
     });
 
-    socket.once('gameCreated', (data) => {
-        const createdGameId = data.gameId;
-        currentGameId = createdGameId;
-        isHost = true;
-        persistLobbyIdentity(createdGameId, data.playerUid);
-        console.log('Game created:', createdGameId);
-
-        const targetAiCount = 2;
-        let aiAdded = 0;
-
-        const onAiAdded = () => {
-            aiAdded++;
-            console.log(`Added AI player ${aiAdded}/${targetAiCount}`);
-
-            if (aiAdded < targetAiCount) {
-                socket.emit('addAIPlayer', { gameId: createdGameId });
-                return;
-            }
-
-            socket.off('aiPlayerAdded', onAiAdded);
-            socket.emit('startGame');
-            console.log('Starting game...');
-
-            // Auto-select host token so AI tokens are assigned without the modal
-            setTimeout(() => {
-                socket.emit('selectToken', { tokenIndex: 0 });
-            }, 200);
-
-            setTimeout(() => {
-                console.log('Opening game page:', createdGameId);
-                window.location.href = `/game/${createdGameId}`;
-            }, 400);
-        };
-
-        socket.on('aiPlayerAdded', onAiAdded);
-        socket.emit('addAIPlayer', { gameId: createdGameId });
-    });
+    socket.emit('createAiVsAiGame', { gameId, spectatorName });
 };
 
 function buildJoinLink(gameId) {

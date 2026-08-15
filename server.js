@@ -341,6 +341,52 @@ function rollDiceWithRareDoubles() {
     return { dice1, dice2, isDoubles: dice1 === dice2 };
 }
 
+function createAiPlayerForGame(game, slotIndex) {
+    return {
+        id: `ai-${game.id}-${uuidv4()}`,
+        uid: uuidv4(),
+        name: `AI Player ${slotIndex}`,
+        money: 2500,
+        position: 0,
+        properties: [],
+        inJail: false,
+        isBankrupt: false,
+        isHost: slotIndex === 1,
+        isAI: true
+    };
+}
+
+function assignTokenIndicesToAiPlayers(game) {
+    const availableTokens = [0, 1, 2, 3, 4, 5, 7];
+    game.players.forEach((p) => {
+        if (p && p.isAI && p.tokenIndex === undefined && availableTokens.length > 0) {
+            p.tokenIndex = availableTokens.shift();
+        }
+    });
+}
+
+function initializePlayingGameState(game) {
+    const actualPlayers = game.players.filter((p) => p !== null);
+    const firstPlayer = actualPlayers[0];
+    const firstPlayerIndex = game.players.findIndex((p) => p && p.id === firstPlayer.id);
+    game.currentPlayerIndex = firstPlayerIndex >= 0 ? firstPlayerIndex : 1;
+
+    game.gameState = {
+        status: 'playing',
+        currentPlayer: firstPlayer.id,
+        diceRolled: false,
+        turnPhase: 'roll'
+    };
+
+    game.status = 'playing';
+    game.readyToSendGameStarted = false;
+
+    if (game.ackTimeout) {
+        clearTimeout(game.ackTimeout);
+        delete game.ackTimeout;
+    }
+}
+
 // AI Helper Functions
 function checkAndExecuteAITurn(game) {
     if (!game || !game.gameState || game.status !== 'playing') return;
@@ -783,6 +829,69 @@ io.on('connection', (socket) => {
         
         // Broadcast updated lobbies list to all clients
         broadcastLobbies();
+    });
+
+    // Create AI vs AI test game: two AIs only, creator spectates (not a player)
+    socket.on('createAiVsAiGame', (data) => {
+        const gameId = (data.gameId || '').trim().toUpperCase();
+        const spectatorName = (data.spectatorName || 'Spectator').trim();
+
+        if (!gameId) {
+            socket.emit('lobbyError', 'Game ID is required');
+            return;
+        }
+
+        if (games[gameId]) {
+            socket.emit('lobbyError', 'Game ID already exists');
+            return;
+        }
+
+        games[gameId] = {
+            id: gameId,
+            players: [null],
+            host: socket.id,
+            originalHost: socket.id,
+            hostName: spectatorName,
+            status: 'lobby',
+            gameState: null,
+            chatLog: [],
+            spectators: [],
+            isAiVsAi: true
+        };
+
+        const game = games[gameId];
+
+        for (let i = 1; i <= 2; i++) {
+            game.players.push(createAiPlayerForGame(game, i));
+        }
+
+        assignTokenIndicesToAiPlayers(game);
+        initializeCardDecks(game);
+        initializePlayingGameState(game);
+
+        players[socket.id] = {
+            gameId,
+            role: 'spectator',
+            playerName: spectatorName
+        };
+        socket.join(gameId);
+
+        saveGames();
+        broadcastLobbies();
+
+        socket.emit('aiVsAiGameCreated', {
+            gameId,
+            players: game.players,
+            gameState: game.gameState
+        });
+
+        io.to(gameId).emit('gameReady', {
+            message: 'AI vs AI game started!',
+            gameState: game.gameState,
+            players: game.players
+        });
+
+        setTimeout(() => checkAndExecuteAITurn(game), 1000);
     });
 
     // Join an existing game lobby
