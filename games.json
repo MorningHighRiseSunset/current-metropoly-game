@@ -1,0 +1,306 @@
+{
+  "UFVPIZB9": {
+    "id": "UFVPIZB9",
+    "players": [
+      null,
+      {
+        "id": "ai-UFVPIZB9-c8553a4d-cf71-43d1-8f94-47e6bbb6a3b7",
+        "uid": "b31e4506-4cfe-4707-bd45-7737bfca916e",
+        "name": "AI Player 1",
+        "money": 2500,
+        "position": 0,
+        "properties": [],
+        "inJail": false,
+        "isBankrupt": false,
+        "isHost": true,
+        "isAI": true,
+        "tokenIndex": 0
+      },
+      {
+        "id": "ai-UFVPIZB9-648d29f3-61c8-4975-8ab4-db5da49d2b44",
+        "uid": "df2a4c64-22d4-4cf6-a877-4bf82f3f9b03",
+        "name": "AI Player 2",
+        "money": 2500,
+        "position": 0,
+        "properties": [],
+        "inJail": false,
+        "isBankrupt": false,
+        "isHost": false,
+        "isAI": true,
+        "tokenIndex": 1
+      }
+    ],
+    "host": "J9Mk4IGwKtqze_yUAAAB",
+    "originalHost": "J9Mk4IGwKtqze_yUAAAB",
+    "hostName": "Test",
+    "status": "playing",
+    "gameState": {
+      "status": "playing",
+      "currentPlayer": "ai-UFVPIZB9-c8553a4d-cf71-43d1-8f94-47e6bbb6a3b7",
+      "diceRolled": false,
+      "turnPhase": "roll"
+    },
+    "chatLog": [],
+    "spectators": [],
+    "isAiVsAi": true,
+    "chanceDeck": [
+      {
+        "type": "move",
+        "position": 0,
+        "message": "Advance to GO"
+      },
+      {
+        "type": "money",
+        "amount": 400,
+        "message": "Bank pays you dividend of $400"
+      },
+      {
+        "type": "jail-free",
+        "message": "Get Out of Jail Free"
+      },
+      {
+        "type": "move",
+        "position": 15,
+        "message": "Advance to nearest Railroad"
+      },
+      {
+        "type": "moveRelative",
+        "delta": -3,
+        "message": "Go back 3 spaces"
+      },
+      {
+        "type": "money",
+        "amount": -100,
+        "message": "Pay poor tax of $100"
+      },
+      {
+        "type": "money",
+        "amount": -400,
+        "message": "Pay doctor fee $400"
+      },
+      {
+        "type": "move",
+        "position": 5,
+        "message": "Advance to nearest Railroad"
+      },
+      {
+        "type": "money",
+        "amount": -300,
+        "message": "Pay school tax of $300"
+      },
+      {
+        "type": "money",
+        "amount": -160,
+        "message": "Pay insurance premium $160"
+      },
+      {
+        "type": "money",
+        "amount": 500,
+        "message": "Receive for services $500"
+      },
+      {
+        "type": "jail",
+        "message": "Go to Jail"
+      },
+      {
+        "type": "money",
+        "amount": 200,
+        "message": "Interest on 7% preference shares - collect $200"
+      },
+      {
+        "type": "money",
+        "amount": -200,
+        "message": "Pay hospital $200"
+      },
+      {
+        "type": "money",
+        "amount": 200,
+        "message": "Your building loan matures - collect $200"
+      },
+      {
+        "type": "money",
+        "amount": 100,
+        "message": "You have won a competition - collect $100"
+      }
+    ],
+    "communityDeck": [
+      {
+        "type": "money",
+        "amount": -160,
+        "message": "Pay for repairs $160"
+      },
+      {
+        "type": "money",
+        "amount": 100,
+        "message": "You inherit $100"
+      },
+      {
+        "type": "money",
+        "amount": 200,
+        "message": "You have won second prize in a beauty contest - collect $200"
+      },
+      {
+        "type": "money",
+        "amount": -200,
+        "message": "Pay school tax of $200"
+      },
+      {
+        "type": "jail-free",
+        "message": "Get out of jail free - keep this card"
+      },
+      {
+        "type": "money",
+        "amount": 400,
+        "message": "You have won $400 in a contest"
+      },
+      {
+        "type": "money",
+        "amount": -100,
+        "message": "Doctor fees - pay $100"
+      },
+      {
+        "type": "money",
+        "amount": -300,
+        "message": "Pay tax of $300"
+      },
+      {
+        "type": "money",
+        "amount": -100,
+        "message": "Pay hospital $100"
+      },
+      {
+        "type": "money",
+        "amount": 400,
+        "message": "From sale of stock you get $400"
+      },
+      {
+        "type": "money",
+        "amount": 400,
+        "message": "Bank error in your favor - collect $400"
+      },
+      {
+        "type": "money",
+        "amount": -800,
+        "message": "Pay hospital $800"
+      },
+      {
+        "type": "money",
+        "amount": 200,
+        "message": "Holiday fund matures - collect $200"
+      },
+      {
+        "type": "money",
+        "amount": 500,
+        "message": "Receive $500 from sale"
+      },
+      {
+        "type": "money",
+        "amount": 500,
+        "message": "Receive $500 consultation fee"
+      },
+      {
+        "type": "money",
+        "amount": 200,
+        "message": "Life insurance matures - collect $200"
+      }
+    ],
+    "chanceIndex": 0,
+    "communityIndex": 0,
+    "currentPlayerIndex": 1,
+    "readyToSendGameStarted": false
+  },
+  "GL6ML18E": {
+    "id": "GL6ML18E",
+    "players": [
+      null,
+      {
+        "id": "ai-GL6ML18E-400bc995-fba1-4f9e-82bd-5c419e1221e5",
+        "uid": "99fcb71c-2378-4b81-833d-57a9be8bec81",
+        "name": "Player 1",
+        "money": 2500,
+        "position": 0,
+        "properties": [],
+        "inJail": false,
+        "isBankrupt": false,
+        "isHost": true,
+        "isAI": true,
+        "tokenIndex": 0
+      },
+      {
+        "id": "ai-GL6ML18E-c45da94f-a89f-4b85-8c7f-299f395115a0",
+        "uid": "0bec78c1-20d9-4bdc-a2e5-05d946d5b10a",
+        "name": "Player 2",
+        "money": 2500,
+        "position": 0,
+        "properties": [],
+        "inJail": false,
+        "isBankrupt": false,
+        "isHost": false,
+        "isAI": true,
+        "tokenIndex": 1
+      }
+    ],
+    "host": "cBHGcm5e9rMRfMeKAAAB",
+    "originalHost": "cBHGcm5e9rMRfMeKAAAB",
+    "hostName": "Watcher",
+    "status": "playing",
+    "gameState": {
+      "status": "playing",
+      "currentPlayer": "ai-GL6ML18E-400bc995-fba1-4f9e-82bd-5c419e1221e5",
+      "diceRolled": false,
+      "turnPhase": "roll"
+    },
+    "chatLog": [],
+    "spectators": [],
+    "isAiVsAi": true,
+    "currentPlayerIndex": 1,
+    "readyToSendGameStarted": false
+  },
+  "S7GLBOND": {
+    "id": "S7GLBOND",
+    "players": [
+      null,
+      {
+        "id": "ai-S7GLBOND-20da7df7-1e02-4c55-8aed-3b28e2bce409",
+        "uid": "1e5d517e-3468-40fb-93a2-ac5903cdce6f",
+        "name": "Player 1",
+        "money": 2500,
+        "position": 0,
+        "properties": [],
+        "inJail": false,
+        "isBankrupt": false,
+        "isHost": true,
+        "isAI": true,
+        "tokenIndex": 0
+      },
+      {
+        "id": "ai-S7GLBOND-66894517-4d38-45c3-b2fc-4919173479b3",
+        "uid": "9e9f4d3a-9e58-4147-be07-d92852c12f5c",
+        "name": "Player 2",
+        "money": 2500,
+        "position": 0,
+        "properties": [],
+        "inJail": false,
+        "isBankrupt": false,
+        "isHost": false,
+        "isAI": true,
+        "tokenIndex": 1
+      }
+    ],
+    "host": "rMwyGeovkgI2gRfnAAAB",
+    "originalHost": "rMwyGeovkgI2gRfnAAAB",
+    "hostName": "Watcher",
+    "status": "playing",
+    "gameState": {
+      "status": "playing",
+      "currentPlayer": "ai-S7GLBOND-20da7df7-1e02-4c55-8aed-3b28e2bce409",
+      "diceRolled": false,
+      "turnPhase": "roll"
+    },
+    "chatLog": [],
+    "spectators": [],
+    "isAiVsAi": true,
+    "currentPlayerIndex": 1,
+    "readyToSendGameStarted": false
+  }
+}

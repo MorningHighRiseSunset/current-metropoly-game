@@ -39,6 +39,7 @@ let casinoMessageListenerAttached = false;
 let activeCasinoBalanceSync = null;
 let isSpectator = false;
 let spectatorName = null;
+let isAiVsAiGame = false;
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -980,6 +981,9 @@ function hydrateSpectatorFromJoinData(data) {
     isSpectator = true;
     myPlayerId = null;
     currentPlayer = null;
+    isAiVsAiGame = Boolean(
+        data.isAiVsAi || sessionStorage.getItem('metropoly_ai_vs_ai') === '1'
+    );
     spectatorName = data.spectatorName || sessionStorage.getItem('metropoly_spectator_name') || 'Spectator';
     players = data.players || [];
     gameState = data.gameState || null;
@@ -2118,8 +2122,12 @@ function updatePlayersList() {
         const isActiveTurn = gameState && gameState.currentPlayer === player.id;
         playerEl.className = `player-card${isActiveTurn ? ' is-active' : ''}${player.isBankrupt ? ' is-bankrupt' : ''}`;
 
-        const displayName = isCurrentPlayer ? 'You' : `Player ${playerNumber}`;
-        const aiBadge = player.isAI ? '<span class="player-card-badge ai">AI</span>' : '';
+        const displayName = isAiVsAiGame
+            ? `Player ${playerNumber}`
+            : (isCurrentPlayer ? 'You' : `Player ${playerNumber}`);
+        const aiBadge = (player.isAI && !isAiVsAiGame)
+            ? '<span class="player-card-badge ai">AI</span>'
+            : '';
         const turnBadge = isActiveTurn ? '<span class="player-card-badge turn">Turn</span>' : '';
         const jailBadge = player.inJail ? '<span class="player-card-badge jail">Jail</span>' : (player.position === 10 ? '<span class="player-card-badge visiting">Visiting</span>' : '');
 
@@ -2212,9 +2220,9 @@ function addChatMessage(sender, message) {
 // Helper function to get display name for a player
 function getPlayerDisplayName(player) {
     if (!player) return 'Unknown Player';
-    const playerNumber = players.findIndex(p => p && p.id === player.id);
-    const displayNumber = playerNumber > 0 ? playerNumber : '?';
-    return `Player ${displayNumber}`;
+    const actualPlayers = players.filter((p) => p);
+    const index = actualPlayers.findIndex((p) => p.id === player.id);
+    return `Player ${index >= 0 ? index + 1 : '?'}`;
 }
 
 // Update UI elements
@@ -2281,7 +2289,7 @@ function updateUI(options = {}) {
     if (gameState) {
         const currentPlayerObj = players.find(p => p && p.id === gameState.currentPlayer);
         if (currentPlayerObj && lastTurnAnnouncementPlayerId !== currentPlayerObj.id) {
-            addLogEntry(`${currentPlayerObj.name}'s turn`, 'system');
+            addLogEntry(`${getPlayerDisplayName(currentPlayerObj)}'s turn`, 'system');
             lastTurnAnnouncementPlayerId = currentPlayerObj.id;
         }
 
@@ -2546,7 +2554,10 @@ socket.on('spectatorJoined', (data) => {
 
     try {
         initializeBoard();
+        initRevealedPlayersForTurn();
+        players.filter((p) => p && p.tokenIndex !== undefined).forEach(loadTokenForPlayerIfNeeded);
         updateUI();
+        updateTokens();
     } catch (error) {
         console.error('GAME: Error initializing spectator view:', error);
     }
@@ -2710,6 +2721,10 @@ socket.on('gameStarted', (data) => {
 });
 
 socket.on('gameReady', (data) => {
+    if (data.isAiVsAi) {
+        isAiVsAiGame = true;
+        sessionStorage.setItem('metropoly_ai_vs_ai', '1');
+    }
     // Update gameState and players from the event
     if (data.gameState) {
         gameState = data.gameState;
@@ -2729,6 +2744,10 @@ socket.on('gameReady', (data) => {
     initRevealedPlayersForTurn();
     updateUI();
     updateTokens();
+    if (isSpectator) {
+        players.filter((p) => p && p.tokenIndex !== undefined).forEach(loadTokenForPlayerIfNeeded);
+        update3DTokenPositions();
+    }
 });
 
 socket.on('updateGameStatus', (data) => {

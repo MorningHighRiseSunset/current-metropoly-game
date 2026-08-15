@@ -63,6 +63,7 @@ window.createAiVsAiGame = function() {
 
     socket.once('aiVsAiGameCreated', (data) => {
         console.log('AI vs AI game ready:', data.gameId);
+        sessionStorage.setItem('metropoly_ai_vs_ai', '1');
         persistSpectatorIdentity(data.gameId, null);
         window.location.href = `/game/${data.gameId}?spectate=1`;
     });
@@ -304,6 +305,7 @@ function clearSpectatorIdentity() {
     sessionStorage.removeItem('metropoly_is_spectator');
     sessionStorage.removeItem('metropoly_spectator_uid');
     sessionStorage.removeItem('metropoly_spectator_name');
+    sessionStorage.removeItem('metropoly_ai_vs_ai');
 }
 
 // Watch an in-progress game as a spectator
