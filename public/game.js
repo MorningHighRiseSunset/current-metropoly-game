@@ -2249,13 +2249,19 @@ socket.on('gameJoined', (data) => {
     // console.log('GAME: Players array:', data.players);
     // console.log('GAME: Available player IDs:', data.players.filter(p => p).map(p => ({ id: p.id, name: p.name })));
 
-    if (data.playerUid) {
-        persistPlayerIdentity(data.gameId, data.playerUid);
+    if (data.isSpectator) {
+        // Spectator mode - no player ID
+        myPlayerId = null;
+        currentPlayer = null;
+    } else {
+        if (data.playerUid) {
+            persistPlayerIdentity(data.gameId, data.playerUid);
+        }
+        currentPlayer = resolveLocalPlayer(players);
+        myPlayerId = currentPlayer ? currentPlayer.id : data.playerId;
     }
-    players = data.players;
-    currentPlayer = resolveLocalPlayer(players);
-    myPlayerId = currentPlayer ? currentPlayer.id : data.playerId;
 
+    players = data.players;
     gameState = data.gameState;
 
     // console.log('GAME: Current player found:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
@@ -2278,7 +2284,9 @@ socket.on('gameJoined', (data) => {
     // Update status immediately
     const gameCodeEl = document.getElementById('gameCode');
     if (gameCodeEl) {
-        if (gameState && (gameState.currentPlayer || gameState.status === 'playing')) {
+        if (data.isSpectator) {
+            gameCodeEl.textContent = '👁️ Spectating';
+        } else if (gameState && (gameState.currentPlayer || gameState.status === 'playing')) {
             gameCodeEl.textContent = 'Game Active!';
         } else if (players.length >= 2 && players.filter(p => p).every(p => p.tokenIndex !== undefined)) {
             gameCodeEl.textContent = 'Ready to Start!';
@@ -2287,6 +2295,19 @@ socket.on('gameJoined', (data) => {
         } else {
             gameCodeEl.textContent = 'Waiting for Players...';
         }
+    }
+
+    // Hide game controls for spectators
+    if (data.isSpectator) {
+        const rollDiceBtn = document.getElementById('rollDiceBtn');
+        const endTurnBtn = document.getElementById('endTurnBtn');
+        const payJailBtn = document.getElementById('payJailBtn');
+        const playerName = document.getElementById('playerName');
+        
+        if (rollDiceBtn) rollDiceBtn.style.display = 'none';
+        if (endTurnBtn) endTurnBtn.style.display = 'none';
+        if (payJailBtn) payJailBtn.style.display = 'none';
+        if (playerName) playerName.textContent = 'Spectator';
     }
 
     // Show token selection if player doesn't have a token

@@ -1137,6 +1137,59 @@ io.on('connection', (socket) => {
         });
     });
 
+    // Spectate a game (watch without playing)
+    socket.on('spectateGame', (data) => {
+        const { gameId } = data;
+        
+        if (!games[gameId]) {
+            socket.emit('gameError', 'Game not found');
+            return;
+        }
+
+        const game = games[gameId];
+        
+        // Join the game room as a spectator
+        socket.join(gameId);
+        
+        // Track spectator
+        if (!game.spectators) game.spectators = [];
+        game.spectators.push({
+            id: socket.id,
+            joinedAt: Date.now()
+        });
+        
+        // Send current game state to spectator
+        socket.emit('gameJoined', {
+            gameId,
+            playerId: null, // null indicates spectator
+            playerUid: null,
+            players: game.players,
+            gameState: game.gameState,
+            isSpectator: true
+        });
+        
+        // Notify all players that a spectator joined
+        io.to(gameId).emit('spectatorJoined', {
+            spectatorCount: game.spectators.length
+        });
+    });
+
+    // Handle spectator disconnect
+    socket.on('disconnect', () => {
+        // Remove from spectator lists
+        for (const gameId in games) {
+            const game = games[gameId];
+            if (game.spectators) {
+                game.spectators = game.spectators.filter(s => s.id !== socket.id);
+                if (game.spectators.length > 0) {
+                    io.to(gameId).emit('spectatorCount', {
+                        spectatorCount: game.spectators.length
+                    });
+                }
+            }
+        }
+    });
+
     // Select token
     socket.on('selectToken', (data) => {
         const playerData = players[socket.id];
