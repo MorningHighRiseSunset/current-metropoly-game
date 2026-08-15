@@ -47,6 +47,41 @@ let isHost = false;
 let availableLobbies = [];
 const PUBLIC_SHARE_ORIGIN = 'https://vegas-metropoly.vercel.app';
 
+// Console command for testing: create AI vs AI game
+// Usage in browser console: createAiVsAiGame()
+window.createAiVsAiGame = function() {
+    console.log('Creating AI vs AI game for testing...');
+    
+    // Create game
+    socket.emit('createGame', {
+        playerName: 'TestHost'
+    });
+    
+    // Wait for game creation, then add 2 AI players and start
+    socket.once('gameCreated', (data) => {
+        const { gameId } = data;
+        console.log('Game created:', gameId);
+        
+        // Add first AI
+        setTimeout(() => {
+            socket.emit('addAIPlayer', { gameId });
+            console.log('Added AI player 1');
+            
+            // Add second AI
+            setTimeout(() => {
+                socket.emit('addAIPlayer', { gameId });
+                console.log('Added AI player 2');
+                
+                // Start game
+                setTimeout(() => {
+                    socket.emit('startGame');
+                    console.log('Game started! Spectate with:', gameId);
+                }, 500);
+            }, 500);
+        }, 500);
+    });
+};
+
 function buildJoinLink(gameId) {
     const baseOrigin = PUBLIC_SHARE_ORIGIN || `${window.location.protocol}//${window.location.host}`;
     return `${baseOrigin}/?gameId=${encodeURIComponent(gameId)}`;
