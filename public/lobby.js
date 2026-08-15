@@ -35,8 +35,6 @@ const settingsModal = document.getElementById('settingsModal');
 const settingsModalClose = document.querySelector('.modal-close');
 const refreshLobbiesBtn = document.getElementById('refreshLobbiesBtn');
 const lobbiesList = document.getElementById('lobbiesList');
-const spectateBtn = document.getElementById('spectateBtn');
-const spectateGameId = document.getElementById('spectateGameId');
 
 const gameMenu = document.querySelector('.lobby-container');
 const gameCreatedSection = document.getElementById('gameCreatedSection');
@@ -464,24 +462,6 @@ removeAiBtn.addEventListener('click', () => {
     }
 
     socket.emit('removeAIPlayer', { gameId: currentGameId });
-});
-
-// Spectate game
-spectateBtn.addEventListener('click', () => {
-    const gameId = spectateGameId.value.trim().toUpperCase();
-    
-    if (!gameId) {
-        showModal('Please enter a game ID');
-        return;
-    }
-
-    // Join as spectator
-    socket.emit('joinAsSpectator', { gameId });
-    
-    // Redirect to game page
-    setTimeout(() => {
-        window.location.href = `/game/${gameId}`;
-    }, 100);
 });
 
 // Modal close handlers
