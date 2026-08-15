@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Vegas Metropoly</title>
     <script src="https://cdn.vercel-insights.com/v1/script.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -117,11 +120,12 @@
                 <!-- Available Lobbies Section -->
                 <div class="lobbies-section">
                     <div class="lobbies-header">
-                        <h2>🎮 Available Lobbies</h2>
+                        <h2>🎮 Games</h2>
                         <button id="refreshLobbiesBtn" class="btn btn-refresh">
                             <span class="refresh-icon">🔄</span>
                         </button>
                     </div>
+                    <p class="lobbies-subtitle">Join open lobbies or watch games in progress</p>
                     <div id="lobbiesList" class="lobbies-list">
                         <div class="loading-lobbies">Loading lobbies...</div>
                     </div>
@@ -186,7 +190,7 @@
         </div>
     </div>
 
-    <script src="runtime-config.js"></script>
+    <script src="runtime-config.js?v=20250811-http-fix"></script>
     <script src="/analytics.js"></script>
     <script>
         // console.log('HTML loaded successfully!');

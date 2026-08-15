@@ -105,14 +105,6 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 		} else if (container && typeof CustomEvent === 'function') {
 			container.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance}}));
 		}
-		// Send winnings to parent window via postMessage
-		if (window.parent !== window) {
-			const initialBalance = typeof playerMoney === 'number' ? playerMoney : 2500;
-			const winnings = balance - initialBalance;
-			if (winnings !== 0) {
-				window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-			}
-		}
 	}
 
 	function getRandomSymbol() {
@@ -257,8 +249,8 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 	updateBalanceDisplay();
 };
 
-// Auto-initialize for standalone usage
-if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('slotMachine/script.js')) {
+// Auto-initialize for standalone usage (skip when embedded in main game iframe)
+if (window.parent === window && document.currentScript && document.currentScript.src && document.currentScript.src.includes('slotMachine/script.js')) {
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function() {
 			window.initSlotMachine(document);

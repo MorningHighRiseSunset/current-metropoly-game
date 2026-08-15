@@ -226,16 +226,6 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
 			// Fallback: dispatch event for loader to catch
 			container.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance}}));
 		}
-		// Send winnings to parent window via postMessage
-		if (window.parent !== window) {
-			const initialBalance = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 2500;
-			const winnings = balance - initialBalance;
-			if (winnings !== 0) {
-				window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-			}
-			// Send close message to parent
-			window.parent.postMessage({ type: 'casinoGameClose' }, '*');
-		}
 	}
 	function showAceChoiceDialog(cardIdx, callback) {
 		const dialog = document.createElement('div');
@@ -797,19 +787,19 @@ function offerInsurance() {
 }
 }
 
-// Auto-initialize for standalone usage
-if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('BlackJack/script.js')) {
+// Auto-initialize for standalone usage (skip when embedded in main game iframe)
+if (window.parent === window && document.currentScript && document.currentScript.src && document.currentScript.src.includes('BlackJack/script.js')) {
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function() {
-			window.initBlackjackMinigame();
+			const container = document.querySelector('#game-ui');
+			if (container) {
+				window.initBlackjackMinigame(container, window.playerMoney, window.updateMainGameBalance);
+			}
 		});
 	} else {
-		window.initBlackjackMinigame();
+		const container = document.querySelector('#game-ui');
+		if (container) {
+			window.initBlackjackMinigame(container, window.playerMoney, window.updateMainGameBalance);
+		}
 	}
 }
-
-// Initial state
-dealBtn.disabled = true;
-hitBtn.disabled = true;
-standBtn.disabled = true;
-updateBalance();

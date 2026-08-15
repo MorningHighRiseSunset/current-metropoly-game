@@ -5,6 +5,7 @@ const tileHoverName = document.getElementById('tileHoverName');
 const tileHoverType = document.getElementById('tileHoverType');
 let currentVideo = null;
 let hoverTimeout = null;
+const lastPlayedVideos = {}; // Track last played video for each tile to prevent repeats
 
 // Function to hide tile hover immediately (for when modals open)
 function hideTileHoverImmediately() {
@@ -44,20 +45,42 @@ function showTileHover(tilePosition) {
     
     // Show media (prefer video if available)
     if (media.videos.length > 0) {
-        const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
+        // Get a random video that's different from the last played one
+        let randomVideo;
+        const lastVideo = lastPlayedVideos[tilePosition];
+        
+        if (media.videos.length === 1) {
+            randomVideo = media.videos[0];
+        } else {
+            // Filter out the last played video
+            const availableVideos = media.videos.filter(v => v !== lastVideo);
+            randomVideo = availableVideos[Math.floor(Math.random() * availableVideos.length)];
+        }
+        
+        // Track this video as the last played for this tile
+        lastPlayedVideos[tilePosition] = randomVideo;
+        
         const video = document.createElement('video');
+        const frame = document.createElement('div');
+        frame.className = 'media-frame media-frame--landscape';
+        frame.appendChild(video);
+        // TEMP TEST: crossOrigin disabled — see game.js showPropertyInfo
+        // video.crossOrigin = 'anonymous';
         video.src = randomVideo;
         video.autoplay = true;
         video.muted = true;
         video.loop = true;
         video.playsInline = true;
         video.controls = true;
-        video.style.width = '100%';
-        video.style.maxHeight = '200px';
-        video.style.objectFit = 'cover';
-        video.style.borderRadius = '8px';
+        if (typeof bindMediaFrameOrientation === 'function') {
+            bindMediaFrameOrientation(frame, video);
+        }
         currentVideo = video;
-        tileHoverMedia.appendChild(video);
+        tileHoverMedia.appendChild(frame);
+        
+        video.addEventListener('error', (e) => {
+            console.error(`[Video Error] ${media.name} - Failed to load video`);
+        });
     } else if (media.images.length > 0) {
         const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
         const img = document.createElement('img');
@@ -103,9 +126,7 @@ function initializeTileHover() {
         if (!isNaN(position) && tileMedia && tileMedia[position]) {
             space.addEventListener('mouseenter', () => {
                 // Don't show hover if any modal is open
-                const buyModal = document.getElementById('buyModal');
                 const propertyModal = document.getElementById('propertyModal');
-                if (buyModal && !buyModal.classList.contains('hidden')) return;
                 if (propertyModal && !propertyModal.classList.contains('hidden')) return;
                 
                 if (hoverTimeout) {

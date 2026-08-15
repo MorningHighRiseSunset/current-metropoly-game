@@ -1,5 +1,7 @@
 // Auto-create Three.js 3D dice roller on page load
 window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBalance) {
+	playerBankroll = bankroll;
+	playerChips = getChipBreakdown(bankroll);
 	// Clear container
 	container.innerHTML = '';
 	// Create craps table wrapper
@@ -29,7 +31,7 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
 				const area = BETTING_AREAS.find(a => a.id === b.areaId);
 				return area && area.label.toLowerCase() === 'pass line';
 			});
-		// End of window.initCrapsMinigame
+		}
 		function getDontPassBet() {
 			return playerBets.find(b => {
 				const area = BETTING_AREAS.find(a => a.id === b.areaId);
@@ -90,39 +92,15 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
 			playerBankroll += bet.amount * (payout - 1);
 			showStatus(msg + ` +$${bet.amount * (payout - 1)}`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
-			// Send winnings to parent window via postMessage
-			if (window.parent !== window) {
-				const initialBalance = bankroll || 2500;
-				const winnings = playerBankroll - initialBalance;
-				if (winnings !== 0) {
-					window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-				}
-			}
 		}
 		function loseBet(bet, msg) {
 			showStatus(msg + ` -$${bet.amount}`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
-			// Send winnings to parent window via postMessage
-			if (window.parent !== window) {
-				const initialBalance = bankroll || 2500;
-				const winnings = playerBankroll - initialBalance;
-				if (winnings !== 0) {
-					window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-				}
-			}
 		}
 		function pushBet(bet, msg) {
 			playerBankroll += bet.amount;
 			showStatus(msg + ` (push)`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
-			// Send winnings to parent window via postMessage
-			if (window.parent !== window) {
-				const initialBalance = bankroll || 2500;
-				const winnings = playerBankroll - initialBalance;
-				if (winnings !== 0) {
-					window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-				}
-			}
 		}
 		function endRound() {
 			setTimeout(() => {
@@ -173,8 +151,6 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
 			handleCrapsRoll(roll);
 		};
 	}
-	playerBankroll = bankroll;
-	playerChips = getChipBreakdown(bankroll);
 	renderPlayerChips();
 	renderBettingAreas();
 };
@@ -848,14 +824,9 @@ function renderChipStack(area, amount) {
 
 	// TODO: Add bet validation, continuous play logic, and chip return
 	// ===================== END INTERACTIVE CRAPS GAME =====================
-	// End of window.initCrapsMinigame
-	}
 
-// TODO: Add bet validation, continuous play logic, and chip return
-// ===================== END INTERACTIVE CRAPS GAME =====================
-
-// Auto-initialize for standalone usage
-if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('Craps/script.js')) {
+// Auto-initialize for standalone usage (skip when embedded in main game iframe)
+if (window.parent === window && document.currentScript && document.currentScript.src && document.currentScript.src.includes('Craps/script.js')) {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.querySelector('.craps-table-container');

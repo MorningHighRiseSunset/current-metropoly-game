@@ -140,6 +140,9 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 		} else {
 			messageEl.textContent = message;
 		}
+		if (!showSummary && typeof updateMainGameBalance === 'function') {
+			updateMainGameBalance(playerChips);
+		}
 	}
 
 	function setControls(enabled) {
@@ -353,14 +356,6 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 		} else if (container && typeof CustomEvent === 'function') {
 			container.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance: playerChips}}));
 		}
-		// Send winnings to parent window via postMessage
-		if (window.parent !== window) {
-			const initialBalance = (typeof playerMoney === 'number' && !isNaN(playerMoney)) ? playerMoney : 2500;
-			const winnings = playerChips - initialBalance;
-			if (winnings !== 0) {
-				window.parent.postMessage({ type: 'casinoWinnings', amount: winnings }, '*');
-			}
-		}
 	}
 
 	// Listen for removal of minigame container to export balance
@@ -376,8 +371,8 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 	startNewGame();
 };
 
-// Auto-initialize for standalone usage
-if (document.currentScript && document.currentScript.src && document.currentScript.src.includes('PokerFP/script.js')) {
+// Auto-initialize for standalone usage (skip when embedded in main game iframe)
+if (window.parent === window && document.currentScript && document.currentScript.src && document.currentScript.src.includes('PokerFP/script.js')) {
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function() {
 			const container = document.querySelector('.poker-container');

@@ -1,21 +1,64 @@
 // Get video CDN base URL from environment or use local path
+
+/*
+// TEMP DEBUG — remove after diagnosing video load failures
+window.__VIDEO_DEBUG__ = window.__VIDEO_DEBUG__ || {
+    configFromApi: null,
+    configFromRuntime: null,
+    scriptSources: {},
+    urlConstructions: [],
+    assignments: []
+};
+
+function logVideoUrlConstruction(localPath, result, context) {
+    const entry = {
+        at: new Date().toISOString(),
+        localPath,
+        result,
+        useVideoCdn: window.USE_VIDEO_CDN,
+        cdnBaseUrl: window.VIDEO_CDN_BASE_URL,
+        ...context
+    };
+    window.__VIDEO_DEBUG__.urlConstructions.push(entry);
+    console.group('[Video Debug] getVideoUrl');
+    console.log('localPath:', localPath);
+    console.log('USE_VIDEO_CDN:', window.USE_VIDEO_CDN);
+    console.log('VIDEO_CDN_BASE_URL (at construction):', window.VIDEO_CDN_BASE_URL);
+    console.log('constructed URL:', result);
+    try {
+        console.log('protocol:', new URL(result, window.location.href).protocol);
+    } catch (e) {
+        console.log('protocol: (could not parse URL)', e.message);
+    }
+    console.groupEnd();
+    return result;
+}
+*/
+
 function getVideoUrl(localPath) {
     const USE_VIDEO_CDN = window.USE_VIDEO_CDN || false;
-    const VIDEO_CDN_BASE_URL = window.VIDEO_CDN_BASE_URL || '';
+    let VIDEO_CDN_BASE_URL = window.VIDEO_CDN_BASE_URL || '';
+    // R2 public URLs must use HTTPS on HTTPS pages (avoid mixed-content blocking)
+    if (VIDEO_CDN_BASE_URL.startsWith('http://')) {
+        VIDEO_CDN_BASE_URL = VIDEO_CDN_BASE_URL.replace(/^http:\/\//, 'https://');
+    }
 
+    let result;
     if (USE_VIDEO_CDN && VIDEO_CDN_BASE_URL) {
         // Preserve the full path including Videos/ folder, just encode the filename
         const parts = localPath.split('/');
         const filename = parts.pop();
         const encodedFilename = encodeURIComponent(filename);
         const path = parts.join('/');
-        return `${VIDEO_CDN_BASE_URL}${path}/${encodedFilename}`;
+        result = `${VIDEO_CDN_BASE_URL}${path}/${encodedFilename}`;
+    } else {
+        // For local paths, encode the filename to handle spaces
+        const parts = localPath.split('/');
+        const filename = parts.pop();
+        const encodedFilename = encodeURIComponent(filename);
+        result = parts.join('/') + '/' + encodedFilename;
     }
-    // For local paths, encode the filename to handle spaces
-    const parts = localPath.split('/');
-    const filename = parts.pop();
-    const encodedFilename = encodeURIComponent(filename);
-    return parts.join('/') + '/' + encodedFilename;
+    return result;
 }
 
 // Tile media mapping (videos and images for each tile)
@@ -26,7 +69,7 @@ const tileMediaRaw = {
     2: { name: 'Community Cards', videos: [], images: [] },
     3: { name: 'Las Vegas Grand Prix', videos: ['/Videos/LV Grand Prix.mp4', '/Videos/LV Grand Prix End (1).mp4'], images: [] },
     4: { name: 'Income Tax', videos: [], images: [] },
-    5: { name: 'Las Vegas Monorail', videos: ['/Videos/Monorail (1).mp4'], images: [] },
+    5: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
     6: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1 (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] },
     7: { name: 'Chance', videos: [], images: [] },
     8: { name: 'Las Vegas Golden Knights', videos: ['/Videos/LV GKnights 1 (1).mp4', '/Videos/LV GKnights 2 (1).mp4', '/Videos/LV Golden Knights (1).mp4'], images: ['/images/230613231941-04-knights-stanley-cup-061323.jpg'] },
@@ -35,32 +78,32 @@ const tileMediaRaw = {
     11: { name: 'Brothel', videos: ['/Videos/BrothelVid (1).mp4'], images: [] },
     12: { name: 'Electric Company', videos: [], images: [] },
     13: { name: 'Bet MGM', videos: ['/Videos/MGMBoxing 1 (1).mp4', '/Videos/MGMBoxing 3 (1).mp4'], images: ['/images/BetMGM.jpg'] },
-    14: { name: 'Las Vegas Monorail', videos: ['/Videos/Monorail (1).mp4'], images: [] },
-    15: { name: 'Bellagio', videos: [], images: ['/images/bellagio.jpg'] },
+    14: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
+    15: { name: 'Bellagio', videos: ['/Videos/Bellagio2.mp4'], images: ['/images/bellagio.jpg'] },
     16: { name: 'Las Vegas Aces', videos: ['/Videos/WNBA (1).mp4', '/Videos/WNBAHL2 (1).mp4', '/Videos/WNBAHL3 (1).mp4', '/Videos/WNBAHL4 (1).mp4'], images: [] },
     17: { name: 'Community Cards', videos: [], images: [] },
     18: { name: 'Horseback Riding', videos: ['/Videos/horse6 (1).mp4'], images: [] },
-    19: { name: 'Resorts World Theatre', videos: [], images: ['/images/ResortsWorldTheater.jpg', '/images/Richling-house-of-blues-sunset.webp'] },
+    19: { name: 'Resorts World Theatre', videos: ['/Videos/Resorts World Theatre1.mp4', '/Videos/Resorts World Theatre2.mp4', '/Videos/Resorts World Theatre3.mp4', '/Videos/Resorts World Theatre4.mp4'], images: ['/images/ResortsWorldTheater.jpg', '/images/Richling-house-of-blues-sunset.webp'] },
     20: { name: 'FREE PARKING', videos: [], images: ['/images/free parking.jpg'] },
-    21: { name: 'Hard Rock Hotel', videos: [], images: [] },
+    21: { name: 'Hard Rock Hotel', videos: ['/Videos/Hard Rock Hotel.mp4'], images: [] },
     22: { name: 'Chance', videos: [], images: [] },
-    23: { name: 'Wynn Las Vegas', videos: [], images: ['/images/Wynn_2_(2).jpg'] },
+    23: { name: 'Wynn Las Vegas', videos: ['/Videos/Wynn Las Vegas1.mp4', '/Videos/Wynn Las Vegas2.mp4', '/Videos/Wynn Las Vegas3.mp4'], images: ['/images/Wynn_2_(2).jpg'] },
     24: { name: 'County Fair', videos: [], images: ['/images/County fair.png'] },
     25: { name: 'Shriners Children\'s Open', videos: [], images: [] },
-    26: { name: 'Las Vegas Little White Wedding Chapel', videos: [], images: [] },
+    26: { name: 'Las Vegas Little White Wedding Chapel', videos: ['/Videos/Las Vegas Little White Wedding Chapel1.mp4', '/Videos/Las Vegas Little White Wedding Chapel2.mp4'], images: [] },
     27: { name: 'Community Cards', videos: [], images: [] },
-    28: { name: 'Sphere', videos: ['/Videos/Sphere (1).mp4'], images: ['/images/LasVegasSphere.jpg', '/images/thesphere.jpg', '/images/PIX-1-Exosphere-Architecture.jpg'] },
+    28: { name: 'Sphere', videos: ['/Videos/Sphere1.mp4', '/Videos/Sphere2.mp4'], images: ['/images/LasVegasSphere.jpg', '/images/thesphere.jpg', '/images/PIX-1-Exosphere-Architecture.jpg'] },
     29: { name: 'Water Works', videos: [], images: [] },
     30: { name: 'GO TO JAIL', videos: [], images: [] },
-    31: { name: 'Caesars Palace', videos: [], images: ['/images/welcome-to-caesars-palace.jpg'] },
-    32: { name: 'Santa Fe Hotel and Casino', videos: [], images: ['/images/santafecasino.jpg'] },
+    31: { name: 'Caesars Palace', videos: ['/Videos/Caesars Palace1.mp4', '/Videos/Caesars Palace3.mp4', '/Videos/Caesars Palace4.mp4'], images: ['/images/welcome-to-caesars-palace.jpg'] },
+    32: { name: 'Santa Fe Hotel and Casino', videos: ['/Videos/Santa Fe Hotel And Casino1.mp4', '/Videos/Santa Fe Hotel And Casino2.mp4'], images: ['/images/santafecasino.jpg'] },
     33: { name: 'Chance', videos: [], images: [] },
     34: { name: 'Luxury Tax', videos: [], images: [] },
-    35: { name: 'House of Blues', videos: [], images: ['/images/Richling-house-of-blues-sunset.webp'] },
+    35: { name: 'House of Blues', videos: ['/Videos/House Of Blues1.mp4', '/Videos/House Of Blues2.mp4', '/Videos/House Of Blues3.mp4'], images: ['/images/Richling-house-of-blues-sunset.webp'] },
     36: { name: 'Venetian', videos: [], images: [] },
-    37: { name: 'The Cosmopolitan', videos: [], images: ['/images/cosmopolitan.jpg'] },
-    38: { name: 'Las Vegas Monorail', videos: ['/Videos/Monorail (1).mp4'], images: [] },
-    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Vegas_Off-Road_Experience_at_Speed_Vegas_Motorsport_Park_(1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] }
+    37: { name: 'The Cosmopolitan', videos: ['/Videos/The Cosmopolitan1.mp4', '/Videos/The Cosmopolitan2.mp4', '/Videos/The Cosmopolitan3.mp4'], images: ['/images/cosmopolitan.jpg'] },
+    38: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
+    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] }
 };
 
 // Proxy to convert URLs on access

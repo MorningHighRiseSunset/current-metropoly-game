@@ -16,7 +16,12 @@ function getConfiguredSocketServerUrl() {
 
 const SOCKET_SERVER_URL = getConfiguredSocketServerUrl();
 const socket = io(SOCKET_SERVER_URL, {
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 10000
 });
 let gameState = null;
 let myPlayerId = null;
@@ -31,6 +36,9 @@ let propertyDecisionEndsAt = null;
 let activePropertyDecision = null;
 let waitingForBuyResult = false;
 let casinoMessageListenerAttached = false;
+let activeCasinoBalanceSync = null;
+let isSpectator = false;
+let spectatorName = null;
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -134,6 +142,9 @@ const tokenData = [
     { name: 'White Girl', model: getModelPath('/Models/WhiteGirlIdle/Standing Idle.fbx'), walkModel: getModelPath('/Models/WhiteGirlWalk/Walking.fbx'), image: '/tokenimages/woman_model.png', scale: 0.06 },
     { name: 'Coffee Cup', model: getModelPath('/Models/CoffeeCup/coffee.gltf'), image: '/tokenimages/coffee.png', scale: 0.25 }
 ];
+
+// Track last played videos for each tile to prevent repeats
+const lastPlayedPropertyVideos = {};
 
 // Helper function to get model path (supports CDN)
 function getModelPath(localPath) {
@@ -343,6 +354,10 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
         cancelAnimationFrame(diceRollAnimFrame);
         diceRollAnimFrame = null;
     }
+    if (diceFadeAnimFrame) {
+        cancelAnimationFrame(diceFadeAnimFrame);
+        diceFadeAnimFrame = null;
+    }
 
     spawnDiceOnBoard(playerPosition);
     // Always roll dice at board center (0, 0)
@@ -365,10 +380,21 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
                 if (callbacks && typeof callbacks.onLand === 'function') {
                     callbacks.onLand();
                 }
-                setTimeout(() => {
-                    if (dice1Mesh) dice1Mesh.visible = false;
-                    if (dice2Mesh) dice2Mesh.visible = false;
-                }, 350);
+                const fadeTick = runDiceFadeOutAnimation(
+                    [dice1Mesh, dice2Mesh],
+                    280,
+                    () => { diceFadeAnimFrame = null; }
+                );
+                if (fadeTick) {
+                    function animateFade(now) {
+                        if (fadeTick && fadeTick(now)) {
+                            diceFadeAnimFrame = requestAnimationFrame(animateFade);
+                        } else {
+                            diceFadeAnimFrame = null;
+                        }
+                    }
+                    diceFadeAnimFrame = requestAnimationFrame(animateFade);
+                }
             }, getDiceSettleHoldMs());
         }
     });
@@ -582,6 +608,7 @@ let resizeObserver = null;
 let dice1Mesh, dice2Mesh;
 let diceRolling = false;
 let diceRollAnimFrame = null;
+let diceFadeAnimFrame = null;
 const revealedPlayerIds = new Set();
 const tokenAnimatingIds = new Set();
 const tokenAnimationHandles = {};
@@ -641,7 +668,6 @@ let lastMouseY = 0;
 
 // Modal elements
 const propertyModal = document.getElementById('propertyModal');
-const buyModal = document.getElementById('buyModal');
 const gameOverModal = document.getElementById('gameOverModal');
 const gameOverTitle = document.getElementById('gameOverTitle');
 const gameOverContent = document.getElementById('gameOverContent');
@@ -662,6 +688,7 @@ let propertyMediaSession = 0;
 
 function stopVideoElement(video) {
     if (!video) return;
+    video._intentionalStop = true;
     video.pause();
     video.currentTime = 0;
     video.loop = false;
@@ -918,6 +945,51 @@ function clearPropertyDecisionTimer() {
     propertyDecisionEndsAt = null;
 }
 
+function getStoredSpectatorUid() {
+    return sessionStorage.getItem('metropoly_spectator_uid');
+}
+
+function isSpectatorSession() {
+    return sessionStorage.getItem('metropoly_is_spectator') === '1'
+        || new URLSearchParams(window.location.search).get('spectate') === '1';
+}
+
+function persistSpectatorIdentity(gameId, uid, name) {
+    sessionStorage.setItem('metropoly_is_spectator', '1');
+    sessionStorage.removeItem('metropoly_player_uid');
+    if (gameId) sessionStorage.setItem('metropoly_game_id', gameId);
+    if (uid) sessionStorage.setItem('metropoly_spectator_uid', uid);
+    if (name) sessionStorage.setItem('metropoly_spectator_name', name);
+}
+
+function applySpectatorModeUI() {
+    document.body.classList.add('spectator-mode');
+    const label = spectatorName || 'Spectator';
+    if (playerNameEl) playerNameEl.textContent = `${label} (Watching)`;
+    if (playerMoneyEl) playerMoneyEl.textContent = '—';
+
+    const rollDiceBtn = document.getElementById('rollDiceBtn');
+    const endTurnBtn = document.getElementById('endTurnBtn');
+    const payJailBtn = document.getElementById('payJailBtn');
+    if (rollDiceBtn) rollDiceBtn.disabled = true;
+    if (endTurnBtn) endTurnBtn.disabled = true;
+    if (payJailBtn) payJailBtn.style.display = 'none';
+}
+
+function hydrateSpectatorFromJoinData(data) {
+    isSpectator = true;
+    myPlayerId = null;
+    currentPlayer = null;
+    spectatorName = data.spectatorName || sessionStorage.getItem('metropoly_spectator_name') || 'Spectator';
+    players = data.players || [];
+    gameState = data.gameState || null;
+    if (data.gameId) currentGameId = data.gameId;
+    if (data.spectatorUid) {
+        persistSpectatorIdentity(data.gameId, data.spectatorUid, spectatorName);
+    }
+    applySpectatorModeUI();
+}
+
 function getStoredPlayerUid() {
     return sessionStorage.getItem('metropoly_player_uid');
 }
@@ -958,7 +1030,14 @@ function dismissPropertyDecisionUI() {
     clearPropertyDecisionTimer();
     activePropertyDecision = null;
     waitingForBuyResult = false;
-    if (buyModal) buyModal.classList.add('hidden');
+    const propertyActions = document.getElementById('propertyActions');
+    const decisionPrompt = document.getElementById('propertyDecisionPrompt');
+    if (propertyActions) propertyActions.classList.add('hidden');
+    if (decisionPrompt) {
+        decisionPrompt.classList.add('hidden');
+        decisionPrompt.textContent = '';
+    }
+    closePropertyModal();
 }
 
 let clientAutoEndTurnTimer = null;
@@ -991,94 +1070,173 @@ function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
     }, delay);
 }
 
-function updateBuyModalContent() {
+function getSpaceTypeLabel(type) {
+    if (type === 'railroad') return 'Railroad';
+    if (type === 'utility') return 'Utility';
+    if (type === 'property') return 'Property';
+    return type.charAt(0).toUpperCase() + type.slice(1).replace(/-/g, ' ');
+}
+
+function updatePropertyDecisionUI() {
     if (!activePropertyDecision) return;
-    const buyContent = document.getElementById('buyContent');
-    const confirmBuyBtn = document.getElementById('confirmBuyBtn');
-    const cancelBuyBtn = document.getElementById('cancelBuyBtn');
-    if (!buyContent) return;
+    const propertyActions = document.getElementById('propertyActions');
+    const propertyConfirmBtn = document.getElementById('propertyConfirmBtn');
+    const propertyPassBtn = document.getElementById('propertyPassBtn');
+    const decisionPrompt = document.getElementById('propertyDecisionPrompt');
+    if (!propertyActions || !propertyConfirmBtn || !propertyPassBtn) return;
 
     const isRentDecision = activePropertyDecision.isRent;
     const canAfford = currentPlayer && currentPlayer.money >= activePropertyDecision.spaceData.price;
     const isCasino = activePropertyDecision.spaceData.isCasino;
+    const spaceData = activePropertyDecision.spaceData;
+    const typeLabel = getSpaceTypeLabel(spaceData.type);
 
-    let html = `<p><strong>${activePropertyDecision.spaceData.name}</strong></p>`;
-    
+    let confirmLabel = `Buy ${typeLabel}`;
+    let passLabel = 'Pass';
+    let promptText = canAfford
+        ? `Buy this ${typeLabel.toLowerCase()} or pass.`
+        : 'Not enough money to buy. Pass to continue.';
+    let confirmHandler = null;
+
     if (isRentDecision) {
         const owner = activePropertyDecision.owner;
-        const rent = calculateRentAmount(activePropertyDecision.spaceData, owner);
-        html += `<p>Owned by: <strong>${owner.name}</strong></p>`;
-        html += `<p>Rent due: <strong>$${rent}</strong></p>`;
-        html += `<p>You must pay rent to continue.</p>`;
-        
-        // Update button text for rent
-        if (confirmBuyBtn) {
-            confirmBuyBtn.textContent = 'Pay Rent';
-            confirmBuyBtn.onclick = () => {
-                if (currentPlayer && currentPlayer.money >= rent) {
-                    socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
-                    dismissPropertyDecisionUI();
-                    endTurnNow();
-                } else {
-                    alert('Not enough money to pay rent!');
-                }
-            };
-        }
+        const rent = calculateRentAmount(spaceData, owner);
+        confirmLabel = 'Pay Rent';
+        passLabel = 'Pass';
+        promptText = `Owned by ${owner.name}. Pay $${rent} to continue.`;
+        confirmHandler = () => {
+            if (currentPlayer && currentPlayer.money >= rent) {
+                socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
+                dismissPropertyDecisionUI();
+                endTurnNow();
+            } else {
+                alert('Not enough money to pay rent!');
+            }
+        };
     } else {
-        html += `<p>Price: <strong>$${activePropertyDecision.spaceData.price}</strong></p>`;
-        html += `<p>Rent: <strong>$${activePropertyDecision.spaceData.rent ? activePropertyDecision.spaceData.rent[0] : 0}</strong></p>`;
-        html += `<p>${canAfford ? 'Buy this property or click End Turn when you are done.' : 'Not enough money to buy. Click End Turn.'}</p>`;
-        
-        // Reset button text for buy
-        if (confirmBuyBtn) {
-            confirmBuyBtn.textContent = 'Buy Property';
-            confirmBuyBtn.onclick = () => {
-                if (canAfford) {
-                    waitingForBuyResult = true;
-                    socket.emit('buyProperty', { position: activePropertyDecision.position });
-                    if (!isCasino) {
-                        setTimeout(() => {
-                            if (gameState && gameState.currentPlayer === myPlayerId) {
-                                endTurnNow();
-                            }
-                        }, 500);
-                    }
+        confirmHandler = () => {
+            if (canAfford) {
+                waitingForBuyResult = true;
+                socket.emit('buyProperty', { position: activePropertyDecision.position });
+                dismissPropertyDecisionUI();
+                if (!isCasino) {
+                    setTimeout(() => {
+                        if (gameState && gameState.currentPlayer === myPlayerId) {
+                            endTurnNow();
+                        }
+                    }, 500);
                 }
-            };
-        }
+            } else {
+                alert(`Not enough money to buy this ${typeLabel.toLowerCase()}.`);
+            }
+        };
     }
-    
-    buyContent.innerHTML = html;
+
+    if (decisionPrompt) {
+        decisionPrompt.textContent = promptText;
+        decisionPrompt.classList.remove('hidden');
+    }
+
+    propertyConfirmBtn.textContent = confirmLabel;
+    propertyPassBtn.textContent = passLabel;
+    propertyConfirmBtn.onclick = confirmHandler;
+    propertyPassBtn.onclick = () => {
+        if (!activePropertyDecision) return;
+        if (isRentDecision) {
+            alert('You must pay rent to continue.');
+            return;
+        }
+        socket.emit('passProperty', { position: activePropertyDecision.position });
+        dismissPropertyDecisionUI();
+    };
+    propertyActions.classList.remove('hidden');
+}
+
+function createCasinoBalanceSync(startingMoney) {
+    let lastSyncedBalance = startingMoney;
+    return function syncCasinoBalance(balance) {
+        if (!socket || typeof balance !== 'number' || Number.isNaN(balance)) return;
+
+        const moneyDiff = balance - lastSyncedBalance;
+        if (moneyDiff === 0) return;
+
+        lastSyncedBalance = balance;
+        socket.emit('casinoWinnings', { amount: moneyDiff });
+
+        const localPlayer = resolveLocalPlayer(players);
+        if (localPlayer) {
+            localPlayer.money = (localPlayer.money ?? startingMoney) + moneyDiff;
+            if (currentPlayer && currentPlayer.id === localPlayer.id) {
+                currentPlayer.money = localPlayer.money;
+            }
+        }
+
+        const label = moneyDiff > 0 ? `Casino win: +$${moneyDiff}` : `Casino loss: -$${Math.abs(moneyDiff)}`;
+        addLogEntry(label, 'system');
+        updateUI();
+    };
+}
+
+function flushCasinoBalanceFromIframe(casinoContainer) {
+    if (!activeCasinoBalanceSync || !casinoContainer) return;
+    try {
+        const iframe = casinoContainer.querySelector('iframe');
+        const win = iframe?.contentWindow;
+        if (!win) return;
+
+        const exposedBalance = win.__casinoBalance ?? win.playerBalance ?? win.playerMoney ?? win.playerBankroll;
+        if (typeof exposedBalance === 'number' && !Number.isNaN(exposedBalance)) {
+            activeCasinoBalanceSync(exposedBalance);
+        }
+    } catch (e) {
+        // Cross-origin or teardown race — balance already synced via callback when possible
+    }
+}
+
+function finishLandingDecisionUI() {
+    if (!activePropertyDecision) return;
+
+    showPropertyInfo(activePropertyDecision.spaceData, { showDecisionActions: true });
+    updatePropertyDecisionUI();
+}
+
+function openLandingPropertyModal(spaceData) {
+    showPropertyInfo(spaceData, { showDecisionActions: true });
+    updatePropertyDecisionUI();
+}
+
+function beginLandingDecision({ spaceData, position, isRent = false, owner = null }) {
+    if (!spaceData || isSpectator) return;
+    if (!currentPlayer) return;
+    cancelClientAutoEndTurn();
+    clearPropertyDecisionTimer();
+    waitingForBuyResult = false;
+    activePropertyDecision = { spaceData, position, isRent, owner };
+
+    if (spaceData.isCasino && !currentPlayer.isAI) {
+        if (propertyModal) propertyModal.classList.add('hidden');
+        cleanupPropertyVideo();
+        openCasinoGame(spaceData.casinoGame);
+    } else {
+        openLandingPropertyModal(spaceData);
+    }
+
+    updateUI();
 }
 
 function startPropertyDecision(spaceData, position) {
-    if (!spaceData || !buyModal || !currentPlayer) return;
-    cancelClientAutoEndTurn();
-    clearPropertyDecisionTimer();
-    waitingForBuyResult = false;
-    activePropertyDecision = { spaceData, position, isRent: false };
-
-    // Auto-open casino if this is a casino property (only for human players)
-    if (spaceData.isCasino && !currentPlayer.isAI) {
-        openCasinoGame(spaceData.casinoGame);
-    } else {
-        updateBuyModalContent();
-        buyModal.classList.remove('hidden');
-    }
-
-    updateUI();
+    if (!spaceData || !currentPlayer) return;
+    beginLandingDecision({ spaceData, position, isRent: false });
 }
 
 function startRentDecision(ownedData, position) {
-    if (!ownedData || !buyModal || !currentPlayer) return;
-    cancelClientAutoEndTurn();
-    clearPropertyDecisionTimer();
-    waitingForBuyResult = false;
-    activePropertyDecision = { spaceData: ownedData.spaceData, position, owner: ownedData.owner, isRent: true };
-    updateBuyModalContent();
-    
-    buyModal.classList.remove('hidden');
-    updateUI();
+    if (!ownedData || !currentPlayer) return;
+    beginLandingDecision({
+        spaceData: ownedData.spaceData,
+        position,
+        isRent: true,
+        owner: ownedData.owner
+    });
 }
 
 function calculateRentAmount(spaceData, owner) {
@@ -1107,6 +1265,22 @@ function calculateRentAmount(spaceData, owner) {
     return rent;
 }
 
+// Root element each casino minigame expects when embedded in the main game iframe
+const CASINO_GAME_CONTAINERS = {
+    Baccarat: '.container',
+    BlackJack: '#game-ui',
+    Craps: '.craps-table-container',
+    PokerFP: '.poker-container',
+    Roulette: 'body',
+    slotMachine: '#slot-machine-root'
+};
+
+function getCasinoGameContainer(doc, gameName) {
+    const selector = CASINO_GAME_CONTAINERS[gameName];
+    if (!selector || selector === 'body') return doc.body;
+    return doc.querySelector(selector) || doc.body;
+}
+
 // Open casino game modal
 function openCasinoGame(gameName) {
     const casinoModal = document.getElementById('casinoGameModal');
@@ -1124,10 +1298,8 @@ function openCasinoGame(gameName) {
 
     casinoModal.classList.remove('hidden');
 
-    // Hide buy modal
-    if (buyModal) {
-        buyModal.classList.add('hidden');
-    }
+    if (propertyModal) propertyModal.classList.add('hidden');
+    cleanupPropertyVideo();
 
     // Listen for messages from the casino game iframe (only add listener once)
     if (!casinoMessageListenerAttached) {
@@ -1151,26 +1323,29 @@ function openCasinoGame(gameName) {
                 };
 
                 const initFunctionName = initFunctionNames[gameName];
-                if (initFunctionName && iframe.contentWindow[initFunctionName]) {
-                    // Create a callback to update the main game balance
-                    const updateMainGameBalance = function(balance) {
-                        if (currentPlayer && socket) {
-                            const moneyDiff = balance - playerMoney;
-                            if (moneyDiff !== 0) {
-                                socket.emit('casinoWinnings', { amount: moneyDiff });
-                            }
-                        }
-                    };
-
-                    // Initialize the casino game
-                    iframe.contentWindow[initFunctionName](
-                        iframe.contentWindow.document,
-                        playerMoney,
-                        updateMainGameBalance
-                    );
+                const initFn = initFunctionName && iframe.contentWindow[initFunctionName];
+                if (!initFn) {
+                    console.error('[Casino] Init function not found:', gameName, initFunctionName);
+                    return;
                 }
+
+                const iframeDoc = iframe.contentWindow.document;
+                const container = getCasinoGameContainer(iframeDoc, gameName);
+                if (!container) {
+                    console.error('[Casino] Container not found for:', gameName);
+                    return;
+                }
+
+                activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
+
+                initFn(container, playerMoney, function syncCasinoBalance(balance) {
+                    activeCasinoBalanceSync(balance);
+                    try {
+                        iframe.contentWindow.__casinoBalance = balance;
+                    } catch (e) {}
+                });
             } catch (e) {
-                // console.log('Could not initialize casino game:', e);
+                console.error('[Casino] Could not initialize casino game:', gameName, e);
             }
         };
     }
@@ -1178,13 +1353,7 @@ function openCasinoGame(gameName) {
 
 // Handle messages from casino game iframe
 function handleCasinoGameMessage(event) {
-    if (event.data && event.data.type === 'casinoWinnings') {
-        const winnings = event.data.amount || 0;
-        if (winnings !== 0 && socket) {
-            socket.emit('casinoWinnings', { amount: winnings });
-        }
-    } else if (event.data && event.data.type === 'casinoGameClose') {
-        // Casino game is requesting to close
+    if (event.data && event.data.type === 'casinoGameClose') {
         closeCasinoGame();
     }
 }
@@ -1194,6 +1363,9 @@ function closeCasinoGame() {
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoContainer = document.getElementById('casinoGameContainer');
 
+    flushCasinoBalanceFromIframe(casinoContainer);
+    activeCasinoBalanceSync = null;
+
     if (casinoModal) {
         casinoModal.classList.add('hidden');
     }
@@ -1202,24 +1374,7 @@ function closeCasinoGame() {
         casinoContainer.innerHTML = '';
     }
 
-    // Remove message listener
-    window.removeEventListener('message', handleCasinoGameMessage);
-    casinoMessageListenerAttached = false;
-
-    // Show buy modal after casino game ends for property purchase
-    // Only if it's still the current player's turn and the property decision is still active
-    if (activePropertyDecision && 
-        activePropertyDecision.spaceData.isCasino && 
-        gameState && 
-        gameState.currentPlayer === myPlayerId) {
-        updateBuyModalContent();
-        buyModal.classList.remove('hidden');
-    } else {
-        // Clean up stale property decision state
-        if (activePropertyDecision) {
-            dismissPropertyDecisionUI();
-        }
-    }
+    finishLandingDecisionUI();
 }
 
 function lerpCoords(from, to, t) {
@@ -1640,26 +1795,149 @@ function updateTokens() {
 // Cache for loaded media to prevent re-loading
 const mediaCache = {};
 
+function pickAlternatePropertyVideo(videos, position) {
+    if (!videos || videos.length === 0) return null;
+    if (videos.length === 1) return videos[0];
+
+    const lastVideo = lastPlayedPropertyVideos[position];
+    const alternatives = lastVideo ? videos.filter(v => v !== lastVideo) : videos;
+    const pool = alternatives.length > 0 ? alternatives : videos;
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function applyMediaFrameOrientation(frame, element) {
+    const w = element.videoWidth || element.naturalWidth;
+    const h = element.videoHeight || element.naturalHeight;
+    if (!w || !h) return;
+
+    const ratio = w / h;
+    frame.classList.remove('media-frame--portrait', 'media-frame--landscape', 'media-frame--square');
+
+    if (ratio < 0.85) {
+        frame.classList.add('media-frame--portrait');
+    } else if (ratio > 1.15) {
+        frame.classList.add('media-frame--landscape');
+    } else {
+        frame.classList.add('media-frame--square');
+    }
+}
+
+function bindMediaFrameOrientation(frame, element) {
+    const apply = () => applyMediaFrameOrientation(frame, element);
+    if (element.tagName === 'VIDEO') {
+        if (element.readyState >= 1) apply();
+        else element.addEventListener('loadedmetadata', apply, { once: true });
+    } else if (element.complete && element.naturalWidth) {
+        apply();
+    } else {
+        element.addEventListener('load', apply, { once: true });
+    }
+}
+
+function createMediaFrame(element) {
+    const frame = document.createElement('div');
+    frame.className = 'media-frame media-frame--landscape';
+    frame.appendChild(element);
+    bindMediaFrameOrientation(frame, element);
+    return frame;
+}
+
+/*
+// TEMP DEBUG — remove after diagnosing video load failures
+function debugVideoAssignment(video, context) { ... }
+function watchVideoSrcMutations(video, propertyName) { ... }
+function logVideoLoadError(video, context) { ... }
+*/
+function debugVideoAssignment() {}
+function watchVideoSrcMutations() { return { disconnect() {} }; }
+function logVideoLoadError(video, context) {
+    if (video && video._intentionalStop) return;
+    const src = context.intendedSrc || video?.currentSrc || video?.src || 'unknown';
+    console.error(`[Video Error] ${context.propertyName} - Failed to load video`, src);
+}
+
+function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
+    if (!media.images || media.images.length === 0) return false;
+    const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+    const img = document.createElement('img');
+    img.src = randomImage;
+    img.alt = media.name;
+    img.loading = 'lazy';
+    const imgFrame = createMediaFrame(img);
+    img.addEventListener('load', () => {
+        mediaContainer.innerHTML = '';
+        mediaContainer.appendChild(imgFrame);
+        mediaCache[cacheKey] = imgFrame.cloneNode(true);
+    });
+    img.addEventListener('error', () => {
+        mediaContainer.innerHTML = '';
+    });
+    return true;
+}
+
 function closePropertyModal() {
     cleanupPropertyVideo();
+    const propertyActions = document.getElementById('propertyActions');
+    const decisionPrompt = document.getElementById('propertyDecisionPrompt');
+    if (propertyActions && !activePropertyDecision) {
+        propertyActions.classList.add('hidden');
+    }
+    if (decisionPrompt && !activePropertyDecision) {
+        decisionPrompt.classList.add('hidden');
+        decisionPrompt.textContent = '';
+    }
     if (propertyModal) {
         propertyModal.classList.add('hidden');
     }
 }
 
+function buildPropertyDetailsHtml(spaceData) {
+    const owner = players.find(p => p && p.properties && p.properties.includes(spaceData.position));
+    const isPurchasable = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
+    const isRentDecision = activePropertyDecision
+        && activePropertyDecision.position === spaceData.position
+        && activePropertyDecision.isRent;
+    let html = '';
+
+    if (isPurchasable) {
+        html += '<div class="property-stat-grid">';
+        if (isRentDecision) {
+            const rent = calculateRentAmount(spaceData, activePropertyDecision.owner);
+            html += `<div class="property-stat"><span class="property-stat-label">Rent Due</span><span class="property-stat-value property-stat-value--accent">$${rent}</span></div>`;
+            html += `<div class="property-stat"><span class="property-stat-label">Owner</span><span class="property-stat-value">${activePropertyDecision.owner.name}</span></div>`;
+        } else {
+            html += `<div class="property-stat"><span class="property-stat-label">Price</span><span class="property-stat-value property-stat-value--accent">$${spaceData.price}</span></div>`;
+            html += `<div class="property-stat"><span class="property-stat-label">Base Rent</span><span class="property-stat-value">$${spaceData.rent ? spaceData.rent[0] : 0}</span></div>`;
+        }
+        html += `<div class="property-stat"><span class="property-stat-label">Tile</span><span class="property-stat-value">#${spaceData.position}</span></div>`;
+        html += `<div class="property-stat"><span class="property-stat-label">Status</span><span class="property-stat-value">${owner ? owner.name : 'Available'}</span></div>`;
+        html += '</div>';
+    } else if (spaceData.type === 'tax') {
+        html += `<div class="property-stat"><span class="property-stat-label">Tax</span><span class="property-stat-value property-stat-value--accent">$${spaceData.amount}</span></div>`;
+    }
+
+    if (spaceData.address) {
+        html += `<p class="property-detail-line">${spaceData.address}</p>`;
+    }
+
+    return html;
+}
+
 // Show property information
-function showPropertyInfo(spaceData) {
-    // console.log('showPropertyInfo called for:', spaceData.name, 'position:', spaceData.position);
+function showPropertyInfo(spaceData, options = {}) {
+    const { showDecisionActions = false } = options;
     cleanupPropertyVideo();
     const mediaSession = propertyMediaSession;
 
     const modal = propertyModal;
     const title = document.getElementById('propertyTitle');
+    const subtitle = document.getElementById('propertySubtitle');
+    const colorBar = document.getElementById('propertyColorBar');
     const content = document.getElementById('propertyContent');
     const mediaContainer = document.getElementById('propertyMedia') || document.getElementById('property-media');
     const loadingIndicator = document.getElementById('loadingIndicator');
-    
-    // console.log('Modal elements:', { modal: !!modal, title: !!title, content: !!content, mediaContainer: !!mediaContainer });
+    const propertyActions = document.getElementById('propertyActions');
+    const decisionPrompt = document.getElementById('propertyDecisionPrompt');
     
     if (!modal || !title || !content || !mediaContainer) {
         console.error('Modal elements not found!');
@@ -1667,6 +1945,28 @@ function showPropertyInfo(spaceData) {
     }
     
     title.textContent = spaceData.name;
+
+    if (subtitle) {
+        const typeLabel = getSpaceTypeLabel(spaceData.type);
+        subtitle.textContent = `${typeLabel}${spaceData.isCasino ? ' · Casino' : ''}`;
+    }
+
+    if (colorBar) {
+        colorBar.style.background = spaceData.color || '#888';
+    }
+
+    if (propertyActions) {
+        if (showDecisionActions) {
+            propertyActions.classList.remove('hidden');
+        } else {
+            propertyActions.classList.add('hidden');
+        }
+    }
+
+    if (decisionPrompt && !showDecisionActions) {
+        decisionPrompt.classList.add('hidden');
+        decisionPrompt.textContent = '';
+    }
     
     // Clear previous media
     mediaContainer.innerHTML = '';
@@ -1674,117 +1974,94 @@ function showPropertyInfo(spaceData) {
     // Load media from tileMedia if available
     if (tileMedia && tileMedia[spaceData.position]) {
         const media = tileMedia[spaceData.position];
-        const cacheKey = `${spaceData.position}_${media.name}`;
-        
-        // Check cache first
-        if (mediaCache[cacheKey]) {
+        const selectedVideo = (media.videos && media.videos.length > 0)
+            ? pickAlternatePropertyVideo(media.videos, spaceData.position)
+            : null;
+        const cacheKey = selectedVideo
+            ? `${spaceData.position}_${selectedVideo}`
+            : `${spaceData.position}_${media.name}`;
+
+        if (selectedVideo && mediaCache[cacheKey]) {
+            lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
             const cloned = mediaCache[cacheKey].cloneNode(true);
             mediaContainer.appendChild(cloned);
-            if (mediaCache[cacheKey].tagName === 'VIDEO') {
-                const video = mediaContainer.querySelector('video');
+            const video = cloned.querySelector('video');
+            if (video) {
                 currentPropertyVideo = video;
-                video.muted = true; // ensure muted when restoring from cache
-                video.loop = false; // Ensure no looping
-                video.currentTime = 0; // Reset video to start
-                video.play().catch(e => {});
+                video.muted = true;
+                video.loop = false;
+                video.currentTime = 0;
+                video.play().catch(() => {});
             }
-        } else {
-            // Prefer video if available
-            if (media.videos && media.videos.length > 0) {
-                const randomVideo = media.videos[Math.floor(Math.random() * media.videos.length)];
-                const video = document.createElement('video');
-                // Don't encode - browser handles spaces in URLs automatically
-                video.src = randomVideo;
-                video.autoplay = true;
-                video.muted = true; // Muted for autoplay to work
-                video.loop = false; // Do not loop - play once then stop
-                video.playsInline = true;
-                video.controls = true;
-                video.style.width = '100%';
-                video.style.maxHeight = '250px';
-                video.style.objectFit = 'cover';
-                video.style.borderRadius = '8px';
-                video.preload = 'auto';
-                pendingPropertyVideo = video;
-                
-                video.addEventListener('loadeddata', () => {
-                    if (mediaSession !== propertyMediaSession) {
-                        stopVideoElement(video);
-                        return;
-                    }
-                    pendingPropertyVideo = null;
-                    mediaContainer.appendChild(video);
-                    mediaCache[cacheKey] = video.cloneNode(true);
-                    currentPropertyVideo = video;
-                    video.play().catch(e => {});
+        } else if (selectedVideo) {
+            lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
+
+            const video = document.createElement('video');
+            const frame = createMediaFrame(video);
+            video.src = selectedVideo;
+            video.autoplay = true;
+            video.muted = true;
+            video.loop = false;
+            video.playsInline = true;
+            video.controls = true;
+            video.preload = 'auto';
+            pendingPropertyVideo = video;
+            mediaContainer.appendChild(frame);
+
+            video.addEventListener('error', () => {
+                if (video._intentionalStop || mediaSession !== propertyMediaSession) return;
+                pendingPropertyVideo = null;
+                logVideoLoadError(video, {
+                    propertyName: media.name,
+                    position: spaceData.position,
+                    intendedSrc: selectedVideo,
+                    fromCache: false
                 });
-                
-                video.addEventListener('error', (e) => {
-                    if (mediaSession !== propertyMediaSession) return;
-                    pendingPropertyVideo = null;
-                    // console.log('Video load error:', e);
-                    // console.log('Failed video src:', randomVideo);
+                if (!showPropertyImages(media, spaceData, mediaContainer, cacheKey) && loadingIndicator) {
                     mediaContainer.innerHTML = '';
-                    if (loadingIndicator) loadingIndicator.textContent = 'Media unavailable';
-                });
-            } else if (media.images && media.images.length > 0) {
-                const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
-                const img = document.createElement('img');
-                img.src = randomImage;
-                img.alt = media.name;
-                img.style.width = '100%';
-                img.style.maxHeight = '250px';
-                img.style.objectFit = 'cover';
-                img.style.borderRadius = '8px';
-                img.loading = 'lazy';
-                
-                img.addEventListener('load', () => {
-                    mediaContainer.innerHTML = '';
-                    mediaContainer.appendChild(img);
-                    mediaCache[cacheKey] = img.cloneNode(true);
-                });
-                
-                img.addEventListener('error', () => {
-                    mediaContainer.innerHTML = '';
-                    if (loadingIndicator) loadingIndicator.textContent = 'Image unavailable';
-                });
-            } else {
+                    loadingIndicator.textContent = 'Media unavailable';
+                }
+            });
+
+            video.addEventListener('loadeddata', () => {
+                if (mediaSession !== propertyMediaSession) {
+                    stopVideoElement(video);
+                    return;
+                }
+                pendingPropertyVideo = null;
+                mediaCache[cacheKey] = frame.cloneNode(true);
+                currentPropertyVideo = video;
+                video.play().catch(() => {});
+            });
+        } else if (mediaCache[cacheKey]) {
+            const cloned = mediaCache[cacheKey].cloneNode(true);
+            mediaContainer.appendChild(cloned);
+        } else if (media.images && media.images.length > 0) {
+            const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+            const img = document.createElement('img');
+            img.src = randomImage;
+            img.alt = media.name;
+            img.loading = 'lazy';
+            const imgFrame = createMediaFrame(img);
+
+            img.addEventListener('load', () => {
                 mediaContainer.innerHTML = '';
-            }
+                mediaContainer.appendChild(imgFrame);
+                mediaCache[cacheKey] = imgFrame.cloneNode(true);
+            });
+
+            img.addEventListener('error', () => {
+                mediaContainer.innerHTML = '';
+                if (loadingIndicator) loadingIndicator.textContent = 'Image unavailable';
+            });
+        } else {
+            mediaContainer.innerHTML = '';
         }
     } else {
         mediaContainer.innerHTML = '';
     }
     
-    let html = `<p><strong>Position:</strong> ${spaceData.position}</p>`;
-    html += `<p><strong>Type:</strong> ${spaceData.type}</p>`;
-    
-    if (spaceData.address) {
-        html += `<p><strong>Address:</strong> ${spaceData.address}</p>`;
-    }
-    
-    if (spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility') {
-        html += `<p><strong>Price:</strong> $${spaceData.price}</p>`;
-
-        if (spaceData.rent) {
-            html += `<p><strong>Rent:</strong> $${spaceData.rent[0]}</p>`;
-        }
-
-        if (spaceData.position !== undefined && spaceData.position !== null) {
-            const owner = players.find(p => p && p.properties && p.properties.includes(spaceData.position));
-            if (owner) {
-                html += `<p><strong>Owner:</strong> ${owner.name}</p>`;
-            } else {
-                html += `<p><strong>Status:</strong> Available</p>`;
-            }
-        }
-    } else if (spaceData.type === 'tax') {
-        html += `<p><strong>Tax Amount:</strong> $${spaceData.amount}</p>`;
-    }
-    
-    content.innerHTML = html;
-    
-    // console.log('Removing hidden class from modal');
+    content.innerHTML = buildPropertyDetailsHtml(spaceData);
     modal.classList.remove('hidden');
 }
 
@@ -1942,6 +2219,16 @@ function getPlayerDisplayName(player) {
 
 // Update UI elements
 function updateUI(options = {}) {
+    if (isSpectator) {
+        applySpectatorModeUI();
+        updatePlayersList();
+        if (myPropertiesEl) myPropertiesEl.innerHTML = '<div class="no-properties">Spectating — no properties</div>';
+        const gameCodeEl = document.getElementById('gameCode');
+        if (gameCodeEl) gameCodeEl.textContent = 'Spectating';
+        if (!options.skipTokenLayer) updateTokens();
+        return;
+    }
+
     if (currentPlayer) {
         playerMoneyEl.textContent = `$${currentPlayer.money || 2500}`;
         playerNameEl.textContent = getPlayerDisplayName(currentPlayer);
@@ -2223,23 +2510,53 @@ function handleDiceRolledEvent(data) {
 
 // Socket event handlers
 socket.on('connect', () => {
-    // console.log('Connected to server');
-
     const urlParts = window.location.pathname.split('/');
     const gameId = urlParts[urlParts.length - 1];
     currentGameId = gameId;
-    const playerUid = getStoredPlayerUid();
+    const spectating = isSpectatorSession();
 
     if (gameId && gameCodeEl) {
         gameCodeEl.textContent = gameId;
     }
 
-    if (gameId) {
+    if (!gameId) return;
+
+    if (spectating) {
+        isSpectator = true;
+        socket.emit('joinAsSpectator', {
+            gameId,
+            spectatorUid: getStoredSpectatorUid(),
+            spectatorName: sessionStorage.getItem('metropoly_spectator_name') || undefined
+        });
+    } else {
+        const playerUid = getStoredPlayerUid();
         socket.emit('joinGame', { gameId, playerUid });
     }
 });
 
+socket.on('spectatorJoined', (data) => {
+    hydrateSpectatorFromJoinData(data);
+
+    if (data.chatLog && Array.isArray(data.chatLog) && chatMessagesEl) {
+        chatMessagesEl.innerHTML = '';
+        data.chatLog.forEach((entry) => {
+            addChatMessage(entry.sender, entry.message);
+        });
+    }
+
+    try {
+        initializeBoard();
+        updateUI();
+    } catch (error) {
+        console.error('GAME: Error initializing spectator view:', error);
+    }
+
+    addLogEntry(`You are watching as ${spectatorName}`, 'system');
+    updateTokens();
+});
+
 socket.on('gameJoined', (data) => {
+    if (isSpectator) return;
     // console.log('=== GAME JOINED ===');
     // console.log('GAME: Received gameJoined event:', data);
     // console.log('GAME: Socket ID:', socket.id);
@@ -2365,13 +2682,13 @@ socket.on('gameStarted', (data) => {
     gameState = data.gameState;
     players = data.players;
 
-    currentPlayer = resolveLocalPlayer(players);
-    if (currentPlayer) {
-        myPlayerId = currentPlayer.id;
+    if (!isSpectator) {
+        currentPlayer = resolveLocalPlayer(players);
+        if (currentPlayer) {
+            myPlayerId = currentPlayer.id;
+        }
+        socket.emit('gameStartedAck');
     }
-
-    // Acknowledge receipt to server
-    socket.emit('gameStartedAck');
 
     // Force status update
     const gameCodeEl = document.getElementById('gameCode');
@@ -2387,8 +2704,7 @@ socket.on('gameStarted', (data) => {
 
     addLogEntry('Game started!', 'system');
 
-    // Show token selection if player doesn't have a token
-    if (currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
+    if (!isSpectator && currentPlayer && !currentPlayer.tokenIndex && currentPlayer.tokenIndex !== 0) {
         showTokenSelection();
     }
 });
@@ -2450,7 +2766,7 @@ socket.on('propertyPurchased', (data) => {
             waitingForBuyResult = false;
             activePropertyDecision = null;
             clearPropertyDecisionTimer();
-            if (buyModal) buyModal.classList.add('hidden');
+            dismissPropertyDecisionUI();
             updateUI();
             endTurnNow();
         }
@@ -2463,9 +2779,8 @@ socket.on('propertyPassed', (data) => {
     
     if (playerId === myPlayerId) {
         waitingForBuyResult = false;
-        activePropertyDecision = null;
         clearPropertyDecisionTimer();
-        if (buyModal) buyModal.classList.add('hidden');
+        dismissPropertyDecisionUI();
         updateUI();
     }
 });
@@ -2476,21 +2791,17 @@ socket.on('playerJoined', (data) => {
 });
 
 socket.on('playersUpdated', (data) => {
-    // console.log('PLAYERS: Received playersUpdated event:', data);
     players = data.players;
     if (data.gameState) {
         gameState = data.gameState;
     }
 
-    currentPlayer = resolveLocalPlayer(players);
-    if (currentPlayer) {
-        myPlayerId = currentPlayer.id;
+    if (!isSpectator) {
+        currentPlayer = resolveLocalPlayer(players);
+        if (currentPlayer) {
+            myPlayerId = currentPlayer.id;
+        }
     }
-    
-    // console.log('PLAYERS: Updated players array:', players);
-    // console.log('PLAYERS: Current player:', currentPlayer ? currentPlayer.name : 'NOT FOUND');
-    // console.log('PLAYERS: My Player ID:', myPlayerId);
-    // console.log('PLAYERS: Socket ID:', socket.id);
     
     updateUI();
     updatePlayersList();
@@ -2869,6 +3180,12 @@ socket.on('gameError', (error) => {
         return;
     }
 
+    if (message.toLowerCase().includes('not in progress') || message.toLowerCase().includes('join the lobby')) {
+        alert(message);
+        window.location.href = '/';
+        return;
+    }
+
     if (message.toLowerCase().includes('token') && currentPlayer && pendingTokenSelection != null) {
         delete currentPlayer.tokenIndex;
         delete currentPlayer.tokenName;
@@ -2882,7 +3199,7 @@ socket.on('gameError', (error) => {
         waitingForBuyResult = false;
         activePropertyDecision = null;
         clearPropertyDecisionTimer();
-        if (buyModal) buyModal.classList.add('hidden');
+        dismissPropertyDecisionUI();
     }
 });
 
@@ -2974,48 +3291,7 @@ function showTokenSelection() {
     tokenModal.classList.remove('hidden');
 }
 
-const confirmBuyBtn = document.getElementById('confirmBuyBtn');
-const cancelBuyBtn = document.getElementById('cancelBuyBtn');
 const closeCasinoBtn = document.getElementById('closeCasinoBtn');
-
-if (confirmBuyBtn) {
-    confirmBuyBtn.addEventListener('click', () => {
-        if (!activePropertyDecision) return;
-        const { position, spaceData } = activePropertyDecision;
-        const canAfford = currentPlayer && currentPlayer.money >= spaceData.price;
-        const isCasino = spaceData.isCasino;
-        clearPropertyDecisionTimer();
-        buyModal.classList.add('hidden');
-
-        if (canAfford) {
-            waitingForBuyResult = true;
-            socket.emit('buyProperty', { position });
-            
-            // Auto-end turn for non-casino properties
-            if (!isCasino) {
-                setTimeout(() => {
-                    if (gameState && gameState.currentPlayer === myPlayerId) {
-                        endTurnNow();
-                    }
-                }, 500);
-            }
-        } else {
-            socket.emit('passProperty', { position });
-            addLogEntry(`Cannot afford ${spaceData.name}. Passing.`, 'system');
-            activePropertyDecision = null;
-        }
-    });
-}
-
-if (cancelBuyBtn) {
-    cancelBuyBtn.addEventListener('click', () => {
-        if (!activePropertyDecision) return;
-        socket.emit('passProperty', { position: activePropertyDecision.position });
-        clearPropertyDecisionTimer();
-        buyModal.classList.add('hidden');
-        activePropertyDecision = null;
-    });
-}
 
 if (closeCasinoBtn) {
     closeCasinoBtn.addEventListener('click', () => {
@@ -3099,14 +3375,17 @@ if (endTurnBtn) {
 document.querySelectorAll('.modal-close').forEach(closeBtn => {
     closeBtn.addEventListener('click', (e) => {
         const modal = e.target.closest('.modal');
-        if (modal === buyModal && activePropertyDecision) {
-            socket.emit('passProperty', { position: activePropertyDecision.position });
-            clearPropertyDecisionTimer();
-            activePropertyDecision = null;
-            waitingForBuyResult = false;
-        }
         if (modal === propertyModal) {
-            closePropertyModal();
+            if (activePropertyDecision) {
+                if (activePropertyDecision.isRent) {
+                    alert('You must pay rent to continue.');
+                } else {
+                    socket.emit('passProperty', { position: activePropertyDecision.position });
+                    dismissPropertyDecisionUI();
+                }
+            } else {
+                closePropertyModal();
+            }
             return;
         }
         if (modal.id === 'casinoGameModal') {
@@ -3121,14 +3400,17 @@ document.querySelectorAll('.modal-close').forEach(closeBtn => {
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
-            if (modal === buyModal && activePropertyDecision) {
-                socket.emit('passProperty', { position: activePropertyDecision.position });
-                clearPropertyDecisionTimer();
-                activePropertyDecision = null;
-                waitingForBuyResult = false;
-            }
             if (modal === propertyModal) {
-                closePropertyModal();
+                if (activePropertyDecision) {
+                    if (activePropertyDecision.isRent) {
+                        alert('You must pay rent to continue.');
+                    } else {
+                        socket.emit('passProperty', { position: activePropertyDecision.position });
+                        dismissPropertyDecisionUI();
+                    }
+                } else {
+                    closePropertyModal();
+                }
                 return;
             }
             modal.classList.add('hidden');
@@ -3143,10 +3425,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const configResponse = await fetch('/api/config');
         const config = await configResponse.json();
         window.USE_VIDEO_CDN = config.USE_VIDEO_CDN;
-        window.VIDEO_CDN_BASE_URL = config.VIDEO_CDN_BASE_URL;
+        window.VIDEO_CDN_BASE_URL = (config.VIDEO_CDN_BASE_URL || '').replace(/^http:\/\//, 'https://');
         window.USE_CDN = config.USE_CDN;
         window.CDN_BASE_URL = config.CDN_BASE_URL;
-        console.log('CDN Config loaded:', config);
     } catch (error) {
         console.error('Failed to load CDN config:', error);
         // Fallback to local paths
@@ -3632,6 +3913,7 @@ function createPremiumBoardTile(spaceData, row, col) {
 let centerCarouselGroup = null;
 let carouselImages = [];
 let carouselCurrentIndex = 0;
+let hotelCasinoImages = new Set();
 
 // Fisher-Yates shuffle for randomizing carousel images
 function shuffleArray(array) {
@@ -3694,6 +3976,19 @@ function createCenterCarousel(parentGroup) {
         '/Images/house_of_blues_sunset.webp',
         '/Images/yellow_light_bulb.jpg',
     ];
+    
+    // Define hotel/casino images to prevent back-to-back display
+    hotelCasinoImages = new Set([
+        '/Images/santafecasino.jpg',
+        '/Images/themirage.jpg',
+        '/Images/bellagio.jpg',
+        '/Images/cosmopolitan.jpg',
+        '/Images/wynn_2_2.jpg',
+        '/Images/welcome_caesars_palace.jpg',
+        '/Images/BetMGM.jpg',
+        '/Images/LasVegasSphere.jpg',
+        '/Images/thesphere.jpg',
+    ]);
     
     // Use sequential track-based ordering instead of randomization
     console.log(`Total carousel images: ${allImages.length}`);
@@ -3804,16 +4099,33 @@ function preloadNextCarouselImage(imageMesh) {
     // Use sequential track-based ordering
     let nextIndex = (imageMesh.userData.currentIndex + 1) % imagesLength;
     
-    // Skip failed images
+    // Skip failed images and prevent hotel/casino images back-to-back
     let attempts = 0;
     const maxAttempts = imagesLength;
-    while (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(nextIndex) && attempts < maxAttempts) {
-        nextIndex = (nextIndex + 1) % imagesLength;
-        attempts++;
+    const currentImage = imageMesh.userData.images[imageMesh.userData.currentIndex];
+    const isCurrentHotelCasino = hotelCasinoImages.has(currentImage);
+    
+    while (attempts < maxAttempts) {
+        // Skip failed images
+        if (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(nextIndex)) {
+            nextIndex = (nextIndex + 1) % imagesLength;
+            attempts++;
+            continue;
+        }
+        
+        // Skip hotel/casino images if current is also hotel/casino
+        const nextImage = imageMesh.userData.images[nextIndex];
+        if (isCurrentHotelCasino && hotelCasinoImages.has(nextImage)) {
+            nextIndex = (nextIndex + 1) % imagesLength;
+            attempts++;
+            continue;
+        }
+        
+        break;
     }
     
     if (attempts >= maxAttempts) {
-        console.warn('All carousel images failed to load');
+        console.warn('All carousel images failed to load or are hotel/casino');
         return;
     }
     
@@ -3869,16 +4181,33 @@ function animateCenterCarousel() {
             const imagesLength = imageMesh.userData.images.length;
             let newIndex = (imageMesh.userData.currentIndex + 1) % imagesLength;
             
-            // Skip failed images
+            // Skip failed images and prevent hotel/casino images back-to-back
             let attempts = 0;
             const maxAttempts = imagesLength;
-            while (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(newIndex) && attempts < maxAttempts) {
-                newIndex = (newIndex + 1) % imagesLength;
-                attempts++;
+            const currentImage = imageMesh.userData.images[imageMesh.userData.currentIndex];
+            const isCurrentHotelCasino = hotelCasinoImages.has(currentImage);
+            
+            while (attempts < maxAttempts) {
+                // Skip failed images
+                if (imageMesh.userData.failedImages && imageMesh.userData.failedImages.has(newIndex)) {
+                    newIndex = (newIndex + 1) % imagesLength;
+                    attempts++;
+                    continue;
+                }
+                
+                // Skip hotel/casino images if current is also hotel/casino
+                const nextImage = imageMesh.userData.images[newIndex];
+                if (isCurrentHotelCasino && hotelCasinoImages.has(nextImage)) {
+                    newIndex = (newIndex + 1) % imagesLength;
+                    attempts++;
+                    continue;
+                }
+                
+                break;
             }
             
             if (attempts >= maxAttempts) {
-                console.warn('All carousel images failed to load, staying on current');
+                console.warn('All carousel images failed to load or are hotel/casino, staying on current');
                 return;
             }
             
