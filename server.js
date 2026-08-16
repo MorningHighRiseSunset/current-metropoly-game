@@ -210,7 +210,16 @@ function loadGames() {
         if (fs.existsSync(GAMES_FILE)) {
             const data = fs.readFileSync(GAMES_FILE, 'utf8');
             const gamesData = JSON.parse(data);
+            let loadedCount = 0;
+            let skippedAiGames = 0;
+            
             for (const [gameId, gameData] of Object.entries(gamesData)) {
+                // Skip AI vs AI games to prevent old AI games from auto-loading
+                if (gameData.isAiVsAi) {
+                    skippedAiGames++;
+                    continue;
+                }
+                
                 games[gameId] = gameData;
                 // Clear socket references on load
                 if (games[gameId].players) {
@@ -219,8 +228,10 @@ function loadGames() {
                 if (games[gameId].spectators) {
                     games[gameId].spectators = games[gameId].spectators.map(s => ({ ...s, socket: undefined }));
                 }
+                loadedCount++;
             }
-            console.log(`Loaded ${Object.keys(games).length} games from disk`);
+            
+            console.log(`Loaded ${loadedCount} games from disk (skipped ${skippedAiGames} AI vs AI games)`);
         }
     } catch (err) {
         console.error('Error loading games:', err);
