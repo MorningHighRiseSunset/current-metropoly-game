@@ -98,6 +98,39 @@ window.createAiVsAiGame = function() {
     }
 };
 
+// Console commands to load minigames directly
+// Usage in browser console: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()
+
+window.loadBlackjack = function() {
+    console.log('Loading Blackjack minigame...');
+    window.location.href = '/BlackJack/index.html';
+};
+
+window.loadBaccarat = function() {
+    console.log('Loading Baccarat minigame...');
+    window.location.href = '/Baccarat/index.html';
+};
+
+window.loadRoulette = function() {
+    console.log('Loading Roulette minigame...');
+    window.location.href = '/Roulette/index.html';
+};
+
+window.loadPoker = function() {
+    console.log('Loading Poker minigame...');
+    window.location.href = '/PokerFP/index.html';
+};
+
+window.loadSlots = function() {
+    console.log('Loading Slot Machine minigame...');
+    window.location.href = '/slotMachine/index.html';
+};
+
+window.loadCraps = function() {
+    console.log('Loading Craps minigame...');
+    window.location.href = '/Craps/index.html';
+};
+
 function buildJoinLink(gameId) {
     const baseOrigin = PUBLIC_SHARE_ORIGIN || `${window.location.protocol}//${window.location.host}`;
     return `${baseOrigin}/?gameId=${encodeURIComponent(gameId)}`;
