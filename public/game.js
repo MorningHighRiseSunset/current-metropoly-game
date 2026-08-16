@@ -3942,14 +3942,9 @@ function encodeCarouselPath(path) {
         .join('/');
 }
 
-function getCarouselImageUrl(imagePath, useR2 = false) {
+function getCarouselImageUrl(imagePath) {
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
-    const path = encodeCarouselPath(imagePath);
-    if (useR2 && window.USE_VIDEO_CDN && window.VIDEO_CDN_BASE_URL) {
-        const base = window.VIDEO_CDN_BASE_URL.replace(/\/$/, '');
-        return `${base}${path}`;
-    }
-    return path;
+    return encodeCarouselPath(imagePath);
 }
 
 function isHotelCasinoCarouselImage(imageUrl) {
@@ -3967,7 +3962,7 @@ function buildCarouselImageList(baseImages, casinoGameImages) {
         ordered.push(getCarouselImageUrl(imagePath));
         if (hotelCasinoImages.has(imagePath) && casinoGameImages.length > 0) {
             const casinoPath = casinoGameImages[casinoIndex % casinoGameImages.length];
-            ordered.push(getCarouselImageUrl(casinoPath, true));
+            ordered.push(getCarouselImageUrl(casinoPath));
             casinoIndex += 1;
         }
     });
@@ -4037,13 +4032,13 @@ function createCenterCarousel(parentGroup) {
         '/Images/yellow_light_bulb.jpg',
     ];
 
-    // Casino game photos stored in R2 — shown between hotel images
+    // Casino game photos (served locally from /Images/, same as other carousel slides)
     const casinoGameImages = [
-        '/Images/Baccarat Photo.webp',
-        '/Images/Poker photo.jpg',
-        '/Images/Poker photo 2.jpg',
-        '/Images/Roulette Photo.jpg',
-        '/Images/Blackjack Photo.jpg',
+        '/Images/baccarat_photo.webp',
+        '/Images/poker_photo.jpg',
+        '/Images/poker_photo_2.jpg',
+        '/Images/roulette_photo.jpg',
+        '/Images/blackjack_photo.jpg',
     ];
     
     // Define hotel/casino images to prevent back-to-back display
