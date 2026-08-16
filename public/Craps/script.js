@@ -90,16 +90,19 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
 		}
 		function payBet(bet, payout, msg) {
 			playerBankroll += bet.amount * (payout - 1);
+			try { window.playerBankroll = playerBankroll; } catch (e) {}
 			showStatus(msg + ` +$${bet.amount * (payout - 1)}`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
 		}
 		function loseBet(bet, msg) {
 			playerBankroll -= bet.amount;
+			try { window.playerBankroll = playerBankroll; } catch (e) {}
 			showStatus(msg + ` -$${bet.amount}`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
 		}
 		function pushBet(bet, msg) {
 			playerBankroll += bet.amount;
+			try { window.playerBankroll = playerBankroll; } catch (e) {}
 			showStatus(msg + ` (push)`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
 		}

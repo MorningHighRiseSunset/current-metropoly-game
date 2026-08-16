@@ -50,25 +50,52 @@ const PUBLIC_SHARE_ORIGIN = 'https://vegas-metropoly.vercel.app';
 // Console command for testing: create AI vs AI game (2 AIs only — you spectate)
 // Usage in browser console: createAiVsAiGame()
 window.createAiVsAiGame = function() {
-    if (!socket.connected) {
-        console.error('Socket not connected. Wait for connection and try again.');
-        return;
+    console.log('createAiVsAiGame called');
+    console.log('Socket connected:', socket.connected);
+    console.log('Socket ID:', socket.id);
+    
+    const createGame = () => {
+        console.log('Creating AI vs AI game (2 AIs, no human players)...');
+
+        const spectatorName = generateRandomPlayerName();
+        const gameId = generateGameId();
+        console.log('Generated gameId:', gameId, 'spectatorName:', spectatorName);
+        
+        sessionStorage.setItem('metropoly_spectator_name', spectatorName);
+
+        socket.once('aiVsAiGameCreated', (data) => {
+            console.log('AI vs AI game ready:', data);
+            sessionStorage.setItem('metropoly_ai_vs_ai', '1');
+            persistSpectatorIdentity(data.gameId, null);
+            console.log('Redirecting to game page...');
+            window.location.href = `/game/${data.gameId}?spectate=1`;
+        });
+        
+        // Add timeout to detect if server doesn't respond
+        setTimeout(() => {
+            console.warn('No response from server after 5 seconds. Check server logs for errors.');
+        }, 5000);
+
+        console.log('Emitting createAiVsAiGame event...');
+        socket.emit('createAiVsAiGame', { gameId, spectatorName });
+    };
+
+    if (socket.connected) {
+        createGame();
+    } else {
+        console.log('Socket not connected yet, waiting for connection...');
+        socket.once('connect', () => {
+            console.log('Socket connected! Proceeding with game creation...');
+            createGame();
+        });
+        
+        // Fallback timeout if connection takes too long
+        setTimeout(() => {
+            if (!socket.connected) {
+                console.error('Socket connection timeout. Please refresh the page and try again.');
+            }
+        }, 10000);
     }
-
-    console.log('Creating AI vs AI game (2 AIs, no human players)...');
-
-    const spectatorName = generateRandomPlayerName();
-    const gameId = generateGameId();
-    sessionStorage.setItem('metropoly_spectator_name', spectatorName);
-
-    socket.once('aiVsAiGameCreated', (data) => {
-        console.log('AI vs AI game ready:', data.gameId);
-        sessionStorage.setItem('metropoly_ai_vs_ai', '1');
-        persistSpectatorIdentity(data.gameId, null);
-        window.location.href = `/game/${data.gameId}?spectate=1`;
-    });
-
-    socket.emit('createAiVsAiGame', { gameId, spectatorName });
 };
 
 function buildJoinLink(gameId) {

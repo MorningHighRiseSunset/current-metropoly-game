@@ -3414,6 +3414,16 @@ socket.on('aiCasinoComplete', (data) => {
         'system'
     );
     updateUI();
+
+    if (player && typeof player.position === 'number') {
+        const spaceData = boardConfig[player.position];
+        if (spaceData) {
+            showPropertyInfo(spaceData, {
+                showDecisionActions: false,
+                viewerLabel: `${getPlayerDisplayName(player)} — casino done (${sign}$${Math.abs(data.winnings)}), deciding on property...`
+            });
+        }
+    }
 });
 
 socket.on('aiLandingEnded', (data) => {
@@ -4128,7 +4138,7 @@ function createPremiumBoardTile(spaceData, row, col) {
         loader.load(getModelPath('/Models/Ferris Wheel/scene.gltf'),
             function(gltf) {
                 const ferrisWheel = gltf.scene;
-                const scale = tileSize * 0.06;
+                const scale = tileSize * 0.08;
                 ferrisWheel.scale.set(scale, scale, scale);
                 ferrisWheel.position.y = tileHeight / 2 + 0.05;
                 ferrisWheel.userData.isFerrisWheel = true;

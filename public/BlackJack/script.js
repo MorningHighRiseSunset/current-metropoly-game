@@ -338,7 +338,8 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
 			betSquares.forEach(sq => sq.classList.remove('selected-bet'));
 			poly.classList.add('selected-bet');
 			currentBetSquare = idx;
-			currentBet = 1000;
+			currentBet = Math.min(1000, balance);
+			if (currentBet <= 0) return;
 			animateChip(idx, currentBet);
 			dealBtn.disabled = false;
 		});
