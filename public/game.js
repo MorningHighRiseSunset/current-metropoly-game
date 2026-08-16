@@ -3934,14 +3934,22 @@ let carouselImages = [];
 let carouselCurrentIndex = 0;
 let hotelCasinoImages = new Set();
 
+function encodeCarouselPath(path) {
+    const normalized = path.startsWith('/') ? path : `/${path}`;
+    return normalized
+        .split('/')
+        .map((segment, index) => (index === 0 ? segment : encodeURIComponent(segment)))
+        .join('/');
+}
+
 function getCarouselImageUrl(imagePath, useR2 = false) {
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+    const path = encodeCarouselPath(imagePath);
     if (useR2 && window.USE_VIDEO_CDN && window.VIDEO_CDN_BASE_URL) {
         const base = window.VIDEO_CDN_BASE_URL.replace(/\/$/, '');
-        const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
         return `${base}${path}`;
     }
-    return imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    return path;
 }
 
 function isHotelCasinoCarouselImage(imageUrl) {
@@ -4031,11 +4039,11 @@ function createCenterCarousel(parentGroup) {
 
     // Casino game photos stored in R2 — shown between hotel images
     const casinoGameImages = [
-        '/Images/Baccarat_Photo.png',
-        '/Images/Poker_photo.png',
-        '/Images/Poker_photo_2.png',
-        '/Images/Roulette_Photo.png',
-        '/Images/Blackjack_Photo.png',
+        '/Images/Baccarat Photo.webp',
+        '/Images/Poker photo.jpg',
+        '/Images/Poker photo 2.jpg',
+        '/Images/Roulette Photo.jpg',
+        '/Images/Blackjack Photo.jpg',
     ];
     
     // Define hotel/casino images to prevent back-to-back display
