@@ -3934,6 +3934,39 @@ let carouselImages = [];
 let carouselCurrentIndex = 0;
 let hotelCasinoImages = new Set();
 
+function getCarouselImageUrl(imagePath, useR2 = false) {
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+    if (useR2 && window.USE_VIDEO_CDN && window.VIDEO_CDN_BASE_URL) {
+        const base = window.VIDEO_CDN_BASE_URL.replace(/\/$/, '');
+        const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+        return `${base}${path}`;
+    }
+    return imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+}
+
+function isHotelCasinoCarouselImage(imageUrl) {
+    if (!imageUrl) return false;
+    return [...hotelCasinoImages].some(
+        (hotelPath) => imageUrl.endsWith(hotelPath) || imageUrl.includes(hotelPath.replace(/^\//, ''))
+    );
+}
+
+function buildCarouselImageList(baseImages, casinoGameImages) {
+    const ordered = [];
+    let casinoIndex = 0;
+
+    baseImages.forEach((imagePath) => {
+        ordered.push(getCarouselImageUrl(imagePath));
+        if (hotelCasinoImages.has(imagePath) && casinoGameImages.length > 0) {
+            const casinoPath = casinoGameImages[casinoIndex % casinoGameImages.length];
+            ordered.push(getCarouselImageUrl(casinoPath, true));
+            casinoIndex += 1;
+        }
+    });
+
+    return ordered;
+}
+
 // Fisher-Yates shuffle for randomizing carousel images
 function shuffleArray(array) {
     const shuffled = [...array];
@@ -3953,7 +3986,7 @@ function createCenterCarousel(parentGroup) {
     carouselImages = [];
     
     // All images from Images folder (excluding tokens and utilities)
-    const allImages = [
+    const baseImages = [
         "/Images/1.png",
         '/Images/county_fair.png',
         '/Images/screenshot_2024-12-12_033702.png',
@@ -3995,6 +4028,15 @@ function createCenterCarousel(parentGroup) {
         '/Images/house_of_blues_sunset.webp',
         '/Images/yellow_light_bulb.jpg',
     ];
+
+    // Casino game photos stored in R2 — shown between hotel images
+    const casinoGameImages = [
+        '/Images/Baccarat_Photo.png',
+        '/Images/Poker_photo.png',
+        '/Images/Poker_photo_2.png',
+        '/Images/Roulette_Photo.png',
+        '/Images/Blackjack_Photo.png',
+    ];
     
     // Define hotel/casino images to prevent back-to-back display
     hotelCasinoImages = new Set([
@@ -4008,6 +4050,8 @@ function createCenterCarousel(parentGroup) {
         '/Images/LasVegasSphere.jpg',
         '/Images/thesphere.jpg',
     ]);
+
+    const allImages = buildCarouselImageList(baseImages, casinoGameImages);
     
     // Use sequential track-based ordering instead of randomization
     console.log(`Total carousel images: ${allImages.length}`);
@@ -4122,7 +4166,7 @@ function preloadNextCarouselImage(imageMesh) {
     let attempts = 0;
     const maxAttempts = imagesLength;
     const currentImage = imageMesh.userData.images[imageMesh.userData.currentIndex];
-    const isCurrentHotelCasino = hotelCasinoImages.has(currentImage);
+    const isCurrentHotelCasino = isHotelCasinoCarouselImage(currentImage);
     
     while (attempts < maxAttempts) {
         // Skip failed images
@@ -4134,7 +4178,7 @@ function preloadNextCarouselImage(imageMesh) {
         
         // Skip hotel/casino images if current is also hotel/casino
         const nextImage = imageMesh.userData.images[nextIndex];
-        if (isCurrentHotelCasino && hotelCasinoImages.has(nextImage)) {
+        if (isCurrentHotelCasino && isHotelCasinoCarouselImage(nextImage)) {
             nextIndex = (nextIndex + 1) % imagesLength;
             attempts++;
             continue;
@@ -4204,7 +4248,7 @@ function animateCenterCarousel() {
             let attempts = 0;
             const maxAttempts = imagesLength;
             const currentImage = imageMesh.userData.images[imageMesh.userData.currentIndex];
-            const isCurrentHotelCasino = hotelCasinoImages.has(currentImage);
+            const isCurrentHotelCasino = isHotelCasinoCarouselImage(currentImage);
             
             while (attempts < maxAttempts) {
                 // Skip failed images
@@ -4216,7 +4260,7 @@ function animateCenterCarousel() {
                 
                 // Skip hotel/casino images if current is also hotel/casino
                 const nextImage = imageMesh.userData.images[newIndex];
-                if (isCurrentHotelCasino && hotelCasinoImages.has(nextImage)) {
+                if (isCurrentHotelCasino && isHotelCasinoCarouselImage(nextImage)) {
                     newIndex = (newIndex + 1) % imagesLength;
                     attempts++;
                     continue;
