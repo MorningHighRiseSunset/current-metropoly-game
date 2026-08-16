@@ -483,11 +483,11 @@ window.updatePlayerInfo = updatePlayerInfo;
 		}
 		let totalBet = Object.values(bets || {}).reduce((a,b) => a+b, 0) * (window.betAmount || 100);
 		let msg = `Winning number: ${winNum}`;
+		window.playerBalance -= totalBet;
 		if (win) {
 			window.playerBalance += payout;
 			msg += ` | You win $${payout}!`;
 		} else {
-			window.playerBalance -= totalBet;
 			msg += ' | No win.';
 		}
 		updatePlayerInfo();

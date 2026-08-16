@@ -40,6 +40,8 @@ let activeCasinoBalanceSync = null;
 let isSpectator = false;
 let spectatorName = null;
 let isAiVsAiGame = false;
+let activeAiLandingPlayerId = null;
+let observerCasinoStartBalance = null;
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -1041,6 +1043,7 @@ function dismissPropertyDecisionUI() {
         decisionPrompt.classList.add('hidden');
         decisionPrompt.textContent = '';
     }
+    activeAiLandingPlayerId = null;
     closePropertyModal();
 }
 
@@ -1285,19 +1288,137 @@ function getCasinoGameContainer(doc, gameName) {
     return doc.querySelector(selector) || doc.body;
 }
 
+function getIframeCasinoBalance(iframe) {
+    if (!iframe) return null;
+    try {
+        const win = iframe.contentWindow;
+        const balance = win.__casinoBalance ?? win.playerBalance ?? win.playerBankroll;
+        return (typeof balance === 'number' && !Number.isNaN(balance)) ? balance : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function reportAiCasinoWinnings(iframe) {
+    if (!activeAiLandingPlayerId || !currentGameId || observerCasinoStartBalance == null) return;
+
+    const endBalance = getIframeCasinoBalance(iframe);
+    if (typeof endBalance !== 'number') return;
+
+    socket.emit('aiCasinoReport', {
+        gameId: currentGameId,
+        playerId: activeAiLandingPlayerId,
+        winnings: Math.round(endBalance - observerCasinoStartBalance)
+    });
+}
+
+function triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc) {
+    if (!iframe || !iframeDoc) return;
+
+    const click = (selector) => {
+        const el = iframeDoc.querySelector(selector);
+        if (el && !el.disabled) {
+            el.click();
+            return true;
+        }
+        return false;
+    };
+
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const postPlayWait = {
+        slotMachine: 6500,
+        Roulette: 5000,
+        BlackJack: 5500,
+        Baccarat: 5500,
+        PokerFP: 3500,
+        Craps: 3500
+    };
+
+    (async () => {
+        try {
+            await delay(900);
+            const win = iframe.contentWindow;
+
+            switch (gameName) {
+                case 'slotMachine':
+                    click('#spinBtn');
+                    break;
+                case 'Roulette': {
+                    const redCell = iframeDoc.querySelector('.number-cell[aria-label="1"]')
+                        || iframeDoc.querySelector('.number-cell');
+                    if (redCell) redCell.click();
+                    await delay(400);
+                    if (typeof win.spinWheel === 'function') {
+                        win.spinWheel();
+                    } else {
+                        click('#spin-btn');
+                    }
+                    break;
+                }
+                case 'BlackJack':
+                    click('#bet0') || click('.bet-square');
+                    await delay(500);
+                    click('#deal-btn');
+                    await delay(2200);
+                    click('#stand-btn');
+                    break;
+                case 'Baccarat':
+                    click('.chip[data-value="50"]') || click('.chip');
+                    await delay(300);
+                    click('.bet-type[data-type="player"]');
+                    await delay(300);
+                    click('#deal-btn');
+                    break;
+                case 'PokerFP':
+                    click('#btn-newgame');
+                    await delay(1200);
+                    click('#btn-check') || click('#btn-call');
+                    break;
+                case 'Craps':
+                    if (typeof win.__crapsAutoPlay === 'function') {
+                        win.__crapsAutoPlay(50);
+                    }
+                    await delay(800);
+                    click('#dice-threejs-wrapper button');
+                    break;
+                default:
+                    break;
+            }
+
+            await delay(postPlayWait[gameName] || 3000);
+            reportAiCasinoWinnings(iframe);
+        } catch (e) {
+            console.warn('[Casino] Observer auto-play failed:', gameName, e);
+        }
+    })();
+}
+
 // Open casino game modal
-function openCasinoGame(gameName) {
+function openCasinoGame(gameName, observerOptions = null) {
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoTitle = document.getElementById('casinoGameTitle');
     const casinoContainer = document.getElementById('casinoGameContainer');
+    const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 
     if (!casinoModal || !casinoContainer) return;
 
-    casinoTitle.textContent = `Play ${gameName}`;
+    const isObserver = Boolean(observerOptions);
+    const observePlayer = observerOptions?.player;
+    const playerLabel = observerOptions?.playerLabel || 'AI';
+    const playerMoney = observePlayer ? observePlayer.money : (currentPlayer ? currentPlayer.money : 2500);
+
+    casinoTitle.textContent = isObserver
+        ? `${playerLabel} playing ${gameName}`
+        : `Play ${gameName}`;
+
+    if (closeCasinoBtn) {
+        closeCasinoBtn.style.display = isObserver ? 'none' : '';
+    }
+
+    observerCasinoStartBalance = isObserver ? playerMoney : null;
 
     // Load casino game in iframe with initialization parameters
     const gamePath = `/${gameName}/index.html`;
-    const playerMoney = currentPlayer ? currentPlayer.money : 2500;
     casinoContainer.innerHTML = `<iframe src="${gamePath}" class="casino-iframe" frameborder="0"></iframe>`;
 
     casinoModal.classList.remove('hidden');
@@ -1340,14 +1461,30 @@ function openCasinoGame(gameName) {
                     return;
                 }
 
-                activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
-
-                initFn(container, playerMoney, function syncCasinoBalance(balance) {
-                    activeCasinoBalanceSync(balance);
+                const syncCasinoBalance = function(balance) {
                     try {
                         iframe.contentWindow.__casinoBalance = balance;
                     } catch (e) {}
-                });
+
+                    if (isObserver) return;
+
+                    if (!activeCasinoBalanceSync) {
+                        activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
+                    }
+                    activeCasinoBalanceSync(balance);
+                };
+
+                if (!isObserver) {
+                    activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
+                } else {
+                    activeCasinoBalanceSync = null;
+                }
+
+                initFn(container, playerMoney, syncCasinoBalance);
+
+                if (isObserver) {
+                    triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc);
+                }
             } catch (e) {
                 console.error('[Casino] Could not initialize casino game:', gameName, e);
             }
@@ -1366,9 +1503,17 @@ function handleCasinoGameMessage(event) {
 function closeCasinoGame() {
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoContainer = document.getElementById('casinoGameContainer');
+    const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 
-    flushCasinoBalanceFromIframe(casinoContainer);
+    if (activeCasinoBalanceSync) {
+        flushCasinoBalanceFromIframe(casinoContainer);
+    }
     activeCasinoBalanceSync = null;
+    observerCasinoStartBalance = null;
+
+    if (closeCasinoBtn) {
+        closeCasinoBtn.style.display = '';
+    }
 
     if (casinoModal) {
         casinoModal.classList.add('hidden');
@@ -1378,7 +1523,9 @@ function closeCasinoGame() {
         casinoContainer.innerHTML = '';
     }
 
-    finishLandingDecisionUI();
+    if (!activeAiLandingPlayerId) {
+        finishLandingDecisionUI();
+    }
 }
 
 function lerpCoords(from, to, t) {
@@ -1880,6 +2027,7 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
 }
 
 function closePropertyModal() {
+    if (activeAiLandingPlayerId) return;
     cleanupPropertyVideo();
     const propertyActions = document.getElementById('propertyActions');
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
@@ -1929,7 +2077,7 @@ function buildPropertyDetailsHtml(spaceData) {
 
 // Show property information
 function showPropertyInfo(spaceData, options = {}) {
-    const { showDecisionActions = false } = options;
+    const { showDecisionActions = false, viewerLabel = null } = options;
     cleanupPropertyVideo();
     const mediaSession = propertyMediaSession;
 
@@ -1967,9 +2115,14 @@ function showPropertyInfo(spaceData, options = {}) {
         }
     }
 
-    if (decisionPrompt && !showDecisionActions) {
-        decisionPrompt.classList.add('hidden');
-        decisionPrompt.textContent = '';
+    if (decisionPrompt) {
+        if (viewerLabel) {
+            decisionPrompt.textContent = viewerLabel;
+            decisionPrompt.classList.remove('hidden');
+        } else if (!showDecisionActions) {
+            decisionPrompt.classList.add('hidden');
+            decisionPrompt.textContent = '';
+        }
     }
     
     // Clear previous media
@@ -2795,6 +2948,10 @@ socket.on('propertyPurchased', (data) => {
 socket.on('propertyPassed', (data) => {
     const { playerId, position, propertyName } = data;
     const player = players.find(p => p && p.id === playerId);
+
+    if (player && player.isAI) {
+        addLogEntry(`${getPlayerDisplayName(player)} passed on ${propertyName}`, 'property');
+    }
     
     if (playerId === myPlayerId) {
         waitingForBuyResult = false;
@@ -3159,26 +3316,120 @@ socket.on('chatMessage', (data) => {
     addChatMessage(data.sender, data.message);
 });
 
-socket.on('gameOver', (data) => {
-    const { winnerName, finalPlayers } = data;
-    
+function showGameWonModal(data) {
     const modal = gameOverModal;
+    if (!modal) return;
+
+    if (data.players) {
+        players = data.players;
+    }
+
+    const winner = players.find((p) => p && p.id === data.winnerId);
+    const winnerName = data.winnerName || (winner ? getPlayerDisplayName(winner) : 'Unknown');
     const title = document.getElementById('gameOverTitle');
     const content = document.getElementById('gameOverContent');
-    
-    title.textContent = winnerName === currentPlayer.name ? 'You Won!' : 'Game Over';
-    content.innerHTML = `
-        <h3>${winnerName} won the game!</h3>
-        <div style="margin-top: 20px;">
-            ${finalPlayers.map((p, i) => `
-                <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                    <strong>${i + 1}. ${p.name}</strong> - $${p.money}
-                </div>
-            `).join('')}
-        </div>
-    `;
-    
+    const reason = data.winReason === 'money'
+        ? `reached $${(data.winningAmount || 10000).toLocaleString()}`
+        : 'bankruptcy';
+
+    if (title) {
+        if (isSpectator) {
+            title.textContent = 'Game Over';
+        } else if (data.winnerId === myPlayerId) {
+            title.textContent = 'You Won!';
+        } else {
+            title.textContent = 'Game Over';
+        }
+    }
+
+    const finalPlayers = (data.players || players).filter((p) => p);
+    if (content) {
+        content.innerHTML = `
+            <h3>${winnerName} won (${reason})!</h3>
+            <div style="margin-top: 20px;">
+                ${finalPlayers.map((p, i) => `
+                    <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                        <strong>${i + 1}. ${getPlayerDisplayName(p)}</strong> - $${(p.money ?? 0).toLocaleString()}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
     modal.classList.remove('hidden');
+}
+
+socket.on('gameWon', (data) => {
+    showGameWonModal(data);
+});
+
+socket.on('aiLandingStarted', (data) => {
+    if (data.players) {
+        players = data.players;
+    }
+
+    activeAiLandingPlayerId = data.playerId;
+    const player = players.find((p) => p && p.id === data.playerId);
+    const spaceData = boardConfig[data.position];
+    if (!spaceData) return;
+
+    const label = `${getPlayerDisplayName(player)} landed on ${spaceData.name}`;
+    showPropertyInfo(spaceData, {
+        showDecisionActions: false,
+        viewerLabel: data.willBuy
+            ? `${label} — watching property video, then may buy...`
+            : `${label} — viewing property...`
+    });
+});
+
+socket.on('aiCasinoStarted', (data) => {
+    if (data.playerId !== activeAiLandingPlayerId || !data.casinoGame) return;
+
+    const player = players.find((p) => p && p.id === data.playerId);
+    if (!player) return;
+
+    openCasinoGame(data.casinoGame, {
+        player,
+        playerLabel: getPlayerDisplayName(player)
+    });
+});
+
+socket.on('aiCasinoComplete', (data) => {
+    if (data.playerId !== activeAiLandingPlayerId) return;
+
+    closeCasinoGame();
+
+    if (data.players) {
+        players = data.players;
+    }
+
+    const player = players.find((p) => p && p.id === data.playerId);
+    if (player && typeof data.newMoney === 'number') {
+        player.money = data.newMoney;
+    }
+
+    const sign = data.winnings >= 0 ? '+' : '';
+    addLogEntry(
+        `${getPlayerDisplayName(player)} finished ${data.casinoGame}: ${sign}$${Math.abs(data.winnings)}`,
+        'system'
+    );
+    updateUI();
+});
+
+socket.on('aiLandingEnded', (data) => {
+    if (data.playerId !== activeAiLandingPlayerId) return;
+    activeAiLandingPlayerId = null;
+    closeCasinoGame();
+    dismissPropertyDecisionUI();
+});
+
+socket.on('gameOver', (data) => {
+    showGameWonModal({
+        winnerId: null,
+        winnerName: data.winnerName,
+        players: data.finalPlayers,
+        winReason: 'bankruptcy'
+    });
 });
 
 socket.on('gameError', (error) => {

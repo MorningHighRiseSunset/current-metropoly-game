@@ -29,6 +29,19 @@ const HOST = '0.0.0.0'; // Listen on all network interfaces
 /** While testing turns / Chance / Community Chest — AI passes on purchasable spaces. */
 const DISABLE_AI_PROPERTY_PURCHASES = false;
 
+const CASINO_GAMES_BY_POSITION = {
+    15: 'PokerFP',
+    21: 'slotMachine',
+    23: 'Roulette',
+    31: 'BlackJack',
+    32: 'Craps',
+    36: 'Baccarat',
+    37: 'Roulette'
+};
+
+const AI_LANDING_VIDEO_MS = 9000;
+const AI_CASINO_PLAY_MS = 10000;
+
 // Get local IP addresses for external access
 function getLocalIPAddresses() {
     const interfaces = os.networkInterfaces();
@@ -779,14 +792,49 @@ function executeAIRollDice(game, aiPlayer) {
     }
 }
 
-function executeAIPropertyDecision(game, aiPlayer, property) {
+function getCasinoGameForPosition(position) {
+    return CASINO_GAMES_BY_POSITION[position] || null;
+}
+
+function simulateAiCasinoWinnings() {
+    const outcomes = [-75, -50, -25, 0, 25, 50, 75, 100, 150];
+    return outcomes[Math.floor(Math.random() * outcomes.length)];
+}
+
+function completeAiCasinoRound(game, aiPlayer, property, willBuy, casinoGame) {
+    const pending = game.pendingAiCasino;
+    const winnings = (pending && typeof pending.winnings === 'number')
+        ? pending.winnings
+        : simulateAiCasinoWinnings();
+    game.pendingAiCasino = null;
+
+    aiPlayer.money += winnings;
+    checkGameWinner(game);
+
+    io.to(game.id).emit('playerMoneyUpdate', {
+        playerId: aiPlayer.id,
+        money: aiPlayer.money,
+        players: game.players
+    });
+
+    io.to(game.id).emit('aiCasinoComplete', {
+        playerId: aiPlayer.id,
+        casinoGame,
+        winnings,
+        newMoney: aiPlayer.money,
+        players: game.players
+    });
+
+    setTimeout(() => finishAiPropertyDecision(game, aiPlayer, property, willBuy), 800);
+}
+
+function scheduleAiPropertyLanding(game, aiPlayer, property) {
     if (DISABLE_AI_PROPERTY_PURCHASES) {
         setTimeout(() => gameRuntime.advanceTurn(game), 500);
         return;
     }
     if (!game || !aiPlayer || !property) return;
 
-    // Check if property is already owned
     const existingOwner = game.players.find(
         (p) => p && p.properties && p.properties.includes(aiPlayer.position)
     );
@@ -795,16 +843,49 @@ function executeAIPropertyDecision(game, aiPlayer, property) {
         return;
     }
 
-    // Simple AI logic: Buy if affordable and has enough money left over
+    const position = aiPlayer.position;
+    const casinoGame = getCasinoGameForPosition(position);
+    const isCasino = Boolean(casinoGame);
     const canAfford = aiPlayer.money >= property.price;
     const moneyAfterPurchase = aiPlayer.money - property.price;
+    const willBuy = canAfford && moneyAfterPurchase >= 200;
 
-    if (canAfford && moneyAfterPurchase >= 200) {
-        // Buy the property
+    io.to(game.id).emit('aiLandingStarted', {
+        playerId: aiPlayer.id,
+        position,
+        propertyName: property.name,
+        isCasino,
+        casinoGame,
+        willBuy,
+        players: game.players
+    });
+
+    setTimeout(() => {
+        if (isCasino) {
+            game.pendingAiCasino = { playerId: aiPlayer.id, winnings: null };
+
+            io.to(game.id).emit('aiCasinoStarted', {
+                playerId: aiPlayer.id,
+                casinoGame,
+                playerMoney: aiPlayer.money
+            });
+
+            setTimeout(() => {
+                completeAiCasinoRound(game, aiPlayer, property, willBuy, casinoGame);
+            }, AI_CASINO_PLAY_MS);
+            return;
+        }
+
+        finishAiPropertyDecision(game, aiPlayer, property, willBuy);
+    }, AI_LANDING_VIDEO_MS);
+}
+
+function finishAiPropertyDecision(game, aiPlayer, property, willBuy) {
+    if (willBuy) {
         aiPlayer.money -= property.price;
         if (!aiPlayer.properties) aiPlayer.properties = [];
         aiPlayer.properties.push(aiPlayer.position);
-        
+
         io.to(game.id).emit('propertyPurchased', {
             playerId: aiPlayer.id,
             position: aiPlayer.position,
@@ -813,19 +894,23 @@ function executeAIPropertyDecision(game, aiPlayer, property) {
             players: game.players
         });
         checkGameWinner(game);
-
         updateGameState(game);
     } else {
-        // Pass on the property
         io.to(game.id).emit('propertyPassed', {
             playerId: aiPlayer.id,
             position: aiPlayer.position,
             propertyName: property.name
         });
-
     }
 
-    setTimeout(() => gameRuntime.advanceTurn(game), 500);
+    setTimeout(() => {
+        io.to(game.id).emit('aiLandingEnded', { playerId: aiPlayer.id });
+        setTimeout(() => gameRuntime.advanceTurn(game), 800);
+    }, willBuy ? 1200 : 600);
+}
+
+function executeAIPropertyDecision(game, aiPlayer, property) {
+    scheduleAiPropertyLanding(game, aiPlayer, property);
 }
 
 // Socket connection handling
@@ -2907,6 +2992,19 @@ io.on('connection', (socket) => {
             money: player.money,
             players: game.players
         });
+    });
+
+    // AI casino result reported by spectator/client after minigame auto-play
+    socket.on('aiCasinoReport', (data) => {
+        const playerData = players[socket.id];
+        if (!playerData) return;
+
+        const game = games[playerData.gameId];
+        if (!game || !game.pendingAiCasino) return;
+        if (game.pendingAiCasino.playerId !== data.playerId) return;
+        if (typeof data.winnings !== 'number' || Number.isNaN(data.winnings)) return;
+
+        game.pendingAiCasino.winnings = Math.max(-500, Math.min(50000, Math.round(data.winnings)));
     });
 
     // Pay rent (manual payment from client)

@@ -94,6 +94,7 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
 		}
 		function loseBet(bet, msg) {
+			playerBankroll -= bet.amount;
 			showStatus(msg + ` -$${bet.amount}`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
 		}
@@ -149,6 +150,16 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
 		window.onDiceRoll = function(roll) {
 			showDiceResult(roll);
 			handleCrapsRoll(roll);
+		};
+
+		window.__crapsAutoPlay = function(betAmount = 50) {
+			const passArea = BETTING_AREAS.find(a => a.label === 'pass line');
+			if (!passArea) return false;
+			const amount = Math.min(betAmount, playerBankroll);
+			if (amount <= 0) return false;
+			playerBets.push({ areaId: passArea.id, amount });
+			renderBettingAreas();
+			return true;
 		};
 	}
 	renderPlayerChips();
