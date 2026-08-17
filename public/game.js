@@ -4237,8 +4237,8 @@ function createPremiumBoardTile(spaceData, row, col) {
         const loader = new THREE.GLTFLoader();
         
         // Try CDN first, fall back to local if it fails
-        const cdnUrl = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models/Ferris%20Wheel/scene.gltf';
-        const localUrl = getModelPath('/Models/Ferris Wheel/scene.gltf');
+        const cdnUrl = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models/ferrisWheel/ferris_wheel.glb';
+        const localUrl = getModelPath('/Models/ferrisWheel/ferris_wheel.glb');
         
         function loadFerrisWheel(url) {
             loader.load(url,
