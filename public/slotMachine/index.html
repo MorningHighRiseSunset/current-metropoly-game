@@ -4,52 +4,137 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slot Machine</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .slot-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #f39c12;
+        }
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(243, 156, 18, 0.1);
+            border: 1px solid rgba(243, 156, 18, 0.3);
+            border-radius: 12px;
+        }
+        .info-item {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .reels {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            border-radius: 20px;
+            border: 4px solid #f39c12;
+        }
+        .reel {
+            width: 100px;
+            height: 120px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .result {
+            font-size: 1.8em;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(243, 156, 18, 0.2);
+            border: 2px solid rgba(243, 156, 18, 0.5);
+            border-radius: 12px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.5);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        @keyframes spin {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+        .spinning {
+            animation: spin 0.3s linear infinite;
+        }
+    </style>
 </head>
 <body>
-<div id="slot-machine-root">
-  <div class="slot-machine-frame">
-    <div class="slot-machine-top">
-      <div class="slot-title">SLOT MACHINE</div>
-      <div class="slot-lights">
-        <span class="light"></span>
-        <span class="light"></span>
-        <span class="light"></span>
-        <span class="light"></span>
-        <span class="light"></span>
-      </div>
-    </div>
-    <div class="slot-machine-body">
-      <div class="slot-lever" id="slot-lever">
-        <div class="lever-bar" id="lever-bar"></div>
-        <div class="lever-knob"></div>
-      </div>
-      <div class="slot-machine-container">
-        <div class="slot-reels-rect">
-          <div class="reel-rect">
-            <div class="reel-highlight"></div>
-            <div class="reel-strip" id="reel1-strip"></div>
-          </div>
-          <div class="reel-rect">
-            <div class="reel-highlight"></div>
-            <div class="reel-strip" id="reel2-strip"></div>
-          </div>
-          <div class="reel-rect">
-            <div class="reel-highlight"></div>
-            <div class="reel-strip" id="reel3-strip"></div>
-          </div>
+    <div class="slot-container">
+        <h1>🎰 Slot Machine</h1>
+        
+        <div class="game-info">
+            <div class="info-item">Balance: $<span id="balance">2500</span></div>
+            <div class="info-item">Bet: $100</div>
         </div>
-        <div class="slot-balance-row">
-          <span class="slot-balance-label">Balance: $</span><span id="slot-balance"></span>
+
+        <div class="reels">
+            <div class="reel" id="reel1">🍒</div>
+            <div class="reel" id="reel2">🍒</div>
+            <div class="reel" id="reel3">🍒</div>
         </div>
-        <button id="spinBtn">Spin ($100)</button>
-        <div class="message" id="message"></div>
-        <div class="sparkles" id="sparkles"></div>
-      </div>
+
+        <div class="result" id="result"></div>
+
+        <div class="controls">
+            <button class="btn" id="spin-btn">SPIN</button>
+        </div>
     </div>
-  </div>
-</div>
-<script>
+
+    <script>
 // Get balance from URL parameter or use default
 function getBalanceFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -59,16 +144,23 @@ function getBalanceFromURL() {
 // Check if loaded standalone (not in iframe)
 const isStandalone = window === window.top;
 if (isStandalone) {
-  // Initialize with default values for standalone mode
   window.playerMoney = 2500;
   window.updateMainGameBalance = function(balance) {
     // No-op in standalone mode
   };
 } else {
-  // Use balance from URL when in iframe
   window.playerMoney = getBalanceFromURL();
 }
 </script>
 <script src="script.js"></script>
+<script>
+// Auto-initialize
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.slot-container');
+    if (container && window.initSlotMachine) {
+        window.initSlotMachine(container, window.playerMoney, window.updateMainGameBalance);
+    }
+});
+</script>
 </body>
 </html>

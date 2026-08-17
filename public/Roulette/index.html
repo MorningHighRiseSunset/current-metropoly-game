@@ -1,158 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Roulette Wheel & Table</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulette</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .roulette-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #c0392b;
+        }
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(192, 57, 43, 0.1);
+            border: 1px solid rgba(192, 57, 43, 0.3);
+            border-radius: 12px;
+        }
+        .info-item {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .wheel-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            border-radius: 50%;
+            border: 8px solid #c0392b;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .wheel {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #c0392b 0deg 10deg, #2c3e50 10deg 20deg,
+                #c0392b 20deg 30deg, #2c3e50 30deg 40deg,
+                #c0392b 40deg 50deg, #2c3e50 50deg 60deg,
+                #c0392b 60deg 70deg, #2c3e50 70deg 80deg,
+                #c0392b 80deg 90deg, #2c3e50 90deg 100deg,
+                #c0392b 100deg 110deg, #2c3e50 110deg 120deg,
+                #c0392b 120deg 130deg, #2c3e50 130deg 140deg,
+                #c0392b 140deg 150deg, #2c3e50 150deg 160deg,
+                #c0392b 160deg 170deg, #2c3e50 170deg 180deg,
+                #c0392b 180deg 190deg, #2c3e50 190deg 200deg,
+                #c0392b 200deg 210deg, #2c3e50 210deg 220deg,
+                #c0392b 220deg 230deg, #2c3e50 230deg 240deg,
+                #c0392b 240deg 250deg, #2c3e50 250deg 260deg,
+                #c0392b 260deg 270deg, #2c3e50 270deg 280deg,
+                #c0392b 280deg 290deg, #2c3e50 290deg 300deg,
+                #c0392b 300deg 310deg, #2c3e50 310deg 320deg,
+                #c0392b 320deg 330deg, #2c3e50 330deg 340deg,
+                #c0392b 340deg 350deg, #2c3e50 350deg 360deg
+            );
+            transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+        .result-number {
+            position: absolute;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+        .betting-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .bet-btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            color: white;
+        }
+        .bet-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(192, 57, 43, 0.5);
+        }
+        .bet-btn.selected {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            transform: scale(1.1);
+        }
+        .result {
+            font-size: 1.8em;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(192, 57, 43, 0.2);
+            border: 2px solid rgba(192, 57, 43, 0.5);
+            border-radius: 12px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        .spin-btn {
+            padding: 15px 40px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(192, 57, 43, 0.3);
+        }
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(192, 57, 43, 0.5);
+        }
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
 </head>
 <body>
+    <div class="roulette-container">
+        <h1>🎰 Roulette</h1>
+        
+        <div class="game-info">
+            <div class="info-item">Balance: $<span id="balance">2500</span></div>
+            <div class="info-item">Bet: $100</div>
+        </div>
 
-  <!-- Instructions Modal -->
-  <div id="instructions-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;">
-    <div style="background:linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);color:#fff;padding:32px 28px 24px 28px;border-radius:18px;max-width:420px;box-shadow:0 8px 32px #0008;position:relative;border:2px solid #8b5cf6;">
-      <h2 style="margin-top:0">How to Play Roulette</h2>
-      <ol style="font-size:1.1em;line-height:1.6;margin-bottom:18px;">
-  <li>Click any number, or any box at the bottom of the table, to place a bet (multiple bets allowed).</li>
-  <li>Bottom boxes let you bet on groups: dozens (1st 12, 2nd 12, 3rd 12), columns (2 to 1), even/odd, red/black, and low/high (1 to 18, 19 to 36).</li>
-  <li>Click <b>SPIN</b> to spin the wheel and launch the ball.</li>
-  <li>If the ball lands on a number or group you bet on, you win!</li>
-  <li>To play again, place new bets and spin.</li>
-      </ol>
-      <button id="close-instructions" style="position:absolute;top:10px;right:14px;font-size:1.2em;background:none;border:none;color:#fff;cursor:pointer;">&times;</button>
-    </div>
-  </div>
-  <div class="roulette-container" style="display:flex;flex-direction:row;align-items:flex-start;justify-content:center;gap:40px;padding:32px 0;position:relative;background:linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);border-radius:24px;box-shadow:0 8px 32px #0003;max-width:1200px;margin:40px auto;overflow-x:auto;border:2px solid #8b5cf6;">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:18px;min-width:420px;">
-      <canvas id="wheel" width="400" height="400" aria-label="Roulette wheel"></canvas>
-      <div style="display:flex;gap:16px;justify-content:center;">
-        <button id="instructions-btn" style="padding:10px 22px;font-size:1em;background:linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);color:#fff;border-radius:10px;border:none;box-shadow:0 2px 8px #0005;cursor:pointer;font-weight:bold;z-index:20;">INSTRUCTIONS</button>
-        <button id="spin-btn" style="padding:12px 32px;font-size:1.3em;background:linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);color:#fff;border-radius:12px;border:none;box-shadow:0 2px 8px #0005;cursor:pointer;font-weight:bold;letter-spacing:2px;z-index:10;">SPIN</button>
-      </div>
-    </div>
+        <div class="wheel-container">
+            <div class="wheel" id="wheel"></div>
+            <div class="result-number" id="result-number"></div>
+        </div>
 
-    <!-- First roulette table -->
-    <div class="roulette-table" aria-label="Roulette betting table" role="table" style="min-width:600px;">
-      <div class="table-grid">
-  <!-- Zero and Double Zero Cells for American Roulette -->
-  <div class="number-cell zero" role="gridcell" aria-label="0" style="grid-column: 1; grid-row: 1 / 2;">0</div>
-  <div class="number-cell zero" role="gridcell" aria-label="00" style="grid-column: 1; grid-row: 2 / 3;">00</div>
-  <!-- Numbers 1 to 36 - arranged in 3 rows and 12 columns -->
-      <!-- Row 1 -->
-      <div class="number-cell red" style="grid-column: 2; grid-row:1;" role="gridcell" aria-label="3">3</div>
-      <div class="number-cell black" style="grid-column: 3; grid-row:1;" role="gridcell" aria-label="6">6</div>
-      <div class="number-cell red" style="grid-column: 4; grid-row:1;" role="gridcell" aria-label="9">9</div>
-      <div class="number-cell black" style="grid-column: 5; grid-row:1;" role="gridcell" aria-label="12">12</div>
-      <div class="number-cell red" style="grid-column: 6; grid-row:1;" role="gridcell" aria-label="15">15</div>
-      <div class="number-cell black" style="grid-column: 7; grid-row:1;" role="gridcell" aria-label="18">18</div>
-      <div class="number-cell red" style="grid-column: 8; grid-row:1;" role="gridcell" aria-label="21">21</div>
-      <div class="number-cell black" style="grid-column: 9; grid-row:1;" role="gridcell" aria-label="24">24</div>
-      <div class="number-cell red" style="grid-column: 10; grid-row:1;" role="gridcell" aria-label="27">27</div>
-      <div class="number-cell black" style="grid-column: 11; grid-row:1;" role="gridcell" aria-label="30">30</div>
-      <div class="number-cell red" style="grid-column: 12; grid-row:1;" role="gridcell" aria-label="33">33</div>
+        <div class="betting-options">
+            <button class="bet-btn" data-bet="red">Red (2x)</button>
+            <button class="bet-btn" data-bet="black">Black (2x)</button>
+            <button class="bet-btn" data-bet="even">Even (2x)</button>
+            <button class="bet-btn" data-bet="odd">Odd (2x)</button>
+        </div>
 
-      <!-- Row 2 -->
-      <div class="number-cell black" style="grid-column: 2; grid-row:2;" role="gridcell" aria-label="2">2</div>
-      <div class="number-cell red" style="grid-column: 3; grid-row:2;" role="gridcell" aria-label="5">5</div>
-      <div class="number-cell black" style="grid-column: 4; grid-row:2;" role="gridcell" aria-label="8">8</div>
-      <div class="number-cell red" style="grid-column: 5; grid-row:2;" role="gridcell" aria-label="11">11</div>
-      <div class="number-cell black" style="grid-column: 6; grid-row:2;" role="gridcell" aria-label="14">14</div>
-      <div class="number-cell red" style="grid-column: 7; grid-row:2;" role="gridcell" aria-label="17">17</div>
-      <div class="number-cell black" style="grid-column: 8; grid-row:2;" role="gridcell" aria-label="20">20</div>
-      <div class="number-cell red" style="grid-column: 9; grid-row:2;" role="gridcell" aria-label="23">23</div>
-      <div class="number-cell black" style="grid-column: 10; grid-row:2;" role="gridcell" aria-label="26">26</div>
-      <div class="number-cell red" style="grid-column: 11; grid-row:2;" role="gridcell" aria-label="29">29</div>
-      <div class="number-cell black" style="grid-column: 12; grid-row:2;" role="gridcell" aria-label="32">32</div>
+        <div class="result" id="result"></div>
 
-      <!-- Row 3 -->
-      <div class="number-cell red" style="grid-column: 2; grid-row:3;" role="gridcell" aria-label="1">1</div>
-      <div class="number-cell black" style="grid-column: 3; grid-row:3;" role="gridcell" aria-label="4">4</div>
-      <div class="number-cell red" style="grid-column: 4; grid-row:3;" role="gridcell" aria-label="7">7</div>
-      <div class="number-cell black" style="grid-column: 5; grid-row:3;" role="gridcell" aria-label="10">10</div>
-      <div class="number-cell red" style="grid-column: 6; grid-row:3;" role="gridcell" aria-label="13">13</div>
-      <div class="number-cell black" style="grid-column: 7; grid-row:3;" role="gridcell" aria-label="16">16</div>
-      <div class="number-cell red" style="grid-column: 8; grid-row:3;" role="gridcell" aria-label="19">19</div>
-      <div class="number-cell black" style="grid-column: 9; grid-row:3;" role="gridcell" aria-label="22">22</div>
-      <div class="number-cell red" style="grid-column: 10; grid-row:3;" role="gridcell" aria-label="25">25</div>
-      <div class="number-cell black" style="grid-column: 11; grid-row:3;" role="gridcell" aria-label="28">28</div>
-      <div class="number-cell red" style="grid-column: 12; grid-row:3;" role="gridcell" aria-label="31">31</div>
-
-      <!-- 2 to 1 bets below each column -->
-      <div class="column-bet" style="grid-column: 2;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 3;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 4;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 5;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 6;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 7;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 8;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 9;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 10;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 11;">2 to 1</div>
-      <div class="column-bet" style="grid-column: 12;">2 to 1</div>
+        <div class="controls">
+            <button class="spin-btn" id="spin-btn">SPIN</button>
+        </div>
     </div>
 
-    <div class="bottom-row" style="margin-top: 12px;">
-      <div class="bet-box" style="flex: 2;">1st 12</div>
-      <div class="bet-box" style="flex: 2;">2nd 12</div>
-      <div class="bet-box" style="flex: 2;">3rd 12</div>
-    </div>
-    <div class="bottom-row">
-      <div class="bet-box" style="flex: 2;">1 to 18</div>
-      <div class="bet-box">EVEN</div>
-      <div class="bet-box red" aria-label="Red"></div>
-      <div class="bet-box black" aria-label="Black"></div>
-      <div class="bet-box">ODD</div>
-      <div class="bet-box" style="flex: 2;">19 to 36</div>
-    </div>
-    <div id="player-info" style="margin:24px auto 0 auto;max-width:900px;text-align:center;font-size:1.2em;background:linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);padding:16px 0 8px 0;border-radius:16px;box-shadow:0 2px 8px #0002;border:2px solid #8b5cf6;">
-      <div style="font-weight:bold;font-size:1.3em;margin-bottom:6px;">
-        Money Available: <span id="player-balance">$5000</span>
-      </div>
-      <div style="margin-bottom:6px;">
-        Bets placed:
-        <div id="player-bets" style="font-size:1.1em;color:#fff;margin-top:2px;">No bets placed yet</div>
-      </div>
-      <div>
-        Remaining: <span id="player-remaining">$5000</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="script.js"></script>
-<script>
+    <script>
 // Get balance from URL parameter or use default
 function getBalanceFromURL() {
     const params = new URLSearchParams(window.location.search);
     return parseInt(params.get('balance')) || window.playerMoney || 2500;
 }
 
-// Instructions modal logic
-const instrBtn = document.getElementById('instructions-btn');
-const instrModal = document.getElementById('instructions-modal');
-const closeInstr = document.getElementById('close-instructions');
-instrBtn.onclick = () => { instrModal.style.display = 'flex'; };
-closeInstr.onclick = () => { instrModal.style.display = 'none'; };
-instrModal.onclick = e => { if (e.target === instrModal) instrModal.style.display = 'none'; };
-// Move spin button logic to new button
-const spinBtn = document.getElementById('spin-btn');
-spinBtn.onclick = () => { if (typeof spinWheel === 'function') spinWheel(); };
-// Remove old spin button if present
-const oldSpinBtn = document.querySelector('button[style*="SPIN"]');
-if (oldSpinBtn && oldSpinBtn.id !== 'spin-btn') oldSpinBtn.remove();
-
 // Check if loaded standalone (not in iframe)
 const isStandalone = window === window.top;
 if (isStandalone) {
-  // Initialize with default values for standalone mode
   window.playerMoney = 2500;
   window.updateMainGameBalance = function(balance) {
     // No-op in standalone mode
   };
 } else {
-  // Use balance from URL when in iframe
   window.playerMoney = getBalanceFromURL();
 }
+</script>
+<script src="script.js"></script>
+<script>
+// Auto-initialize
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.roulette-container');
+    if (container && window.initRouletteMinigame) {
+        window.initRouletteMinigame(container, window.playerMoney, window.updateMainGameBalance);
+    }
+});
 </script>
 </body>
 </html>

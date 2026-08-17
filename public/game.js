@@ -79,8 +79,8 @@ function loadMinigameInOverlay(url) {
     const iframe = document.createElement('iframe');
     iframe.src = urlWithBalance;
     iframe.style.cssText = `
-        width: 90vw;
-        height: 90vh;
+        width: 70vw;
+        height: 70vh;
         border: none;
         border-radius: 16px;
         box-shadow: 0 0 40px rgba(155, 89, 182, 0.5);
