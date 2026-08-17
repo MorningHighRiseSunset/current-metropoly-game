@@ -19,34 +19,46 @@ function getConfiguredSocketServerUrl() {
 window.loadBlackjack = function() {
     console.log('Loading Blackjack minigame in overlay...');
     loadMinigameInOverlay('/BlackJack/index.html');
+    return 'Blackjack loading...';
 };
 
 window.loadBaccarat = function() {
     console.log('Loading Baccarat minigame in overlay...');
     loadMinigameInOverlay('/Baccarat/index.html');
+    return 'Baccarat loading...';
 };
 
 window.loadRoulette = function() {
     console.log('Loading Roulette minigame in overlay...');
     loadMinigameInOverlay('/Roulette/index.html');
+    return 'Roulette loading...';
 };
 
 window.loadPoker = function() {
     console.log('Loading Poker minigame in overlay...');
     loadMinigameInOverlay('/PokerFP/index.html');
+    return 'Poker loading...';
 };
 
 window.loadSlots = function() {
     console.log('Loading Slot Machine minigame in overlay...');
     loadMinigameInOverlay('/slotMachine/index.html');
+    return 'Slots loading...';
 };
 
 window.loadCraps = function() {
     console.log('Loading Craps minigame in overlay...');
     loadMinigameInOverlay('/Craps/index.html');
+    return 'Craps loading...';
 };
 
 function loadMinigameInOverlay(url) {
+    // Get current player balance from game state
+    const playerBalance = window.playerMoney || 2500;
+    
+    // Add balance as URL parameter
+    const urlWithBalance = url + (url.includes('?') ? '&' : '?') + 'balance=' + playerBalance;
+    
     // Create overlay container
     const overlay = document.createElement('div');
     overlay.id = 'minigame-overlay';
@@ -65,7 +77,7 @@ function loadMinigameInOverlay(url) {
     
     // Create iframe for minigame
     const iframe = document.createElement('iframe');
-    iframe.src = url;
+    iframe.src = urlWithBalance;
     iframe.style.cssText = `
         width: 90vw;
         height: 90vh;

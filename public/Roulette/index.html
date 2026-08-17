@@ -121,6 +121,12 @@
 
 <script src="script.js"></script>
 <script>
+// Get balance from URL parameter or use default
+function getBalanceFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return parseInt(params.get('balance')) || window.playerMoney || 2500;
+}
+
 // Instructions modal logic
 const instrBtn = document.getElementById('instructions-btn');
 const instrModal = document.getElementById('instructions-modal');
@@ -134,9 +140,7 @@ spinBtn.onclick = () => { if (typeof spinWheel === 'function') spinWheel(); };
 // Remove old spin button if present
 const oldSpinBtn = document.querySelector('button[style*="SPIN"]');
 if (oldSpinBtn && oldSpinBtn.id !== 'spin-btn') oldSpinBtn.remove();
-</script>
 
-<script>
 // Check if loaded standalone (not in iframe)
 const isStandalone = window === window.top;
 if (isStandalone) {
@@ -145,6 +149,9 @@ if (isStandalone) {
   window.updateMainGameBalance = function(balance) {
     // No-op in standalone mode
   };
+} else {
+  // Use balance from URL when in iframe
+  window.playerMoney = getBalanceFromURL();
 }
 </script>
 </body>

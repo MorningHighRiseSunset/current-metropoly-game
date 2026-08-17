@@ -206,15 +206,20 @@
     <script src="/runtime-config.js"></script>
     <script src="script.js"></script>
     <script>
-        // Auto-initialize for standalone usage
-        if (window.parent === window || !window.initBlackjackMinigame) {
-            document.addEventListener('DOMContentLoaded', function() {
-                const container = document.querySelector('.blackjack-container');
-                if (container && window.initBlackjackMinigame) {
-                    window.initBlackjackMinigame(container, window.playerMoney, window.updateMainGameBalance);
-                }
-            });
+        // Get balance from URL parameter or use default
+        function getBalanceFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return parseInt(params.get('balance')) || window.playerMoney || 2500;
         }
+        
+        // Auto-initialize for both standalone and iframe usage
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.blackjack-container');
+            if (container && window.initBlackjackMinigame) {
+                const balance = getBalanceFromURL();
+                window.initBlackjackMinigame(container, balance, window.updateMainGameBalance);
+            }
+        });
     </script>
 </body>
 </html>

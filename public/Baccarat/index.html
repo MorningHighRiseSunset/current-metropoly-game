@@ -75,6 +75,12 @@
     </div>
 </div>
 <script>
+// Get balance from URL parameter or use default
+function getBalanceFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return parseInt(params.get('balance')) || window.playerMoney || 2500;
+}
+
 // Check if loaded standalone (not in iframe)
 const isStandalone = window === window.top;
 if (isStandalone) {
@@ -86,5 +92,9 @@ if (isStandalone) {
 }
 </script>
 <script src="script.js"></script>
+<script>
+// Override playerMoney with URL balance
+window.playerMoney = getBalanceFromURL();
+</script>
 </body>
 </html>
