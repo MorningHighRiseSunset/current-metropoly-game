@@ -11,159 +11,312 @@
             box-sizing: border-box;
         }
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
+            overflow: hidden;
         }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 70%, rgba(220, 20, 60, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 30%, rgba(138, 43, 226, 0.15) 0%, transparent 50%);
+            animation: pulseBackground 10s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes pulseBackground {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
         .roulette-container {
             width: 100%;
-            max-width: 600px;
-            padding: 20px;
+            max-width: 700px;
+            padding: 30px;
             text-align: center;
+            position: relative;
+            z-index: 1;
         }
+        
         h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            color: #c0392b;
+            font-size: 3em;
+            margin-bottom: 25px;
+            background: linear-gradient(45deg, #DC143C, #8B0000, #FF6347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(220, 20, 60, 0.5);
+            animation: titleGlow 2s ease-in-out infinite;
+            letter-spacing: 2px;
         }
+        
+        @keyframes titleGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
+        }
+        
         .game-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(192, 57, 43, 0.1);
-            border: 1px solid rgba(192, 57, 43, 0.3);
-            border-radius: 12px;
-        }
-        .info-item {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-        .wheel-container {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             padding: 20px;
-            background: linear-gradient(145deg, #2c3e50, #34495e);
+            background: linear-gradient(135deg, rgba(220, 20, 60, 0.15), rgba(139, 0, 0, 0.15));
+            border: 2px solid rgba(220, 20, 60, 0.4);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(220, 20, 60, 0.3);
+        }
+        
+        .info-item {
+            font-size: 1.4em;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(220, 20, 60, 0.5);
+        }
+        
+        .wheel-container {
+            margin-bottom: 35px;
+            padding: 30px;
+            background: linear-gradient(145deg, #2c3e50, #1a252f);
             border-radius: 50%;
-            border: 8px solid #c0392b;
-            width: 200px;
-            height: 200px;
+            border: 12px solid;
+            border-image: linear-gradient(45deg, #FFD700, #DC143C, #8B0000) 1;
+            width: 280px;
+            height: 280px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-left: auto;
             margin-right: auto;
+            position: relative;
+            box-shadow: 
+                0 0 80px rgba(220, 20, 60, 0.4),
+                inset 0 0 40px rgba(0, 0, 0, 0.6);
         }
+        
+        .wheel-container::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #FFD700;
+            z-index: 10;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+        }
+        
         .wheel {
-            width: 180px;
-            height: 180px;
+            width: 250px;
+            height: 250px;
             border-radius: 50%;
             background: conic-gradient(
-                #c0392b 0deg 10deg, #2c3e50 10deg 20deg,
-                #c0392b 20deg 30deg, #2c3e50 30deg 40deg,
-                #c0392b 40deg 50deg, #2c3e50 50deg 60deg,
-                #c0392b 60deg 70deg, #2c3e50 70deg 80deg,
-                #c0392b 80deg 90deg, #2c3e50 90deg 100deg,
-                #c0392b 100deg 110deg, #2c3e50 110deg 120deg,
-                #c0392b 120deg 130deg, #2c3e50 130deg 140deg,
-                #c0392b 140deg 150deg, #2c3e50 150deg 160deg,
-                #c0392b 160deg 170deg, #2c3e50 170deg 180deg,
-                #c0392b 180deg 190deg, #2c3e50 190deg 200deg,
-                #c0392b 200deg 210deg, #2c3e50 210deg 220deg,
-                #c0392b 220deg 230deg, #2c3e50 230deg 240deg,
-                #c0392b 240deg 250deg, #2c3e50 250deg 260deg,
-                #c0392b 260deg 270deg, #2c3e50 270deg 280deg,
-                #c0392b 280deg 290deg, #2c3e50 290deg 300deg,
-                #c0392b 300deg 310deg, #2c3e50 310deg 320deg,
-                #c0392b 320deg 330deg, #2c3e50 330deg 340deg,
-                #c0392b 340deg 350deg, #2c3e50 350deg 360deg
+                #DC143C 0deg 9.7deg, #1a1a2e 9.7deg 19.4deg,
+                #DC143C 19.4deg 29.1deg, #1a1a2e 29.1deg 38.8deg,
+                #DC143C 38.8deg 48.5deg, #1a1a2e 48.5deg 58.2deg,
+                #DC143C 58.2deg 67.9deg, #1a1a2e 67.9deg 77.6deg,
+                #DC143C 77.6deg 87.3deg, #1a1a2e 87.3deg 97deg,
+                #DC143C 97deg 106.7deg, #1a1a2e 106.7deg 116.4deg,
+                #DC143C 116.4deg 126.1deg, #1a1a2e 126.1deg 135.8deg,
+                #DC143C 135.8deg 145.5deg, #1a1a2e 145.5deg 155.2deg,
+                #DC143C 155.2deg 164.9deg, #1a1a2e 164.9deg 174.6deg,
+                #DC143C 174.6deg 184.3deg, #1a1a2e 184.3deg 194deg,
+                #DC143C 194deg 203.7deg, #1a1a2e 203.7deg 213.4deg,
+                #DC143C 213.4deg 223.1deg, #1a1a2e 223.1deg 232.8deg,
+                #DC143C 232.8deg 242.5deg, #1a1a2e 242.5deg 252.2deg,
+                #DC143C 252.2deg 261.9deg, #1a1a2e 261.9deg 271.6deg,
+                #DC143C 271.6deg 281.3deg, #1a1a2e 281.3deg 291deg,
+                #DC143C 291deg 300.7deg, #1a1a2e 300.7deg 310.4deg,
+                #DC143C 310.4deg 320.1deg, #1a1a2e 320.1deg 329.8deg,
+                #DC143C 329.8deg 339.5deg, #1a1a2e 339.5deg 349.2deg,
+                #DC143C 349.2deg 358.9deg, #1a1a2e 358.9deg 360deg
             );
-            transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
         }
+        
+        .wheel::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #FFD700, #FFA500);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        
         .result-number {
             position: absolute;
-            font-size: 2em;
+            font-size: 2.5em;
             font-weight: bold;
             color: white;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            text-shadow: 0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(255, 215, 0, 0.5);
+            z-index: 5;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
+        
         .betting-options {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
+        
         .bet-btn {
-            padding: 10px 20px;
-            font-size: 1em;
+            padding: 15px 30px;
+            font-size: 1.1em;
             font-weight: bold;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            background: linear-gradient(135deg, #DC143C, #8B0000);
             color: white;
+            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
         }
+        
+        .bet-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .bet-btn:hover::before {
+            left: 100%;
+        }
+        
         .bet-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(192, 57, 43, 0.5);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(220, 20, 60, 0.5);
         }
+        
         .bet-btn.selected {
             background: linear-gradient(135deg, #27ae60, #2ecc71);
             transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.5);
         }
+        
         .result {
             font-size: 1.8em;
-            margin: 20px 0;
-            padding: 20px;
-            background: rgba(192, 57, 43, 0.2);
-            border: 2px solid rgba(192, 57, 43, 0.5);
-            border-radius: 12px;
-            min-height: 60px;
+            margin: 25px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, rgba(220, 20, 60, 0.2), rgba(139, 0, 0, 0.2));
+            border: 2px solid rgba(220, 20, 60, 0.5);
+            border-radius: 20px;
+            min-height: 70px;
             display: flex;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(220, 20, 60, 0.2);
+            transition: all 0.3s ease;
         }
+        
+        .result.win {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.3));
+            border-color: #FFD700;
+            animation: resultWin 0.5s ease-out;
+        }
+        
+        @keyframes resultWin {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
         .controls {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             justify-content: center;
         }
+        
         .spin-btn {
-            padding: 15px 40px;
-            font-size: 1.3em;
+            padding: 18px 50px;
+            font-size: 1.4em;
             font-weight: bold;
             border: none;
-            border-radius: 12px;
+            border-radius: 15px;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            background: linear-gradient(135deg, #DC143C, #8B0000);
             color: white;
-            box-shadow: 0 4px 15px rgba(192, 57, 43, 0.3);
+            box-shadow: 0 8px 20px rgba(220, 20, 60, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
         }
+        
+        .spin-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .spin-btn:hover::before {
+            left: 100%;
+        }
+        
         .spin-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(192, 57, 43, 0.5);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(220, 20, 60, 0.6);
         }
+        
+        .spin-btn:active:not(:disabled) {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
         .spin-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
     </style>
 </head>
 <body>
     <div class="roulette-container">
-        <h1>🎰 Roulette</h1>
+        <h1>🎰 ROULETTE</h1>
         
         <div class="game-info">
-            <div class="info-item">Balance: $<span id="balance">2500</span></div>
-            <div class="info-item">Bet: $100</div>
+            <div class="info-item">💰 Balance: $<span id="balance">2500</span></div>
+            <div class="info-item">🎯 Bet: $100</div>
         </div>
 
         <div class="wheel-container">
@@ -172,16 +325,16 @@
         </div>
 
         <div class="betting-options">
-            <button class="bet-btn" data-bet="red">Red (2x)</button>
-            <button class="bet-btn" data-bet="black">Black (2x)</button>
-            <button class="bet-btn" data-bet="even">Even (2x)</button>
-            <button class="bet-btn" data-bet="odd">Odd (2x)</button>
+            <button class="bet-btn" data-bet="red">🔴 Red (2x)</button>
+            <button class="bet-btn" data-bet="black">⚫ Black (2x)</button>
+            <button class="bet-btn" data-bet="even">⚖️ Even (2x)</button>
+            <button class="bet-btn" data-bet="odd">🎲 Odd (2x)</button>
         </div>
 
         <div class="result" id="result"></div>
 
         <div class="controls">
-            <button class="spin-btn" id="spin-btn">SPIN</button>
+            <button class="spin-btn" id="spin-btn">🎲 SPIN</button>
         </div>
     </div>
 

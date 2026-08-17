@@ -272,7 +272,7 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         }
         
         updateBalance();
-        showResult(result);
+        showResult(result, win);
         
         // Reset for next round
         setTimeout(() => {
@@ -283,10 +283,16 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         }, 3000);
     }
 
-    function showResult(text) {
+    function showResult(text, isWin = null) {
         const resultEl = q('#result');
         if (resultEl) {
             resultEl.textContent = text;
+            resultEl.classList.remove('win', 'lose');
+            if (isWin === true) {
+                resultEl.classList.add('win');
+            } else if (isWin === false) {
+                resultEl.classList.add('lose');
+            }
             resultEl.style.animation = 'none';
             resultEl.offsetHeight; // Trigger reflow
             resultEl.style.animation = 'fadeIn 0.5s ease-out';

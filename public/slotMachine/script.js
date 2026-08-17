@@ -20,10 +20,32 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
         }
     }
 
-    function showResult(text) {
+    function showResult(text, isWin = false) {
         const resultEl = q('#result');
         if (resultEl) {
             resultEl.textContent = text;
+            resultEl.classList.remove('win');
+            if (isWin) {
+                resultEl.classList.add('win');
+                createSparkles();
+            }
+        }
+    }
+
+    function createSparkles() {
+        const reelsContainer = q('.reels');
+        if (!reelsContainer) return;
+        
+        for (let i = 0; i < 20; i++) {
+            setTimeout(() => {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                reelsContainer.appendChild(sparkle);
+                
+                setTimeout(() => sparkle.remove(), 1000);
+            }, i * 100);
         }
     }
 
@@ -75,9 +97,15 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
             // Check for wins
             let result = '';
             let winAmount = 0;
+            let isWin = false;
 
             if (symbol1 === symbol2 && symbol2 === symbol3) {
                 // Three of a kind
+                isWin = true;
+                if (reel1) reel1.classList.add('winner');
+                if (reel2) reel2.classList.add('winner');
+                if (reel3) reel3.classList.add('winner');
+                
                 if (symbol1 === '💎') {
                     winAmount = currentBet * 10;
                     result = `💎 JACKPOT! Three Diamonds! Win $${winAmount}!`;
@@ -90,6 +118,7 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
                 }
             } else if (symbol1 === symbol2 || symbol2 === symbol3 || symbol1 === symbol3) {
                 // Two of a kind
+                isWin = true;
                 winAmount = currentBet * 2;
                 result = `Nice! Two matching symbols! Win $${winAmount}!`;
             } else {
@@ -99,9 +128,10 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
             if (winAmount > 0) {
                 balance += winAmount;
                 updateBalance();
+                showResult(result, true);
+            } else {
+                showResult(result);
             }
-
-            showResult(result);
             isSpinning = false;
 
             if (spinBtn) spinBtn.disabled = false;
@@ -109,6 +139,9 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
             // Auto-reset after delay
             setTimeout(() => {
                 showResult('Click Spin to play again!');
+                if (reel1) reel1.classList.remove('winner');
+                if (reel2) reel2.classList.remove('winner');
+                if (reel3) reel3.classList.remove('winner');
             }, 3000);
         }, 2000);
     }

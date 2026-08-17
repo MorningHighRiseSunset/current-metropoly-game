@@ -20,10 +20,14 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
         }
     }
 
-    function showResult(text) {
+    function showResult(text, isWin = false) {
         const resultEl = q('#result');
         if (resultEl) {
             resultEl.textContent = text;
+            resultEl.classList.remove('win');
+            if (isWin) {
+                resultEl.classList.add('win');
+            }
         }
     }
 
@@ -121,9 +125,9 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
             if (won) {
                 balance += payout;
                 updateBalance();
-                showResult(`🎉 You won $${payout}! Ball landed on ${number}`);
+                showResult(`🎉 You won $${payout}! Ball landed on ${number}`, true);
             } else {
-                showResult(`😢 You lost $${currentBet}. Ball landed on ${number}`);
+                showResult(`😢 You lost $${currentBet}. Ball landed on ${number}`, false);
             }
 
             isSpinning = false;
