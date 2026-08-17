@@ -26,7 +26,6 @@ window.initBaccaratMinigame = function(container, playerMoneyInit, updateMainGam
     let playerMoney = typeof playerMoneyInit === 'number' ? playerMoneyInit : 1000;
     let currentBet = 0;
     let currentBetType = null;
-    let gameHistory = [];
     let roundInProgress = false;
 
     function createDeck() {
@@ -124,20 +123,17 @@ window.initBaccaratMinigame = function(container, playerMoneyInit, updateMainGam
         renderHand(aiHand, 'ai-cards');
         updateScores();
         // Reset bet
-        currentBet = 0;
+        currentBet = 100;
         currentBetType = null;
         updateMoneyUI();
         // Enable betting UI
         setBettingUIEnabled(true);
-        // Hide next round button
-        const nextRoundContainer = q('.next-round-container');
-        if (nextRoundContainer) nextRoundContainer.style.display = 'none';
         roundInProgress = false;
     }
     function deal() {
         if (roundInProgress) return;
-        if (!currentBet || !currentBetType) {
-            alert('Please select a bet amount and type!');
+        if (!currentBetType) {
+            alert('Please select a bet type (Player, Banker, or Tie)!');
             return;
         }
         if (currentBet > playerMoney) {
@@ -255,27 +251,13 @@ window.initBaccaratMinigame = function(container, playerMoneyInit, updateMainGam
         updateMoneyUI();
         const resultEl = q('#result');
         if (resultEl) resultEl.textContent = result;
-        // Add to history
-        gameHistory.push(winner);
-        renderHistory();
-        // Show next round button
-        const nextRoundContainer = q('.next-round-container');
-        if (nextRoundContainer) nextRoundContainer.style.display = 'block';
+        // Single round only - reset game after delay
         roundInProgress = false;
+        setTimeout(() => {
+            resetGame();
+        }, 3000);
     }
-    function renderHistory() {
-        const historyEl = q('#history');
-        if (!historyEl) return;
-        historyEl.innerHTML = '';
-        gameHistory.slice(-20).forEach(res => {
-            const div = document.createElement('div');
-            div.className = 'history-item ' + res;
-            if (res === 'player') div.textContent = 'P';
-            else if (res === 'banker') div.textContent = 'B';
-            else if (res === 'tie') div.textContent = 'T';
-            historyEl.appendChild(div);
-        });
-    }
+
     function showWinAnimation() {
         const result = q('#result');
         if (!result) return;
@@ -331,24 +313,10 @@ window.initBaccaratMinigame = function(container, playerMoneyInit, updateMainGam
     if (dealBtn) dealBtn.addEventListener('click', deal);
     const resetBtn = q('#reset-btn');
     if (resetBtn) resetBtn.addEventListener('click', resetGame);
-    // Next round button logic
-    const nextRoundBtn = q('#next-round-btn');
-    if (nextRoundBtn) {
-        nextRoundBtn.addEventListener('click', () => {
-            // Keep bet and bet type, just clear hands and result
-            playerHand = [];
-            aiHand = [];
-            const resultEl = q('#result');
-            if (resultEl) resultEl.textContent = '';
-            renderHand(playerHand, 'player-cards');
-            renderHand(aiHand, 'ai-cards');
-            updateScores();
-            setBettingUIEnabled(true);
-            const nextRoundContainer = q('.next-round-container');
-            if (nextRoundContainer) nextRoundContainer.style.display = 'none';
-            roundInProgress = false;
-        });
-    }
+    
+    // Set default bet to 100 for simplicity
+    currentBet = 100;
+    updateMoneyUI();
     // Instructions modal logic
     const instructionsBtn = q('#instructions-btn');
     const instructionsModal = q('#instructions-modal');
@@ -368,7 +336,6 @@ window.initBaccaratMinigame = function(container, playerMoneyInit, updateMainGam
     }
     // Initial state
     resetGame();
-    renderHistory();
 };
 
 // Auto-initialize for standalone usage (skip when embedded in main game iframe)

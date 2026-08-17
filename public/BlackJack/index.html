@@ -3,74 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blackjack</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Blackjack - Vegas Metropoly</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .blackjack-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #9b59b6, #8e44ad, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(155, 89, 182, 0.3);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(155, 89, 182, 0.1);
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-item {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .hands-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .hand-section {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 150px;
+        }
+
+        .hand-label {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #9b59b6;
+            font-weight: bold;
+        }
+
+        .hand {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            min-height: 130px;
+        }
+
+        .score {
+            font-size: 1.5em;
+            margin-top: 15px;
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .result {
+            font-size: 2em;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(155, 89, 182, 0.2);
+            border: 2px solid rgba(155, 89, 182, 0.5);
+            border-radius: 12px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.5);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-hit {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+
+        .btn-stand {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        @keyframes dealCard {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) rotate(-10deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) rotate(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .face-down {
+            background: linear-gradient(145deg, #8e44ad, #9b59b6) !important;
+            border-color: #9b59b6 !important;
+        }
+    </style>
 </head>
 <body>
-<div id="game-ui">
-  <svg class="table-svg" width="1000" height="700" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg">
-    <!-- Blackjack table image as background -->
-    <image href="images/blackjack-red-yellow-square-box-complete-for-printing-and-website-Classic-Green-343-C.gif" x="0" y="0" width="1000" height="700" />
-    <!-- Yellow betting squares -->
-    <polygon class="bet-square" id="bet0" points="233,274 185,307 213,346 260,313" />
-    <polygon class="bet-square" id="bet1" points="275,331 236,372 270,405 309,363" />
-    <polygon class="bet-square" id="bet2" points="329,376 300,425 341,449 370,400" />
-    <polygon class="bet-square" id="bet3" points="394,411 378,467 423,480 440,425" />
-    <polygon class="bet-square" id="bet4" points="467,427 466,485 514,485 514,427" />
-    <polygon class="bet-square" id="bet5" points="591,411 545,423 559,479 606,467" />
-    <polygon class="bet-square" id="bet6" points="658,377 616,400 644,451 686,428" />
-    <polygon class="bet-square" id="bet7" points="713,330 678,363 718,405 753,372" />
-    <polygon class="bet-square" id="bet8" points="756,273 727,311 772,346 801,309" />
-    <!-- Chips will be animated and placed here -->
-    <g id="chips-layer"></g>
-    <!-- Cards will be animated and placed here -->
-    <g id="cards-layer"></g>
-  </svg>
-  <div id="controls" style="position:absolute;top:0px;left:50%;transform:translateX(-50%);width:auto;min-width:320px;max-width:90%;background:rgba(34,34,34,0.95);padding:12px 24px;display:flex;z-index:99;flex-direction:row;align-items:center;justify-content:center;gap:16px;border-radius:0 0 18px 18px;">
-    <button id="deal-btn">Deal</button>
-    <button id="hit-btn" disabled>Hit</button>
-    <button id="stand-btn" disabled>Stand</button>
-    <button id="instructions-btn">Instructions</button>
-    <span id="balance">Balance: $1000</span>
-  </div>
-  <audio id="chip-sound" src="Sounds/cardSoundOne.mp3" preload="auto"></audio>
-  <audio id="card-sound1" src="Sounds/cardSoundOne.mp3" preload="auto" onerror="this.src='Sounds/flipcard-91468.mp3'"></audio>
-  <audio id="card-sound2" src="Sounds/flipcard-91468.mp3" preload="auto"></audio>
+    <div class="blackjack-container">
+        <h1>🃏 Blackjack</h1>
+        
+        <div class="game-info">
+            <div class="info-item">Balance: <span id="balance">$2500</span></div>
+            <div class="info-item">Current Bet: <span id="current-bet">$0</span></div>
+        </div>
 
-  <!-- Instructions Modal -->
-  <div id="instructions-modal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
-    <div style="background:#222; color:#FFD700; padding:32px 36px; border-radius:18px; max-width:400px; margin:auto; box-shadow:0 4px 32px #000; position:relative;">
-      <h2 style="margin-top:0;">Blackjack Instructions</h2>
-      <h3>Card Points</h3>
-      <ul style="margin-bottom:16px;">
-        <li>Ace (A): 1 or 11 points</li>
-        <li>2-10: Face value</li>
-        <li>Jack (J), Queen (Q), King (K): 10 points</li>
-      </ul>
-      <h3>How to Play</h3>
-      <ul>
-        <li>Place your bet by clicking a yellow square.</li>
-        <li>Click <b>Deal</b> to receive two cards.</li>
-        <li>Click <b>Hit</b> to draw another card, or <b>Stand</b> to keep your hand.</li>
-        <li>If your hand exceeds 21, you bust and lose.</li>
-        <li>Dealer draws until reaching 17 or higher.</li>
-        <li>Closest to 21 without busting wins. Ties are a push.</li>
-      </ul>
-  <button id="close-instructions" style="position:absolute; top:12px; right:18px; background:none; color:#FFD700; border:none; border-radius:50%; width:32px; height:32px; font-size:1.6em; font-weight:bold; cursor:pointer; line-height:1;">&times;</button>
+        <div class="hands-container">
+            <div class="hand-section">
+                <div class="hand-label">Dealer's Hand</div>
+                <div class="hand" id="dealer-hand"></div>
+                <div class="score">Score: <span id="dealer-score">0</span></div>
+            </div>
+
+            <div class="hand-section">
+                <div class="hand-label">Your Hand</div>
+                <div class="hand" id="player-hand"></div>
+                <div class="score">Score: <span id="player-score">0</span></div>
+            </div>
+        </div>
+
+        <div class="result" id="result"></div>
+
+        <div class="controls">
+            <button class="btn" id="deal-btn">Deal ($100)</button>
+            <button class="btn btn-hit" id="hit-btn" disabled>Hit</button>
+            <button class="btn btn-stand" id="stand-btn" disabled>Stand</button>
+        </div>
     </div>
-  </div>
-</div>
-<script>
-// Check if loaded standalone (not in iframe)
-const isStandalone = window === window.top;
-if (isStandalone) {
-  // Initialize with default values for standalone mode
-  window.playerMoney = 2500;
-  window.updateMainGameBalance = function(balance) {
-    // No-op in standalone mode
-  };
-}
-</script>
-<script src="script.js"></script>
+
+    <script src="/runtime-config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Auto-initialize for standalone usage
+        if (window.parent === window || !window.initBlackjackMinigame) {
+            document.addEventListener('DOMContentLoaded', function() {
+                const container = document.querySelector('.blackjack-container');
+                if (container && window.initBlackjackMinigame) {
+                    window.initBlackjackMinigame(container, window.playerMoney, window.updateMainGameBalance);
+                }
+            });
+        }
+    </script>
 </body>
 </html>

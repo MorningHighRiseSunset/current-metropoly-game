@@ -93,18 +93,30 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
 			try { window.playerBankroll = playerBankroll; } catch (e) {}
 			showStatus(msg + ` +$${bet.amount * (payout - 1)}`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
+			// Auto-reset chips after payout
+			setTimeout(() => {
+				renderPlayerChips();
+			}, 2000);
 		}
 		function loseBet(bet, msg) {
 			playerBankroll -= bet.amount;
 			try { window.playerBankroll = playerBankroll; } catch (e) {}
 			showStatus(msg + ` -$${bet.amount}`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
+			// Auto-reset chips after loss
+			setTimeout(() => {
+				renderPlayerChips();
+			}, 2000);
 		}
 		function pushBet(bet, msg) {
 			playerBankroll += bet.amount;
 			try { window.playerBankroll = playerBankroll; } catch (e) {}
 			showStatus(msg + ` (push)`);
 			if (typeof updateMainGameBalance === 'function') updateMainGameBalance(playerBankroll);
+			// Auto-reset chips after push
+			setTimeout(() => {
+				renderPlayerChips();
+			}, 2000);
 		}
 		function endRound() {
 			setTimeout(() => {
@@ -113,8 +125,8 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
 				gamePhase = 'comeout';
 				point = null;
 				renderBettingAreas();
-				showStatus('Place your bets for a new round!');
-			}, 1800);
+				showStatus('Round complete! Place your bets for a new round...');
+			}, 3000); // Longer delay for single-round play
 		}
 		function handleCrapsRoll(roll) {
 			const passBet = getPassLineBet();
@@ -556,9 +568,9 @@ let playerChips = [];
 
 // Casino chip denominations and colors
 const CHIP_DENOMS = [
-	{ value: 1000, color: '#2e86de' }, // blue
-	{ value: 250, color: '#27ae60' },  // green
-	{ value: 50, color: '#e67e22' },   // orange
+	{ value: 100, color: '#2e86de' }, // blue
+	{ value: 50, color: '#27ae60' },  // green
+	{ value: 25, color: '#e67e22' },   // orange
 	{ value: 10, color: '#fff' }       // white
 ];
 

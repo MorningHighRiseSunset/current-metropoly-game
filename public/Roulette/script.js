@@ -415,7 +415,7 @@ function showResult() {
 
 // --- Player Info Logic ---
 window.playerBalance = typeof playerMoney === 'number' ? playerMoney : 2500;
-window.betAmount = 1000;
+window.betAmount = 100; // Simplified to $100 bets
 
 function updatePlayerInfo() {
 	let totalBets = Object.values(bets || {}).reduce((a,b) => a+b, 0);

@@ -36,7 +36,7 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 	let playerHand = [];
 	let aiHand = [];
 	let communityCards = [];
-	let currentBet = 0;
+	let currentBet = 100; // Simplified to $100
 	let playerBet = 0;
 	let aiBet = 0;
 	let stage = 'preflop'; // preflop, flop, turn, river, showdown
@@ -66,8 +66,6 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 	const btnCheck = q('#btn-check');
 	const btnCall = q('#btn-call');
 	const btnBet = q('#btn-bet');
-	const btnNewGame = q('#btn-newgame');
-	const betAmountInput = q('#bet-amount');
 
 	// --- Game Logic ---
 	function startNewGame() {
@@ -129,19 +127,11 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 		playerChipsEl.textContent = playerChips;
 		aiChipsEl.textContent = aiChips;
 		potEl.textContent = pot;
-		// Message or summary
-		if (showSummary) {
-			let diff = playerChips - startingChips;
-			let summary = `You finished with $${playerChips}. `;
-			if (diff > 0) summary += `You won $${diff}!`;
-			else if (diff < 0) summary += `You lost $${-diff}.`;
-			else summary += `You broke even.`;
-			messageEl.textContent = summary;
-		} else {
-			messageEl.textContent = message;
-		}
-		if (!showSummary && typeof updateMainGameBalance === 'function') {
+		messageEl.textContent = message;
+		if (typeof updateMainGameBalance === 'function') {
 			updateMainGameBalance(playerChips);
+		} else if (container && typeof CustomEvent === 'function') {
+			container.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance: playerChips}}));
 		}
 	}
 
@@ -288,6 +278,11 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 		}
 		message = `Showdown! ${winner}`;
 		updateUI();
+		
+		// Single round only - reset after delay
+		setTimeout(() => {
+			startNewGame();
+		}, 3000);
 	}
 
 	// --- Poker Hand Evaluation (simple, not all tiebreakers) ---
@@ -346,7 +341,6 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 	btnCheck.addEventListener('click', playerCheck);
 	btnCall.addEventListener('click', playerCall);
 	btnBet.addEventListener('click', playerBetAction);
-	btnNewGame.addEventListener('click', startNewGame);
 
 	// --- Minigame close: export balance and show summary ---
 	function showEndSummaryAndExport() {

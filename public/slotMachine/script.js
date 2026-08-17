@@ -147,12 +147,12 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 	}
 
 	function spin() {
-		if (balance < 1000) {
+		if (balance < 100) {
 			message.textContent = 'Not enough money to spin!';
 			message.style.color = '#fff';
 			return;
 		}
-		balance -= 1000;
+		balance -= 100;
 		updateBalanceDisplay();
 		spinBtn.disabled = true;
 		message.textContent = '';
@@ -202,10 +202,10 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 
 	function checkWin(finalSymbols) {
 		if (finalSymbols[0] === finalSymbols[1] && finalSymbols[1] === finalSymbols[2]) {
-			let reward = 10000;
+			let reward = 500;
 			let symbol = finalSymbols[0];
 			if (symbol === '💎') {
-				reward = 50000;
+				reward = 1000;
 				message.textContent = `💎💎💎 DIAMOND JACKPOT! Three Diamonds! You win $${reward}!`;
 				message.style.color = '#00eaff';
 				playJackpotSound();
@@ -218,7 +218,7 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 			updateBalanceDisplay();
 			showSparkles();
 		} else if (finalSymbols[0] === finalSymbols[1] || finalSymbols[1] === finalSymbols[2] || finalSymbols[0] === finalSymbols[2]) {
-			let reward = 2000;
+			let reward = 150;
 			balance += reward;
 			updateBalanceDisplay();
 			message.textContent = `Nice! Two matching symbols! You win $${reward}!`;
@@ -229,6 +229,12 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 			message.style.color = '#fff';
 			updateBalanceDisplay();
 		}
+		
+		// Single round only - auto reset after delay
+		setTimeout(() => {
+			spinBtn.disabled = false;
+			message.textContent = '';
+		}, 3000);
 	}
 
 	function showSparkles() {

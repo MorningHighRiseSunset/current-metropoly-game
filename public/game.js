@@ -14,37 +14,91 @@ function getConfiguredSocketServerUrl() {
     return configuredUrl.replace(/\/$/, '');
 }
 
-// Console commands to load minigames directly
+// Console commands to load minigames directly in the same page
 // Usage in browser console: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()
 window.loadBlackjack = function() {
-    console.log('Loading Blackjack minigame...');
-    window.location.href = '/BlackJack/index.html';
+    console.log('Loading Blackjack minigame in overlay...');
+    loadMinigameInOverlay('/BlackJack/index.html');
 };
 
 window.loadBaccarat = function() {
-    console.log('Loading Baccarat minigame...');
-    window.location.href = '/Baccarat/index.html';
+    console.log('Loading Baccarat minigame in overlay...');
+    loadMinigameInOverlay('/Baccarat/index.html');
 };
 
 window.loadRoulette = function() {
-    console.log('Loading Roulette minigame...');
-    window.location.href = '/Roulette/index.html';
+    console.log('Loading Roulette minigame in overlay...');
+    loadMinigameInOverlay('/Roulette/index.html');
 };
 
 window.loadPoker = function() {
-    console.log('Loading Poker minigame...');
-    window.location.href = '/PokerFP/index.html';
+    console.log('Loading Poker minigame in overlay...');
+    loadMinigameInOverlay('/PokerFP/index.html');
 };
 
 window.loadSlots = function() {
-    console.log('Loading Slot Machine minigame...');
-    window.location.href = '/slotMachine/index.html';
+    console.log('Loading Slot Machine minigame in overlay...');
+    loadMinigameInOverlay('/slotMachine/index.html');
 };
 
 window.loadCraps = function() {
-    console.log('Loading Craps minigame...');
-    window.location.href = '/Craps/index.html';
+    console.log('Loading Craps minigame in overlay...');
+    loadMinigameInOverlay('/Craps/index.html');
 };
+
+function loadMinigameInOverlay(url) {
+    // Create overlay container
+    const overlay = document.createElement('div');
+    overlay.id = 'minigame-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    // Create iframe for minigame
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.cssText = `
+        width: 90vw;
+        height: 90vh;
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 0 40px rgba(155, 89, 182, 0.5);
+    `;
+    
+    // Create close button
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ Close';
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 10001;
+    `;
+    closeBtn.onclick = () => {
+        document.body.removeChild(overlay);
+    };
+    
+    overlay.appendChild(iframe);
+    overlay.appendChild(closeBtn);
+    document.body.appendChild(overlay);
+}
 
 console.log('Minigame console commands loaded: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()');
 
@@ -4169,7 +4223,7 @@ function createPremiumBoardTile(spaceData, row, col) {
     // Add Ferris Wheel model for County Fair (position 24)
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
         const loader = new THREE.GLTFLoader();
-        loader.load(getModelPath('/Models/Ferris Wheel/scene.gltf'),
+        loader.load('https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models/Ferris%20Wheel/scene.gltf',
             function(gltf) {
                 const ferrisWheel = gltf.scene;
                 const scale = tileSize * 0.08;
