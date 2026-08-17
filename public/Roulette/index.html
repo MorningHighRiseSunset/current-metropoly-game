@@ -12,7 +12,7 @@
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%);
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -31,34 +31,34 @@
             width: 100%;
             height: 100%;
             background: 
-                radial-gradient(circle at 30% 70%, rgba(220, 20, 60, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 70% 30%, rgba(138, 43, 226, 0.15) 0%, transparent 50%);
-            animation: pulseBackground 10s ease-in-out infinite;
+                radial-gradient(circle at 30% 70%, rgba(155, 89, 182, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 30%, rgba(142, 68, 173, 0.15) 0%, transparent 50%);
+            animation: pulseBackground 8s ease-in-out infinite;
             pointer-events: none;
         }
         
         @keyframes pulseBackground {
-            0%, 100% { opacity: 0.6; }
+            0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
         }
         
         .roulette-container {
             width: 100%;
-            max-width: 700px;
-            padding: 30px;
+            max-width: 500px;
+            padding: 20px;
             text-align: center;
             position: relative;
             z-index: 1;
         }
         
         h1 {
-            font-size: 3em;
-            margin-bottom: 25px;
-            background: linear-gradient(45deg, #DC143C, #8B0000, #FF6347);
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #9b59b6, #8e44ad, #9b59b6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 30px rgba(220, 20, 60, 0.5);
+            text-shadow: 0 0 30px rgba(155, 89, 182, 0.5);
             animation: titleGlow 2s ease-in-out infinite;
             letter-spacing: 2px;
         }
@@ -71,30 +71,30 @@
         .game-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 25px;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(220, 20, 60, 0.15), rgba(139, 0, 0, 0.15));
-            border: 2px solid rgba(220, 20, 60, 0.4);
-            border-radius: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.15), rgba(142, 68, 173, 0.15));
+            border: 2px solid rgba(155, 89, 182, 0.4);
+            border-radius: 15px;
             backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(220, 20, 60, 0.3);
+            box-shadow: 0 8px 32px rgba(155, 89, 182, 0.3);
         }
         
         .info-item {
-            font-size: 1.4em;
+            font-size: 1.2em;
             font-weight: bold;
-            text-shadow: 0 0 10px rgba(220, 20, 60, 0.5);
+            text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
         }
         
         .wheel-container {
-            margin-bottom: 35px;
-            padding: 30px;
-            background: linear-gradient(145deg, #2c3e50, #1a252f);
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
             border-radius: 50%;
-            border: 12px solid;
-            border-image: linear-gradient(45deg, #FFD700, #DC143C, #8B0000) 1;
-            width: 280px;
-            height: 280px;
+            border: 8px solid;
+            border-image: linear-gradient(45deg, #9b59b6, #8e44ad, #9b59b6) 1;
+            width: 220px;
+            height: 220px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -102,53 +102,52 @@
             margin-right: auto;
             position: relative;
             box-shadow: 
-                0 0 80px rgba(220, 20, 60, 0.4),
-                inset 0 0 40px rgba(0, 0, 0, 0.6);
+                0 0 60px rgba(155, 89, 182, 0.4),
+                inset 0 0 30px rgba(0, 0, 0, 0.6);
         }
         
         .wheel-container::before {
             content: '';
             position: absolute;
-            top: -20px;
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 30px solid #FFD700;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #9b59b6;
             z-index: 10;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
         }
         
         .wheel {
-            width: 250px;
-            height: 250px;
+            width: 190px;
+            height: 190px;
             border-radius: 50%;
             background: conic-gradient(
-                #DC143C 0deg 9.7deg, #1a1a2e 9.7deg 19.4deg,
-                #DC143C 19.4deg 29.1deg, #1a1a2e 29.1deg 38.8deg,
-                #DC143C 38.8deg 48.5deg, #1a1a2e 48.5deg 58.2deg,
-                #DC143C 58.2deg 67.9deg, #1a1a2e 67.9deg 77.6deg,
-                #DC143C 77.6deg 87.3deg, #1a1a2e 87.3deg 97deg,
-                #DC143C 97deg 106.7deg, #1a1a2e 106.7deg 116.4deg,
-                #DC143C 116.4deg 126.1deg, #1a1a2e 126.1deg 135.8deg,
-                #DC143C 135.8deg 145.5deg, #1a1a2e 145.5deg 155.2deg,
-                #DC143C 155.2deg 164.9deg, #1a1a2e 164.9deg 174.6deg,
-                #DC143C 174.6deg 184.3deg, #1a1a2e 184.3deg 194deg,
-                #DC143C 194deg 203.7deg, #1a1a2e 203.7deg 213.4deg,
-                #DC143C 213.4deg 223.1deg, #1a1a2e 223.1deg 232.8deg,
-                #DC143C 232.8deg 242.5deg, #1a1a2e 242.5deg 252.2deg,
-                #DC143C 252.2deg 261.9deg, #1a1a2e 261.9deg 271.6deg,
-                #DC143C 271.6deg 281.3deg, #1a1a2e 281.3deg 291deg,
-                #DC143C 291deg 300.7deg, #1a1a2e 300.7deg 310.4deg,
-                #DC143C 310.4deg 320.1deg, #1a1a2e 320.1deg 329.8deg,
-                #DC143C 329.8deg 339.5deg, #1a1a2e 339.5deg 349.2deg,
-                #DC143C 349.2deg 358.9deg, #1a1a2e 358.9deg 360deg
+                #9b59b6 0deg 10deg, #1a1a2e 10deg 20deg,
+                #9b59b6 20deg 30deg, #1a1a2e 30deg 40deg,
+                #9b59b6 40deg 50deg, #1a1a2e 50deg 60deg,
+                #9b59b6 60deg 70deg, #1a1a2e 70deg 80deg,
+                #9b59b6 80deg 90deg, #1a1a2e 90deg 100deg,
+                #9b59b6 100deg 110deg, #1a1a2e 110deg 120deg,
+                #9b59b6 120deg 130deg, #1a1a2e 130deg 140deg,
+                #9b59b6 140deg 150deg, #1a1a2e 150deg 160deg,
+                #9b59b6 160deg 170deg, #1a1a2e 170deg 180deg,
+                #9b59b6 180deg 190deg, #1a1a2e 190deg 200deg,
+                #9b59b6 200deg 210deg, #1a1a2e 210deg 220deg,
+                #9b59b6 220deg 230deg, #1a1a2e 230deg 240deg,
+                #9b59b6 240deg 250deg, #1a1a2e 250deg 260deg,
+                #9b59b6 260deg 270deg, #1a1a2e 270deg 280deg,
+                #9b59b6 280deg 290deg, #1a1a2e 290deg 300deg,
+                #9b59b6 300deg 310deg, #1a1a2e 310deg 320deg,
+                #9b59b6 320deg 330deg, #1a1a2e 330deg 340deg,
+                #9b59b6 340deg 350deg, #1a1a2e 350deg 360deg
             );
             transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
             position: relative;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
         
         .wheel::after {
@@ -157,19 +156,19 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(145deg, #FFD700, #FFA500);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(145deg, #9b59b6, #8e44ad);
             border-radius: 50%;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 15px rgba(155, 89, 182, 0.5);
         }
         
         .result-number {
             position: absolute;
-            font-size: 2.5em;
+            font-size: 2em;
             font-weight: bold;
             color: white;
-            text-shadow: 0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(255, 215, 0, 0.5);
+            text-shadow: 0 0 15px rgba(0,0,0,0.8), 0 0 30px rgba(155, 89, 182, 0.5);
             z-index: 5;
             top: 50%;
             left: 50%;
@@ -179,22 +178,22 @@
         .betting-options {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
             justify-content: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         
         .bet-btn {
-            padding: 15px 30px;
-            font-size: 1.1em;
+            padding: 12px 25px;
+            font-size: 1em;
             font-weight: bold;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: linear-gradient(135deg, #DC143C, #8B0000);
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
             color: white;
-            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
             text-transform: uppercase;
             letter-spacing: 1px;
             position: relative;
@@ -217,35 +216,35 @@
         }
         
         .bet-btn:hover:not(:disabled) {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(220, 20, 60, 0.5);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.5);
         }
         
         .bet-btn.selected {
             background: linear-gradient(135deg, #27ae60, #2ecc71);
             transform: scale(1.1);
-            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.5);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.5);
         }
         
         .result {
-            font-size: 1.8em;
-            margin: 25px 0;
-            padding: 25px;
-            background: linear-gradient(135deg, rgba(220, 20, 60, 0.2), rgba(139, 0, 0, 0.2));
-            border: 2px solid rgba(220, 20, 60, 0.5);
-            border-radius: 20px;
-            min-height: 70px;
+            font-size: 1.5em;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(142, 68, 173, 0.2));
+            border: 2px solid rgba(155, 89, 182, 0.5);
+            border-radius: 15px;
+            min-height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(220, 20, 60, 0.2);
+            box-shadow: 0 8px 32px rgba(155, 89, 182, 0.2);
             transition: all 0.3s ease;
         }
         
         .result.win {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.3));
-            border-color: #FFD700;
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.3), rgba(39, 174, 96, 0.3));
+            border-color: #2ecc71;
             animation: resultWin 0.5s ease-out;
         }
         
@@ -257,21 +256,21 @@
         
         .controls {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             justify-content: center;
         }
         
         .spin-btn {
-            padding: 18px 50px;
-            font-size: 1.4em;
+            padding: 15px 40px;
+            font-size: 1.2em;
             font-weight: bold;
             border: none;
-            border-radius: 15px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: linear-gradient(135deg, #DC143C, #8B0000);
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
             color: white;
-            box-shadow: 0 8px 20px rgba(220, 20, 60, 0.4);
+            box-shadow: 0 8px 20px rgba(155, 89, 182, 0.4);
             text-transform: uppercase;
             letter-spacing: 2px;
             position: relative;
@@ -295,7 +294,7 @@
         
         .spin-btn:hover:not(:disabled) {
             transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 12px 30px rgba(220, 20, 60, 0.6);
+            box-shadow: 0 12px 30px rgba(155, 89, 182, 0.6);
         }
         
         .spin-btn:active:not(:disabled) {

@@ -134,10 +134,14 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
         }
     }
 
-    function showResult(text) {
+    function showResult(text, isWin = false) {
         const resultEl = q('#result');
         if (resultEl) {
             resultEl.textContent = text;
+            resultEl.classList.remove('win');
+            if (isWin) {
+                resultEl.classList.add('win');
+            }
             resultEl.style.animation = 'none';
             resultEl.offsetHeight; // Trigger reflow
             resultEl.style.animation = 'fadeIn 0.5s ease-out';
@@ -196,17 +200,21 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
             const aiEval = evaluateHand(aiHand);
             
             let result = '';
+            let isWin = false;
             if (playerEval.rank > aiEval.rank) {
                 balance += currentBet * 2;
                 result = `You win! ${playerEval.name} beats ${aiEval.name}`;
+                isWin = true;
             } else if (aiEval.rank > playerEval.rank) {
                 result = `AI wins! ${aiEval.name} beats ${playerEval.name}`;
+                isWin = false;
             } else {
                 balance += currentBet; // Push
                 result = `It's a tie! Both have ${playerEval.name}`;
+                isWin = false;
             }
             
-            showResult(result);
+            showResult(result, isWin);
             updateBalance();
             gamePhase = 'result';
             
