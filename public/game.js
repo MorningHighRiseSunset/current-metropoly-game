@@ -4236,68 +4236,56 @@ function createPremiumBoardTile(spaceData, row, col) {
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
         const loader = new THREE.GLTFLoader();
         
-        // Try CDN first, fall back to local if it fails
-        const cdnUrl = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models/ferrisWheel/ferris_wheel.glb';
-        const localUrl = getModelPath('/Models/ferrisWheel/ferris_wheel.glb');
-        
-        function loadFerrisWheel(url) {
-            loader.load(url,
-                function(gltf) {
-                    const ferrisWheel = gltf.scene;
-                    const scale = tileSize * 0.08;
-                    ferrisWheel.scale.set(scale, scale, scale);
-                    ferrisWheel.position.y = tileHeight / 2 + 0.05;
-                    ferrisWheel.userData.isFerrisWheel = true;
-                    ferrisWheel.userData.lastUpdate = 0;
-                    
-                    // Optimize model for performance
-                    ferrisWheel.traverse((child) => {
-                        if (child.isMesh) {
-                            child.castShadow = false;
-                            child.receiveShadow = false;
-                            if (child.material) {
-                                child.material.flatShading = true;
-                                // Disable expensive material features
-                                child.material.needsUpdate = true;
-                                if (child.material.map) {
-                                    child.material.map.anisotropy = 1;
-                                }
+        // Use local file since CDN has 404
+        loader.load(getModelPath('/Models/Ferris Wheel/scene.gltf'),
+            function(gltf) {
+                const ferrisWheel = gltf.scene;
+                const scale = tileSize * 0.08;
+                ferrisWheel.scale.set(scale, scale, scale);
+                ferrisWheel.position.y = tileHeight / 2 + 0.05;
+                ferrisWheel.userData.isFerrisWheel = true;
+                ferrisWheel.userData.lastUpdate = 0;
+                
+                // Optimize model for performance
+                ferrisWheel.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = false;
+                        child.receiveShadow = false;
+                        if (child.material) {
+                            child.material.flatShading = true;
+                            // Disable expensive material features
+                            child.material.needsUpdate = true;
+                            if (child.material.map) {
+                                child.material.map.anisotropy = 1;
                             }
                         }
-                    });
+                    }
+                });
+                
+                // Setup animation mixer if model has animations
+                if (gltf.animations && gltf.animations.length > 0) {
+                    const mixer = new THREE.AnimationMixer(ferrisWheel);
+                    ferrisWheel.mixer = mixer;
+                    ferrisWheel.animations = gltf.animations;
                     
-                    // Setup animation mixer if model has animations
-                    if (gltf.animations && gltf.animations.length > 0) {
-                        const mixer = new THREE.AnimationMixer(ferrisWheel);
-                        ferrisWheel.mixer = mixer;
-                        ferrisWheel.animations = gltf.animations;
-                        
-                        // Play the animation with reduced time scale for performance
-                        const action = mixer.clipAction(gltf.animations[0]);
-                        action.timeScale = 0.3;
-                        action.play();
-                    }
-                    
-                    group.add(ferrisWheel);
-                },
-                function(xhr) {
-                    if (xhr.lengthComputable) {
-                        const percentComplete = xhr.loaded / xhr.total * 100;
-                        console.log(`Loading Ferris Wheel: ${percentComplete.toFixed(2)}%`);
-                    }
-                },
-                function(error) {
-                    console.error(`Error loading Ferris Wheel from ${url}:`, error);
-                    // If CDN fails, try local file
-                    if (url === cdnUrl) {
-                        console.log('Falling back to local file...');
-                        loadFerrisWheel(localUrl);
-                    }
+                    // Play the animation with reduced time scale for performance
+                    const action = mixer.clipAction(gltf.animations[0]);
+                    action.timeScale = 0.3;
+                    action.play();
                 }
-            );
-        }
-        
-        loadFerrisWheel(cdnUrl);
+                
+                group.add(ferrisWheel);
+            },
+            function(xhr) {
+                if (xhr.lengthComputable) {
+                    const percentComplete = xhr.loaded / xhr.total * 100;
+                    console.log(`Loading Ferris Wheel: ${percentComplete.toFixed(2)}%`);
+                }
+            },
+            function(error) {
+                console.error('Error loading Ferris Wheel model:', error);
+            }
+        );
     }
 
     return group;
