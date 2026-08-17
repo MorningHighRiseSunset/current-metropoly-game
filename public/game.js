@@ -4236,8 +4236,8 @@ function createPremiumBoardTile(spaceData, row, col) {
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
         const loader = new THREE.GLTFLoader();
         
-        // Use local file from repository
-        loader.load(getModelPath('/Models/ferrisWheel/ferris_wheel.glb'),
+        // Use R2 bucket URL for ferris wheel
+        loader.load('https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models/ferrisWheel/ferris_wheel.glb',
             function(gltf) {
                 const ferrisWheel = gltf.scene;
                 const scale = tileSize * 0.08;
