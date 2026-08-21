@@ -9,6 +9,16 @@
     <title>Vegas Metropoly</title>
     <script src="https://cdn.vercel-insights.com/v1/script.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fflate/0.8.0/fflate.min.js"></script>
+    <script>
+        // Ensure fflate is globally available for FBXLoader
+        if (typeof fflate !== 'undefined') {
+            window.fflate = fflate;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         body {
@@ -104,6 +114,9 @@
             <div class="lobby-header">
                 <h1 class="main-title">🎰 Vegas Metropoly</h1>
             </div>
+            
+            <!-- 3D Helicopter Container -->
+            <div id="helicopter-container" class="helicopter-container"></div>
 
             <div class="lobby-container">
                 <!-- Create Game Section -->
@@ -176,7 +189,7 @@
         </div>
     </div>
 
-    <script src="runtime-config.js?v=20250811-http-fix"></script>
+    <script src="runtime-config.js?v=20250817-helicopter-cdn"></script>
     <script src="/analytics.js"></script>
     <script>
         // Console commands to load minigames directly in the same page

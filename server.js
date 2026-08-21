@@ -186,6 +186,7 @@ const games = {};
 const players = {};
 const disconnectTimers = {};
 const GAMES_FILE = path.join(__dirname, 'games.json');
+const INACTIVE_LOBBY_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
 
 // Game persistence functions
 function saveGames() {
@@ -196,7 +197,9 @@ function saveGames() {
                 ...game,
                 // Don't save socket references
                 players: game.players.map(p => p ? { ...p, socket: undefined } : null),
-                spectators: (game.spectators || []).map(s => ({ ...s, socket: undefined }))
+                spectators: (game.spectators || []).map(s => ({ ...s, socket: undefined })),
+                // Ensure lastActivity is saved
+                lastActivity: game.lastActivity || Date.now()
             };
         }
         fs.writeFileSync(GAMES_FILE, JSON.stringify(gamesData, null, 2));
@@ -212,6 +215,7 @@ function loadGames() {
             const gamesData = JSON.parse(data);
             let loadedCount = 0;
             let skippedAiGames = 0;
+            let cleanedInactive = 0;
             
             for (const [gameId, gameData] of Object.entries(gamesData)) {
                 // Skip AI vs AI games to prevent old AI games from auto-loading
@@ -220,7 +224,21 @@ function loadGames() {
                     continue;
                 }
                 
+                // Check if lobby is inactive (older than 1 hour and still in lobby status)
+                if (gameData.status === 'lobby' && gameData.lastActivity) {
+                    const inactiveTime = Date.now() - gameData.lastActivity;
+                    if (inactiveTime > INACTIVE_LOBBY_TIMEOUT) {
+                        console.log(`Skipping inactive lobby ${gameId} (inactive for ${Math.round(inactiveTime / 60000)} minutes)`);
+                        cleanedInactive++;
+                        continue;
+                    }
+                }
+                
                 games[gameId] = gameData;
+                // Initialize lastActivity if not present (for backwards compatibility)
+                if (!games[gameId].lastActivity) {
+                    games[gameId].lastActivity = Date.now();
+                }
                 // Clear socket references on load
                 if (games[gameId].players) {
                     games[gameId].players = games[gameId].players.map(p => p ? { ...p, socket: undefined } : null);
@@ -231,10 +249,37 @@ function loadGames() {
                 loadedCount++;
             }
             
-            console.log(`Loaded ${loadedCount} games from disk (skipped ${skippedAiGames} AI vs AI games)`);
+            console.log(`Loaded ${loadedCount} games from disk (skipped ${skippedAiGames} AI vs AI games, cleaned ${cleanedInactive} inactive lobbies)`);
         }
     } catch (err) {
         console.error('Error loading games:', err);
+    }
+}
+
+// Cleanup inactive lobbies
+function cleanupInactiveLobbies() {
+    const now = Date.now();
+    let cleanedCount = 0;
+    
+    for (const [gameId, game] of Object.entries(games)) {
+        // Only clean up lobbies that are inactive and in lobby status
+        if (game.status === 'lobby') {
+            // Handle backwards compatibility - if no lastActivity, assume recent
+            const lastActivity = game.lastActivity || now;
+            const inactiveTime = now - lastActivity;
+            
+            if (inactiveTime > INACTIVE_LOBBY_TIMEOUT) {
+                console.log(`Cleaning up inactive lobby ${gameId} (inactive for ${Math.round(inactiveTime / 60000)} minutes)`);
+                delete games[gameId];
+                cleanedCount++;
+            }
+        }
+    }
+    
+    if (cleanedCount > 0) {
+        saveGames();
+        broadcastLobbies();
+        console.log(`Cleaned up ${cleanedCount} inactive lobbies`);
     }
 }
 
@@ -946,6 +991,7 @@ io.on('connection', (socket) => {
             originalHost: socket.id, // Store original host socket ID
             hostName: playerName,    // Store host name for persistence
             status: 'lobby',
+            lastActivity: Date.now(), // Track last activity time
             gameState: null,
             chatLog: [],
             spectators: []
@@ -1059,6 +1105,7 @@ io.on('connection', (socket) => {
         }
 
         const game = games[gameId];
+        game.lastActivity = Date.now(); // Update activity timestamp
 
         if (countGamePlayers(game) >= 4) {
             socket.emit('lobbyError', 'Game is full');
@@ -1125,6 +1172,7 @@ io.on('connection', (socket) => {
         }
 
         const game = games[gameId];
+        game.lastActivity = Date.now(); // Update activity timestamp
 
         // Check if game is full (max 4 players)
         if (countGamePlayers(game) >= 4) {
@@ -1168,6 +1216,7 @@ io.on('connection', (socket) => {
         }
 
         const game = games[gameId];
+        game.lastActivity = Date.now(); // Update activity timestamp
 
         // Find and remove the last AI player
         const aiPlayers = game.players.filter(p => p && p.isAI);
@@ -1212,6 +1261,7 @@ io.on('connection', (socket) => {
         }
 
         game.status = 'playing';
+        game.lastActivity = Date.now(); // Update activity timestamp
         const actualPlayers = game.players.filter(p => p !== null);
         // Find the host and set them as current player
         const hostPlayer = actualPlayers.find(p => p.isHost);
@@ -1579,6 +1629,10 @@ io.on('connection', (socket) => {
         if (!playerData) return;
 
         const game = games[playerData.gameId];
+        if (game) {
+            game.lastActivity = Date.now(); // Update activity timestamp
+        }
+
         const player = game.players.find(p => p && p.id === socket.id);
         
         if (!player) return;
@@ -1774,6 +1828,10 @@ io.on('connection', (socket) => {
         if (!playerData) return;
 
         const game = games[playerData.gameId];
+        if (game) {
+            game.lastActivity = Date.now(); // Update activity timestamp
+        }
+
         if (!game) {
             socket.emit('gameError', 'Game not found');
             return;
@@ -2448,6 +2506,10 @@ io.on('connection', (socket) => {
             }
 
             const game = games[playerData.gameId];
+            if (game) {
+                game.lastActivity = Date.now(); // Update activity timestamp
+            }
+
             if (!game) {
                 console.error('Game not found for chat message:', playerData.gameId);
                 console.error('Available games:', Object.keys(games));
@@ -2838,6 +2900,10 @@ io.on('connection', (socket) => {
         if (!playerData) return;
 
         const game = games[playerData.gameId];
+        if (game) {
+            game.lastActivity = Date.now(); // Update activity timestamp
+        }
+
         const player = game.players.find(p => p && p.id === socket.id);
         
         if (!player.properties.includes(data.position)) {
@@ -2971,6 +3037,9 @@ io.on('connection', (socket) => {
         if (!playerData) return;
 
         const game = games[playerData.gameId];
+        if (game) {
+            game.lastActivity = Date.now(); // Update activity timestamp
+        }
         if (game.status !== 'playing') return;
 
         if (game.gameState.currentPlayer !== socket.id) {
@@ -3134,6 +3203,9 @@ io.on('connection', (socket) => {
         if (playerData) {
             const game = games[playerData.gameId];
             if (game) {
+                // Update activity timestamp on disconnect
+                game.lastActivity = Date.now();
+                
                 if (playerData.role === 'spectator') {
                     if (game.spectators) {
                         game.spectators = game.spectators.filter(s => s.id !== socket.id);
@@ -3242,6 +3314,9 @@ app.get('/server-info', (req, res) => {
 
 // Load games from disk on server start
 loadGames();
+
+// Run cleanup every 5 minutes
+setInterval(cleanupInactiveLobbies, 5 * 60 * 1000);
 
 server.listen(PORT, HOST, () => {
     const localIPs = getLocalIPAddresses();

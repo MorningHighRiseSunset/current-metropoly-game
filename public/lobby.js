@@ -22,6 +22,18 @@ const socket = io(SOCKET_SERVER_URL, {
     timeout: 10000
 });
 
+// Helper function to get model path (using CDN if configured)
+function getModelPath(localPath) {
+    const USE_CDN = window.USE_CDN !== false; // Default to true unless explicitly disabled
+    const CDN_BASE_URL = window.CDN_BASE_URL;
+    
+    if (USE_CDN && CDN_BASE_URL) {
+        // Convert local path like '/Models/Helicopter/helicopter.glb' to CDN URL
+        return localPath.replace('/Models', CDN_BASE_URL);
+    }
+    return localPath;
+}
+
 // DOM Elements
 const createGameBtn = document.getElementById('createGameBtn');
 const startGameBtn = document.getElementById('startGameBtn');
@@ -172,6 +184,9 @@ function setTheme(theme) {
 
 // Initialize theme toggle on page load
 initThemeToggle();
+
+// Initialize helicopter animation
+initHelicopterAnimation();
 
 // Fetch lobbies on page load
 fetchLobbies();
@@ -696,6 +711,178 @@ socket.on('connect_error', (error) => {
         showModal('Failed to connect to server. Please refresh the page.');
     }
 });
+
+// Helicopter Animation
+function initHelicopterAnimation() {
+    const container = document.getElementById('helicopter-container');
+    if (!container) return;
+
+    // Set up Three.js scene for helicopter
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0); // Transparent background
+    container.appendChild(renderer.domElement);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 7);
+    scene.add(directionalLight);
+
+    // Camera position
+    camera.position.z = 5;
+
+    // Load helicopter model
+    const helicopterModelPath = getModelPath('/Models/Helicopter/helicopter.glb');
+    let helicopterModel = null;
+    let mixer = null;
+
+    const loader = new THREE.GLTFLoader();
+    loader.load(helicopterModelPath,
+        function(gltf) {
+            helicopterModel = gltf.scene;
+            helicopterModel.scale.set(0.5, 0.5, 0.5); // Adjusted scale for lobby
+            helicopterModel.visible = false;
+            scene.add(helicopterModel);
+
+            // Set up animation mixer for rotor spinning
+            if (gltf.animations && gltf.animations.length > 0) {
+                mixer = new THREE.AnimationMixer(helicopterModel);
+                helicopterModel.animations = gltf.animations;
+                
+                // Play all animations (rotor spinning)
+                gltf.animations.forEach((anim) => {
+                    const action = mixer.clipAction(anim);
+                    action.timeScale = 3.0; // Spin 3x faster
+                    action.play();
+                });
+            }
+
+            // Start helicopter animation loop
+            animateHelicopter();
+        },
+        function(xhr) {
+            if (xhr.lengthComputable) {
+                const percentComplete = xhr.loaded / xhr.total * 100;
+                console.log(`Loading helicopter: ${percentComplete.toFixed(2)}%`);
+            }
+        },
+        function(error) {
+            console.error('Error loading helicopter model:', error);
+        }
+    );
+
+    // Animation state
+    let animationState = {
+        active: false,
+        direction: 'right', // 'left' or 'right'
+        progress: 0,
+        duration: 8000, // 8 seconds
+        startTime: 0
+    };
+
+    function animateHelicopter() {
+        if (!helicopterModel) {
+            requestAnimationFrame(animateHelicopter);
+            return;
+        }
+
+        // Update animation mixer for rotor spinning
+        if (mixer) {
+            mixer.update(0.016);
+        }
+
+        // Handle helicopter flight animation
+        if (animationState.active) {
+            const elapsed = performance.now() - animationState.startTime;
+            const t = Math.min(elapsed / animationState.duration, 1);
+            
+            // Flight path: fly towards camera (Z axis), then veer and exit
+            const progress = t;
+            
+            if (animationState.direction === 'right') {
+                // Left to right flight
+                if (progress < 0.4) {
+                    // Fly towards camera (start far away, come close)
+                    const approachProgress = progress / 0.4;
+                    helicopterModel.position.x = -8 + approachProgress * 2; // Start off-center, move toward center
+                    helicopterModel.position.y = 0 + approachProgress * 1; // Lower height
+                    helicopterModel.position.z = -80 + approachProgress * 60; // Move from -80 to -20 (further from camera)
+                    helicopterModel.scale.setScalar(0.5 + approachProgress * 0.5); // Scale from 0.5 to 1.0
+                    helicopterModel.rotation.y = 10 * (Math.PI / 180);
+                } else {
+                    // Veer right and exit away from camera
+                    const exitProgress = (progress - 0.4) / 0.6;
+                    helicopterModel.position.x = -6 + exitProgress * 25; // Move right
+                    helicopterModel.position.y = 1 + exitProgress * 3;
+                    helicopterModel.position.z = -20 - exitProgress * 40; // Move away from camera
+                    helicopterModel.scale.setScalar(1.0 - exitProgress * 0.8); // Scale down
+                    helicopterModel.rotation.y = -30 * (Math.PI / 180); // Bank right
+                }
+            } else {
+                // Right to left flight
+                if (progress < 0.4) {
+                    // Fly towards camera (start far away, come close)
+                    const approachProgress = progress / 0.4;
+                    helicopterModel.position.x = 8 - approachProgress * 2; // Start off-center, move toward center
+                    helicopterModel.position.y = 0 + approachProgress * 1; // Lower height
+                    helicopterModel.position.z = -80 + approachProgress * 60; // Move from -80 to -20 (further from camera)
+                    helicopterModel.scale.setScalar(0.5 + approachProgress * 0.5); // Scale from 0.5 to 1.0
+                    helicopterModel.rotation.y = -10 * (Math.PI / 180);
+                } else {
+                    // Veer left and exit away from camera
+                    const exitProgress = (progress - 0.4) / 0.6;
+                    helicopterModel.position.x = 6 - exitProgress * 25; // Move left
+                    helicopterModel.position.y = 1 + exitProgress * 3;
+                    helicopterModel.position.z = -20 - exitProgress * 40; // Move away from camera
+                    helicopterModel.scale.setScalar(1.0 - exitProgress * 0.8); // Scale down
+                    helicopterModel.rotation.y = 30 * (Math.PI / 180); // Bank left
+                }
+            }
+
+            helicopterModel.visible = true;
+
+            // End animation
+            if (t >= 1) {
+                animationState.active = false;
+                helicopterModel.visible = false;
+                
+                // Schedule next flight
+                const nextFlight = Math.random() * 15000 + 15000;
+                setTimeout(triggerHelicopter, nextFlight);
+            }
+        }
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(animateHelicopter);
+    }
+
+    function triggerHelicopter() {
+        if (!helicopterModel) return;
+        
+        // Randomly choose direction
+        animationState.direction = Math.random() > 0.5 ? 'right' : 'left';
+        animationState.active = true;
+        animationState.startTime = performance.now();
+        
+        console.log(`Helicopter flying ${animationState.direction}`);
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Start first helicopter after model loads
+    setTimeout(triggerHelicopter, 5000);
+}
 
 // Reset error count on successful connection
 socket.on('connect', () => {

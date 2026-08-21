@@ -1,4 +1,5 @@
 {
+  "name": "vegas-metropoly",
   "builds": [
     {
       "src": "server.js",
