@@ -85,30 +85,32 @@ window.createAiVsAiGame = function() {
         
         // Add timeout to detect if server doesn't respond
         setTimeout(() => {
-            console.warn('No response from server after 5 seconds. Check server logs for errors.');
-        }, 5000);
-
-        console.log('Emitting createAiVsAiGame event...');
-        socket.emit('createAiVsAiGame', { gameId, spectatorName });
-    };
-
-    if (socket.connected) {
-        createGame();
-    } else {
-        console.log('Socket not connected yet, waiting for connection...');
-        socket.once('connect', () => {
-            console.log('Socket connected! Proceeding with game creation...');
-            createGame();
-        });
-        
-        // Fallback timeout if connection takes too long
-        setTimeout(() => {
-            if (!socket.connected) {
-                console.error('Socket connection timeout. Please refresh the page and try again.');
-            }
-        }, 10000);
-    }
+<<<<<<< HEAD
+            socket.emit('addAIPlayer', { gameId });
+            console.log('Added AI player 1');
+            
+            // Add second AI
+            setTimeout(() => {
+                socket.emit('addAIPlayer', { gameId });
+                console.log('Added AI player 2');
+                
+                // Start game
+                setTimeout(() => {
+                    socket.emit('startGame');
+                    console.log('Game started! Redirecting to game page...');
+                    
+                    // Redirect to game page as spectator
+                    setTimeout(() => {
+                        window.location.href = `/game/${gameId}`;
+                    }, 500);
+                }, 500);
+            }, 500);
+        }, 500);
+    });
 };
+
+// Alias for common typo
+window.createAIVsAIGame = window.createAiVsAiGame;
 
 function buildJoinLink(gameId) {
     const baseOrigin = PUBLIC_SHARE_ORIGIN || `${window.location.protocol}//${window.location.host}`;
