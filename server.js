@@ -29,6 +29,19 @@ const HOST = '0.0.0.0'; // Listen on all network interfaces
 /** While testing turns / Chance / Community Chest — AI passes on purchasable spaces. */
 const DISABLE_AI_PROPERTY_PURCHASES = false;
 
+const CASINO_GAMES_BY_POSITION = {
+    15: 'PokerFP',
+    21: 'slotMachine',
+    23: 'Roulette',
+    31: 'BlackJack',
+    32: 'Craps',
+    36: 'Baccarat',
+    37: 'Roulette'
+};
+
+const AI_LANDING_VIDEO_MS = 9000;
+const AI_CASINO_PLAY_MS = 10000;
+
 // Get local IP addresses for external access
 function getLocalIPAddresses() {
     const interfaces = os.networkInterfaces();
@@ -197,7 +210,16 @@ function loadGames() {
         if (fs.existsSync(GAMES_FILE)) {
             const data = fs.readFileSync(GAMES_FILE, 'utf8');
             const gamesData = JSON.parse(data);
+            let loadedCount = 0;
+            let skippedAiGames = 0;
+            
             for (const [gameId, gameData] of Object.entries(gamesData)) {
+                // Skip AI vs AI games to prevent old AI games from auto-loading
+                if (gameData.isAiVsAi) {
+                    skippedAiGames++;
+                    continue;
+                }
+                
                 games[gameId] = gameData;
                 // Clear socket references on load
                 if (games[gameId].players) {
@@ -206,8 +228,10 @@ function loadGames() {
                 if (games[gameId].spectators) {
                     games[gameId].spectators = games[gameId].spectators.map(s => ({ ...s, socket: undefined }));
                 }
+                loadedCount++;
             }
-            console.log(`Loaded ${Object.keys(games).length} games from disk`);
+            
+            console.log(`Loaded ${loadedCount} games from disk (skipped ${skippedAiGames} AI vs AI games)`);
         }
     } catch (err) {
         console.error('Error loading games:', err);
@@ -285,6 +309,40 @@ function updateGameState(game) {
     });
 }
 
+function checkGameWinner(game) {
+    const activePlayers = game.players.filter((p) => p && !p.isBankrupt);
+    const WINNING_MONEY_THRESHOLD = 10000;
+
+    for (const player of activePlayers) {
+        if (player.money >= WINNING_MONEY_THRESHOLD) {
+            game.status = 'finished';
+            game.winner = player.id;
+            saveGames();
+            io.to(game.id).emit('gameWon', {
+                winnerId: player.id,
+                winnerName: player.name,
+                winReason: 'money',
+                winningAmount: player.money,
+                players: game.players
+            });
+            return;
+        }
+    }
+
+    if (activePlayers.length === 1) {
+        const winner = activePlayers[0];
+        game.status = 'finished';
+        game.winner = winner.id;
+        saveGames();
+        io.to(game.id).emit('gameWon', {
+            winnerId: winner.id,
+            winnerName: winner.name,
+            winReason: 'bankruptcy',
+            players: game.players
+        });
+    }
+}
+
 // Client dice roll + token step animation (must match public/dice-glb-config.js + game.js)
 function getRollAnimationMs(rollTotal) {
     const diceRollMs = 2000;
@@ -339,6 +397,60 @@ function rollDiceWithRareDoubles() {
     }
     
     return { dice1, dice2, isDoubles: dice1 === dice2 };
+}
+
+function createAiPlayerForGame(game, slotIndex) {
+    return {
+        id: `ai-${game.id}-${uuidv4()}`,
+        uid: uuidv4(),
+        name: `Player ${slotIndex}`,
+        money: 2500,
+        position: 0,
+        properties: [],
+        inJail: false,
+        isBankrupt: false,
+        isHost: slotIndex === 1,
+        isAI: true
+    };
+}
+
+function assignTokenIndicesToAiPlayers(game) {
+    const availableTokens = [0, 1, 2, 3, 4, 5, 7];
+    game.players.forEach((p) => {
+        if (p && p.isAI && p.tokenIndex === undefined && availableTokens.length > 0) {
+            p.tokenIndex = availableTokens.shift();
+        }
+    });
+}
+
+function initializePlayingGameState(game) {
+    const actualPlayers = game.players.filter((p) => p !== null);
+    const firstPlayer = actualPlayers[0];
+    const firstPlayerIndex = game.players.findIndex((p) => p && p.id === firstPlayer.id);
+    game.currentPlayerIndex = firstPlayerIndex >= 0 ? firstPlayerIndex : 1;
+
+    game.gameState = {
+        status: 'playing',
+        currentPlayer: firstPlayer.id,
+        diceRolled: false,
+        turnPhase: 'roll'
+    };
+
+    game.status = 'playing';
+    game.readyToSendGameStarted = false;
+
+    if (game.ackTimeout) {
+        clearTimeout(game.ackTimeout);
+        delete game.ackTimeout;
+    }
+}
+
+function ensureAiTurnRunning(game) {
+    if (!game || !game.gameState || game.status !== 'playing') return;
+    const current = game.players.find((p) => p && p.id === game.gameState.currentPlayer);
+    if (current && current.isAI && !game.gameState.diceRolled) {
+        checkAndExecuteAITurn(game);
+    }
 }
 
 // AI Helper Functions
@@ -634,42 +746,55 @@ function executeAIRollDice(game, aiPlayer) {
     // Only check for rent and special spaces if NOT doubles
     if (!isDoubles) {
         setTimeout(() => {
-            gameRuntime.checkRentPayment(game, aiPlayer, oldPosition);
-
-            // Check for special spaces
-            const boardSpaces = getBoardSpaces();
-            const landedSpace = boardSpaces[aiPlayer.position];
-
-            if (landedSpace.type === 'chance') {
-                gameRuntime.drawChanceCard(game, aiPlayer);
-                setTimeout(() => gameRuntime.advanceTurn(game), getCardEffectAnimationMs());
-            } else if (landedSpace.type === 'community-chest') {
-                gameRuntime.drawCommunityChestCard(game, aiPlayer);
-                setTimeout(() => gameRuntime.advanceTurn(game), getCardEffectAnimationMs());
-            } else if (landedSpace.type === 'tax') {
-                // Pay tax
-                if (aiPlayer.money >= landedSpace.amount) {
-                    aiPlayer.money -= landedSpace.amount;
-                    io.to(game.id).emit('taxPaid', {
-                        playerId: aiPlayer.id,
-                        amount: landedSpace.amount,
-                        newMoney: aiPlayer.money,
-                        players: game.players
-                    });
-                    checkGameWinner(game);
+            try {
+                if (gameRuntime.checkRentPayment) {
+                    gameRuntime.checkRentPayment(game, aiPlayer, oldPosition);
                 }
-                setTimeout(() => gameRuntime.advanceTurn(game), 500);
-            } else if (landedSpace.position === 31) { // Go to Jail
-                gameRuntime.sendToJail(game, aiPlayer);
-                // sendToJail already calls advanceTurn internally
-            } else if (landedSpace.type === 'property' || landedSpace.type === 'railroad' || landedSpace.type === 'utility') {
-                if (DISABLE_AI_PROPERTY_PURCHASES) {
+
+                // Check for special spaces
+                const boardSpaces = getBoardSpaces();
+                const landedSpace = boardSpaces[aiPlayer.position];
+                if (!landedSpace) {
                     setTimeout(() => gameRuntime.advanceTurn(game), 500);
-                } else {
-                    setTimeout(() => executeAIPropertyDecision(game, aiPlayer, landedSpace), 1000);
+                    return;
                 }
-            } else {
-                setTimeout(() => gameRuntime.advanceTurn(game), 500);
+
+                if (landedSpace.type === 'chance') {
+                    gameRuntime.drawChanceCard(game, aiPlayer);
+                    setTimeout(() => gameRuntime.advanceTurn(game), getCardEffectAnimationMs());
+                } else if (landedSpace.type === 'community-chest') {
+                    gameRuntime.drawCommunityChestCard(game, aiPlayer);
+                    setTimeout(() => gameRuntime.advanceTurn(game), getCardEffectAnimationMs());
+                } else if (landedSpace.type === 'tax') {
+                    // Pay tax
+                    if (aiPlayer.money >= landedSpace.amount) {
+                        aiPlayer.money -= landedSpace.amount;
+                        io.to(game.id).emit('taxPaid', {
+                            playerId: aiPlayer.id,
+                            amount: landedSpace.amount,
+                            newMoney: aiPlayer.money,
+                            players: game.players
+                        });
+                        checkGameWinner(game);
+                    }
+                    setTimeout(() => gameRuntime.advanceTurn(game), 500);
+                } else if (landedSpace.position === 31) { // Go to Jail
+                    gameRuntime.sendToJail(game, aiPlayer);
+                    // sendToJail already calls advanceTurn internally
+                } else if (landedSpace.type === 'property' || landedSpace.type === 'railroad' || landedSpace.type === 'utility') {
+                    if (DISABLE_AI_PROPERTY_PURCHASES) {
+                        setTimeout(() => gameRuntime.advanceTurn(game), 500);
+                    } else {
+                        setTimeout(() => executeAIPropertyDecision(game, aiPlayer, landedSpace), 1000);
+                    }
+                } else {
+                    setTimeout(() => gameRuntime.advanceTurn(game), 500);
+                }
+            } catch (err) {
+                console.error('AI land-on-tile error:', err);
+                if (gameRuntime.advanceTurn) {
+                    setTimeout(() => gameRuntime.advanceTurn(game), 500);
+                }
             }
         }, getRollAnimationMs(total));
     } else {
@@ -678,30 +803,100 @@ function executeAIRollDice(game, aiPlayer) {
     }
 }
 
-function executeAIPropertyDecision(game, aiPlayer, property) {
+function getCasinoGameForPosition(position) {
+    return CASINO_GAMES_BY_POSITION[position] || null;
+}
+
+function simulateAiCasinoWinnings() {
+    const outcomes = [-75, -50, -25, 0, 25, 50, 75, 100, 150];
+    return outcomes[Math.floor(Math.random() * outcomes.length)];
+}
+
+function completeAiCasinoRound(game, aiPlayer, property, willBuy, casinoGame) {
+    const pending = game.pendingAiCasino;
+    const winnings = (pending && typeof pending.winnings === 'number')
+        ? pending.winnings
+        : simulateAiCasinoWinnings();
+    game.pendingAiCasino = null;
+
+    aiPlayer.money += winnings;
+    checkGameWinner(game);
+
+    io.to(game.id).emit('playerMoneyUpdate', {
+        playerId: aiPlayer.id,
+        money: aiPlayer.money,
+        players: game.players
+    });
+
+    io.to(game.id).emit('aiCasinoComplete', {
+        playerId: aiPlayer.id,
+        casinoGame,
+        winnings,
+        newMoney: aiPlayer.money,
+        players: game.players
+    });
+
+    setTimeout(() => finishAiPropertyDecision(game, aiPlayer, property, willBuy), 800);
+}
+
+function scheduleAiPropertyLanding(game, aiPlayer, property) {
     if (DISABLE_AI_PROPERTY_PURCHASES) {
         setTimeout(() => gameRuntime.advanceTurn(game), 500);
         return;
     }
     if (!game || !aiPlayer || !property) return;
 
-    // Check if property is already owned
-    const existingOwner = game.players.find(p => p && p.properties.includes(aiPlayer.position));
+    const existingOwner = game.players.find(
+        (p) => p && p.properties && p.properties.includes(aiPlayer.position)
+    );
     if (existingOwner) {
         setTimeout(() => gameRuntime.advanceTurn(game), 500);
         return;
     }
 
-    // Simple AI logic: Buy if affordable and has enough money left over
+    const position = aiPlayer.position;
+    const casinoGame = getCasinoGameForPosition(position);
+    const isCasino = Boolean(casinoGame);
     const canAfford = aiPlayer.money >= property.price;
     const moneyAfterPurchase = aiPlayer.money - property.price;
+    const willBuy = canAfford && moneyAfterPurchase >= 200;
 
-    if (canAfford && moneyAfterPurchase >= 200) {
-        // Buy the property
+    io.to(game.id).emit('aiLandingStarted', {
+        playerId: aiPlayer.id,
+        position,
+        propertyName: property.name,
+        isCasino,
+        casinoGame,
+        willBuy,
+        players: game.players
+    });
+
+    setTimeout(() => {
+        if (isCasino) {
+            game.pendingAiCasino = { playerId: aiPlayer.id, winnings: null };
+
+            io.to(game.id).emit('aiCasinoStarted', {
+                playerId: aiPlayer.id,
+                casinoGame,
+                playerMoney: aiPlayer.money
+            });
+
+            setTimeout(() => {
+                completeAiCasinoRound(game, aiPlayer, property, willBuy, casinoGame);
+            }, AI_CASINO_PLAY_MS);
+            return;
+        }
+
+        finishAiPropertyDecision(game, aiPlayer, property, willBuy);
+    }, AI_LANDING_VIDEO_MS);
+}
+
+function finishAiPropertyDecision(game, aiPlayer, property, willBuy) {
+    if (willBuy) {
         aiPlayer.money -= property.price;
         if (!aiPlayer.properties) aiPlayer.properties = [];
         aiPlayer.properties.push(aiPlayer.position);
-        
+
         io.to(game.id).emit('propertyPurchased', {
             playerId: aiPlayer.id,
             position: aiPlayer.position,
@@ -710,19 +905,23 @@ function executeAIPropertyDecision(game, aiPlayer, property) {
             players: game.players
         });
         checkGameWinner(game);
-
         updateGameState(game);
     } else {
-        // Pass on the property
         io.to(game.id).emit('propertyPassed', {
             playerId: aiPlayer.id,
             position: aiPlayer.position,
             propertyName: property.name
         });
-
     }
 
-    setTimeout(() => gameRuntime.advanceTurn(game), 500);
+    setTimeout(() => {
+        io.to(game.id).emit('aiLandingEnded', { playerId: aiPlayer.id });
+        setTimeout(() => gameRuntime.advanceTurn(game), 800);
+    }, willBuy ? 1200 : 600);
+}
+
+function executeAIPropertyDecision(game, aiPlayer, property) {
+    scheduleAiPropertyLanding(game, aiPlayer, property);
 }
 
 // Socket connection handling
@@ -783,6 +982,70 @@ io.on('connection', (socket) => {
         
         // Broadcast updated lobbies list to all clients
         broadcastLobbies();
+    });
+
+    // Create AI vs AI test game: two AIs only, creator spectates (not a player)
+    socket.on('createAiVsAiGame', (data) => {
+        const gameId = (data.gameId || '').trim().toUpperCase();
+        const spectatorName = (data.spectatorName || 'Spectator').trim();
+
+        if (!gameId) {
+            socket.emit('lobbyError', 'Game ID is required');
+            return;
+        }
+
+        if (games[gameId]) {
+            socket.emit('lobbyError', 'Game ID already exists');
+            return;
+        }
+
+        games[gameId] = {
+            id: gameId,
+            players: [null],
+            host: socket.id,
+            originalHost: socket.id,
+            hostName: spectatorName,
+            status: 'lobby',
+            gameState: null,
+            chatLog: [],
+            spectators: [],
+            isAiVsAi: true
+        };
+
+        const game = games[gameId];
+
+        for (let i = 1; i <= 2; i++) {
+            game.players.push(createAiPlayerForGame(game, i));
+        }
+
+        assignTokenIndicesToAiPlayers(game);
+        initializePlayingGameState(game);
+
+        players[socket.id] = {
+            gameId,
+            role: 'spectator',
+            playerName: spectatorName
+        };
+        socket.join(gameId);
+
+        saveGames();
+        broadcastLobbies();
+
+        socket.emit('aiVsAiGameCreated', {
+            gameId,
+            players: game.players,
+            gameState: game.gameState,
+            isAiVsAi: true
+        });
+
+        io.to(gameId).emit('gameReady', {
+            message: 'AI vs AI game started!',
+            gameState: game.gameState,
+            players: game.players,
+            isAiVsAi: true
+        });
+
+        ensureAiTurnRunning(game);
     });
 
     // Join an existing game lobby
@@ -1226,7 +1489,8 @@ io.on('connection', (socket) => {
             spectatorName: spectator.name,
             players: game.players,
             gameState: game.gameState,
-            chatLog: game.chatLog || []
+            chatLog: game.chatLog || [],
+            isAiVsAi: game.isAiVsAi || false
         });
 
         io.to(gameId).emit('spectatorConnected', {
@@ -1235,6 +1499,7 @@ io.on('connection', (socket) => {
         });
 
         broadcastLobbies();
+        ensureAiTurnRunning(game);
     });
 
     // Select token
@@ -1737,8 +2002,8 @@ io.on('connection', (socket) => {
 
         if (landedSpace.type === 'property' || landedSpace.type === 'railroad' || landedSpace.type === 'utility') {
             // Find property owner
-            const owner = game.players.find(p => p &&
-                p.properties.includes(newPosition) && p.id !== player.id
+            const owner = game.players.find((p) => p &&
+                p.properties && p.properties.includes(newPosition) && p.id !== player.id
             );
 
             if (owner) {
@@ -1896,47 +2161,6 @@ io.on('connection', (socket) => {
     // End turn for bankrupt player — use same advance path as normal end turn
     function endTurnForBankruptPlayer(game) {
         advanceTurn(game);
-    }
-
-    // Check for game winner
-    function checkGameWinner(game) {
-        const activePlayers = game.players.filter(p => p && !p.isBankrupt);
-        const WINNING_MONEY_THRESHOLD = 10000;
-        
-        // Check if any player has reached the money threshold
-        for (const player of activePlayers) {
-            if (player.money >= WINNING_MONEY_THRESHOLD) {
-                game.status = 'finished';
-                game.winner = player.id;
-
-                saveGames();
-                
-                io.to(game.id).emit('gameWon', {
-                    winnerId: player.id,
-                    winnerName: player.name,
-                    winReason: 'money',
-                    winningAmount: player.money,
-                    players: game.players
-                });
-                return;
-            }
-        }
-        
-        // Fallback: bankruptcy condition (only one player left)
-        if (activePlayers.length === 1) {
-            const winner = activePlayers[0];
-            game.status = 'finished';
-            game.winner = winner.id;
-
-            saveGames();
-            
-            io.to(game.id).emit('gameWon', {
-                winnerId: winner.id,
-                winnerName: winner.name,
-                winReason: 'bankruptcy',
-                players: game.players
-            });
-        }
     }
 
     // Card decks
@@ -2779,6 +3003,19 @@ io.on('connection', (socket) => {
             money: player.money,
             players: game.players
         });
+    });
+
+    // AI casino result reported by spectator/client after minigame auto-play
+    socket.on('aiCasinoReport', (data) => {
+        const playerData = players[socket.id];
+        if (!playerData) return;
+
+        const game = games[playerData.gameId];
+        if (!game || !game.pendingAiCasino) return;
+        if (game.pendingAiCasino.playerId !== data.playerId) return;
+        if (typeof data.winnings !== 'number' || Number.isNaN(data.winnings)) return;
+
+        game.pendingAiCasino.winnings = Math.max(-500, Math.min(50000, Math.round(data.winnings)));
     });
 
     // Pay rent (manual payment from client)

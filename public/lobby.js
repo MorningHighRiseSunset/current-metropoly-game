@@ -47,23 +47,33 @@ let isHost = false;
 let availableLobbies = [];
 const PUBLIC_SHARE_ORIGIN = 'https://vegas-metropoly.vercel.app';
 
-// Console command for testing: create AI vs AI game
+// Console command for testing: create AI vs AI game (2 AIs only — you spectate)
 // Usage in browser console: createAiVsAiGame()
 window.createAiVsAiGame = function() {
-    console.log('Creating AI vs AI game for testing...');
+    console.log('createAiVsAiGame called');
+    console.log('Socket connected:', socket.connected);
+    console.log('Socket ID:', socket.id);
     
-    // Create game
-    socket.emit('createGame', {
-        playerName: 'TestHost'
-    });
-    
-    // Wait for game creation, then add 2 AI players and start
-    socket.once('gameCreated', (data) => {
-        const { gameId } = data;
-        console.log('Game created:', gameId);
+    const createGame = () => {
+        console.log('Creating AI vs AI game (2 AIs, no human players)...');
+
+        const spectatorName = generateRandomPlayerName();
+        const gameId = generateGameId();
+        console.log('Generated gameId:', gameId, 'spectatorName:', spectatorName);
         
-        // Add first AI
+        sessionStorage.setItem('metropoly_spectator_name', spectatorName);
+
+        socket.once('aiVsAiGameCreated', (data) => {
+            console.log('AI vs AI game ready:', data);
+            sessionStorage.setItem('metropoly_ai_vs_ai', '1');
+            persistSpectatorIdentity(data.gameId, null);
+            console.log('Redirecting to game page...');
+            window.location.href = `/game/${data.gameId}?spectate=1`;
+        });
+        
+        // Add timeout to detect if server doesn't respond
         setTimeout(() => {
+<<<<<<< HEAD
             socket.emit('addAIPlayer', { gameId });
             console.log('Added AI player 1');
             
@@ -324,6 +334,7 @@ function clearSpectatorIdentity() {
     sessionStorage.removeItem('metropoly_is_spectator');
     sessionStorage.removeItem('metropoly_spectator_uid');
     sessionStorage.removeItem('metropoly_spectator_name');
+    sessionStorage.removeItem('metropoly_ai_vs_ai');
 }
 
 // Watch an in-progress game as a spectator

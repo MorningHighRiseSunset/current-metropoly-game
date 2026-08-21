@@ -14,6 +14,106 @@ function getConfiguredSocketServerUrl() {
     return configuredUrl.replace(/\/$/, '');
 }
 
+// Console commands to load minigames directly in the same page
+// Usage in browser console: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()
+window.loadBlackjack = function() {
+    console.log('Loading Blackjack minigame in overlay...');
+    loadMinigameInOverlay('/BlackJack/index.html');
+    return 'Blackjack loading...';
+};
+
+window.loadBaccarat = function() {
+    console.log('Loading Baccarat minigame in overlay...');
+    loadMinigameInOverlay('/Baccarat/index.html');
+    return 'Baccarat loading...';
+};
+
+window.loadRoulette = function() {
+    console.log('Loading Roulette minigame in overlay...');
+    loadMinigameInOverlay('/Roulette/index.html');
+    return 'Roulette loading...';
+};
+
+window.loadPoker = function() {
+    console.log('Loading Poker minigame in overlay...');
+    loadMinigameInOverlay('/PokerFP/index.html');
+    return 'Poker loading...';
+};
+
+window.loadSlots = function() {
+    console.log('Loading Slot Machine minigame in overlay...');
+    loadMinigameInOverlay('/slotMachine/index.html');
+    return 'Slots loading...';
+};
+
+window.loadCraps = function() {
+    console.log('Loading Craps minigame in overlay...');
+    loadMinigameInOverlay('/Craps/index.html');
+    return 'Craps loading...';
+};
+
+function loadMinigameInOverlay(url) {
+    // Get current player balance from game state
+    const playerBalance = window.playerMoney || 2500;
+    
+    // Add balance as URL parameter
+    const urlWithBalance = url + (url.includes('?') ? '&' : '?') + 'balance=' + playerBalance;
+    
+    // Create overlay container
+    const overlay = document.createElement('div');
+    overlay.id = 'minigame-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    // Create iframe for minigame
+    const iframe = document.createElement('iframe');
+    iframe.src = urlWithBalance;
+    iframe.style.cssText = `
+        width: 70vw;
+        height: 70vh;
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 0 40px rgba(155, 89, 182, 0.5);
+    `;
+    
+    // Create close button
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ Close';
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 10001;
+    `;
+    closeBtn.onclick = () => {
+        document.body.removeChild(overlay);
+    };
+    
+    overlay.appendChild(iframe);
+    overlay.appendChild(closeBtn);
+    document.body.appendChild(overlay);
+}
+
+console.log('Minigame console commands loaded: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()');
+
 const SOCKET_SERVER_URL = getConfiguredSocketServerUrl();
 const socket = io(SOCKET_SERVER_URL, {
     transports: ['websocket', 'polling'],
@@ -39,6 +139,9 @@ let casinoMessageListenerAttached = false;
 let activeCasinoBalanceSync = null;
 let isSpectator = false;
 let spectatorName = null;
+let isAiVsAiGame = false;
+let activeAiLandingPlayerId = null;
+let observerCasinoStartBalance = null;
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -980,6 +1083,9 @@ function hydrateSpectatorFromJoinData(data) {
     isSpectator = true;
     myPlayerId = null;
     currentPlayer = null;
+    isAiVsAiGame = Boolean(
+        data.isAiVsAi || sessionStorage.getItem('metropoly_ai_vs_ai') === '1'
+    );
     spectatorName = data.spectatorName || sessionStorage.getItem('metropoly_spectator_name') || 'Spectator';
     players = data.players || [];
     gameState = data.gameState || null;
@@ -1037,6 +1143,7 @@ function dismissPropertyDecisionUI() {
         decisionPrompt.classList.add('hidden');
         decisionPrompt.textContent = '';
     }
+    activeAiLandingPlayerId = null;
     closePropertyModal();
 }
 
@@ -1281,19 +1388,137 @@ function getCasinoGameContainer(doc, gameName) {
     return doc.querySelector(selector) || doc.body;
 }
 
+function getIframeCasinoBalance(iframe) {
+    if (!iframe) return null;
+    try {
+        const win = iframe.contentWindow;
+        const balance = win.__casinoBalance ?? win.playerBalance ?? win.playerBankroll;
+        return (typeof balance === 'number' && !Number.isNaN(balance)) ? balance : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function reportAiCasinoWinnings(iframe) {
+    if (!activeAiLandingPlayerId || !currentGameId || observerCasinoStartBalance == null) return;
+
+    const endBalance = getIframeCasinoBalance(iframe);
+    if (typeof endBalance !== 'number') return;
+
+    socket.emit('aiCasinoReport', {
+        gameId: currentGameId,
+        playerId: activeAiLandingPlayerId,
+        winnings: Math.round(endBalance - observerCasinoStartBalance)
+    });
+}
+
+function triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc) {
+    if (!iframe || !iframeDoc) return;
+
+    const click = (selector) => {
+        const el = iframeDoc.querySelector(selector);
+        if (el && !el.disabled) {
+            el.click();
+            return true;
+        }
+        return false;
+    };
+
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const postPlayWait = {
+        slotMachine: 6500,
+        Roulette: 5000,
+        BlackJack: 5500,
+        Baccarat: 5500,
+        PokerFP: 3500,
+        Craps: 3500
+    };
+
+    (async () => {
+        try {
+            await delay(900);
+            const win = iframe.contentWindow;
+
+            switch (gameName) {
+                case 'slotMachine':
+                    click('#spinBtn');
+                    break;
+                case 'Roulette': {
+                    const redCell = iframeDoc.querySelector('.number-cell[aria-label="1"]')
+                        || iframeDoc.querySelector('.number-cell');
+                    if (redCell) redCell.click();
+                    await delay(400);
+                    if (typeof win.spinWheel === 'function') {
+                        win.spinWheel();
+                    } else {
+                        click('#spin-btn');
+                    }
+                    break;
+                }
+                case 'BlackJack':
+                    click('#bet0') || click('.bet-square');
+                    await delay(500);
+                    click('#deal-btn');
+                    await delay(2200);
+                    click('#stand-btn');
+                    break;
+                case 'Baccarat':
+                    click('.chip[data-value="50"]') || click('.chip');
+                    await delay(300);
+                    click('.bet-type[data-type="player"]');
+                    await delay(300);
+                    click('#deal-btn');
+                    break;
+                case 'PokerFP':
+                    click('#btn-newgame');
+                    await delay(1200);
+                    click('#btn-check') || click('#btn-call');
+                    break;
+                case 'Craps':
+                    if (typeof win.__crapsAutoPlay === 'function') {
+                        win.__crapsAutoPlay(50);
+                    }
+                    await delay(800);
+                    click('#dice-threejs-wrapper button');
+                    break;
+                default:
+                    break;
+            }
+
+            await delay(postPlayWait[gameName] || 3000);
+            reportAiCasinoWinnings(iframe);
+        } catch (e) {
+            console.warn('[Casino] Observer auto-play failed:', gameName, e);
+        }
+    })();
+}
+
 // Open casino game modal
-function openCasinoGame(gameName) {
+function openCasinoGame(gameName, observerOptions = null) {
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoTitle = document.getElementById('casinoGameTitle');
     const casinoContainer = document.getElementById('casinoGameContainer');
+    const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 
     if (!casinoModal || !casinoContainer) return;
 
-    casinoTitle.textContent = `Play ${gameName}`;
+    const isObserver = Boolean(observerOptions);
+    const observePlayer = observerOptions?.player;
+    const playerLabel = observerOptions?.playerLabel || 'AI';
+    const playerMoney = observePlayer ? observePlayer.money : (currentPlayer ? currentPlayer.money : 2500);
+
+    casinoTitle.textContent = isObserver
+        ? `${playerLabel} playing ${gameName}`
+        : `Play ${gameName}`;
+
+    if (closeCasinoBtn) {
+        closeCasinoBtn.style.display = isObserver ? 'none' : '';
+    }
+
+    observerCasinoStartBalance = isObserver ? playerMoney : null;
 
     // Load casino game in iframe with initialization parameters
     const gamePath = `/${gameName}/index.html`;
-    const playerMoney = currentPlayer ? currentPlayer.money : 2500;
     casinoContainer.innerHTML = `<iframe src="${gamePath}" class="casino-iframe" frameborder="0"></iframe>`;
 
     casinoModal.classList.remove('hidden');
@@ -1336,14 +1561,30 @@ function openCasinoGame(gameName) {
                     return;
                 }
 
-                activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
-
-                initFn(container, playerMoney, function syncCasinoBalance(balance) {
-                    activeCasinoBalanceSync(balance);
+                const syncCasinoBalance = function(balance) {
                     try {
                         iframe.contentWindow.__casinoBalance = balance;
                     } catch (e) {}
-                });
+
+                    if (isObserver) return;
+
+                    if (!activeCasinoBalanceSync) {
+                        activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
+                    }
+                    activeCasinoBalanceSync(balance);
+                };
+
+                if (!isObserver) {
+                    activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
+                } else {
+                    activeCasinoBalanceSync = null;
+                }
+
+                initFn(container, playerMoney, syncCasinoBalance);
+
+                if (isObserver) {
+                    triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc);
+                }
             } catch (e) {
                 console.error('[Casino] Could not initialize casino game:', gameName, e);
             }
@@ -1362,9 +1603,17 @@ function handleCasinoGameMessage(event) {
 function closeCasinoGame() {
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoContainer = document.getElementById('casinoGameContainer');
+    const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 
-    flushCasinoBalanceFromIframe(casinoContainer);
+    if (activeCasinoBalanceSync) {
+        flushCasinoBalanceFromIframe(casinoContainer);
+    }
     activeCasinoBalanceSync = null;
+    observerCasinoStartBalance = null;
+
+    if (closeCasinoBtn) {
+        closeCasinoBtn.style.display = '';
+    }
 
     if (casinoModal) {
         casinoModal.classList.add('hidden');
@@ -1374,7 +1623,9 @@ function closeCasinoGame() {
         casinoContainer.innerHTML = '';
     }
 
-    finishLandingDecisionUI();
+    if (!activeAiLandingPlayerId) {
+        finishLandingDecisionUI();
+    }
 }
 
 function lerpCoords(from, to, t) {
@@ -1876,6 +2127,7 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
 }
 
 function closePropertyModal() {
+    if (activeAiLandingPlayerId) return;
     cleanupPropertyVideo();
     const propertyActions = document.getElementById('propertyActions');
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
@@ -1925,7 +2177,7 @@ function buildPropertyDetailsHtml(spaceData) {
 
 // Show property information
 function showPropertyInfo(spaceData, options = {}) {
-    const { showDecisionActions = false } = options;
+    const { showDecisionActions = false, viewerLabel = null } = options;
     cleanupPropertyVideo();
     const mediaSession = propertyMediaSession;
 
@@ -1963,9 +2215,14 @@ function showPropertyInfo(spaceData, options = {}) {
         }
     }
 
-    if (decisionPrompt && !showDecisionActions) {
-        decisionPrompt.classList.add('hidden');
-        decisionPrompt.textContent = '';
+    if (decisionPrompt) {
+        if (viewerLabel) {
+            decisionPrompt.textContent = viewerLabel;
+            decisionPrompt.classList.remove('hidden');
+        } else if (!showDecisionActions) {
+            decisionPrompt.classList.add('hidden');
+            decisionPrompt.textContent = '';
+        }
     }
     
     // Clear previous media
@@ -2118,8 +2375,12 @@ function updatePlayersList() {
         const isActiveTurn = gameState && gameState.currentPlayer === player.id;
         playerEl.className = `player-card${isActiveTurn ? ' is-active' : ''}${player.isBankrupt ? ' is-bankrupt' : ''}`;
 
-        const displayName = isCurrentPlayer ? 'You' : `Player ${playerNumber}`;
-        const aiBadge = player.isAI ? '<span class="player-card-badge ai">AI</span>' : '';
+        const displayName = isAiVsAiGame
+            ? `Player ${playerNumber}`
+            : (isCurrentPlayer ? 'You' : `Player ${playerNumber}`);
+        const aiBadge = (player.isAI && !isAiVsAiGame)
+            ? '<span class="player-card-badge ai">AI</span>'
+            : '';
         const turnBadge = isActiveTurn ? '<span class="player-card-badge turn">Turn</span>' : '';
         const jailBadge = player.inJail ? '<span class="player-card-badge jail">Jail</span>' : (player.position === 10 ? '<span class="player-card-badge visiting">Visiting</span>' : '');
 
@@ -2212,9 +2473,9 @@ function addChatMessage(sender, message) {
 // Helper function to get display name for a player
 function getPlayerDisplayName(player) {
     if (!player) return 'Unknown Player';
-    const playerNumber = players.findIndex(p => p && p.id === player.id);
-    const displayNumber = playerNumber > 0 ? playerNumber : '?';
-    return `Player ${displayNumber}`;
+    const actualPlayers = players.filter((p) => p);
+    const index = actualPlayers.findIndex((p) => p.id === player.id);
+    return `Player ${index >= 0 ? index + 1 : '?'}`;
 }
 
 // Update UI elements
@@ -2281,7 +2542,7 @@ function updateUI(options = {}) {
     if (gameState) {
         const currentPlayerObj = players.find(p => p && p.id === gameState.currentPlayer);
         if (currentPlayerObj && lastTurnAnnouncementPlayerId !== currentPlayerObj.id) {
-            addLogEntry(`${currentPlayerObj.name}'s turn`, 'system');
+            addLogEntry(`${getPlayerDisplayName(currentPlayerObj)}'s turn`, 'system');
             lastTurnAnnouncementPlayerId = currentPlayerObj.id;
         }
 
@@ -2546,7 +2807,10 @@ socket.on('spectatorJoined', (data) => {
 
     try {
         initializeBoard();
+        initRevealedPlayersForTurn();
+        players.filter((p) => p && p.tokenIndex !== undefined).forEach(loadTokenForPlayerIfNeeded);
         updateUI();
+        updateTokens();
     } catch (error) {
         console.error('GAME: Error initializing spectator view:', error);
     }
@@ -2710,6 +2974,10 @@ socket.on('gameStarted', (data) => {
 });
 
 socket.on('gameReady', (data) => {
+    if (data.isAiVsAi) {
+        isAiVsAiGame = true;
+        sessionStorage.setItem('metropoly_ai_vs_ai', '1');
+    }
     // Update gameState and players from the event
     if (data.gameState) {
         gameState = data.gameState;
@@ -2729,6 +2997,10 @@ socket.on('gameReady', (data) => {
     initRevealedPlayersForTurn();
     updateUI();
     updateTokens();
+    if (isSpectator) {
+        players.filter((p) => p && p.tokenIndex !== undefined).forEach(loadTokenForPlayerIfNeeded);
+        update3DTokenPositions();
+    }
 });
 
 socket.on('updateGameStatus', (data) => {
@@ -2776,6 +3048,10 @@ socket.on('propertyPurchased', (data) => {
 socket.on('propertyPassed', (data) => {
     const { playerId, position, propertyName } = data;
     const player = players.find(p => p && p.id === playerId);
+
+    if (player && player.isAI) {
+        addLogEntry(`${getPlayerDisplayName(player)} passed on ${propertyName}`, 'property');
+    }
     
     if (playerId === myPlayerId) {
         waitingForBuyResult = false;
@@ -3140,26 +3416,130 @@ socket.on('chatMessage', (data) => {
     addChatMessage(data.sender, data.message);
 });
 
-socket.on('gameOver', (data) => {
-    const { winnerName, finalPlayers } = data;
-    
+function showGameWonModal(data) {
     const modal = gameOverModal;
+    if (!modal) return;
+
+    if (data.players) {
+        players = data.players;
+    }
+
+    const winner = players.find((p) => p && p.id === data.winnerId);
+    const winnerName = data.winnerName || (winner ? getPlayerDisplayName(winner) : 'Unknown');
     const title = document.getElementById('gameOverTitle');
     const content = document.getElementById('gameOverContent');
-    
-    title.textContent = winnerName === currentPlayer.name ? 'You Won!' : 'Game Over';
-    content.innerHTML = `
-        <h3>${winnerName} won the game!</h3>
-        <div style="margin-top: 20px;">
-            ${finalPlayers.map((p, i) => `
-                <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                    <strong>${i + 1}. ${p.name}</strong> - $${p.money}
-                </div>
-            `).join('')}
-        </div>
-    `;
-    
+    const reason = data.winReason === 'money'
+        ? `reached $${(data.winningAmount || 10000).toLocaleString()}`
+        : 'bankruptcy';
+
+    if (title) {
+        if (isSpectator) {
+            title.textContent = 'Game Over';
+        } else if (data.winnerId === myPlayerId) {
+            title.textContent = 'You Won!';
+        } else {
+            title.textContent = 'Game Over';
+        }
+    }
+
+    const finalPlayers = (data.players || players).filter((p) => p);
+    if (content) {
+        content.innerHTML = `
+            <h3>${winnerName} won (${reason})!</h3>
+            <div style="margin-top: 20px;">
+                ${finalPlayers.map((p, i) => `
+                    <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                        <strong>${i + 1}. ${getPlayerDisplayName(p)}</strong> - $${(p.money ?? 0).toLocaleString()}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
     modal.classList.remove('hidden');
+}
+
+socket.on('gameWon', (data) => {
+    showGameWonModal(data);
+});
+
+socket.on('aiLandingStarted', (data) => {
+    if (data.players) {
+        players = data.players;
+    }
+
+    activeAiLandingPlayerId = data.playerId;
+    const player = players.find((p) => p && p.id === data.playerId);
+    const spaceData = boardConfig[data.position];
+    if (!spaceData) return;
+
+    const label = `${getPlayerDisplayName(player)} landed on ${spaceData.name}`;
+    showPropertyInfo(spaceData, {
+        showDecisionActions: false,
+        viewerLabel: data.willBuy
+            ? `${label} — watching property video, then may buy...`
+            : `${label} — viewing property...`
+    });
+});
+
+socket.on('aiCasinoStarted', (data) => {
+    if (data.playerId !== activeAiLandingPlayerId || !data.casinoGame) return;
+
+    const player = players.find((p) => p && p.id === data.playerId);
+    if (!player) return;
+
+    openCasinoGame(data.casinoGame, {
+        player,
+        playerLabel: getPlayerDisplayName(player)
+    });
+});
+
+socket.on('aiCasinoComplete', (data) => {
+    if (data.playerId !== activeAiLandingPlayerId) return;
+
+    closeCasinoGame();
+
+    if (data.players) {
+        players = data.players;
+    }
+
+    const player = players.find((p) => p && p.id === data.playerId);
+    if (player && typeof data.newMoney === 'number') {
+        player.money = data.newMoney;
+    }
+
+    const sign = data.winnings >= 0 ? '+' : '';
+    addLogEntry(
+        `${getPlayerDisplayName(player)} finished ${data.casinoGame}: ${sign}$${Math.abs(data.winnings)}`,
+        'system'
+    );
+    updateUI();
+
+    if (player && typeof player.position === 'number') {
+        const spaceData = boardConfig[player.position];
+        if (spaceData) {
+            showPropertyInfo(spaceData, {
+                showDecisionActions: false,
+                viewerLabel: `${getPlayerDisplayName(player)} — casino done (${sign}$${Math.abs(data.winnings)}), deciding on property...`
+            });
+        }
+    }
+});
+
+socket.on('aiLandingEnded', (data) => {
+    if (data.playerId !== activeAiLandingPlayerId) return;
+    activeAiLandingPlayerId = null;
+    closeCasinoGame();
+    dismissPropertyDecisionUI();
+});
+
+socket.on('gameOver', (data) => {
+    showGameWonModal({
+        winnerId: null,
+        winnerName: data.winnerName,
+        players: data.finalPlayers,
+        winReason: 'bankruptcy'
+    });
 });
 
 socket.on('gameError', (error) => {
@@ -3855,10 +4235,12 @@ function createPremiumBoardTile(spaceData, row, col) {
     // Add Ferris Wheel model for County Fair (position 24)
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
         const loader = new THREE.GLTFLoader();
-        loader.load(getModelPath('/Models/Ferris Wheel/scene.gltf'),
+        
+        // Load like other models using getModelPath
+        loader.load(getModelPath('/Models/ferrisWheel/ferris_wheel.glb'),
             function(gltf) {
                 const ferrisWheel = gltf.scene;
-                const scale = tileSize * 0.06;
+                const scale = tileSize * 0.08;
                 ferrisWheel.scale.set(scale, scale, scale);
                 ferrisWheel.position.y = tileHeight / 2 + 0.05;
                 ferrisWheel.userData.isFerrisWheel = true;
@@ -3915,6 +4297,42 @@ let carouselImages = [];
 let carouselCurrentIndex = 0;
 let hotelCasinoImages = new Set();
 
+function encodeCarouselPath(path) {
+    const normalized = path.startsWith('/') ? path : `/${path}`;
+    return normalized
+        .split('/')
+        .map((segment, index) => (index === 0 ? segment : encodeURIComponent(segment)))
+        .join('/');
+}
+
+function getCarouselImageUrl(imagePath) {
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+    return encodeCarouselPath(imagePath);
+}
+
+function isHotelCasinoCarouselImage(imageUrl) {
+    if (!imageUrl) return false;
+    return [...hotelCasinoImages].some(
+        (hotelPath) => imageUrl.endsWith(hotelPath) || imageUrl.includes(hotelPath.replace(/^\//, ''))
+    );
+}
+
+function buildCarouselImageList(baseImages, casinoGameImages) {
+    const ordered = [];
+    let casinoIndex = 0;
+
+    baseImages.forEach((imagePath) => {
+        ordered.push(getCarouselImageUrl(imagePath));
+        if (hotelCasinoImages.has(imagePath) && casinoGameImages.length > 0) {
+            const casinoPath = casinoGameImages[casinoIndex % casinoGameImages.length];
+            ordered.push(getCarouselImageUrl(casinoPath));
+            casinoIndex += 1;
+        }
+    });
+
+    return ordered;
+}
+
 // Fisher-Yates shuffle for randomizing carousel images
 function shuffleArray(array) {
     const shuffled = [...array];
@@ -3934,7 +4352,7 @@ function createCenterCarousel(parentGroup) {
     carouselImages = [];
     
     // All images from Images folder (excluding tokens and utilities)
-    const allImages = [
+    const baseImages = [
         "/Images/1.png",
         '/Images/county_fair.png',
         '/Images/screenshot_2024-12-12_033702.png',
@@ -3976,6 +4394,15 @@ function createCenterCarousel(parentGroup) {
         '/Images/house_of_blues_sunset.webp',
         '/Images/yellow_light_bulb.jpg',
     ];
+
+    // Casino game photos (served locally from /Images/, same as other carousel slides)
+    const casinoGameImages = [
+        '/Images/baccarat_photo.webp',
+        '/Images/poker_photo.jpg',
+        '/Images/poker_photo_2.jpg',
+        '/Images/roulette_photo.jpg',
+        '/Images/blackjack_photo.jpg',
+    ];
     
     // Define hotel/casino images to prevent back-to-back display
     hotelCasinoImages = new Set([
@@ -3989,6 +4416,8 @@ function createCenterCarousel(parentGroup) {
         '/Images/LasVegasSphere.jpg',
         '/Images/thesphere.jpg',
     ]);
+
+    const allImages = buildCarouselImageList(baseImages, casinoGameImages);
     
     // Use sequential track-based ordering instead of randomization
     console.log(`Total carousel images: ${allImages.length}`);
@@ -4103,7 +4532,7 @@ function preloadNextCarouselImage(imageMesh) {
     let attempts = 0;
     const maxAttempts = imagesLength;
     const currentImage = imageMesh.userData.images[imageMesh.userData.currentIndex];
-    const isCurrentHotelCasino = hotelCasinoImages.has(currentImage);
+    const isCurrentHotelCasino = isHotelCasinoCarouselImage(currentImage);
     
     while (attempts < maxAttempts) {
         // Skip failed images
@@ -4115,7 +4544,7 @@ function preloadNextCarouselImage(imageMesh) {
         
         // Skip hotel/casino images if current is also hotel/casino
         const nextImage = imageMesh.userData.images[nextIndex];
-        if (isCurrentHotelCasino && hotelCasinoImages.has(nextImage)) {
+        if (isCurrentHotelCasino && isHotelCasinoCarouselImage(nextImage)) {
             nextIndex = (nextIndex + 1) % imagesLength;
             attempts++;
             continue;
@@ -4185,7 +4614,7 @@ function animateCenterCarousel() {
             let attempts = 0;
             const maxAttempts = imagesLength;
             const currentImage = imageMesh.userData.images[imageMesh.userData.currentIndex];
-            const isCurrentHotelCasino = hotelCasinoImages.has(currentImage);
+            const isCurrentHotelCasino = isHotelCasinoCarouselImage(currentImage);
             
             while (attempts < maxAttempts) {
                 // Skip failed images
@@ -4197,7 +4626,7 @@ function animateCenterCarousel() {
                 
                 // Skip hotel/casino images if current is also hotel/casino
                 const nextImage = imageMesh.userData.images[newIndex];
-                if (isCurrentHotelCasino && hotelCasinoImages.has(nextImage)) {
+                if (isCurrentHotelCasino && isHotelCasinoCarouselImage(nextImage)) {
                     newIndex = (newIndex + 1) % imagesLength;
                     attempts++;
                     continue;

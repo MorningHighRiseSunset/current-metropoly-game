@@ -65,10 +65,12 @@ function createThreeDice(container) {
     }
     animate();
 
-    // Roll dice on click
+    // Roll dice on click (two dice, sum 2-12 for craps)
     diceDiv.onclick = function() {
-        const roll = Math.floor(Math.random()*6)+1;
-        rollDiceToFace(roll);
+        const die1 = Math.floor(Math.random() * 6) + 1;
+        const die2 = Math.floor(Math.random() * 6) + 1;
+        const roll = die1 + die2;
+        rollDiceToFace(die1);
         if (typeof window.onDiceRoll === 'function') window.onDiceRoll(roll);
     };
 
