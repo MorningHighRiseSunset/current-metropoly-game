@@ -85,7 +85,6 @@ window.createAiVsAiGame = function() {
         
         // Add timeout to detect if server doesn't respond
         setTimeout(() => {
-<<<<<<< HEAD
             socket.emit('addAIPlayer', { gameId });
             console.log('Added AI player 1');
             
@@ -106,7 +105,9 @@ window.createAiVsAiGame = function() {
                 }, 500);
             }, 500);
         }, 500);
-    });
+    };
+    
+    createGame();
 };
 
 // Alias for common typo
@@ -737,10 +738,11 @@ function initHelicopterAnimation() {
     scene.add(directionalLight);
 
     // Camera position
-    camera.position.z = 5;
+    camera.position.z = 200;
 
     // Load helicopter model
     const helicopterModelPath = getModelPath('/Models/Helicopter/helicopter.glb');
+    console.log('Loading helicopter model from:', helicopterModelPath);
     let helicopterModel = null;
     let mixer = null;
 
@@ -808,43 +810,21 @@ function initHelicopterAnimation() {
             const progress = t;
             
             if (animationState.direction === 'right') {
-                // Left to right flight
-                if (progress < 0.4) {
-                    // Fly towards camera (start far away, come close)
-                    const approachProgress = progress / 0.4;
-                    helicopterModel.position.x = -8 + approachProgress * 2; // Start off-center, move toward center
-                    helicopterModel.position.y = 0 + approachProgress * 1; // Lower height
-                    helicopterModel.position.z = -80 + approachProgress * 60; // Move from -80 to -20 (further from camera)
-                    helicopterModel.scale.setScalar(0.5 + approachProgress * 0.5); // Scale from 0.5 to 1.0
-                    helicopterModel.rotation.y = 10 * (Math.PI / 180);
-                } else {
-                    // Veer right and exit away from camera
-                    const exitProgress = (progress - 0.4) / 0.6;
-                    helicopterModel.position.x = -6 + exitProgress * 25; // Move right
-                    helicopterModel.position.y = 1 + exitProgress * 3;
-                    helicopterModel.position.z = -20 - exitProgress * 40; // Move away from camera
-                    helicopterModel.scale.setScalar(1.0 - exitProgress * 0.8); // Scale down
-                    helicopterModel.rotation.y = -30 * (Math.PI / 180); // Bank right
-                }
+                // Left to right flight - one smooth continuous animation
+                helicopterModel.position.x = -600 + progress * 800; // Start WAY off-screen left (-600), fly to off-screen right (200)
+                helicopterModel.position.y = 5 + progress * 35; // Move up smoothly (5 to 40)
+                // Smooth Z curve: start far, come close, go away using sine wave - closer to screen
+                helicopterModel.position.z = -120 + Math.sin(progress * Math.PI) * 90; 
+                helicopterModel.scale.setScalar(0.25 + Math.sin(progress * Math.PI) * 0.7); // Smooth scale: small -> big -> small
+                helicopterModel.rotation.y = progress * 45 * (Math.PI / 180); // Smooth turn right
             } else {
-                // Right to left flight
-                if (progress < 0.4) {
-                    // Fly towards camera (start far away, come close)
-                    const approachProgress = progress / 0.4;
-                    helicopterModel.position.x = 8 - approachProgress * 2; // Start off-center, move toward center
-                    helicopterModel.position.y = 0 + approachProgress * 1; // Lower height
-                    helicopterModel.position.z = -80 + approachProgress * 60; // Move from -80 to -20 (further from camera)
-                    helicopterModel.scale.setScalar(0.5 + approachProgress * 0.5); // Scale from 0.5 to 1.0
-                    helicopterModel.rotation.y = -10 * (Math.PI / 180);
-                } else {
-                    // Veer left and exit away from camera
-                    const exitProgress = (progress - 0.4) / 0.6;
-                    helicopterModel.position.x = 6 - exitProgress * 25; // Move left
-                    helicopterModel.position.y = 1 + exitProgress * 3;
-                    helicopterModel.position.z = -20 - exitProgress * 40; // Move away from camera
-                    helicopterModel.scale.setScalar(1.0 - exitProgress * 0.8); // Scale down
-                    helicopterModel.rotation.y = 30 * (Math.PI / 180); // Bank left
-                }
+                // Right to left flight - one smooth continuous animation
+                helicopterModel.position.x = 600 - progress * 800; // Start WAY off-screen right (600), fly to off-screen left (-200)
+                helicopterModel.position.y = 5 + progress * 35; // Move up smoothly (5 to 40)
+                // Smooth Z curve: start far, come close, go away using sine wave - closer to screen
+                helicopterModel.position.z = -120 + Math.sin(progress * Math.PI) * 90;
+                helicopterModel.scale.setScalar(0.25 + Math.sin(progress * Math.PI) * 0.7); // Smooth scale: small -> big -> small
+                helicopterModel.rotation.y = 180 * (Math.PI / 180) - progress * 45 * (Math.PI / 180); // Smooth turn left
             }
 
             helicopterModel.visible = true;
