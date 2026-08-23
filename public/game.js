@@ -4280,7 +4280,7 @@ function createPremiumBoardTile(spaceData, row, col) {
             loader.load(path,
                 function(gltf) {
                     const ferrisWheel = gltf.scene;
-                    const scale = tileSize * 0.08;
+                    const scale = 0.002; // Much smaller scale as suggested
                     ferrisWheel.scale.set(scale, scale, scale);
                     ferrisWheel.position.y = tileHeight / 2 + 0.05;
                     ferrisWheel.userData.isFerrisWheel = true;
@@ -4319,7 +4319,10 @@ function createPremiumBoardTile(spaceData, row, col) {
                 function(xhr) {
                     if (xhr.lengthComputable) {
                         const percentComplete = xhr.loaded / xhr.total * 100;
-                        console.log(`Loading Ferris Wheel: ${percentComplete.toFixed(2)}%`);
+                        // Only log at milestones to reduce console spam
+                        if (percentComplete >= 100 || percentComplete % 25 < 1) {
+                            console.log(`Loading Ferris Wheel: ${percentComplete.toFixed(0)}%`);
+                        }
                     }
                 },
                 function(error) {
