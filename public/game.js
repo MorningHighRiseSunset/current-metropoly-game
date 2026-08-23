@@ -4324,33 +4324,6 @@ function createPremiumBoardTile(spaceData, row, col) {
                         action.play();
                     }
                     
-                    // Add Clark County Fair image plane
-                    const textureLoader = new THREE.TextureLoader();
-                    const clarkCountyImageUrl = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/clark%20county%20fair.jpg';
-                    
-                    textureLoader.load(clarkCountyImageUrl,
-                        function(texture) {
-                            const imageGeometry = new THREE.PlaneGeometry(0.8, 0.6);
-                            const imageMaterial = new THREE.MeshBasicMaterial({
-                                map: texture,
-                                side: THREE.DoubleSide,
-                                transparent: true
-                            });
-                            const imagePlane = new THREE.Mesh(imageGeometry, imageMaterial);
-                            
-                            // Position the image plane in front of the ferris wheel
-                            imagePlane.position.set(0, tileHeight / 2 + 0.35, 0.25);
-                            imagePlane.rotation.x = -Math.PI / 4; // Tilt slightly for better viewing
-                            
-                            group.add(imagePlane);
-                            console.log('Clark County Fair image added to ferris wheel');
-                        },
-                        undefined,
-                        function(error) {
-                            console.error('Error loading Clark County Fair image:', error);
-                        }
-                    );
-                    
                     group.add(ferrisWheel);
                     console.log('Ferris wheel added to group. Group children count:', group.children.length);
                 },
