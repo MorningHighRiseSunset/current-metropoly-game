@@ -1874,10 +1874,24 @@ function loadTokenModel(tokenIndex, player) {
     // Check file extension to determine loader
     const isFBX = tokenInfo.model.toLowerCase().endsWith('.fbx');
 
+    // Get local path for fallback
+    const getLocalPath = (cdnPath) => {
+        // If CDN path, extract the local path by removing CDN base
+        if (window.CDN_BASE_URL && cdnPath.includes(window.CDN_BASE_URL)) {
+            return cdnPath.replace(window.CDN_BASE_URL, '/Models');
+        }
+        // Already local or unknown format, return as-is
+        return cdnPath;
+    };
+
     if (isFBX) {
         // Use FBX loader for FBX files
         const loader = new THREE.FBXLoader();
-        loader.load(tokenInfo.model,
+        const modelPath = tokenInfo.model;
+        const localPath = getLocalPath(modelPath);
+        
+        const loadModel = (path) => {
+            loader.load(path,
             function(fbx) {
             // console.log(`FBX model loaded for ${player.name}:`, fbx);
 
@@ -1923,27 +1937,39 @@ function loadTokenModel(tokenIndex, player) {
                 }
             },
             function(error) {
-                console.error(`Error loading FBX model for ${player.name}:`, error);
-                console.error(`Model path: ${tokenInfo.model}`);
-                delete tokenLoading[player.id];
-                // Create a fallback simple geometry if model fails to load
-                const fallbackGeometry = new THREE.BoxGeometry(1, 1, 1);
-                const fallbackMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-                const fallbackModel = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
-                fallbackModel.scale.set(0.4, 0.4, 0.4);
-                tokenModels[player.id] = fallbackModel;
-                tokenMeshes[player.id] = fallbackModel;
-                scene.add(fallbackModel);
-                fallbackModel.visible = isTokenVisible(player.id);
-                // console.log(`Created fallback token for ${player.name}`);
-                update3DTokenPositions();
-                updateTokenVisibility();
+                console.error(`Error loading FBX model for ${player.name} from ${path}:`, error);
+                // If CDN failed and this was CDN path, try local
+                if (path !== localPath) {
+                    console.log(`Falling back to local FBX model for ${player.name}...`);
+                    loadModel(localPath);
+                } else {
+                    console.error(`Model path: ${tokenInfo.model}`);
+                    delete tokenLoading[player.id];
+                    // Create a fallback simple geometry if model fails to load
+                    const fallbackGeometry = new THREE.BoxGeometry(1, 1, 1);
+                    const fallbackMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                    const fallbackModel = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
+                    fallbackModel.scale.set(0.4, 0.4, 0.4);
+                    tokenModels[player.id] = fallbackModel;
+                    tokenMeshes[player.id] = fallbackModel;
+                    scene.add(fallbackModel);
+                    fallbackModel.visible = isTokenVisible(player.id);
+                    // console.log(`Created fallback token for ${player.name}`);
+                    update3DTokenPositions();
+                    updateTokenVisibility();
+                }
             }
         );
+        
+        loadModel(modelPath);
     } else {
         // Use GLTF loader for GLB/GLTF files
         const loader = new THREE.GLTFLoader();
-        loader.load(tokenInfo.model,
+        const modelPath = tokenInfo.model;
+        const localPath = getLocalPath(modelPath);
+        
+        const loadModel = (path) => {
+            loader.load(path,
             function(gltf) {
                 const model = gltf.scene;
                 const scale = tokenInfo.scale || 0.2;
@@ -1983,21 +2009,29 @@ function loadTokenModel(tokenIndex, player) {
                 }
             },
             function(error) {
-                console.error(`Error loading GLTF model for ${player.name}:`, error);
-                delete tokenLoading[player.id];
-                // Create a fallback simple geometry if model fails to load
-                const fallbackGeometry = new THREE.BoxGeometry(1, 1, 1);
-                const fallbackMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-                const fallbackModel = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
-                fallbackModel.scale.set(0.4, 0.4, 0.4);
-                tokenModels[player.id] = fallbackModel;
-                tokenMeshes[player.id] = fallbackModel;
-                scene.add(fallbackModel);
-                fallbackModel.visible = isTokenVisible(player.id);
-                update3DTokenPositions();
-                updateTokenVisibility();
+                console.error(`Error loading GLTF model for ${player.name} from ${path}:`, error);
+                // If CDN failed and this was CDN path, try local
+                if (path !== localPath) {
+                    console.log(`Falling back to local GLTF model for ${player.name}...`);
+                    loadModel(localPath);
+                } else {
+                    delete tokenLoading[player.id];
+                    // Create a fallback simple geometry if model fails to load
+                    const fallbackGeometry = new THREE.BoxGeometry(1, 1, 1);
+                    const fallbackMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                    const fallbackModel = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
+                    fallbackModel.scale.set(0.4, 0.4, 0.4);
+                    tokenModels[player.id] = fallbackModel;
+                    tokenMeshes[player.id] = fallbackModel;
+                    scene.add(fallbackModel);
+                    fallbackModel.visible = isTokenVisible(player.id);
+                    update3DTokenPositions();
+                    updateTokenVisibility();
+                }
             }
         );
+        
+        loadModel(modelPath);
     }
 }
 
@@ -4238,7 +4272,7 @@ function createPremiumBoardTile(spaceData, row, col) {
         
         // Try CDN first, fall back to local if CDN fails
         const cdnPath = getModelPath('/Models/ferrisWheel/ferris_wheel.glb');
-        const localPath = '/Models/ferrisWheel/ferris_wheel.glb';
+        const localPath = '/Models/ferrisWheel/ferris_wheel.glb'; // Models are now in public/Models
         
         const loadFerrisWheel = (path) => {
             loader.load(path,

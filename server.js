@@ -151,7 +151,7 @@ app.get('/api/config', (req, res) => {
         USE_VIDEO_CDN: process.env.USE_VIDEO_CDN === 'true' || true,
         VIDEO_CDN_BASE_URL: process.env.VIDEO_CDN_BASE_URL || 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev',
         USE_CDN: process.env.USE_CDN === 'true',
-        CDN_BASE_URL: process.env.CDN_BASE_URL || ''
+        CDN_BASE_URL: process.env.CDN_BASE_URL || 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models'
     });
 });
 app.use('/images', express.static(path.join(__dirname, 'Images')));
@@ -176,7 +176,9 @@ if (process.env.USE_CDN === 'true' && process.env.CDN_BASE_URL) {
     // Models served from CDN - no local static serving needed
     console.log('Models will be served from CDN:', process.env.CDN_BASE_URL);
 } else {
+    // Models moved to public/Models directory - serve from there
     app.use('/Models', express.static(path.join(__dirname, 'public/Models')));
+    console.log('Models will be served locally from public/Models');
 }
 
 app.use('/tokenimages', express.static(path.join(__dirname, 'tokenimages')));

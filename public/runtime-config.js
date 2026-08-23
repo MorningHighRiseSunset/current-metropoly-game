@@ -17,4 +17,4 @@ window.VIDEO_CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev
 // Model CDN configuration for R2 bucket storage
 // Detect if running locally and use local models instead of CDN
 window.USE_CDN = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
-window.CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/metropoly-models/Models';
+window.CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models';
