@@ -4280,9 +4280,10 @@ function createPremiumBoardTile(spaceData, row, col) {
             loader.load(path,
                 function(gltf) {
                     const ferrisWheel = gltf.scene;
-                    const scale = 0.04; // Increased scale for better visibility
+                    const scale = 0.03; // Adjusted scale
                     ferrisWheel.scale.set(scale, scale, scale);
-                    ferrisWheel.position.y = tileHeight / 2 + 0.2; // Raised higher
+                    ferrisWheel.position.y = tileHeight / 2 + 0.22; // Raised by 0.02
+                    ferrisWheel.position.z = 0.15; // Moved forward
                     ferrisWheel.visible = true; // Ensure visible
                     ferrisWheel.userData.isFerrisWheel = true;
                     ferrisWheel.userData.lastUpdate = 0;
@@ -4322,6 +4323,33 @@ function createPremiumBoardTile(spaceData, row, col) {
                         action.timeScale = 0.3;
                         action.play();
                     }
+                    
+                    // Add Clark County Fair image plane
+                    const textureLoader = new THREE.TextureLoader();
+                    const clarkCountyImageUrl = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/clark%20county%20fair.jpg';
+                    
+                    textureLoader.load(clarkCountyImageUrl,
+                        function(texture) {
+                            const imageGeometry = new THREE.PlaneGeometry(0.8, 0.6);
+                            const imageMaterial = new THREE.MeshBasicMaterial({
+                                map: texture,
+                                side: THREE.DoubleSide,
+                                transparent: true
+                            });
+                            const imagePlane = new THREE.Mesh(imageGeometry, imageMaterial);
+                            
+                            // Position the image plane in front of the ferris wheel
+                            imagePlane.position.set(0, tileHeight / 2 + 0.35, 0.25);
+                            imagePlane.rotation.x = -Math.PI / 4; // Tilt slightly for better viewing
+                            
+                            group.add(imagePlane);
+                            console.log('Clark County Fair image added to ferris wheel');
+                        },
+                        undefined,
+                        function(error) {
+                            console.error('Error loading Clark County Fair image:', error);
+                        }
+                    );
                     
                     group.add(ferrisWheel);
                     console.log('Ferris wheel added to group. Group children count:', group.children.length);
@@ -4447,6 +4475,9 @@ function createCenterCarousel(parentGroup) {
         '/Images/BetMGM.jpg',
         '/Images/las_vegas_motor_speedway.webp',
         '/Images/tigetwoods.avif',
+        'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/ClarkCountyFair.jpg',
+        'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/Clark-County-Today-Clark-County-Fair-Carnival-02.jpg',
+        'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/clark%20county%20fair.jpg',
         '/Images/minus_1x_1.webp',
         '/Images/berry_1.webp',
         '/Images/las_vegas_elopement_wedding_champagne_pop.webp',

@@ -88,7 +88,7 @@ const tileMediaRaw = {
     21: { name: 'Hard Rock Hotel', videos: ['/Videos/Hard Rock Hotel.mp4'], images: [] },
     22: { name: 'Chance', videos: [], images: [] },
     23: { name: 'Wynn Las Vegas', videos: ['/Videos/Wynn Las Vegas1.mp4', '/Videos/Wynn Las Vegas2.mp4', '/Videos/Wynn Las Vegas3.mp4'], images: ['/images/Wynn_2_(2).jpg'] },
-    24: { name: 'County Fair', videos: [], images: ['/images/County fair.png'] },
+    24: { name: 'County Fair', videos: [], images: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/ClarkCountyFair.jpg', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/Clark-County-Today-Clark-County-Fair-Carnival-02.jpg', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/clark%20county%20fair.jpg'] },
     25: { name: 'Shriners Children\'s Open', videos: [], images: [] },
     26: { name: 'Las Vegas Little White Wedding Chapel', videos: ['/Videos/Las Vegas Little White Wedding Chapel1.mp4', '/Videos/Las Vegas Little White Wedding Chapel2.mp4'], images: [] },
     27: { name: 'Community Cards', videos: [], images: [] },
