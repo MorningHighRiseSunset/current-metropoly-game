@@ -192,6 +192,38 @@
     <script src="runtime-config.js?v=20250817-helicopter-cdn"></script>
     <script src="/analytics.js"></script>
     <script>
+        // Open ferris wheel test in new tab for debugging
+        const openFerrisWheelTest = () => {
+            window.open('/ferris-wheel-test.html', '_blank');
+        };
+        
+        // Add button to open test
+        document.addEventListener('DOMContentLoaded', () => {
+            const testBtn = document.createElement('button');
+            testBtn.textContent = '🎡 Test Ferris Wheel';
+            testBtn.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                color: white;
+                border: none;
+                padding: 15px 25px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                z-index: 10000;
+                box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+                transition: transform 0.2s;
+            `;
+            testBtn.onmouseover = () => testBtn.style.transform = 'scale(1.05)';
+            testBtn.onmouseout = () => testBtn.style.transform = 'scale(1)';
+            testBtn.onclick = openFerrisWheelTest;
+            document.body.appendChild(testBtn);
+        });
+    </script>
+    <script>
         // Console commands to load minigames directly in the same page
         // Usage in browser console: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()
         
