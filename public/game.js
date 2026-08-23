@@ -1960,6 +1960,7 @@ function loadTokenModel(tokenIndex, player) {
                 }
             }
         );
+        };
         
         loadModel(modelPath);
     } else {
@@ -2030,6 +2031,7 @@ function loadTokenModel(tokenIndex, player) {
                 }
             }
         );
+        };
         
         loadModel(modelPath);
     }
