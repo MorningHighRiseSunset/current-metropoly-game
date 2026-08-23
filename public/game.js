@@ -4282,25 +4282,34 @@ function createPremiumBoardTile(spaceData, row, col) {
                     const ferrisWheel = gltf.scene;
                     const scale = 0.02; // Correct scale for board visibility
                     ferrisWheel.scale.set(scale, scale, scale);
-                    ferrisWheel.position.y = tileHeight / 2 + 0.05;
+                    ferrisWheel.position.y = tileHeight / 2 + 0.1; // Raised slightly
+                    ferrisWheel.visible = true; // Ensure visible
                     ferrisWheel.userData.isFerrisWheel = true;
                     ferrisWheel.userData.lastUpdate = 0;
                     
-                    // Optimize model for performance
+                    console.log('Ferris wheel added to scene at position:', ferrisWheel.position);
+                    console.log('Ferris wheel scale:', ferrisWheel.scale);
+                    
+                    // Optimize model for performance but keep it visible
                     ferrisWheel.traverse((child) => {
                         if (child.isMesh) {
                             child.castShadow = false;
                             child.receiveShadow = false;
+                            child.visible = true; // Ensure each mesh is visible
                             if (child.material) {
-                                child.material.flatShading = true;
-                                // Disable expensive material features
+                                child.material.flatShading = false; // Better visual quality
                                 child.material.needsUpdate = true;
                                 if (child.material.map) {
                                     child.material.map.anisotropy = 1;
                                 }
+                                // Ensure material is visible
+                                child.material.transparent = false;
+                                child.material.opacity = 1.0;
                             }
                         }
                     });
+                    
+                    console.log('Ferris wheel loaded with', gltf.animations.length, 'animations');
                     
                     // Setup animation mixer if model has animations
                     if (gltf.animations && gltf.animations.length > 0) {
@@ -4315,6 +4324,7 @@ function createPremiumBoardTile(spaceData, row, col) {
                     }
                     
                     group.add(ferrisWheel);
+                    console.log('Ferris wheel added to group. Group children count:', group.children.length);
                 },
                 function(xhr) {
                     if (xhr.lengthComputable) {
