@@ -4280,9 +4280,9 @@ function createPremiumBoardTile(spaceData, row, col) {
             loader.load(path,
                 function(gltf) {
                     const ferrisWheel = gltf.scene;
-                    const scale = 0.02; // Correct scale for board visibility
+                    const scale = 0.04; // Increased scale for better visibility
                     ferrisWheel.scale.set(scale, scale, scale);
-                    ferrisWheel.position.y = tileHeight / 2 + 0.1; // Raised slightly
+                    ferrisWheel.position.y = tileHeight / 2 + 0.2; // Raised higher
                     ferrisWheel.visible = true; // Ensure visible
                     ferrisWheel.userData.isFerrisWheel = true;
                     ferrisWheel.userData.lastUpdate = 0;
