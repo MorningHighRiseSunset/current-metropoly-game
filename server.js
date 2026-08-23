@@ -176,7 +176,7 @@ if (process.env.USE_CDN === 'true' && process.env.CDN_BASE_URL) {
     // Models served from CDN - no local static serving needed
     console.log('Models will be served from CDN:', process.env.CDN_BASE_URL);
 } else {
-    app.use('/Models', express.static(path.join(__dirname, 'Models')));
+    app.use('/Models', express.static(path.join(__dirname, 'public/Models')));
 }
 
 app.use('/tokenimages', express.static(path.join(__dirname, 'tokenimages')));
