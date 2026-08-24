@@ -54,9 +54,7 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
     // --- UI Functions ---
     function updateBalance() {
         const balanceEl = q('#balance');
-        const betDisplayEl = q('#bet-display');
         if (balanceEl) balanceEl.textContent = `$${balance}`;
-        if (betDisplayEl) betDisplayEl.textContent = `$${currentBet}`;
         if (typeof updateMainGameBalance === 'function') {
             updateMainGameBalance(balance);
         } else if (container && typeof CustomEvent === 'function') {
