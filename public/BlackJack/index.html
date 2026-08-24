@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            background: linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -45,7 +45,7 @@
 
         .blackjack-container {
             width: 100%;
-            max-width: 500px;
+            max-width: 700px;
             padding: 20px;
             text-align: center;
             position: relative;
@@ -53,8 +53,8 @@
         }
 
         h1 {
-            font-size: 3em;
-            margin-bottom: 25px;
+            font-size: 2.5em;
+            margin-bottom: 20px;
             background: linear-gradient(45deg, #9b59b6, #8e44ad, #9b59b6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -72,75 +72,97 @@
         .game-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 25px;
-            padding: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
             background: linear-gradient(135deg, rgba(155, 89, 182, 0.15), rgba(142, 68, 173, 0.15));
             border: 2px solid rgba(155, 89, 182, 0.4);
-            border-radius: 20px;
+            border-radius: 15px;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(155, 89, 182, 0.3);
         }
 
         .info-item {
-            font-size: 1.4em;
+            font-size: 1.2em;
             font-weight: bold;
             text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
         }
 
-        .hands-container {
-            display: flex;
-            flex-direction: column;
-            gap: 35px;
-            margin-bottom: 35px;
-        }
-
-        .hand-section {
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px solid rgba(155, 89, 182, 0.4);
-            border-radius: 20px;
-            padding: 25px;
-            min-height: 170px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(155, 89, 182, 0.2);
-            transition: all 0.3s ease;
+        /* Casino Table Layout */
+        .casino-table {
+            background: linear-gradient(135deg, #1a472a 0%, #0d2b1a 100%);
+            border: 8px solid #8b5cf6;
+            border-radius: 30px;
+            padding: 40px 30px;
+            margin: 20px 0;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5), inset 0 0 80px rgba(0,0,0,0.3);
+            position: relative;
         }
         
-        .hand-section:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(155, 89, 182, 0.3);
+        .casino-table::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(255,255,255,0.02) 15px, rgba(255,255,255,0.02) 30px);
+            pointer-events: none;
+            border-radius: 22px;
+        }
+
+        .table-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hand-area {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            border: 2px solid rgba(139, 92, 246, 0.3);
         }
 
         .hand-label {
-            font-size: 1.4em;
-            margin-bottom: 20px;
-            color: #9b59b6;
+            font-size: 1.3em;
+            color: #a78bfa;
             font-weight: bold;
             text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
+            min-width: 120px;
+            text-align: left;
         }
 
         .hand {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            min-height: 140px;
+            gap: 12px;
+            flex: 1;
+            min-height: 100px;
         }
 
-        .score {
-            font-size: 1.6em;
-            margin-top: 20px;
-            color: #f39c12;
+        .score-display {
+            font-size: 1.4em;
+            color: #a78bfa;
             font-weight: bold;
-            text-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+            min-width: 80px;
+            text-align: right;
+            text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
         }
 
         .result {
-            font-size: 2em;
-            margin: 25px 0;
-            padding: 25px;
+            font-size: 1.5em;
+            margin: 20px 0;
+            padding: 20px;
             background: linear-gradient(135deg, rgba(155, 89, 182, 0.25), rgba(142, 68, 173, 0.25));
             border: 2px solid rgba(155, 89, 182, 0.5);
-            border-radius: 20px;
-            min-height: 70px;
+            border-radius: 15px;
+            min-height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -150,14 +172,14 @@
         }
         
         .result.win {
-            background: linear-gradient(135deg, rgba(46, 204, 113, 0.3), rgba(39, 174, 96, 0.3));
-            border-color: #2ecc71;
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.5), rgba(142, 68, 173, 0.5));
+            border-color: #9b59b6;
             animation: resultWin 0.5s ease-out;
         }
         
         .result.lose {
-            background: linear-gradient(135deg, rgba(231, 76, 60, 0.3), rgba(192, 57, 43, 0.3));
-            border-color: #e74c3c;
+            background: linear-gradient(135deg, rgba(142, 68, 173, 0.4), rgba(110, 68, 173, 0.4));
+            border-color: #8e44ad;
         }
         
         @keyframes resultWin {
@@ -168,16 +190,16 @@
 
         .controls {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             justify-content: center;
         }
 
         .btn {
-            padding: 18px 40px;
-            font-size: 1.3em;
+            padding: 15px 35px;
+            font-size: 1.2em;
             font-weight: bold;
             border: none;
-            border-radius: 15px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
             background: linear-gradient(135deg, #9b59b6, #8e44ad);
@@ -216,13 +238,13 @@
         }
 
         .btn-hit {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
         }
 
         .btn-stand {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+            background: linear-gradient(135deg, #6d28d9, #5b21b6);
+            box-shadow: 0 8px 20px rgba(109, 40, 217, 0.4);
         }
 
         @keyframes dealCard {
@@ -263,17 +285,19 @@
             <div class="info-item">🎯 Current Bet: $<span id="current-bet">0</span></div>
         </div>
 
-        <div class="hands-container">
-            <div class="hand-section">
-                <div class="hand-label">🤖 Dealer's Hand</div>
-                <div class="hand" id="dealer-hand"></div>
-                <div class="score">Score: <span id="dealer-score">0</span></div>
-            </div>
+        <div class="casino-table">
+            <div class="table-layout">
+                <div class="hand-area">
+                    <div class="hand-label">🤖 Dealer</div>
+                    <div class="hand" id="dealer-hand"></div>
+                    <div class="score-display">Score: <span id="dealer-score">0</span></div>
+                </div>
 
-            <div class="hand-section">
-                <div class="hand-label">👤 Your Hand</div>
-                <div class="hand" id="player-hand"></div>
-                <div class="score">Score: <span id="player-score">0</span></div>
+                <div class="hand-area">
+                    <div class="hand-label">👤 Player</div>
+                    <div class="hand" id="player-hand"></div>
+                    <div class="score-display">Score: <span id="player-score">0</span></div>
+                </div>
             </div>
         </div>
 

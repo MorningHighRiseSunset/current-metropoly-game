@@ -66,18 +66,18 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         const cardEl = document.createElement('div');
         cardEl.className = 'card';
         cardEl.style.cssText = `
-            width: 80px;
-            height: 120px;
+            width: 70px;
+            height: 100px;
             background: linear-gradient(145deg, #1a1a2e, #16213e);
-            border: 2px solid ${card.suit === '♥' || card.suit === '♦' ? '#e74c3c' : '#27ae60'};
-            border-radius: 12px;
+            border: 2px solid #8b5cf6;
+            border-radius: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin: 5px;
-            color: ${card.suit === '♥' || card.suit === '♦' ? '#e74c3c' : '#27ae60'};
-            font-size: 24px;
+            margin: 4px;
+            color: #a78bfa;
+            font-size: 20px;
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             animation: dealCard 0.3s ease-out;
@@ -85,9 +85,9 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         `;
         
         cardEl.innerHTML = `
-            <div style="font-size: 18px; position: absolute; top: 8px; left: 8px;">${card.rank}</div>
-            <div style="font-size: 32px;">${card.suit}</div>
-            <div style="font-size: 18px; position: absolute; bottom: 8px; right: 8px; transform: rotate(180deg);">${card.rank}</div>
+            <div style="font-size: 16px; position: absolute; top: 6px; left: 6px;">${card.rank}</div>
+            <div style="font-size: 28px;">${card.suit}</div>
+            <div style="font-size: 16px; position: absolute; bottom: 6px; right: 6px; transform: rotate(180deg);">${card.rank}</div>
         `;
         
         return cardEl;
@@ -114,18 +114,18 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
                     const cardEl = document.createElement('div');
                     cardEl.className = 'card face-down';
                     cardEl.style.cssText = `
-                        width: 80px;
-                        height: 120px;
+                        width: 70px;
+                        height: 100px;
                         background: linear-gradient(145deg, #8e44ad, #9b59b6);
                         border: 2px solid #9b59b6;
-                        border-radius: 12px;
-                        margin: 5px;
+                        border-radius: 10px;
+                        margin: 4px;
                         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
                         display: flex;
                         align-items: center;
                         justify-content: center;
                     `;
-                    cardEl.innerHTML = '<div style="font-size: 24px;">🂠</div>';
+                    cardEl.innerHTML = '<div style="font-size: 20px;">🂠</div>';
                     dealerHandEl.appendChild(cardEl);
                 } else {
                     const cardEl = renderCard(card, false, index);
