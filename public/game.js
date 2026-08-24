@@ -2382,7 +2382,6 @@ function showPropertyInfo(spaceData, options = {}) {
             mediaContainer.innerHTML = '';
         }
         */
-        }
     } else {
         mediaContainer.innerHTML = '';
     }
