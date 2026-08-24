@@ -87,16 +87,17 @@
             text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
         }
 
-        /* Professional Casino Blackjack Table */
+        /* Professional Casino Blackjack Table - Semicircle */
         .blackjack-table {
             background: linear-gradient(135deg, #1a472a 0%, #0d2b1a 100%);
             border: 12px solid #8b5cf6;
-            border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+            border-radius: 300px 300px 0 0;
             padding: 60px 40px 40px 40px;
             margin: 20px 0;
             box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 0 100px rgba(0,0,0,0.4);
             position: relative;
-            min-height: 400px;
+            min-height: 350px;
+            max-width: 800px;
         }
         
         .blackjack-table::before {
@@ -109,20 +110,7 @@
             background: 
                 repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.02) 20px, rgba(255,255,255,0.02) 40px);
             pointer-events: none;
-            border-radius: 45% 45% 35% 35% / 55% 55% 35% 35%;
-        }
-
-        /* Table markings */
-        .table-markings {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: 3px solid rgba(139, 92, 246, 0.3);
-            border-radius: 50%;
-            width: 200px;
-            height: 100px;
-            z-index: 1;
+            border-radius: 290px 290px 0 0;
         }
 
         .table-layout {
