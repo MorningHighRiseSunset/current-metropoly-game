@@ -48,7 +48,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
 
     // --- UI Functions ---
     function updateBalance() {
-        const balanceEl = q('#money-display');
+        const balanceEl = q('#money-display') || q('#balance');
         if (balanceEl) balanceEl.textContent = balance;
         if (typeof updateMainGameBalance === 'function') {
             updateMainGameBalance(balance);
@@ -60,9 +60,6 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     function renderCard(card) {
         const cardEl = document.createElement('div');
         cardEl.className = 'card';
-        if (card.suit === '♥' || card.suit === '♦') {
-            cardEl.classList.add('red');
-        }
         cardEl.innerHTML = `
             <div style="font-size: 16px;">${card.rank}</div>
             <div style="font-size: 28px;">${card.suit}</div>
