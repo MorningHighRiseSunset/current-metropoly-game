@@ -280,19 +280,7 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
     }
 
     function showResult(text, isWin = null) {
-        const resultEl = q('#result');
-        if (resultEl) {
-            resultEl.textContent = text;
-            resultEl.classList.remove('win', 'lose');
-            if (isWin === true) {
-                resultEl.classList.add('win');
-            } else if (isWin === false) {
-                resultEl.classList.add('lose');
-            }
-            resultEl.style.animation = 'none';
-            resultEl.offsetHeight; // Trigger reflow
-            resultEl.style.animation = 'fadeIn 0.5s ease-out';
-        }
+        // Result display removed - no longer needed
     }
 
     // --- Event Listeners ---
