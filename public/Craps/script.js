@@ -1,65 +1,23 @@
-// Simple Craps Minigame - Single Round Version
+// Craps Minigame with Professional Table Layout
 window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBalance) {
-    // Create simple UI
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-        color: white;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        padding: 20px;
-    `;
-    
-    // Only create UI if container is empty
-    if (container.children.length === 0) {
-        wrapper.innerHTML = `
-            <h1 style="margin-bottom: 20px; font-size: 2.5em; background: linear-gradient(45deg, #9b59b6, #8e44ad, #9b59b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 0 30px rgba(155, 89, 182, 0.5); animation: titleGlow 2s ease-in-out infinite; letter-spacing: 2px;">🎲 Craps</h1>
-            
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, rgba(155, 89, 182, 0.15), rgba(142, 68, 173, 0.15)); border: 2px solid rgba(155, 89, 182, 0.4); border-radius: 15px; backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(155, 89, 182, 0.3);">
-                <div style="font-size: 1.2em; font-weight: bold; text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);">Balance: $<span id="craps-balance">${bankroll}</span></div>
-                <div style="font-size: 1.2em; font-weight: bold; text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);">Current Bet: $<span id="craps-bet">0</span></div>
-            </div>
-            
-            <div style="font-size: 1.2em; margin-bottom: 15px; color: #9b59b6;">Phase: <span id="craps-phase">Come Out</span> | Point: <span id="craps-point">-</span></div>
-            
-            <div style="font-size: 4em; margin: 25px 0; min-height: 80px; display: flex; align-items: center; justify-content: center; gap: 20px;">
-                <div class="dice" id="dice1" style="width: 80px; height: 80px; background: linear-gradient(145deg, #ffffff, #f0f0f0); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5em; box-shadow: 0 8px 20px rgba(0,0,0,0.3); color: #1a1a2e; transition: transform 0.3s ease;">🎲</div>
-                <div class="dice" id="dice2" style="width: 80px; height: 80px; background: linear-gradient(145deg, #ffffff, #f0f0f0); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5em; box-shadow: 0 8px 20px rgba(0,0,0,0.3); color: #1a1a2e; transition: transform 0.3s ease;">🎲</div>
-            </div>
-            
-            <div id="craps-result" style="font-size: 1.5em; margin: 20px 0; padding: 20px; background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(142, 68, 173, 0.2)); border: 2px solid rgba(155, 89, 182, 0.5); border-radius: 15px; min-height: 60px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(155, 89, 182, 0.2); transition: all 0.3s ease;"></div>
-            
-            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                <button id="bet-pass" style="padding: 15px 30px; font-size: 1.1em; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4); text-transform: uppercase; letter-spacing: 1px;">� Pass Line ($100)</button>
-                <button id="bet-dont" style="padding: 15px 30px; font-size: 1.1em; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4); text-transform: uppercase; letter-spacing: 1px;">❌ Don't Pass ($100)</button>
-                <button id="roll-btn" style="padding: 15px 30px; font-size: 1.1em; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; box-shadow: 0 8px 20px rgba(155, 89, 182, 0.4); text-transform: uppercase; letter-spacing: 1px;" disabled>🎲 Roll Dice</button>
-            </div>
-        `;
-        container.appendChild(wrapper);
-    }
-    
     // Game state
     let balance = bankroll;
     let currentBet = 0;
-    let betType = null; // 'pass' or 'dont'
+    let betType = null; // 'pass', 'dont', or specific bets
     let phase = 'comeout'; // 'comeout' or 'point'
     let point = null;
     
-    // DOM elements
+    // DOM elements (using existing HTML structure)
     const balanceEl = container.querySelector('#craps-balance');
     const betEl = container.querySelector('#craps-bet');
     const phaseEl = container.querySelector('#craps-phase');
     const pointEl = container.querySelector('#craps-point');
     const rollBtn = container.querySelector('#roll-btn');
-    const diceDisplay = container.querySelector('#craps-result');
+    const clearBtn = container.querySelector('#clear-bets');
+    const resultEl = container.querySelector('#craps-result');
     const dice1 = container.querySelector('#dice1');
     const dice2 = container.querySelector('#dice2');
-    const passBtn = container.querySelector('#bet-pass');
-    const dontBtn = container.querySelector('#bet-dont');
+    const betAreas = container.querySelectorAll('.bet-area');
     
     // Update UI
     function updateUI() {
@@ -69,42 +27,59 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
         pointEl.textContent = point ? point : '-';
         
         // Enable/disable buttons
-        passBtn.disabled = currentBet > 0 || phase === 'point';
-        dontBtn.disabled = currentBet > 0 || phase === 'point';
         rollBtn.disabled = currentBet === 0;
+        
+        // Update bet area selection
+        betAreas.forEach(area => {
+            area.classList.remove('selected');
+            if (area.dataset.bet === betType) {
+                area.classList.add('selected');
+            }
+        });
     }
     
     function showResult(text, isWin = false) {
-        diceDisplay.textContent = text;
-        diceDisplay.classList.remove('win');
+        resultEl.textContent = text;
+        resultEl.classList.remove('win');
         if (isWin) {
-            diceDisplay.classList.add('win');
+            resultEl.classList.add('win');
         }
     }
     
-    // Bet functions
-    passBtn.addEventListener('click', () => {
-        if (balance < 100) {
-            showResult('Not enough balance!');
-            return;
-        }
-        currentBet = 100;
-        betType = 'pass';
-        balance -= 100;
-        updateUI();
-        showResult('Pass Line bet placed. Roll the dice!');
+    // Bet area click handlers
+    betAreas.forEach(area => {
+        area.addEventListener('click', () => {
+            if (currentBet > 0) {
+                showResult('Clear current bet first!');
+                return;
+            }
+            
+            if (balance < 100) {
+                showResult('Not enough balance!');
+                return;
+            }
+            
+            const bet = area.dataset.bet;
+            currentBet = 100;
+            betType = bet;
+            balance -= 100;
+            updateUI();
+            
+            const betName = area.querySelector('.label')?.textContent || bet;
+            showResult(`${betName} bet placed. Roll the dice!`);
+        });
     });
     
-    dontBtn.addEventListener('click', () => {
-        if (balance < 100) {
-            showResult('Not enough balance!');
-            return;
+    // Clear bets
+    clearBtn.addEventListener('click', () => {
+        if (currentBet > 0) {
+            balance += currentBet;
+            currentBet = 0;
+            betType = null;
+            updateUI();
+            showResult('Bets cleared.');
+            syncBalance();
         }
-        currentBet = 100;
-        betType = 'dont';
-        balance -= 100;
-        updateUI();
-        showResult("Don't Pass bet placed. Roll the dice!");
     });
     
     // Roll dice
@@ -131,15 +106,17 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
                     if (betType === 'pass') {
                         balance += currentBet * 2;
                         showResult(`🎉 Natural ${total}! Pass Line wins! +$${currentBet}`, true);
-                    } else if (betType === 'dont') {
+                    } else if (betType === 'dont-pass') {
                         showResult(`❌ Natural ${total}! Don't Pass loses. -$${currentBet}`, false);
+                    } else {
+                        showResult(`Rolled ${total}. No bet placed.`, false);
                     }
                     endRound();
                 } else if (total === 2 || total === 3 || total === 12) {
                     // Pass loses, Don't Pass wins (except 12 is push)
                     if (betType === 'pass') {
                         showResult(`❌ Craps ${total}! Pass Line loses. -$${currentBet}`, false);
-                    } else if (betType === 'dont') {
+                    } else if (betType === 'dont-pass') {
                         if (total === 12) {
                             balance += currentBet; // Push
                             showResult(`🤝 12 is push. Bet returned.`, false);
@@ -147,6 +124,8 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
                             balance += currentBet * 2;
                             showResult(`🎉 Craps ${total}! Don't Pass wins! +$${currentBet}`, true);
                         }
+                    } else {
+                        showResult(`Rolled ${total}. No bet placed.`, false);
                     }
                     endRound();
                 } else {
@@ -162,9 +141,11 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
                     // Seven out - Pass loses, Don't Pass wins
                     if (betType === 'pass') {
                         showResult(`❌ Seven out! Pass Line loses. -$${currentBet}`, false);
-                    } else if (betType === 'dont') {
+                    } else if (betType === 'dont-pass') {
                         balance += currentBet * 2;
                         showResult(`🎉 Seven out! Don't Pass wins! +$${currentBet}`, true);
+                    } else {
+                        showResult(`Seven out! No bet placed.`, false);
                     }
                     endRound();
                 } else if (total === point) {
@@ -172,8 +153,10 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
                     if (betType === 'pass') {
                         balance += currentBet * 2;
                         showResult(`🎉 Point ${point} made! Pass Line wins! +$${currentBet}`, true);
-                    } else if (betType === 'dont') {
+                    } else if (betType === 'dont-pass') {
                         showResult(`❌ Point ${point} made! Don't Pass loses. -$${currentBet}`, false);
+                    } else {
+                        showResult(`Point ${point} made! No bet placed.`, false);
                     }
                     endRound();
                 } else {
@@ -212,14 +195,3 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
     updateUI();
     syncBalance();
 };
-
-// Auto-initialize for standalone usage
-if (window.parent === window && document.currentScript && document.currentScript.src && document.currentScript.src.includes('Craps/script.js')) {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            window.initCrapsMinigame(document.querySelector('.craps-table-container'), window.playerMoney, window.updateMainGameBalance);
-        });
-    } else {
-        window.initCrapsMinigame(document.querySelector('.craps-table-container'), window.playerMoney, window.updateMainGameBalance);
-    }
-}

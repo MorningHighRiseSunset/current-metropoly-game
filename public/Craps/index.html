@@ -44,11 +44,120 @@
 		
 		.craps-container {
 			width: 100%;
-			max-width: 500px;
+			max-width: 900px;
 			padding: 20px;
 			text-align: center;
 			position: relative;
 			z-index: 1;
+		}
+		
+		.craps-table {
+			background: linear-gradient(135deg, #1a472a 0%, #0d2b1a 100%);
+			border: 8px solid #8b5cf6;
+			border-radius: 20px;
+			padding: 30px;
+			margin: 20px 0;
+			box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,0,0,0.3);
+			position: relative;
+		}
+		
+		.craps-table::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: 
+				repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.03) 10px, rgba(255,255,255,0.03) 20px);
+			pointer-events: none;
+			border-radius: 12px;
+		}
+		
+		.table-layout {
+			display: grid;
+			grid-template-columns: repeat(6, 1fr);
+			grid-template-rows: repeat(6, 1fr);
+			gap: 8px;
+			margin: 20px 0;
+			position: relative;
+			z-index: 1;
+		}
+		
+		.bet-area {
+			background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(142, 68, 173, 0.2));
+			border: 2px solid rgba(139, 92, 246, 0.5);
+			border-radius: 8px;
+			padding: 10px;
+			min-height: 60px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			position: relative;
+			overflow: hidden;
+		}
+		
+		.bet-area:hover {
+			background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(142, 68, 173, 0.4));
+			transform: scale(1.05);
+			box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+		}
+		
+		.bet-area.selected {
+			background: linear-gradient(135deg, rgba(46, 204, 113, 0.4), rgba(39, 174, 96, 0.4));
+			border-color: #2ecc71;
+			box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+		}
+		
+		.bet-area .number {
+			font-size: 1.8em;
+			font-weight: bold;
+			color: #fff;
+			text-shadow: 0 0 10px rgba(0,0,0,0.5);
+		}
+		
+		.bet-area .label {
+			font-size: 0.8em;
+			color: #a78bfa;
+			margin-top: 5px;
+		}
+		
+		.bet-area .payout {
+			font-size: 0.7em;
+			color: #f39c12;
+			margin-top: 2px;
+		}
+		
+		.pass-line {
+			grid-column: 1 / -1;
+			background: linear-gradient(135deg, rgba(46, 204, 113, 0.3), rgba(39, 174, 96, 0.3));
+			border-color: #2ecc71;
+		}
+		
+		.dont-pass {
+			grid-column: 1 / -1;
+			background: linear-gradient(135deg, rgba(231, 76, 60, 0.3), rgba(192, 57, 43, 0.3));
+			border-color: #e74c3c;
+		}
+		
+		.field-area {
+			grid-column: 1 / -1;
+			background: linear-gradient(135deg, rgba(243, 156, 18, 0.3), rgba(211, 84, 0, 0.3));
+			border-color: #f39c12;
+		}
+		
+		.center-area {
+			grid-column: 2 / 6;
+			grid-row: 3 / 5;
+			background: linear-gradient(135deg, rgba(155, 89, 182, 0.3), rgba(142, 68, 173, 0.3));
+			border: 3px solid #9b59b6;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
 		}
 		
 		h1 {
@@ -87,27 +196,27 @@
 		}
 		
 		.dice-display {
-			font-size: 4em;
-			margin: 25px 0;
-			min-height: 80px;
+			font-size: 2.5em;
+			margin: 10px 0;
+			min-height: 50px;
 			display: flex;
-		 align-items: center;
-		 justify-content: center;
-		 gap: 20px;
+			align-items: center;
+			justify-content: center;
+			gap: 15px;
 		}
 		
 		.dice {
-			width: 80px;
-			height: 80px;
+			width: 50px;
+			height: 50px;
 			background: linear-gradient(145deg, #ffffff, #f0f0f0);
-			border-radius: 15px;
+			border-radius: 10px;
 			display: flex;
-		 align-items: center;
-		 justify-content: center;
-		 font-size: 2.5em;
-		 box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-		 color: #1a1a2e;
-		 transition: transform 0.3s ease;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.8em;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+			color: #1a1a2e;
+			transition: transform 0.3s ease;
 		}
 		
 		.dice.rolling {
@@ -123,16 +232,16 @@
 		}
 		
 		.result {
-			font-size: 1.5em;
-			margin: 20px 0;
-			padding: 20px;
+			font-size: 1.2em;
+			margin: 10px 0;
+			padding: 15px;
 			background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(142, 68, 173, 0.2));
 			border: 2px solid rgba(155, 89, 182, 0.5);
-			border-radius: 15px;
-			min-height: 60px;
+			border-radius: 12px;
+			min-height: 40px;
 			display: flex;
-		 align-items: center;
-		 justify-content: center;
+			align-items: center;
+			justify-content: center;
 			backdrop-filter: blur(10px);
 			box-shadow: 0 8px 32px rgba(155, 89, 182, 0.2);
 			transition: all 0.3s ease;
@@ -199,16 +308,6 @@
 			cursor: not-allowed;
 			transform: none;
 		}
-		
-		.btn-pass {
-			background: linear-gradient(135deg, #27ae60, #2ecc71);
-			box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
-		}
-		
-		.btn-dont {
-			background: linear-gradient(135deg, #e74c3c, #c0392b);
-			box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
-		}
 	</style>
 </head>
 <body>
@@ -222,17 +321,89 @@
 		
 		<div style="font-size: 1.2em; margin-bottom: 15px; color: #9b59b6;">Phase: <span id="craps-phase">Come Out</span> | Point: <span id="craps-point">-</span></div>
 		
-		<div class="dice-display">
-			<div class="dice" id="dice1">🎲</div>
-			<div class="dice" id="dice2">🎲</div>
+		<div class="craps-table">
+			<div class="table-layout">
+				<div class="bet-area pass-line" data-bet="pass">
+					<div class="label">PASS LINE</div>
+					<div class="payout">1:1</div>
+				</div>
+				
+				<div class="bet-area" data-bet="4">
+					<div class="number">4</div>
+					<div class="payout">9:5</div>
+				</div>
+				<div class="bet-area" data-bet="5">
+					<div class="number">5</div>
+					<div class="payout">7:5</div>
+				</div>
+				<div class="bet-area" data-bet="6">
+					<div class="number">6</div>
+					<div class="payout">7:6</div>
+				</div>
+				<div class="bet-area" data-bet="8">
+					<div class="number">8</div>
+					<div class="payout">7:6</div>
+				</div>
+				<div class="bet-area" data-bet="9">
+					<div class="number">9</div>
+					<div class="payout">7:5</div>
+				</div>
+				<div class="bet-area" data-bet="10">
+					<div class="number">10</div>
+					<div class="payout">9:5</div>
+				</div>
+				
+				<div class="bet-area" data-bet="6-come">
+					<div class="number">6</div>
+					<div class="label">COME</div>
+				</div>
+				<div class="center-area">
+					<div class="dice-display">
+						<div class="dice" id="dice1">🎲</div>
+						<div class="dice" id="dice2">🎲</div>
+					</div>
+					<div class="result" id="craps-result"></div>
+				</div>
+				<div class="bet-area" data-bet="8-come">
+					<div class="number">8</div>
+					<div class="label">COME</div>
+				</div>
+				
+				<div class="bet-area field-area" data-bet="field">
+					<div class="label">FIELD</div>
+					<div class="payout">2:1 on 2,12</div>
+				</div>
+				<div class="bet-area" data-bet="7">
+					<div class="number">7</div>
+					<div class="payout">4:1</div>
+				</div>
+				<div class="bet-area" data-bet="any-craps">
+					<div class="label">ANY CRAPS</div>
+					<div class="payout">7:1</div>
+				</div>
+				<div class="bet-area" data-bet="hard-8">
+					<div class="label">HARD 8</div>
+					<div class="payout">9:1</div>
+				</div>
+				<div class="bet-area" data-bet="hard-6">
+					<div class="label">HARD 6</div>
+					<div class="payout">9:1</div>
+				</div>
+				<div class="bet-area" data-bet="hard-4">
+					<div class="label">HARD 4</div>
+					<div class="payout">7:1</div>
+				</div>
+				
+				<div class="bet-area dont-pass" data-bet="dont-pass">
+					<div class="label">DON'T PASS</div>
+					<div class="payout">1:1</div>
+				</div>
+			</div>
 		</div>
 		
-		<div class="result" id="craps-result"></div>
-		
 		<div class="controls">
-			<button class="btn btn-pass" id="bet-pass">🎯 Pass Line ($100)</button>
-			<button class="btn btn-dont" id="bet-dont">❌ Don't Pass ($100)</button>
-			<button class="btn" id="roll-btn" disabled>🎲 Roll Dice</button>
+			<button class="btn" id="roll-btn" disabled>🎲 Roll Dice ($100)</button>
+			<button class="btn" id="clear-bets">🗑️ Clear Bets</button>
 		</div>
 	</div>
 	
