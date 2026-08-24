@@ -3163,6 +3163,14 @@ socket.on('playerDisconnected', (data) => {
     updatePlayersList();
 });
 
+socket.on('lobbyDeleted', (data) => {
+    const { gameId, reason } = data;
+    alert(`Lobby deleted: ${reason}`);
+    
+    // Redirect back to lobby
+    window.location.href = '/';
+});
+
 socket.on('playerMoved', (data) => {
     const { playerId, newPosition, message, players: serverPlayers, direction = 'forward' } = data;
 

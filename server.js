@@ -3245,16 +3245,21 @@ io.on('connection', (socket) => {
                 
                 // Handle player removal based on game status
                 if (game.status === 'lobby') {
-                    // In lobby: immediately remove player and potentially delete game
-                    game.players = game.players.filter(p => p && p.id !== socket.id);
-                    
-                    if (game.host === socket.id && game.players.length > 0) {
-                        // Find first non-null player
-                        const firstPlayer = game.players.find(p => p);
-                        if (firstPlayer) {
-                            game.host = firstPlayer.id;
-                        }
+                    // In lobby: if host leaves, delete the game entirely
+                    if (game.host === socket.id) {
+                        console.log(`Deleting lobby game ${playerData.gameId} - host left`);
+                        delete games[playerData.gameId];
+                        saveGames();
+                        broadcastLobbies();
+                        io.to(playerData.gameId).emit('lobbyDeleted', {
+                            gameId: playerData.gameId,
+                            reason: 'Host left the lobby'
+                        });
+                        return;
                     }
+                    
+                    // Non-host player leaving: remove player
+                    game.players = game.players.filter(p => p && p.id !== socket.id);
 
                     if (game.players.length === 0) {
                         console.log(`Deleting lobby game ${playerData.gameId} - no players left`);

@@ -590,6 +590,25 @@ socket.on('lobbyJoined', (data) => {
     }
 });
 
+socket.on('lobbyDeleted', (data) => {
+    const { gameId, reason } = data;
+    showModal(`Lobby deleted: ${reason}`);
+    
+    // Clear game state
+    currentGameId = null;
+    isHost = false;
+    clearSpectatorIdentity();
+    
+    // Return to lobby menu
+    setTimeout(() => {
+        hideModal();
+        gameCreatedSection.classList.add('hidden');
+        lobbySection.classList.add('hidden');
+        gameMenu.classList.remove('hidden');
+        fetchLobbies();
+    }, 2000);
+});
+
 socket.on('playerJoined', (data) => {
     console.log('playerJoined received:', data);
     console.log('isHost:', isHost);
