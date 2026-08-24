@@ -53,63 +53,15 @@ window.loadCraps = function() {
 };
 
 function loadMinigameInOverlay(url) {
+    // Extract game name from URL to use the proper casino modal
+    const gameNameMatch = url.match(/\/([^\/]+)\/index\.html/);
+    const gameName = gameNameMatch ? gameNameMatch[1] : 'BlackJack';
+    
     // Get current player balance from game state
     const playerBalance = window.playerMoney || 2500;
     
-    // Add balance as URL parameter
-    const urlWithBalance = url + (url.includes('?') ? '&' : '?') + 'balance=' + playerBalance;
-    
-    // Create overlay container
-    const overlay = document.createElement('div');
-    overlay.id = 'minigame-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.9);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    `;
-    
-    // Create iframe for minigame
-    const iframe = document.createElement('iframe');
-    iframe.src = urlWithBalance;
-    iframe.style.cssText = `
-        width: 90vw;
-        height: 90vh;
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 0 40px rgba(155, 89, 182, 0.5);
-    `;
-    
-    // Create close button
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕ Close';
-    closeBtn.style.cssText = `
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #9b59b6, #8e44ad);
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: bold;
-        z-index: 10001;
-    `;
-    closeBtn.onclick = () => {
-        document.body.removeChild(overlay);
-    };
-    
-    overlay.appendChild(iframe);
-    overlay.appendChild(closeBtn);
-    document.body.appendChild(overlay);
+    // Use the same casino modal system as the actual popup
+    openCasinoGame(gameName, playerBalance);
 }
 
 console.log('Minigame console commands loaded: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()');
