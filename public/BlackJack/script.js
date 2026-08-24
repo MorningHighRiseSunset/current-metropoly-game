@@ -139,8 +139,13 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         const playerScoreEl = q('#player-score');
         const dealerScoreEl = q('#dealer-score');
         if (playerScoreEl) playerScoreEl.textContent = handValue(playerHand);
-        if (dealerScoreEl && revealDealer) dealerScoreEl.textContent = handValue(dealerHand);
-        else if (dealerScoreEl) dealerScoreEl.textContent = '?';
+        if (dealerScoreEl) {
+            if (revealDealer) {
+                dealerScoreEl.textContent = handValue(dealerHand);
+            } else {
+                dealerScoreEl.textContent = '?';
+            }
+        }
     }
 
     function clearGame() {
@@ -195,6 +200,12 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         
         renderHands(false);
         
+        // Explicitly update initial scores
+        const playerScoreEl = q('#player-score');
+        const dealerScoreEl = q('#dealer-score');
+        if (playerScoreEl) playerScoreEl.textContent = handValue(playerHand);
+        if (dealerScoreEl) dealerScoreEl.textContent = '?';
+        
         // Enable hit/stand buttons
         const hitBtn = q('#hit-btn');
         const standBtn = q('#stand-btn');
@@ -218,6 +229,12 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         playerHand.push(card);
         renderHands(false);
         
+        // Explicitly update player score display
+        const playerScoreEl = q('#player-score');
+        if (playerScoreEl) {
+            playerScoreEl.textContent = handValue(playerHand);
+        }
+        
         const playerScore = handValue(playerHand);
         if (playerScore > 21) {
             endRound();
@@ -237,6 +254,13 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         }
         
         renderHands(true);
+        
+        // Explicitly update dealer score display
+        const dealerScoreEl = q('#dealer-score');
+        if (dealerScoreEl) {
+            dealerScoreEl.textContent = handValue(dealerHand);
+        }
+        
         endRound();
     }
 
