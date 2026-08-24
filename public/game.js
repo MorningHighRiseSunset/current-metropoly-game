@@ -4448,8 +4448,6 @@ function createCenterCarousel(parentGroup) {
         '/Images/BetMGM.jpg',
         '/Images/las_vegas_motor_speedway.webp',
         '/Images/tigetwoods.avif',
-        'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/ClarkCountyFair.jpg',
-        'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/Clark-County-Today-Clark-County-Fair-Carnival-02.jpg',
         'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/clark%20county%20fair.jpg',
         '/Images/minus_1x_1.webp',
         '/Images/berry_1.webp',
