@@ -1634,8 +1634,8 @@ body {
     background: var(--card-bg);
     padding: 30px;
     border-radius: 15px;
-    max-width: 700px;
-    width: 90%;
+    max-width: 500px;
+    width: 70%;
     max-height: 80vh;
     overflow-y: auto;
     overflow-x: hidden;
@@ -1769,7 +1769,7 @@ body {
     border: 1px solid var(--card-border);
     box-shadow: 0 4px 20px var(--shadow-color);
     animation: modalSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    max-width: 380px;
+    max-width: 300px;
     padding: 20px;
 }
 
@@ -1913,7 +1913,7 @@ body {
     border: 1px solid var(--card-border);
     box-shadow: 0 4px 20px var(--shadow-color);
     animation: modalSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    max-width: 400px;
+    max-width: 320px;
     padding: 20px;
 }
 
@@ -1988,8 +1988,8 @@ body {
 }
 
 #propertyModal .property-modal-content {
-    max-width: 460px;
-    width: 92%;
+    max-width: 350px;
+    width: 70%;
     max-height: none;
     margin-top: 0;
     padding: 0;
