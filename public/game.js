@@ -1519,7 +1519,14 @@ function openCasinoGame(gameName, observerOptions = null) {
 
     // Load casino game in iframe with initialization parameters
     const gamePath = `/${gameName}/index.html`;
-    casinoContainer.innerHTML = `<iframe src="${gamePath}" class="casino-iframe" frameborder="0"></iframe>`;
+    
+    // Create iframe without src first to avoid race condition
+    const iframe = document.createElement('iframe');
+    iframe.className = 'casino-iframe';
+    iframe.frameBorder = '0';
+    
+    casinoContainer.innerHTML = '';
+    casinoContainer.appendChild(iframe);
 
     casinoModal.classList.remove('hidden');
 
@@ -1533,63 +1540,64 @@ function openCasinoGame(gameName, observerOptions = null) {
     }
 
     // Initialize the casino game with player money after iframe loads
-    const iframe = casinoContainer.querySelector('iframe');
-    if (iframe) {
-        iframe.onload = function() {
-            try {
-                // Get the appropriate initialization function name based on game
-                const initFunctionNames = {
-                    'Baccarat': 'initBaccaratMinigame',
-                    'BlackJack': 'initBlackjackMinigame',
-                    'Craps': 'initCrapsMinigame',
-                    'PokerFP': 'initPokerMinigame',
-                    'Roulette': 'initRouletteMinigame',
-                    'slotMachine': 'initSlotMachine'
-                };
+    // Attach onload handler BEFORE setting src to ensure it always fires
+    iframe.onload = function() {
+        try {
+            // Get the appropriate initialization function name based on game
+            const initFunctionNames = {
+                'Baccarat': 'initBaccaratMinigame',
+                'BlackJack': 'initBlackjackMinigame',
+                'Craps': 'initCrapsMinigame',
+                'PokerFP': 'initPokerMinigame',
+                'Roulette': 'initRouletteMinigame',
+                'slotMachine': 'initSlotMachine'
+            };
 
-                const initFunctionName = initFunctionNames[gameName];
-                const initFn = initFunctionName && iframe.contentWindow[initFunctionName];
-                if (!initFn) {
-                    console.error('[Casino] Init function not found:', gameName, initFunctionName);
-                    return;
-                }
-
-                const iframeDoc = iframe.contentWindow.document;
-                const container = getCasinoGameContainer(iframeDoc, gameName);
-                if (!container) {
-                    console.error('[Casino] Container not found for:', gameName);
-                    return;
-                }
-
-                const syncCasinoBalance = function(balance) {
-                    try {
-                        iframe.contentWindow.__casinoBalance = balance;
-                    } catch (e) {}
-
-                    if (isObserver) return;
-
-                    if (!activeCasinoBalanceSync) {
-                        activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
-                    }
-                    activeCasinoBalanceSync(balance);
-                };
-
-                if (!isObserver) {
-                    activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
-                } else {
-                    activeCasinoBalanceSync = null;
-                }
-
-                initFn(container, playerMoney, syncCasinoBalance);
-
-                if (isObserver) {
-                    triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc);
-                }
-            } catch (e) {
-                console.error('[Casino] Could not initialize casino game:', gameName, e);
+            const initFunctionName = initFunctionNames[gameName];
+            const initFn = initFunctionName && iframe.contentWindow[initFunctionName];
+            if (!initFn) {
+                console.error('[Casino] Init function not found:', gameName, initFunctionName);
+                return;
             }
-        };
-    }
+
+            const iframeDoc = iframe.contentWindow.document;
+            const container = getCasinoGameContainer(iframeDoc, gameName);
+            if (!container) {
+                console.error('[Casino] Container not found for:', gameName);
+                return;
+            }
+
+            const syncCasinoBalance = function(balance) {
+                try {
+                    iframe.contentWindow.__casinoBalance = balance;
+                } catch (e) {}
+
+                if (isObserver) return;
+
+                if (!activeCasinoBalanceSync) {
+                    activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
+                }
+                activeCasinoBalanceSync(balance);
+            };
+
+            if (!isObserver) {
+                activeCasinoBalanceSync = createCasinoBalanceSync(playerMoney);
+            } else {
+                activeCasinoBalanceSync = null;
+            }
+
+            initFn(container, playerMoney, syncCasinoBalance);
+
+            if (isObserver) {
+                triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc);
+            }
+        } catch (e) {
+            console.error('[Casino] Could not initialize casino game:', gameName, e);
+        }
+    };
+    
+    // Now set the src to start loading
+    iframe.src = gamePath;
 }
 
 // Handle messages from casino game iframe
