@@ -216,8 +216,6 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     background: linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);
-    transform: scale(0.85);
-    transform-origin: center center;
 }
 
 .container {
