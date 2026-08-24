@@ -49,16 +49,16 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
         const threes = Object.values(rankCounts).filter(c => c === 3).length;
         const fours = Object.values(rankCounts).filter(c => c === 4).length;
         
-        // Hand rankings
-        if (isStraight && isFlush) return { rank: 8, name: 'Straight Flush' };
-        if (fours > 0) return { rank: 7, name: 'Four of a Kind' };
-        if (threes > 0 && pairs > 0) return { rank: 6, name: 'Full House' };
-        if (isFlush) return { rank: 5, name: 'Flush' };
-        if (isStraight) return { rank: 4, name: 'Straight' };
-        if (threes > 0) return { rank: 3, name: 'Three of a Kind' };
-        if (pairs >= 2) return { rank: 2, name: 'Two Pair' };
-        if (pairs === 1) return { rank: 1, name: 'Pair' };
-        return { rank: 0, name: 'High Card' };
+        // Hand rankings with multipliers
+        if (isStraight && isFlush) return { rank: 8, name: 'Straight Flush', multiplier: 100 };
+        if (fours > 0) return { rank: 7, name: 'Four of a Kind', multiplier: 30 };
+        if (threes > 0 && pairs > 0) return { rank: 6, name: 'Full House', multiplier: 20 };
+        if (isFlush) return { rank: 5, name: 'Flush', multiplier: 15 };
+        if (isStraight) return { rank: 4, name: 'Straight', multiplier: 12 };
+        if (threes > 0) return { rank: 3, name: 'Three of a Kind', multiplier: 8 };
+        if (pairs >= 2) return { rank: 2, name: 'Two Pair', multiplier: 5 };
+        if (pairs === 1) return { rank: 1, name: 'Pair', multiplier: 3 };
+        return { rank: 0, name: 'High Card', multiplier: 2 };
     }
     
     function checkStraight(values) {
@@ -121,7 +121,7 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
                 });
             } else {
                 // Show face-down cards
-                for (let i = 0; i < 2; i++) {
+                for (let i = 0; i < 5; i++) {
                     const cardEl = document.createElement('div');
                     cardEl.className = 'card';
                     cardEl.style.background = 'linear-gradient(145deg, #8e44ad, #9b59b6)';
@@ -134,17 +134,10 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
         }
     }
 
-    function showResult(text, isWin = false) {
-        const resultEl = q('#result');
-        if (resultEl) {
-            resultEl.textContent = text;
-            resultEl.classList.remove('win');
-            if (isWin) {
-                resultEl.classList.add('win');
-            }
-            resultEl.style.animation = 'none';
-            resultEl.offsetHeight; // Trigger reflow
-            resultEl.style.animation = 'fadeIn 0.5s ease-out';
+    function showStatus(text) {
+        const statusEl = q('#status-message');
+        if (statusEl) {
+            statusEl.textContent = text;
         }
     }
 
@@ -157,13 +150,15 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
         
         const playerHandEl = q('#player-hand');
         const aiHandEl = q('#ai-hand');
-        const resultEl = q('#result');
-        const potEl = q('#pot');
+        const playerResultEl = q('#player-hand-result');
+        const aiResultEl = q('#ai-hand-result');
+        const statusEl = q('#status-message');
         
         if (playerHandEl) playerHandEl.innerHTML = '';
         if (aiHandEl) aiHandEl.innerHTML = '';
-        if (resultEl) resultEl.textContent = '';
-        if (potEl) potEl.textContent = '0';
+        if (playerResultEl) playerResultEl.textContent = '';
+        if (aiResultEl) aiResultEl.textContent = '';
+        if (statusEl) statusEl.textContent = 'Click Deal to play';
         
         // Reset button
         const dealBtn = q('#deal-btn');
@@ -173,56 +168,57 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
     function deal() {
         if (gamePhase !== 'betting') return;
         if (currentBet > balance) {
-            showResult('Not enough balance!');
+            showStatus('Not enough balance!');
             return;
         }
         
         balance -= currentBet;
         updateBalance();
         
-        const potEl = q('#pot');
-        if (potEl) potEl.textContent = currentBet * 2; // AI also bets
-        
-        // Deal cards
+        // Deal 5 cards
         deck = createDeck();
         shuffle(deck);
-        playerHand = [deck.pop(), deck.pop()];
-        aiHand = [deck.pop(), deck.pop()];
+        playerHand = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+        aiHand = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
         
         renderHands(false);
         gamePhase = 'playing';
+        showStatus('Dealing 5 cards...');
         
         // Reveal and evaluate after delay
         setTimeout(() => {
             renderHands(true);
+            showStatus('Revealing hands...');
             
             const playerEval = evaluateHand(playerHand);
             const aiEval = evaluateHand(aiHand);
             
-            let result = '';
-            let isWin = false;
-            if (playerEval.rank > aiEval.rank) {
-                balance += currentBet * 2;
-                result = `You win! ${playerEval.name} beats ${aiEval.name}`;
-                isWin = true;
-            } else if (aiEval.rank > playerEval.rank) {
-                result = `AI wins! ${aiEval.name} beats ${playerEval.name}`;
-                isWin = false;
-            } else {
-                balance += currentBet; // Push
-                result = `It's a tie! Both have ${playerEval.name}`;
-                isWin = false;
-            }
+            // Show hand rankings
+            const playerResultEl = q('#player-hand-result');
+            const aiResultEl = q('#ai-hand-result');
+            if (playerResultEl) playerResultEl.textContent = playerEval.name;
+            if (aiResultEl) aiResultEl.textContent = aiEval.name;
             
-            showResult(result, isWin);
-            updateBalance();
-            gamePhase = 'result';
-            
-            // Auto-reset after delay
             setTimeout(() => {
-                clearGame();
-                showResult('Click Deal to play again!');
-            }, 3000);
+                if (playerEval.rank > aiEval.rank) {
+                    const winAmount = Math.floor(currentBet * playerEval.multiplier);
+                    balance += winAmount;
+                    showStatus(`You win! ${playerEval.name} beats ${aiEval.name}. +$${winAmount - currentBet}`);
+                } else if (aiEval.rank > playerEval.rank) {
+                    showStatus(`AI wins! ${aiEval.name} beats ${playerEval.name}. -$${currentBet}`);
+                } else {
+                    balance += currentBet; // Push
+                    showStatus(`Tie! Both have ${playerEval.name}. Bet returned.`);
+                }
+                
+                updateBalance();
+                gamePhase = 'result';
+                
+                // Auto-reset after delay
+                setTimeout(() => {
+                    clearGame();
+                }, 3000);
+            }, 500);
         }, 1000);
     }
 

@@ -92,14 +92,10 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         if (bankerScoreEl) bankerScoreEl.textContent = handValue(bankerHand);
     }
 
-    function showResult(text, isWin = false) {
-        const resultEl = q('#result');
-        if (resultEl) {
-            resultEl.textContent = text;
-            resultEl.classList.remove('win');
-            if (isWin) {
-                resultEl.classList.add('win');
-            }
+    function showStatus(text) {
+        const statusEl = q('#status-message');
+        if (statusEl) {
+            statusEl.textContent = text;
         }
     }
 
@@ -112,17 +108,17 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         
         const playerHandEl = q('#player-cards');
         const bankerHandEl = q('#ai-cards');
-        const resultEl = q('#result');
         const playerScoreEl = q('#player-score');
         const bankerScoreEl = q('#ai-score');
         const betDisplayEl = q('#current-bet-display');
+        const statusEl = q('#status-message');
         
         if (playerHandEl) playerHandEl.innerHTML = '';
         if (bankerHandEl) bankerHandEl.innerHTML = '';
-        if (resultEl) resultEl.textContent = '';
         if (playerScoreEl) playerScoreEl.textContent = '0';
         if (bankerScoreEl) bankerScoreEl.textContent = '0';
         if (betDisplayEl) betDisplayEl.textContent = '0';
+        if (statusEl) statusEl.textContent = 'Place your bet and click Deal';
         
         // Reset buttons
         const betBtns = container.querySelectorAll('.bet-btn');
@@ -152,17 +148,17 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         const betDisplayEl = q('#current-bet-display');
         if (betDisplayEl) betDisplayEl.textContent = `$${currentBet}`;
         
-        showResult(`Selected ${type.toUpperCase()}. Click Deal!`);
+        showStatus(`Selected ${type.toUpperCase()}. Click Deal to begin.`);
     }
 
     function deal() {
         if (gamePhase !== 'betting') return;
         if (!betType) {
-            showResult('Please select a bet type!');
+            showStatus('Please select a bet type!');
             return;
         }
         if (currentBet > balance) {
-            showResult('Not enough balance!');
+            showStatus('Not enough balance!');
             return;
         }
         
@@ -176,7 +172,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         const dealBtn = q('#deal-btn');
         if (dealBtn) dealBtn.disabled = true;
         
-        // Deal cards
+        // Deal initial cards
         deck = createDeck();
         shuffle(deck);
         playerHand = [deck.pop(), deck.pop()];
@@ -184,54 +180,139 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         
         renderHands();
         gamePhase = 'playing';
+        showStatus('Dealing initial cards...');
         
-        // Resolve after delay
+        // Check for naturals (8 or 9)
         setTimeout(() => {
             const playerScore = handValue(playerHand);
             const bankerScore = handValue(bankerHand);
             
-            let result = '';
-            let isWin = false;
+            if (playerScore >= 8 || bankerScore >= 8) {
+                showStatus(`Natural! Player: ${playerScore}, Banker: ${bankerScore}`);
+                resolveGame(playerScore, bankerScore);
+                return;
+            }
             
+            // Player draws on 0-5
+            if (playerScore <= 5) {
+                showStatus(`Player has ${playerScore}. Drawing third card...`);
+                setTimeout(() => {
+                    playerHand.push(deck.pop());
+                    renderHands();
+                    const newPlayerScore = handValue(playerHand);
+                    const playerThirdCard = playerHand[2];
+                    
+                    // Banker drawing rules based on Player's third card
+                    determineBankerDraw(bankerScore, playerThirdCard, newPlayerScore);
+                }, 800);
+            } else {
+                showStatus(`Player stands with ${playerScore}`);
+                // Banker draws on 0-5, stands on 6-7
+                if (bankerScore <= 5) {
+                    showStatus(`Banker has ${bankerScore}. Drawing third card...`);
+                    setTimeout(() => {
+                        bankerHand.push(deck.pop());
+                        renderHands();
+                        const finalBankerScore = handValue(bankerHand);
+                        showStatus(`Banker draws. Final: Player ${playerScore}, Banker ${finalBankerScore}`);
+                        resolveGame(playerScore, finalBankerScore);
+                    }, 800);
+                } else {
+                    showStatus(`Banker stands with ${bankerScore}`);
+                    resolveGame(playerScore, bankerScore);
+                }
+            }
+        }, 800);
+    }
+    
+    function determineBankerDraw(bankerScore, playerThirdCard, playerScore) {
+        // Banker always draws on 0-2
+        if (bankerScore <= 2) {
+            showStatus(`Banker has ${bankerScore}. Drawing third card...`);
+            setTimeout(() => {
+                bankerHand.push(deck.pop());
+                renderHands();
+                const finalBankerScore = handValue(bankerHand);
+                showStatus(`Banker draws. Final: Player ${playerScore}, Banker ${finalBankerScore}`);
+                resolveGame(playerScore, finalBankerScore);
+            }, 800);
+            return;
+        }
+        
+        // Banker stands on 7
+        if (bankerScore >= 7) {
+            showStatus(`Banker stands with ${bankerScore}`);
+            resolveGame(playerScore, bankerScore);
+            return;
+        }
+        
+        // Banker 3-6: depends on Player's third card
+        const thirdCardValue = getCardValue(playerThirdCard);
+        let shouldDraw = false;
+        
+        if (bankerScore === 3) {
+            shouldDraw = thirdCardValue !== 8;
+        } else if (bankerScore === 4) {
+            shouldDraw = thirdCardValue >= 2 && thirdCardValue <= 7;
+        } else if (bankerScore === 5) {
+            shouldDraw = thirdCardValue >= 4 && thirdCardValue <= 7;
+        } else if (bankerScore === 6) {
+            shouldDraw = thirdCardValue === 6 || thirdCardValue === 7;
+        }
+        
+        if (shouldDraw) {
+            showStatus(`Banker has ${bankerScore}. Drawing third card...`);
+            setTimeout(() => {
+                bankerHand.push(deck.pop());
+                renderHands();
+                const finalBankerScore = handValue(bankerHand);
+                showStatus(`Banker draws. Final: Player ${playerScore}, Banker ${finalBankerScore}`);
+                resolveGame(playerScore, finalBankerScore);
+            }, 800);
+        } else {
+            showStatus(`Banker stands with ${bankerScore}`);
+            resolveGame(playerScore, bankerScore);
+        }
+    }
+    
+    function getCardValue(card) {
+        if (card.rank === 'A') return 1;
+        if (['K', 'Q', 'J', '10'].includes(card.rank)) return 0;
+        return parseInt(card.rank);
+    }
+    
+    function resolveGame(playerScore, bankerScore) {
+        setTimeout(() => {
             if (playerScore > bankerScore) {
                 if (betType === 'player') {
                     balance += currentBet * 2;
-                    result = `Player wins! +$${currentBet}`;
-                    isWin = true;
+                    showStatus(`Player wins! +$${currentBet}`);
                 } else {
-                    result = `Player wins. You lost $${currentBet}`;
-                    isWin = false;
+                    showStatus(`Player wins. You lost $${currentBet}`);
                 }
             } else if (bankerScore > playerScore) {
                 if (betType === 'banker') {
                     balance += Math.floor(currentBet * 1.95);
-                    result = `Banker wins! +$${Math.floor(currentBet * 0.95)}`;
-                    isWin = true;
+                    showStatus(`Banker wins! +$${Math.floor(currentBet * 0.95)}`);
                 } else {
-                    result = `Banker wins. You lost $${currentBet}`;
-                    isWin = false;
+                    showStatus(`Banker wins. You lost $${currentBet}`);
                 }
             } else {
-                // Tie
                 if (betType === 'tie') {
                     balance += currentBet * 8;
-                    result = `Tie! +$${currentBet * 7}`;
-                    isWin = true;
+                    showStatus(`Tie! +$${currentBet * 7}`);
                 } else {
-                    balance += currentBet; // Push
-                    result = `Tie! Bet returned`;
-                    isWin = false;
+                    balance += currentBet;
+                    showStatus(`Tie! Bet returned`);
                 }
             }
             
-            showResult(result, isWin);
             updateBalance();
             gamePhase = 'result';
             
-            // Auto-reset after delay
             setTimeout(() => {
                 clearGame();
-                showResult('Select a bet type to begin!');
+                showStatus('Place your bet and click Deal');
             }, 3000);
         }, 1000);
     }
@@ -252,7 +333,6 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     // --- Initialize ---
     clearGame();
     updateBalance();
-    showResult('Select a bet type to begin!');
 };
 
 // Auto-initialize for standalone usage
