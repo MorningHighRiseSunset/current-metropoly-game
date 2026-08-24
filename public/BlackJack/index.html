@@ -45,7 +45,7 @@
 
         .blackjack-container {
             width: 100%;
-            max-width: 700px;
+            max-width: 900px;
             padding: 20px;
             text-align: center;
             position: relative;
@@ -87,18 +87,19 @@
             text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
         }
 
-        /* Casino Table Layout */
-        .casino-table {
+        /* Professional Casino Blackjack Table */
+        .blackjack-table {
             background: linear-gradient(135deg, #1a472a 0%, #0d2b1a 100%);
-            border: 8px solid #8b5cf6;
-            border-radius: 30px;
-            padding: 40px 30px;
+            border: 12px solid #8b5cf6;
+            border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+            padding: 60px 40px 40px 40px;
             margin: 20px 0;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.5), inset 0 0 80px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 0 100px rgba(0,0,0,0.4);
             position: relative;
+            min-height: 400px;
         }
         
-        .casino-table::before {
+        .blackjack-table::before {
             content: '';
             position: absolute;
             top: 0;
@@ -106,53 +107,131 @@
             right: 0;
             bottom: 0;
             background: 
-                repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(255,255,255,0.02) 15px, rgba(255,255,255,0.02) 30px);
+                repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.02) 20px, rgba(255,255,255,0.02) 40px);
             pointer-events: none;
-            border-radius: 22px;
+            border-radius: 45% 45% 35% 35% / 55% 55% 35% 35%;
+        }
+
+        /* Table markings */
+        .table-markings {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid rgba(139, 92, 246, 0.3);
+            border-radius: 50%;
+            width: 200px;
+            height: 100px;
+            z-index: 1;
         }
 
         .table-layout {
             display: flex;
             flex-direction: column;
-            gap: 30px;
+            gap: 40px;
             position: relative;
-            z-index: 1;
+            z-index: 2;
         }
 
-        .hand-area {
+        /* Dealer area */
+        .dealer-area {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
             padding: 20px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 15px;
-            border: 2px solid rgba(139, 92, 246, 0.3);
+            background: rgba(0,0,0,0.15);
+            border-radius: 20px;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            max-width: 400px;
+            margin: 0 auto;
         }
 
-        .hand-label {
+        .dealer-label {
+            font-size: 1.2em;
+            color: #a78bfa;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .dealer-hand {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            min-height: 100px;
+        }
+
+        .dealer-score {
+            font-size: 1.3em;
+            color: #a78bfa;
+            font-weight: bold;
+            margin-top: 10px;
+            text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
+        }
+
+        /* Player area */
+        .player-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+            border: 3px solid rgba(139, 92, 246, 0.4);
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .player-label {
             font-size: 1.3em;
             color: #a78bfa;
             font-weight: bold;
             text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
-            min-width: 120px;
-            text-align: left;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
-        .hand {
+        .player-hand {
             display: flex;
             justify-content: center;
             gap: 12px;
-            flex: 1;
-            min-height: 100px;
+            min-height: 110px;
         }
 
-        .score-display {
+        .player-score {
             font-size: 1.4em;
             color: #a78bfa;
             font-weight: bold;
-            min-width: 80px;
-            text-align: right;
+            margin-top: 15px;
             text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
+        }
+
+        /* Betting circle */
+        .betting-circle {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            border: 3px solid rgba(139, 92, 246, 0.5);
+            border-radius: 50%;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .betting-circle .bet-amount {
+            font-size: 1.1em;
+            color: #a78bfa;
+            font-weight: bold;
         }
 
         .result {
@@ -282,22 +361,27 @@
         
         <div class="game-info">
             <div class="info-item">💰 Balance: $<span id="balance">2500</span></div>
-            <div class="info-item">🎯 Current Bet: $<span id="current-bet">0</span></div>
         </div>
 
-        <div class="casino-table">
+        <div class="blackjack-table">
+            <div class="table-markings"></div>
+            
             <div class="table-layout">
-                <div class="hand-area">
-                    <div class="hand-label">🤖 Dealer</div>
-                    <div class="hand" id="dealer-hand"></div>
-                    <div class="score-display">Score: <span id="dealer-score">0</span></div>
+                <div class="dealer-area">
+                    <div class="dealer-label">🤖 Dealer</div>
+                    <div class="dealer-hand" id="dealer-hand"></div>
+                    <div class="dealer-score">Score: <span id="dealer-score">0</span></div>
                 </div>
 
-                <div class="hand-area">
-                    <div class="hand-label">👤 Player</div>
-                    <div class="hand" id="player-hand"></div>
-                    <div class="score-display">Score: <span id="player-score">0</span></div>
+                <div class="player-area">
+                    <div class="player-label">👤 Player</div>
+                    <div class="player-hand" id="player-hand"></div>
+                    <div class="player-score">Score: <span id="player-score">0</span></div>
                 </div>
+            </div>
+            
+            <div class="betting-circle">
+                <div class="bet-amount" id="bet-display">$0</div>
             </div>
         </div>
 

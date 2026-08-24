@@ -54,7 +54,9 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
     // --- UI Functions ---
     function updateBalance() {
         const balanceEl = q('#balance');
+        const betDisplayEl = q('#bet-display');
         if (balanceEl) balanceEl.textContent = `$${balance}`;
+        if (betDisplayEl) betDisplayEl.textContent = `$${currentBet}`;
         if (typeof updateMainGameBalance === 'function') {
             updateMainGameBalance(balance);
         } else if (container && typeof CustomEvent === 'function') {
@@ -183,9 +185,6 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         balance -= amount;
         updateBalance();
         
-        const betEl = q('#current-bet');
-        if (betEl) betEl.textContent = `$${currentBet}`;
-        
         // Start game
         gamePhase = 'playing';
         startRound();
@@ -278,8 +277,7 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         setTimeout(() => {
             clearGame();
             currentBet = 0;
-            const betEl = q('#current-bet');
-            if (betEl) betEl.textContent = '$0';
+            updateBalance();
         }, 3000);
     }
 
