@@ -140,11 +140,10 @@
         
         .table-layout {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             gap: 8px;
             position: relative;
             z-index: 1;
-            justify-content: space-between;
         }
         
         .hand-section {
@@ -152,7 +151,6 @@
             flex-direction: column;
             align-items: center;
             padding: 5px;
-            flex: 1;
         }
         
         .hand-label {
@@ -178,11 +176,6 @@
             justify-content: center;
             align-items: center;
             padding: 5px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2;
         }
         
         .status-message {
@@ -219,11 +212,6 @@
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             transition: transform 0.3s ease;
-        }
-        
-        .card.red {
-            border-color: #e74c3c;
-            color: #e74c3c;
         }
         
         .card:hover {
