@@ -94,6 +94,7 @@ let spectatorName = null;
 let isAiVsAiGame = false;
 let activeAiLandingPlayerId = null;
 let observerCasinoStartBalance = null;
+let activePlayerCasinoGame = null; // Track if human player is actively playing casino
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -1469,6 +1470,11 @@ function openCasinoGame(gameName, observerOptions = null) {
 
     observerCasinoStartBalance = isObserver ? playerMoney : null;
 
+    // Track if human player is actively playing
+    if (!isObserver && currentPlayer) {
+        activePlayerCasinoGame = gameName;
+    }
+
     // Load casino game in iframe with initialization parameters
     const gamePath = `/${gameName}/index.html`;
     
@@ -1555,6 +1561,11 @@ function openCasinoGame(gameName, observerOptions = null) {
 // Handle messages from casino game iframe
 function handleCasinoGameMessage(event) {
     if (event.data && event.data.type === 'casinoGameClose') {
+        // Only auto-close if it's an AI observer, not a human player actively playing
+        if (activePlayerCasinoGame) {
+            console.log('[Casino] Human player is actively playing, ignoring auto-close request');
+            return;
+        }
         closeCasinoGame();
     }
 }
@@ -1570,6 +1581,7 @@ function closeCasinoGame() {
     }
     activeCasinoBalanceSync = null;
     observerCasinoStartBalance = null;
+    activePlayerCasinoGame = null; // Clear the active player casino game flag
 
     if (closeCasinoBtn) {
         closeCasinoBtn.style.display = '';
@@ -3703,6 +3715,7 @@ const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 
 if (closeCasinoBtn) {
     closeCasinoBtn.addEventListener('click', () => {
+        activePlayerCasinoGame = null; // Clear the flag when human manually closes
         closeCasinoGame();
     });
 }
@@ -3797,6 +3810,7 @@ document.querySelectorAll('.modal-close').forEach(closeBtn => {
             return;
         }
         if (modal.id === 'casinoGameModal') {
+            activePlayerCasinoGame = null; // Clear the flag when human manually closes
             closeCasinoGame();
             return;
         }
