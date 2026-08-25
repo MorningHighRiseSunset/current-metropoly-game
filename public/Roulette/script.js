@@ -4,6 +4,7 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
     let currentBet = 100;
     let selectedBet = null;
+    let selectedNumber = null; // For specific number bets
     let isSpinning = false;
 
     // --- DOM helpers ---
@@ -34,6 +35,51 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
         return wheelNumbers[Math.floor(Math.random() * wheelNumbers.length)];
     }
 
+    // --- Generate number betting grid ---
+    function generateNumberGrid() {
+        const numberGrid = q('#numberGrid');
+        if (!numberGrid) return;
+
+        // Generate numbers 0-36 and 00
+        const numbers = [0, '00', ...Array.from({length: 36}, (_, i) => i + 1)];
+        
+        numbers.forEach(num => {
+            const numBtn = document.createElement('button');
+            numBtn.className = 'number-btn';
+            numBtn.dataset.number = num.toString();
+            numBtn.textContent = num.toString();
+            
+            // Add color styling
+            if (num === 0 || num === '00') {
+                numBtn.classList.add('green');
+            } else if (isRed(num)) {
+                numBtn.classList.add('red');
+            } else {
+                numBtn.classList.add('black');
+            }
+            
+            numBtn.addEventListener('click', () => {
+                if (isSpinning) return;
+                
+                // Remove selected class from all number buttons
+                numberGrid.querySelectorAll('.number-btn').forEach(b => b.classList.remove('selected'));
+                
+                // Remove selected class from bet buttons
+                const betBtns = container.querySelectorAll('.bet-btn');
+                betBtns.forEach(b => b.classList.remove('selected'));
+                
+                // Add selected class to clicked number button
+                numBtn.classList.add('selected');
+                selectedNumber = num.toString();
+                selectedBet = 'number';
+                
+                showResult(`Selected number: ${num}. Click Spin! (35x payout)`);
+            });
+            
+            numberGrid.appendChild(numBtn);
+        });
+    }
+
     // --- UI Functions ---
     function updateBalance() {
         const balanceEl = q('#balance');
@@ -60,7 +106,11 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
     function spin() {
         if (isSpinning) return;
         if (!selectedBet) {
-            showResult('Please select a bet type!');
+            showResult('Please select a bet type or number!');
+            return;
+        }
+        if (selectedBet === 'number' && !selectedNumber) {
+            showResult('Please select a specific number!');
             return;
         }
         if (balance < currentBet) {
@@ -176,16 +226,10 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
                         payout = currentBet * 2;
                     }
                     break;
-                case '0':
-                    if (randomNumber === 0) {
+                case 'number':
+                    if (randomNumber.toString() === selectedNumber) {
                         won = true;
-                        payout = currentBet * 36;
-                    }
-                    break;
-                case '00':
-                    if (randomNumber === '00') {
-                        won = true;
-                        payout = currentBet * 36;
+                        payout = currentBet * 35; // 35:1 payout for straight up bets
                     }
                     break;
             }
@@ -218,6 +262,19 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
         if (spinBtn) spinBtn.style.display = 'inline-block';
         if (resetBtn) resetBtn.style.display = 'none';
         if (data) data.classList.remove('reveal');
+        
+        // Clear selections
+        selectedBet = null;
+        selectedNumber = null;
+        
+        // Remove selected classes
+        const betBtns = container.querySelectorAll('.bet-btn');
+        betBtns.forEach(b => b.classList.remove('selected'));
+        
+        const numberBtns = container.querySelectorAll('.number-btn');
+        numberBtns.forEach(b => b.classList.remove('selected'));
+        
+        showResult('Select a bet type or number to begin!');
     }
 
     // --- Event Listeners ---
@@ -236,9 +293,14 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
             // Remove selected class from all buttons
             betBtns.forEach(b => b.classList.remove('selected'));
             
+            // Remove selected class from number buttons
+            const numberBtns = container.querySelectorAll('.number-btn');
+            numberBtns.forEach(b => b.classList.remove('selected'));
+            
             // Add selected class to clicked button
             btn.classList.add('selected');
             selectedBet = btn.dataset.bet;
+            selectedNumber = null; // Clear number selection when selecting bet type
             
             showResult(`Selected: ${selectedBet.toUpperCase()}. Click Spin!`);
         });
@@ -250,8 +312,11 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
     
     if (resetBtn) resetBtn.style.display = 'none';
     
+    // Generate number betting grid
+    generateNumberGrid();
+    
     updateBalance();
-    showResult('Select a bet type to begin!');
+    showResult('Select a bet type or number to begin!');
 };
 
 // Auto-initialize for standalone usage
