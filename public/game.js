@@ -2255,28 +2255,7 @@ function showPropertyInfo(spaceData, options = {}) {
     if (tileMedia && tileMedia[spaceData.position]) {
         const media = tileMedia[spaceData.position];
         
-        // W.I.P. - Videos disabled until reconstruction
-        const wipOverlay = document.createElement('div');
-        wipOverlay.style.cssText = `
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #9b59b6;
-            font-size: 18px;
-            font-weight: bold;
-            text-align: center;
-            padding: 20px;
-            border-radius: 8px;
-            border: 2px dashed #9b59b6;
-        `;
-        wipOverlay.textContent = '🚧 W.I.P. - Videos down until reconstruction';
-        mediaContainer.appendChild(wipOverlay);
-        
-        /* 
-        // DISABLED: Video loading code - W.I.P.
+        // Video loading code
         const selectedVideo = (media.videos && media.videos.length > 0)
             ? pickAlternatePropertyVideo(media.videos, spaceData.position)
             : null;
@@ -2360,7 +2339,6 @@ function showPropertyInfo(spaceData, options = {}) {
         } else {
             mediaContainer.innerHTML = '';
         }
-        */
     } else {
         mediaContainer.innerHTML = '';
     }

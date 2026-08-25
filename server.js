@@ -112,8 +112,8 @@ function getBoardSpaces() {
         { name: 'Community Cards', type: 'community-chest', position: 27 },
         { name: 'Sphere', type: 'property', color: '#008000', group: 'green', price: 400, rent: [44, 88, 264, 792, 1100, 1320], position: 28, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
         { name: 'Water Works', type: 'utility', group: 'utility', price: 200, rent: [0, 0], position: 29 },
-        { name: 'Caesars Palace', type: 'property', color: '#0000FF', group: 'darkBlue', price: 420, rent: [46, 92, 277, 831, 1155, 1386], position: 30, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109' },
-        { name: 'GO TO JAIL', type: 'corner', position: 31 },
+        { name: 'GO TO JAIL', type: 'corner', position: 30 },
+        { name: 'Caesars Palace', type: 'property', color: '#0000FF', group: 'darkBlue', price: 420, rent: [46, 92, 277, 831, 1155, 1386], position: 31, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#0000FF', group: 'darkBlue', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 32, address: '4949 N Rancho Dr, Las Vegas, NV 89130' },
         { name: 'Luxury Tax', type: 'tax', amount: 100, position: 33 },
         { name: 'Chance', type: 'chance', position: 34 },
@@ -639,7 +639,7 @@ function executeAIRollDice(game, aiPlayer) {
                                 checkGameWinner(game);
                             }
                             setTimeout(() => gameRuntime.advanceTurn(game), 500);
-                        } else if (landedSpace.position === 31) { // Go to Jail
+                        } else if (landedSpace.position === 30) { // Go to Jail
                             gameRuntime.sendToJail(game, aiPlayer);
                             // sendToJail already calls advanceTurn internally
                         } else if (landedSpace.type === 'property' || landedSpace.type === 'railroad' || landedSpace.type === 'utility') {
@@ -843,7 +843,7 @@ function executeAIRollDice(game, aiPlayer) {
                         checkGameWinner(game);
                     }
                     setTimeout(() => gameRuntime.advanceTurn(game), 500);
-                } else if (landedSpace.position === 31) { // Go to Jail
+                } else if (landedSpace.position === 30) { // Go to Jail
                     gameRuntime.sendToJail(game, aiPlayer);
                     // sendToJail already calls advanceTurn internally
                 } else if (landedSpace.type === 'property' || landedSpace.type === 'railroad' || landedSpace.type === 'utility') {
