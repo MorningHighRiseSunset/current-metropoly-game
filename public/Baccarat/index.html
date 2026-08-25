@@ -185,6 +185,18 @@
             padding: 12px;
         }
 
+        .card-display-area {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
         .player-pair-bet {
             left: 20px;
             top: 210px;
@@ -467,7 +479,44 @@
                     <span class="bet-label">PLAYER</span>
                     <span class="bet-payout">1:1</span>
                 </div>
+                <div class="bet-area banker-area-bet" data-bet="banker">
+                    <span class="bet-label">BANKER</span>
+                    <span class="bet-payout">1:1</span>
+                </div>
+                <div class="bet-area tie-area-bet" data-bet="tie">
+                    <span class="bet-label">TIE</span>
+                    <span class="bet-payout">8:1</span>
+                </div>
+                <div class="card-display-area">
+                    <div class="banker-area">
+                        <div class="banker-label">Banker</div>
+                        <div class="hand" id="ai-cards"></div>
+                        <div class="score-display" id="ai-score">0</div>
+                    </div>
+                    <div class="player-area">
+                        <div class="player-label">Player</div>
+                        <div class="hand" id="player-cards"></div>
+                        <div class="score-display" id="player-score">0</div>
+                    </div>
+                </div>
+                <div class="player-pair-bet bet-area" data-bet="player-pair">
+                    <span class="bet-label">PLAYER PAIR</span>
+                    <span class="bet-payout">11:1</span>
+                </div>
+                <div class="banker-pair-bet bet-area" data-bet="banker-pair">
+                    <span class="bet-label">BANKER PAIR</span>
+                    <span class="bet-payout">11:1</span>
+                </div>
             </div>
+        </div>
+
+        <div class="status-area">
+            <div class="status-message" id="status-message">Place your bet and click Deal</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="deal-btn">🎴 Deal</button>
+            <button class="btn" id="clear-btn">🗑️ Clear Bets</button>
         </div>
 
     </div>

@@ -10,25 +10,51 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     let bets = []; // Array of active bets: {type, amount}
     let playerHand = [];
     let bankerHand = [];
-    let deck = [];
+    let shoe = [];
+    let shoePosition = 0;
     let gamePhase = 'betting'; // 'betting', 'playing', 'result'
 
-    // --- Deck functions ---
-    function createDeck() {
-        const deck = [];
+    // --- Secure random number generation (from new Baccarat-Game) ---
+    function secureRandomBelow(max) {
+        if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+            const values = new Uint32Array(1);
+            const range = 0x100000000;
+            const limit = Math.floor(range / max) * max;
+            do crypto.getRandomValues(values); while (values[0] >= limit);
+            return values[0] % max;
+        }
+        return Math.floor(Math.random() * max);
+    }
+
+    // --- Improved shuffle (from new Baccarat-Game) ---
+    function shuffled(input) {
+        const result = [...input];
+        for (let index = result.length - 1; index > 0; index -= 1) {
+            const swapIndex = secureRandomBelow(index + 1);
+            [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+        }
+        return result;
+    }
+
+    // --- 8-deck shoe system (from new Baccarat-Game) ---
+    function createShoe() {
+        const oneDeck = [];
         for (const suit of suits) {
             for (const rank of ranks) {
-                deck.push({ suit, rank });
+                oneDeck.push({ suit, rank });
             }
         }
-        return deck;
+        return shuffled(Array.from({ length: 8 }, () => oneDeck).flat().map((card) => ({ ...card })));
+    }
+
+    function createDeck() {
+        // Legacy function for compatibility, now uses shoe
+        return createShoe();
     }
 
     function shuffle(deck) {
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
+        // Legacy function for compatibility, now uses shuffled
+        return shuffled(deck);
     }
 
     function handValue(hand) {
@@ -107,8 +133,8 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     function clearGame() {
         playerHand = [];
         bankerHand = [];
-        deck = createDeck();
-        shuffle(deck);
+        shoe = createShoe();
+        shoePosition = 0;
         gamePhase = 'betting';
         bets = [];
         
@@ -174,6 +200,12 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
             return;
         }
         
+        // Check if we need to reshuffle the shoe
+        if (shoePosition > shoe.length - 12) {
+            shoe = createShoe();
+            shoePosition = 0;
+        }
+        
         // Disable betting UI
         const betAreas = container.querySelectorAll('.bet-area');
         betAreas.forEach(area => area.style.pointerEvents = 'none');
@@ -181,11 +213,9 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         const dealBtn = q('#deal-btn');
         if (dealBtn) dealBtn.disabled = true;
         
-        // Deal initial cards
-        deck = createDeck();
-        shuffle(deck);
-        playerHand = [deck.pop(), deck.pop()];
-        bankerHand = [deck.pop(), deck.pop()];
+        // Deal initial cards from shoe
+        playerHand = [shoe[shoePosition++], shoe[shoePosition++]];
+        bankerHand = [shoe[shoePosition++], shoe[shoePosition++]];
         
         renderHands();
         gamePhase = 'playing';
@@ -206,7 +236,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
             if (playerScore <= 5) {
                 showStatus(`Player has ${playerScore}. Drawing third card...`);
                 setTimeout(() => {
-                    playerHand.push(deck.pop());
+                    playerHand.push(shoe[shoePosition++]);
                     renderHands();
                     const newPlayerScore = handValue(playerHand);
                     const playerThirdCard = playerHand[2];
@@ -220,7 +250,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
                 if (bankerScore <= 5) {
                     showStatus(`Banker has ${bankerScore}. Drawing third card...`);
                     setTimeout(() => {
-                        bankerHand.push(deck.pop());
+                        bankerHand.push(shoe[shoePosition++]);
                         renderHands();
                         const finalBankerScore = handValue(bankerHand);
                         showStatus(`Banker draws. Final: Player ${playerScore}, Banker ${finalBankerScore}`);
@@ -234,45 +264,24 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         }, 800);
     }
     
+    // Improved banker draw logic (from new Baccarat-Game)
+    function shouldBankerDraw(bankerTotal, playerThird) {
+        if (playerThird === undefined) return bankerTotal <= 5;
+        if (bankerTotal <= 2) return true;
+        if (bankerTotal === 3) return playerThird !== 8;
+        if (bankerTotal === 4) return playerThird >= 2 && playerThird <= 7;
+        if (bankerTotal === 5) return playerThird >= 4 && playerThird <= 7;
+        if (bankerTotal === 6) return playerThird === 6 || playerThird === 7;
+        return false;
+    }
+
     function determineBankerDraw(bankerScore, playerThirdCard, playerScore) {
-        // Banker always draws on 0-2
-        if (bankerScore <= 2) {
+        const thirdCardValue = playerThirdCard ? getCardValue(playerThirdCard) : undefined;
+        
+        if (shouldBankerDraw(bankerScore, thirdCardValue)) {
             showStatus(`Banker has ${bankerScore}. Drawing third card...`);
             setTimeout(() => {
-                bankerHand.push(deck.pop());
-                renderHands();
-                const finalBankerScore = handValue(bankerHand);
-                showStatus(`Banker draws. Final: Player ${playerScore}, Banker ${finalBankerScore}`);
-                resolveGame(playerScore, finalBankerScore);
-            }, 800);
-            return;
-        }
-        
-        // Banker stands on 7
-        if (bankerScore >= 7) {
-            showStatus(`Banker stands with ${bankerScore}`);
-            resolveGame(playerScore, bankerScore);
-            return;
-        }
-        
-        // Banker 3-6: depends on Player's third card
-        const thirdCardValue = getCardValue(playerThirdCard);
-        let shouldDraw = false;
-        
-        if (bankerScore === 3) {
-            shouldDraw = thirdCardValue !== 8;
-        } else if (bankerScore === 4) {
-            shouldDraw = thirdCardValue >= 2 && thirdCardValue <= 7;
-        } else if (bankerScore === 5) {
-            shouldDraw = thirdCardValue >= 4 && thirdCardValue <= 7;
-        } else if (bankerScore === 6) {
-            shouldDraw = thirdCardValue === 6 || thirdCardValue === 7;
-        }
-        
-        if (shouldDraw) {
-            showStatus(`Banker has ${bankerScore}. Drawing third card...`);
-            setTimeout(() => {
-                bankerHand.push(deck.pop());
+                bankerHand.push(shoe[shoePosition++]);
                 renderHands();
                 const finalBankerScore = handValue(bankerHand);
                 showStatus(`Banker draws. Final: Player ${playerScore}, Banker ${finalBankerScore}`);
@@ -409,6 +418,8 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     }
 
     // --- Initialize ---
+    shoe = createShoe();
+    shoePosition = 0;
     clearGame();
     updateBalance();
 };
