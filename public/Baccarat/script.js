@@ -1,4 +1,4 @@
-// Simple Baccarat Minigame
+// Simple Baccarat Minigame with Pair Bets
 window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBalance) {
     // --- DOM helpers ---
     function q(sel) { return container.querySelector(sel); }
@@ -7,8 +7,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     const suits = ['♠', '♥', '♦', '♣'];
     const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
-    let currentBet = 100;
-    let betType = null; // 'player', 'banker', 'tie'
+    let bets = []; // Array of active bets: {type, amount}
     let playerHand = [];
     let bankerHand = [];
     let deck = [];
@@ -47,9 +46,15 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     }
 
     // --- UI Functions ---
+    function getTotalBets() {
+        return bets.reduce((sum, bet) => sum + bet.amount, 0);
+    }
+
     function updateBalance() {
         const balanceEl = q('#money-display') || q('#balance');
         if (balanceEl) balanceEl.textContent = balance;
+        const betDisplayEl = q('#current-bet-display');
+        if (betDisplayEl) betDisplayEl.textContent = getTotalBets();
         if (typeof updateMainGameBalance === 'function') {
             updateMainGameBalance(balance);
         } else if (container && typeof CustomEvent === 'function') {
@@ -105,6 +110,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         deck = createDeck();
         shuffle(deck);
         gamePhase = 'betting';
+        bets = [];
         
         const playerHandEl = q('#player-cards');
         const bankerHandEl = q('#ai-cards');
@@ -120,54 +126,57 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         if (betDisplayEl) betDisplayEl.textContent = '0';
         if (statusEl) statusEl.textContent = 'Place your bet and click Deal';
         
-        // Reset buttons
-        const betBtns = container.querySelectorAll('.bet-btn');
-        betBtns.forEach(btn => {
-            btn.classList.remove('selected');
-            btn.disabled = false;
+        // Reset bet areas
+        const betAreas = container.querySelectorAll('.bet-area');
+        betAreas.forEach(area => {
+            area.classList.remove('selected');
         });
         
         const dealBtn = q('#deal-btn');
         if (dealBtn) dealBtn.disabled = false;
+        
+        updateBalance();
     }
 
     function selectBet(type) {
         if (gamePhase !== 'betting') return;
         
-        betType = type;
-        
-        // Update UI
-        const betBtns = container.querySelectorAll('.bet-btn');
-        betBtns.forEach(btn => {
-            btn.classList.remove('selected');
-            if (btn.dataset.type === type) {
-                btn.classList.add('selected');
-            }
-        });
-        
-        const betDisplayEl = q('#current-bet-display');
-        if (betDisplayEl) betDisplayEl.textContent = `$${currentBet}`;
-        
-        showStatus(`Selected ${type.toUpperCase()}. Click Deal to begin.`);
-    }
-
-    function deal() {
-        if (gamePhase !== 'betting') return;
-        if (!betType) {
-            showStatus('Please select a bet type!');
+        // Check if bet already exists
+        if (bets.some(b => b.type === type)) {
+            showStatus('Bet already placed!');
             return;
         }
-        if (currentBet > balance) {
+        
+        if (balance < 100) {
             showStatus('Not enough balance!');
             return;
         }
         
-        balance -= currentBet;
+        balance -= 100;
+        bets.push({ type, amount: 100 });
+        
+        // Update UI
+        const betAreas = container.querySelectorAll('.bet-area');
+        betAreas.forEach(area => {
+            if (area.dataset.bet === type) {
+                area.classList.add('selected');
+            }
+        });
+        
         updateBalance();
+        showStatus(`${type.toUpperCase()} bet placed. Click Deal to begin.`);
+    }
+
+    function deal() {
+        if (gamePhase !== 'betting') return;
+        if (bets.length === 0) {
+            showStatus('Please place a bet!');
+            return;
+        }
         
         // Disable betting UI
-        const betBtns = container.querySelectorAll('.bet-btn');
-        betBtns.forEach(btn => btn.disabled = true);
+        const betAreas = container.querySelectorAll('.bet-area');
+        betAreas.forEach(area => area.style.pointerEvents = 'none');
         
         const dealBtn = q('#deal-btn');
         if (dealBtn) dealBtn.disabled = true;
@@ -281,35 +290,86 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         return parseInt(card.rank);
     }
     
+    function hasPair(hand) {
+        if (hand.length < 2) return false;
+        return hand[0].rank === hand[1].rank;
+    }
+
     function resolveGame(playerScore, bankerScore) {
         setTimeout(() => {
-            if (playerScore > bankerScore) {
-                if (betType === 'player') {
-                    balance += currentBet * 2;
-                    showStatus(`Player wins! +$${currentBet}`);
-                } else {
-                    showStatus(`Player wins. You lost $${currentBet}`);
+            let winnings = 0;
+            let results = [];
+
+            // Check for pairs first
+            const playerHasPair = hasPair(playerHand);
+            const bankerHasPair = hasPair(bankerHand);
+
+            bets.forEach(bet => {
+                let won = false;
+                let payout = 0;
+
+                // Player Pair
+                if (bet.type === 'player-pair') {
+                    if (playerHasPair) {
+                        won = true;
+                        payout = bet.amount * 12; // 11:1 + original bet
+                        results.push('Player Pair wins!');
+                    }
                 }
-            } else if (bankerScore > playerScore) {
-                if (betType === 'banker') {
-                    balance += Math.floor(currentBet * 1.95);
-                    showStatus(`Banker wins! +$${Math.floor(currentBet * 0.95)}`);
-                } else {
-                    showStatus(`Banker wins. You lost $${currentBet}`);
+                // Banker Pair
+                else if (bet.type === 'banker-pair') {
+                    if (bankerHasPair) {
+                        won = true;
+                        payout = bet.amount * 12;
+                        results.push('Banker Pair wins!');
+                    }
                 }
-            } else {
-                if (betType === 'tie') {
-                    balance += currentBet * 8;
-                    showStatus(`Tie! +$${currentBet * 7}`);
-                } else {
-                    balance += currentBet;
-                    showStatus(`Tie! Bet returned`);
+                // Player
+                else if (bet.type === 'player') {
+                    if (playerScore > bankerScore) {
+                        won = true;
+                        payout = bet.amount * 2;
+                        results.push('Player wins!');
+                    } else if (playerScore === bankerScore) {
+                        // Tie - return bet
+                        payout = bet.amount;
+                        results.push('Tie - bet returned');
+                    }
                 }
-            }
-            
+                // Banker
+                else if (bet.type === 'banker') {
+                    if (bankerScore > playerScore) {
+                        won = true;
+                        payout = Math.floor(bet.amount * 1.95); // 5% commission
+                        results.push('Banker wins!');
+                    } else if (playerScore === bankerScore) {
+                        payout = bet.amount;
+                        results.push('Tie - bet returned');
+                    }
+                }
+                // Tie
+                else if (bet.type === 'tie') {
+                    if (playerScore === bankerScore) {
+                        won = true;
+                        payout = bet.amount * 9; // 8:1 + original bet
+                        results.push('Tie wins!');
+                    }
+                }
+
+                winnings += payout;
+            });
+
+            balance += winnings;
             updateBalance();
+
+            if (results.length > 0) {
+                showStatus(results.join(' | '));
+            } else {
+                showStatus('No wins this round');
+            }
+
             gamePhase = 'result';
-            
+
             setTimeout(() => {
                 clearGame();
                 showStatus('Place your bet and click Deal');
@@ -318,16 +378,34 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     }
 
     // --- Event Listeners ---
-    const betBtns = container.querySelectorAll('.bet-btn');
-    betBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectBet(btn.dataset.type);
+    const betAreas = container.querySelectorAll('.bet-area');
+    betAreas.forEach(area => {
+        area.addEventListener('click', () => {
+            selectBet(area.dataset.bet);
         });
     });
 
     const dealBtn = q('#deal-btn');
     if (dealBtn) {
         dealBtn.addEventListener('click', deal);
+    }
+
+    const clearBtn = q('#clear-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (gamePhase === 'betting' && bets.length > 0) {
+                const total = getTotalBets();
+                balance += total;
+                bets = [];
+                
+                betAreas.forEach(area => {
+                    area.classList.remove('selected');
+                });
+                
+                updateBalance();
+                showStatus('Bets cleared');
+            }
+        });
     }
 
     // --- Initialize ---

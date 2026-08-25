@@ -1,439 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Craps</title>
-	<style>
-		* {
-			margin: 0;
-			padding: 0;
-			box-sizing: border-box;
-		}
-		body {
-			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-			background: linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);
-			min-height: 100vh;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			color: white;
-			overflow: hidden;
-		}
-		
-		/* Animated background */
-		body::before {
-			content: '';
-			position: fixed;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			background: 
-				radial-gradient(circle at 20% 80%, rgba(155, 89, 182, 0.15) 0%, transparent 50%),
-				radial-gradient(circle at 80% 20%, rgba(142, 68, 173, 0.15) 0%, transparent 50%);
-			animation: pulseBackground 8s ease-in-out infinite;
-			pointer-events: none;
-		}
-		
-		@keyframes pulseBackground {
-			0%, 100% { opacity: 0.5; }
-			50% { opacity: 1; }
-		}
-		
-		.craps-container {
-			width: 100%;
-			max-width: 380px;
-			padding: 8px;
-			text-align: left;
-			position: relative;
-			z-index: 1;
-		}
-		
-		.craps-table {
-			background: linear-gradient(135deg, #1a472a 0%, #0d2b1a 100%);
-			border: 5px solid #8b5cf6;
-			border-radius: 12px;
-			padding: 10px;
-			margin: 8px 0;
-			box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,0,0,0.3);
-			position: relative;
-		}
-		
-		.craps-table::before {
-			content: '';
-			position: absolute;
-			top: 0;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			background: 
-				repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.03) 10px, rgba(255,255,255,0.03) 20px);
-			pointer-events: none;
-			border-radius: 12px;
-		}
-		
-		.table-layout {
-			display: grid;
-			grid-template-columns: repeat(6, 1fr);
-			grid-template-rows: repeat(6, 1fr);
-			gap: 3px;
-			margin: 8px 0;
-			position: relative;
-			z-index: 1;
-		}
-		
-		.bet-area {
-			background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(142, 68, 173, 0.2));
-			border: 2px solid rgba(139, 92, 246, 0.5);
-			border-radius: 4px;
-			padding: 3px;
-			min-height: 30px;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			cursor: pointer;
-			transition: all 0.3s ease;
-			position: relative;
-			overflow: hidden;
-		}
-		
-		.bet-area:hover {
-			background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(142, 68, 173, 0.4));
-			transform: scale(1.05);
-			box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
-		}
-		
-		.bet-area.selected {
-			background: linear-gradient(135deg, rgba(46, 204, 113, 0.4), rgba(39, 174, 96, 0.4));
-			border-color: #2ecc71;
-			box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
-		}
-		
-		.bet-area .number {
-			font-size: 1.8em;
-			font-weight: bold;
-			color: #fff;
-			text-shadow: 0 0 10px rgba(0,0,0,0.5);
-		}
-		
-		.bet-area .label {
-			font-size: 0.8em;
-			color: #a78bfa;
-			margin-top: 5px;
-		}
-		
-		.bet-area .payout {
-			font-size: 0.7em;
-			color: #f39c12;
-			margin-top: 2px;
-		}
-		
-		.pass-line {
-			grid-column: 1 / -1;
-			background: linear-gradient(135deg, rgba(46, 204, 113, 0.3), rgba(39, 174, 96, 0.3));
-			border-color: #2ecc71;
-		}
-		
-		.dont-pass {
-			grid-column: 1 / -1;
-			background: linear-gradient(135deg, rgba(231, 76, 60, 0.3), rgba(192, 57, 43, 0.3));
-			border-color: #e74c3c;
-		}
-		
-		.field-area {
-			grid-column: 1 / -1;
-			background: linear-gradient(135deg, rgba(243, 156, 18, 0.3), rgba(211, 84, 0, 0.3));
-			border-color: #f39c12;
-		}
-		
-		.center-area {
-			grid-column: 2 / 6;
-			grid-row: 3 / 5;
-			background: linear-gradient(135deg, rgba(155, 89, 182, 0.3), rgba(142, 68, 173, 0.3));
-			border: 3px solid #9b59b6;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			flex-direction: column;
-		}
-		
-		h1 {
-			font-size: 1.2em;
-			margin-bottom: 8px;
-			background: linear-gradient(45deg, #9b59b6, #8e44ad, #9b59b6);
-			-webkit-background-clip: text;
-			-webkit-text-fill-color: transparent;
-			background-clip: text;
-			text-shadow: 0 0 30px rgba(155, 89, 182, 0.5);
-			animation: titleGlow 2s ease-in-out infinite;
-			letter-spacing: 2px;
-		}
-		
-		@keyframes titleGlow {
-			0%, 100% { filter: brightness(1); }
-			50% { filter: brightness(1.3); }
-		}
-		
-		.game-info {
-			display: flex;
-			justify-content: space-between;
-			margin-bottom: 20px;
-			padding: 15px;
-			background: linear-gradient(135deg, rgba(155, 89, 182, 0.15), rgba(142, 68, 173, 0.15));
-			border: 2px solid rgba(155, 89, 182, 0.4);
-			border-radius: 15px;
-			backdrop-filter: blur(10px);
-			box-shadow: 0 8px 32px rgba(155, 89, 182, 0.3);
-		}
-		
-		.info-item {
-			font-size: 0.85em;
-			font-weight: bold;
-			text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
-		}
-		
-		.dice-display {
-			font-size: 1.5em;
-			margin: 8px 0;
-			min-height: 35px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 10px;
-		}
-		
-		.dice {
-			width: 35px;
-			height: 35px;
-			background: linear-gradient(145deg, #ffffff, #f0f0f0);
-			border-radius: 8px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			font-size: 1.2em;
-			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-			color: #1a1a2e;
-			transition: transform 0.3s ease;
-		}
-		
-		.dice.rolling {
-			animation: diceRoll 0.5s ease-in-out infinite;
-		}
-		
-		@keyframes diceRoll {
-			0% { transform: rotate(0deg) scale(1); }
-			25% { transform: rotate(90deg) scale(1.1); }
-			50% { transform: rotate(180deg) scale(1); }
-			75% { transform: rotate(270deg) scale(1.1); }
-			100% { transform: rotate(360deg) scale(1); }
-		}
-		
-		.result {
-			font-size: 1.2em;
-			margin: 10px 0;
-			padding: 15px;
-			background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(142, 68, 173, 0.2));
-			border: 2px solid rgba(155, 89, 182, 0.5);
-			border-radius: 12px;
-			min-height: 40px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			backdrop-filter: blur(10px);
-			box-shadow: 0 8px 32px rgba(155, 89, 182, 0.2);
-			transition: all 0.3s ease;
-		}
-		
-		.result.win {
-			background: linear-gradient(135deg, rgba(46, 204, 113, 0.3), rgba(39, 174, 96, 0.3));
-			border-color: #2ecc71;
-			animation: resultWin 0.5s ease-out;
-		}
-		
-		@keyframes resultWin {
-			0% { transform: scale(0.8); opacity: 0; }
-			50% { transform: scale(1.1); }
-			100% { transform: scale(1); opacity: 1; }
-		}
-		
-		.controls {
-			display: flex;
-			gap: 8px;
-			justify-content: center;
-			flex-wrap: wrap;
-		}
-		
-		.btn {
-			padding: 8px 15px;
-			font-size: 0.8em;
-			font-weight: bold;
-			border: none;
-			border-radius: 8px;
-			cursor: pointer;
-			transition: all 0.3s ease;
-			background: linear-gradient(135deg, #9b59b6, #8e44ad);
-			color: white;
-			box-shadow: 0 8px 20px rgba(155, 89, 182, 0.4);
-			text-transform: uppercase;
-			letter-spacing: 1px;
-			position: relative;
-			overflow: hidden;
-		}
-		
-		.btn::before {
-			content: '';
-			position: absolute;
-			top: 0;
-			left: -100%;
-			width: 100%;
-			height: 100%;
-			background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-			transition: left 0.5s ease;
-		}
-		
-		.btn:hover::before {
-			left: 100%;
-		}
-		
-		.btn:hover:not(:disabled) {
-			transform: translateY(-3px) scale(1.05);
-			box-shadow: 0 12px 30px rgba(155, 89, 182, 0.6);
-		}
-		
-		.btn:disabled {
-			opacity: 0.5;
-			cursor: not-allowed;
-			transform: none;
-		}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craps</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-	<div class="craps-container">
-		<h1>🎲 Craps</h1>
-		
-		<div class="game-info">
-			<div class="info-item">💰 Balance: $<span id="craps-balance">2500</span></div>
-			<div class="info-item">🎯 Current Bet: $<span id="craps-bet">0</span></div>
-		</div>
-		
-		<div style="font-size: 1.2em; margin-bottom: 15px; color: #9b59b6;">Phase: <span id="craps-phase">Come Out</span> | Point: <span id="craps-point">-</span></div>
-		
-		<div class="craps-table">
-			<div class="table-layout">
-				<div class="bet-area pass-line" data-bet="pass">
-					<div class="label">PASS LINE</div>
-					<div class="payout">1:1</div>
-				</div>
-				
-				<div class="bet-area" data-bet="4">
-					<div class="number">4</div>
-					<div class="payout">9:5</div>
-				</div>
-				<div class="bet-area" data-bet="5">
-					<div class="number">5</div>
-					<div class="payout">7:5</div>
-				</div>
-				<div class="bet-area" data-bet="6">
-					<div class="number">6</div>
-					<div class="payout">7:6</div>
-				</div>
-				<div class="bet-area" data-bet="8">
-					<div class="number">8</div>
-					<div class="payout">7:6</div>
-				</div>
-				<div class="bet-area" data-bet="9">
-					<div class="number">9</div>
-					<div class="payout">7:5</div>
-				</div>
-				<div class="bet-area" data-bet="10">
-					<div class="number">10</div>
-					<div class="payout">9:5</div>
-				</div>
-				
-				<div class="bet-area" data-bet="6-come">
-					<div class="number">6</div>
-					<div class="label">COME</div>
-				</div>
-				<div class="center-area">
-					<div class="dice-display">
-						<div class="dice" id="dice1">🎲</div>
-						<div class="dice" id="dice2">🎲</div>
-					</div>
-					<div class="result" id="craps-result"></div>
-				</div>
-				<div class="bet-area" data-bet="8-come">
-					<div class="number">8</div>
-					<div class="label">COME</div>
-				</div>
-				
-				<div class="bet-area field-area" data-bet="field">
-					<div class="label">FIELD</div>
-					<div class="payout">2:1 on 2,12</div>
-				</div>
-				<div class="bet-area" data-bet="7">
-					<div class="number">7</div>
-					<div class="payout">4:1</div>
-				</div>
-				<div class="bet-area" data-bet="any-craps">
-					<div class="label">ANY CRAPS</div>
-					<div class="payout">7:1</div>
-				</div>
-				<div class="bet-area" data-bet="hard-8">
-					<div class="label">HARD 8</div>
-					<div class="payout">9:1</div>
-				</div>
-				<div class="bet-area" data-bet="hard-6">
-					<div class="label">HARD 6</div>
-					<div class="payout">9:1</div>
-				</div>
-				<div class="bet-area" data-bet="hard-4">
-					<div class="label">HARD 4</div>
-					<div class="payout">7:1</div>
-				</div>
-				
-				<div class="bet-area dont-pass" data-bet="dont-pass">
-					<div class="label">DON'T PASS</div>
-					<div class="payout">1:1</div>
-				</div>
-			</div>
-		</div>
-		
-		<div class="controls">
-			<button class="btn" id="roll-btn" disabled>🎲 Roll Dice ($100)</button>
-			<button class="btn" id="clear-bets">🗑️ Clear Bets</button>
-		</div>
-	</div>
-	
-	<script>
-	// Get balance from URL parameter or use default
-	function getBalanceFromURL() {
-	    const params = new URLSearchParams(window.location.search);
-	    return parseInt(params.get('balance')) || window.playerMoney || 2500;
-	}
-	
-	// Check if loaded standalone (not in iframe)
-	const isStandalone = window === window.top;
-	if (isStandalone) {
-		window.playerMoney = 2500;
-		window.updateMainGameBalance = function(balance) {
-			// No-op in standalone mode
-		};
-	} else {
-		window.playerMoney = getBalanceFromURL();
-	}
-	</script>
-	<script src="script.js"></script>
-	<script>
-	// Auto-initialize
-	document.addEventListener('DOMContentLoaded', function() {
-		const container = document.querySelector('.craps-container');
-		if (container && window.initCrapsMinigame) {
-			window.initCrapsMinigame(container, window.playerMoney, window.updateMainGameBalance);
-		}
-	});
-	</script>
+    <div class="craps-game">
+        <div class="game-header">
+            <h1>🎲 CRAPS</h1>
+            <div class="game-info">
+                <div class="info-item">💰 Balance: $<span id="balance">2500</span></div>
+                <div class="info-item">🎯 Bet: $<span id="current-bet">0</span></div>
+            </div>
+            <div class="phase-info">
+                <span>Phase: <strong id="phase">Come Out</strong></span>
+                <span>Point: <strong id="point">-</strong></span>
+            </div>
+        </div>
+
+        <div class="craps-table">
+            <!-- Top Section - Pass Line and Don't Pass -->
+            <div class="table-section top-section">
+                <div class="bet-area pass-line" data-bet="pass">
+                    <span class="bet-label">PASS LINE</span>
+                    <span class="payout">1:1</span>
+                </div>
+                <div class="bet-area dont-pass" data-bet="dont-pass">
+                    <span class="bet-label">DON'T PASS</span>
+                    <span class="payout">1:1</span>
+                </div>
+            </div>
+
+            <!-- Middle Section - Come and Place Bets -->
+            <div class="table-section middle-section">
+                <div class="come-area">
+                    <div class="bet-area come" data-bet="come">
+                        <span class="bet-label">COME</span>
+                        <span class="payout">1:1</span>
+                    </div>
+                </div>
+                
+                <div class="place-bets">
+                    <div class="bet-area place-bet" data-bet="4">
+                        <span class="bet-number">4</span>
+                        <span class="payout">9:5</span>
+                    </div>
+                    <div class="bet-area place-bet" data-bet="5">
+                        <span class="bet-number">5</span>
+                        <span class="payout">7:5</span>
+                    </div>
+                    <div class="bet-area place-bet" data-bet="6">
+                        <span class="bet-number">6</span>
+                        <span class="payout">7:6</span>
+                    </div>
+                    <div class="bet-area place-bet" data-bet="8">
+                        <span class="bet-number">8</span>
+                        <span class="payout">7:6</span>
+                    </div>
+                    <div class="bet-area place-bet" data-bet="9">
+                        <span class="bet-number">9</span>
+                        <span class="payout">7:5</span>
+                    </div>
+                    <div class="bet-area place-bet" data-bet="10">
+                        <span class="bet-number">10</span>
+                        <span class="payout">9:5</span>
+                    </div>
+                </div>
+
+                <div class="dont-come-area">
+                    <div class="bet-area dont-come" data-bet="dont-come">
+                        <span class="bet-label">DON'T COME</span>
+                        <span class="payout">1:1</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Section - Prop Bets -->
+            <div class="table-section center-section">
+                <div class="field-bet bet-area" data-bet="field">
+                    <span class="bet-label">FIELD</span>
+                    <span class="payout">2:1 on 2,12</span>
+                </div>
+                
+                <div class="center-bets">
+                    <div class="bet-area center-bet" data-bet="any-craps">
+                        <span class="bet-label">ANY CRAPS</span>
+                        <span class="payout">7:1</span>
+                    </div>
+                    <div class="bet-area center-bet" data-bet="7">
+                        <span class="bet-label">7</span>
+                        <span class="payout">4:1</span>
+                    </div>
+                    <div class="bet-area center-bet" data-bet="hard-4">
+                        <span class="bet-label">HARD 4</span>
+                        <span class="payout">7:1</span>
+                    </div>
+                    <div class="bet-area center-bet" data-bet="hard-6">
+                        <span class="bet-label">HARD 6</span>
+                        <span class="payout">9:1</span>
+                    </div>
+                    <div class="bet-area center-bet" data-bet="hard-8">
+                        <span class="bet-label">HARD 8</span>
+                        <span class="payout">9:1</span>
+                    </div>
+                    <div class="bet-area center-bet" data-bet="hard-10">
+                        <span class="bet-label">HARD 10</span>
+                        <span class="payout">7:1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dice Display Area (outside table) -->
+        <div class="dice-area">
+            <div class="dice-container">
+                <div class="dice" id="dice1">🎲</div>
+                <div class="dice" id="dice2">🎲</div>
+            </div>
+            <div class="result" id="result">Place your bet!</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="roll-btn" disabled>🎲 Roll ($100)</button>
+            <button class="btn" id="clear-btn">🗑️ Clear Bets</button>
+        </div>
+    </div>
+
+    <script>
+    // Get balance from URL parameter or use default
+    function getBalanceFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        return parseInt(params.get('balance')) || window.playerMoney || 2500;
+    }
+
+    // Check if loaded standalone (not in iframe)
+    const isStandalone = window === window.top;
+    if (isStandalone) {
+        window.playerMoney = 2500;
+        window.updateMainGameBalance = function(balance) {
+            // No-op in standalone mode
+        };
+    } else {
+        window.playerMoney = getBalanceFromURL();
+    }
+    </script>
+    <script src="script.js"></script>
+    <script>
+    // Auto-initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.querySelector('.craps-game');
+        if (container && window.initCrapsMinigame) {
+            window.initCrapsMinigame(container, window.playerMoney, window.updateMainGameBalance);
+        }
+    });
+    </script>
 </body>
 </html>

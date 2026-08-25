@@ -1,4 +1,4 @@
-// Simple Roulette Minigame
+// American Roulette Minigame with proper betting
 window.initRouletteMinigame = function(container, playerMoney, updateMainGameBalance) {
     // --- State ---
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
@@ -8,6 +8,31 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
 
     // --- DOM helpers ---
     function q(sel) { return container.querySelector(sel); }
+
+    // --- Roulette wheel numbers in order (American style) ---
+    const wheelNumbers = [0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1, '00', 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2];
+    
+    const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+
+    // --- Helper functions ---
+    function isRed(number) {
+        if (number === 0 || number === '00') return false;
+        return redNumbers.includes(number);
+    }
+
+    function isBlack(number) {
+        if (number === 0 || number === '00') return false;
+        return !isRed(number);
+    }
+
+    function getColor(number) {
+        if (number === 0 || number === '00') return 'green';
+        return isRed(number) ? 'red' : 'black';
+    }
+
+    function getRandomNumber() {
+        return wheelNumbers[Math.floor(Math.random() * wheelNumbers.length)];
+    }
 
     // --- UI Functions ---
     function updateBalance() {
@@ -31,30 +56,7 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
         }
     }
 
-    function getRandomNumber() {
-        return Math.floor(Math.random() * 37); // 0-36
-    }
-
-    function isRed(number) {
-        const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-        return redNumbers.includes(number);
-    }
-
-    function isBlack(number) {
-        if (number === 0) return false;
-        return !isRed(number);
-    }
-
-    function isEven(number) {
-        if (number === 0) return false;
-        return number % 2 === 0;
-    }
-
-    function isOdd(number) {
-        if (number === 0) return false;
-        return number % 2 === 1;
-    }
-
+    // --- Spin function ---
     function spin() {
         if (isSpinning) return;
         if (!selectedBet) {
@@ -70,25 +72,67 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
         updateBalance();
         isSpinning = true;
 
-        const spinBtn = q('#spin-btn');
-        if (spinBtn) spinBtn.disabled = true;
+        const spinBtn = q('#spin');
+        const resetBtn = q('#reset');
+        const inner = q('.inner');
+        const mask = q('.mask');
+        const data = q('.data');
 
-        const wheel = q('#wheel');
-        const resultNumber = q('#result-number');
-
-        // Spin animation
-        const rotation = 1800 + Math.random() * 360; // At least 5 full rotations
-        if (wheel) {
-            wheel.style.transform = `rotate(${rotation}deg)`;
+        if (spinBtn) spinBtn.style.display = 'none';
+        if (resetBtn) {
+            resetBtn.style.display = 'inline-block';
+            resetBtn.classList.add('disabled');
+            resetBtn.disabled = true;
         }
 
-        showResult('Spinning...');
+        const placeholder = q('.placeholder');
+        if (placeholder) placeholder.remove();
 
-        // Get result after spin
+        const randomNumber = getRandomNumber();
+        const color = getColor(randomNumber);
+
+        // Find the index in wheel numbers
+        const numberIndex = wheelNumbers.indexOf(randomNumber);
+        
+        // Set the spin animation
+        if (inner) {
+            inner.setAttribute('data-spinto', randomNumber.toString());
+        }
+
+        // Check the corresponding radio button
+        const radioInput = q(`input[value="${randomNumber}"]`);
+        if (radioInput) radioInput.checked = true;
+
+        if (mask) mask.textContent = '';
+
         setTimeout(() => {
-            const number = getRandomNumber();
-            if (resultNumber) {
-                resultNumber.textContent = number;
+            if (mask) mask.textContent = '';
+        }, 4500);
+
+        setTimeout(() => {
+            if (resetBtn) {
+                resetBtn.classList.remove('disabled');
+                resetBtn.disabled = false;
+            }
+
+            const resultNumber = q('.result-number');
+            const resultColor = q('.result-color');
+            const resultDiv = q('.result');
+
+            if (resultNumber) resultNumber.textContent = randomNumber;
+            if (resultColor) resultColor.textContent = color;
+            if (resultDiv) resultDiv.style.backgroundColor = color;
+            
+            if (data) data.classList.add('reveal');
+            if (inner) inner.classList.add('rest');
+
+            // Add to previous results
+            const previousList = q('.previous-list');
+            if (previousList) {
+                const resultItem = document.createElement('li');
+                resultItem.className = `previous-result color-${color}`;
+                resultItem.innerHTML = `<span class="previous-number">${randomNumber}</span><span class="previous-color">${color}</span>`;
+                previousList.prepend(resultItem);
             }
 
             // Check win
@@ -97,27 +141,51 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
 
             switch (selectedBet) {
                 case 'red':
-                    if (isRed(number)) {
+                    if (isRed(randomNumber)) {
                         won = true;
                         payout = currentBet * 2;
                     }
                     break;
                 case 'black':
-                    if (isBlack(number)) {
+                    if (isBlack(randomNumber)) {
                         won = true;
                         payout = currentBet * 2;
                     }
                     break;
                 case 'even':
-                    if (isEven(number)) {
+                    if (randomNumber !== 0 && randomNumber !== '00' && randomNumber % 2 === 0) {
                         won = true;
                         payout = currentBet * 2;
                     }
                     break;
                 case 'odd':
-                    if (isOdd(number)) {
+                    if (randomNumber !== 0 && randomNumber !== '00' && randomNumber % 2 === 1) {
                         won = true;
                         payout = currentBet * 2;
+                    }
+                    break;
+                case 'low':
+                    if (randomNumber >= 1 && randomNumber <= 18) {
+                        won = true;
+                        payout = currentBet * 2;
+                    }
+                    break;
+                case 'high':
+                    if (randomNumber >= 19 && randomNumber <= 36) {
+                        won = true;
+                        payout = currentBet * 2;
+                    }
+                    break;
+                case '0':
+                    if (randomNumber === 0) {
+                        won = true;
+                        payout = currentBet * 36;
+                    }
+                    break;
+                case '00':
+                    if (randomNumber === '00') {
+                        won = true;
+                        payout = currentBet * 36;
                     }
                     break;
             }
@@ -125,38 +193,42 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
             if (won) {
                 balance += payout;
                 updateBalance();
-                showResult(`🎉 You won $${payout}! Ball landed on ${number}`, true);
+                showResult(`🎉 You won $${payout}! Ball landed on ${randomNumber}`, true);
             } else {
-                showResult(`😢 You lost $${currentBet}. Ball landed on ${number}`, false);
+                showResult(`😢 You lost $${currentBet}. Ball landed on ${randomNumber}`, false);
             }
 
             isSpinning = false;
 
-            if (spinBtn) spinBtn.disabled = false;
+        }, 9000);
+    }
 
-            // Reset wheel position
-            setTimeout(() => {
-                if (wheel) {
-                    wheel.style.transition = 'none';
-                    wheel.style.transform = 'rotate(0deg)';
-                    setTimeout(() => {
-                        wheel.style.transition = 'transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
-                    }, 100);
-                }
-                if (resultNumber) {
-                    resultNumber.textContent = '';
-                }
-            }, 3000);
+    // --- Reset function ---
+    function reset() {
+        const inner = q('.inner');
+        const spinBtn = q('#spin');
+        const resetBtn = q('#reset');
+        const data = q('.data');
 
-            // Auto-reset after delay
-            setTimeout(() => {
-                showResult('Select a bet and spin again!');
-            }, 4000);
-        }, 3000);
+        if (inner) {
+            inner.removeAttribute('data-spinto');
+            inner.classList.remove('rest');
+        }
+        
+        if (spinBtn) spinBtn.style.display = 'inline-block';
+        if (resetBtn) resetBtn.style.display = 'none';
+        if (data) data.classList.remove('reveal');
     }
 
     // --- Event Listeners ---
+    const spinBtn = q('#spin');
+    const resetBtn = q('#reset');
     const betBtns = container.querySelectorAll('.bet-btn');
+
+    if (spinBtn) spinBtn.addEventListener('click', spin);
+    if (resetBtn) resetBtn.addEventListener('click', reset);
+
+    // Bet button selection
     betBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             if (isSpinning) return;
@@ -172,12 +244,12 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
         });
     });
 
-    const spinBtn = q('#spin-btn');
-    if (spinBtn) {
-        spinBtn.addEventListener('click', spin);
-    }
-
     // --- Initialize ---
+    const mask = q('.mask');
+    if (mask) mask.textContent = '';
+    
+    if (resetBtn) resetBtn.style.display = 'none';
+    
     updateBalance();
     showResult('Select a bet type to begin!');
 };
@@ -186,9 +258,9 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
 if (window.parent === window && document.currentScript && document.currentScript.src && document.currentScript.src.includes('Roulette/script.js')) {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            window.initRouletteMinigame(document.querySelector('.roulette-container'), window.playerMoney, window.updateMainGameBalance);
+            window.initRouletteMinigame(document.querySelector('.main'), window.playerMoney, window.updateMainGameBalance);
         });
     } else {
-        window.initRouletteMinigame(document.querySelector('.roulette-container'), window.playerMoney, window.updateMainGameBalance);
+        window.initRouletteMinigame(document.querySelector('.main'), window.playerMoney, window.updateMainGameBalance);
     }
 }

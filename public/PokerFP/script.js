@@ -1,4 +1,4 @@
-// Simple Poker Minigame - Single Round Version
+// Texas Hold'em Poker - Full Game Implementation
 window.initPokerMinigame = function(container, playerMoney, updateMainGameBalance) {
     // --- DOM helpers ---
     function q(sel) { return container.querySelector(sel); }
@@ -8,10 +8,14 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
     const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
     let currentBet = 100;
+    let pot = 0;
     let playerHand = [];
     let aiHand = [];
+    let communityCards = [];
     let deck = [];
-    let gamePhase = 'betting'; // 'betting', 'playing', 'result'
+    let gamePhase = 'idle'; // 'idle', 'dealt', 'bet', 'turn', 'river', 'showdown'
+    let playerBet = 0;
+    let aiBet = 0;
 
     // --- Deck functions ---
     function createDeck() {
@@ -31,10 +35,44 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
         }
     }
 
-    // --- Hand evaluation (simplified) ---
-    function evaluateHand(hand) {
-        const rankValues = ranks.map(r => r);
-        const values = hand.map(c => rankValues.indexOf(c.rank) + 2);
+    // --- Card value mapping ---
+    function getCardValue(rank) {
+        const valueMap = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
+        return valueMap[rank];
+    }
+
+    // --- 7-card hand evaluation for Texas Hold'em ---
+    function evaluate7CardHand(holeCards, community) {
+        const allCards = [...holeCards, ...community];
+        const allCombinations = getCombinations(allCards, 5);
+        
+        let bestHand = null;
+        let bestRank = -1;
+        
+        for (const combo of allCombinations) {
+            const evaluation = evaluate5CardHand(combo);
+            if (evaluation.rank > bestRank) {
+                bestRank = evaluation.rank;
+                bestHand = evaluation;
+            }
+        }
+        
+        return bestHand;
+    }
+
+    function getCombinations(arr, size) {
+        if (size === 1) return arr.map(el => [el]);
+        const result = [];
+        arr.forEach((el, i) => {
+            const remaining = arr.slice(i + 1);
+            const combinations = getCombinations(remaining, size - 1);
+            combinations.forEach(combo => result.push([el, ...combo]));
+        });
+        return result;
+    }
+
+    function evaluate5CardHand(hand) {
+        const values = hand.map(c => getCardValue(c.rank)).sort((a, b) => b - a);
         const suitCounts = {};
         const rankCounts = {};
         
@@ -45,36 +83,69 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
         
         const isFlush = Object.values(suitCounts).some(count => count >= 5);
         const isStraight = checkStraight(values);
-        const pairs = Object.values(rankCounts).filter(c => c === 2).length;
-        const threes = Object.values(rankCounts).filter(c => c === 3).length;
-        const fours = Object.values(rankCounts).filter(c => c === 4).length;
+        const counts = Object.values(rankCounts).sort((a, b) => b - a);
         
-        // Hand rankings with multipliers
-        if (isStraight && isFlush) return { rank: 8, name: 'Straight Flush', multiplier: 100 };
-        if (fours > 0) return { rank: 7, name: 'Four of a Kind', multiplier: 30 };
-        if (threes > 0 && pairs > 0) return { rank: 6, name: 'Full House', multiplier: 20 };
-        if (isFlush) return { rank: 5, name: 'Flush', multiplier: 15 };
-        if (isStraight) return { rank: 4, name: 'Straight', multiplier: 12 };
-        if (threes > 0) return { rank: 3, name: 'Three of a Kind', multiplier: 8 };
-        if (pairs >= 2) return { rank: 2, name: 'Two Pair', multiplier: 5 };
-        if (pairs === 1) return { rank: 1, name: 'Pair', multiplier: 3 };
+        // Royal Flush
+        if (isFlush && isStraight && values[0] === 14 && values[4] === 10) {
+            return { rank: 9, name: 'Royal Flush', multiplier: 100 };
+        }
+        // Straight Flush
+        if (isFlush && isStraight) {
+            return { rank: 8, name: 'Straight Flush', multiplier: 75 };
+        }
+        // Four of a Kind
+        if (counts[0] === 4) {
+            return { rank: 7, name: 'Four of a Kind', multiplier: 50 };
+        }
+        // Full House
+        if (counts[0] === 3 && counts[1] === 2) {
+            return { rank: 6, name: 'Full House', multiplier: 25 };
+        }
+        // Flush
+        if (isFlush) {
+            return { rank: 5, name: 'Flush', multiplier: 15 };
+        }
+        // Straight
+        if (isStraight) {
+            return { rank: 4, name: 'Straight', multiplier: 10 };
+        }
+        // Three of a Kind
+        if (counts[0] === 3) {
+            return { rank: 3, name: 'Three of a Kind', multiplier: 8 };
+        }
+        // Two Pair
+        if (counts[0] === 2 && counts[1] === 2) {
+            return { rank: 2, name: 'Two Pair', multiplier: 5 };
+        }
+        // One Pair
+        if (counts[0] === 2) {
+            return { rank: 1, name: 'Pair', multiplier: 3 };
+        }
+        // High Card
         return { rank: 0, name: 'High Card', multiplier: 2 };
     }
-    
+
     function checkStraight(values) {
-        const sorted = [...new Set(values)].sort((a, b) => a - b);
+        const sorted = [...new Set(values)].sort((a, b) => b - a);
         if (sorted.length < 5) return false;
         
+        // Check for regular straight
         for (let i = 0; i <= sorted.length - 5; i++) {
             let consecutive = true;
             for (let j = 0; j < 4; j++) {
-                if (sorted[i + j + 1] - sorted[i + j] !== 1) {
+                if (sorted[i + j] - sorted[i + j + 1] !== 1) {
                     consecutive = false;
                     break;
                 }
             }
             if (consecutive) return true;
         }
+        
+        // Check for wheel (A-2-3-4-5)
+        if (sorted.includes(14) && sorted.includes(2) && sorted.includes(3) && sorted.includes(4) && sorted.includes(5)) {
+            return true;
+        }
+        
         return false;
     }
 
@@ -89,23 +160,41 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
         }
     }
 
-    function renderCard(card) {
+    function updatePot() {
+        const potEl = q('#pot');
+        if (potEl) potEl.textContent = pot;
+    }
+
+    function updateCurrentBet() {
+        const betEl = q('#current-bet');
+        if (betEl) betEl.textContent = currentBet;
+    }
+
+    function renderCard(card, faceDown = false) {
         const cardEl = document.createElement('div');
         cardEl.className = 'card';
-        if (card.suit === '♥' || card.suit === '♦') {
-            cardEl.classList.add('red');
+        
+        if (faceDown) {
+            cardEl.classList.add('face-down');
+        } else {
+            if (card.suit === '♥' || card.suit === '♦') {
+                cardEl.classList.add('red');
+            }
+            cardEl.innerHTML = `
+                <div style="font-size: 12px; font-weight: bold;">${card.rank}</div>
+                <div style="font-size: 20px;">${card.suit}</div>
+            `;
         }
-        cardEl.innerHTML = `
-            <div style="font-size: 16px;">${card.rank}</div>
-            <div style="font-size: 28px;">${card.suit}</div>
-        `;
+        
         return cardEl;
     }
 
     function renderHands(revealAI = false) {
         const playerHandEl = q('#player-hand');
         const aiHandEl = q('#ai-hand');
+        const communityEl = q('#community-cards');
         
+        // Render player hand
         if (playerHandEl) {
             playerHandEl.innerHTML = '';
             playerHand.forEach(card => {
@@ -113,22 +202,24 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
             });
         }
         
+        // Render AI hand
         if (aiHandEl) {
             aiHandEl.innerHTML = '';
-            if (revealAI) {
-                aiHand.forEach(card => {
-                    aiHandEl.appendChild(renderCard(card));
-                });
-            } else {
-                // Show face-down cards
-                for (let i = 0; i < 5; i++) {
-                    const cardEl = document.createElement('div');
-                    cardEl.className = 'card';
-                    cardEl.style.background = 'linear-gradient(145deg, #8e44ad, #9b59b6)';
-                    cardEl.style.borderColor = '#9b59b6';
-                    cardEl.style.color = '#9b59b6';
-                    cardEl.innerHTML = '<div style="font-size: 24px;">🂠</div>';
-                    aiHandEl.appendChild(cardEl);
+            aiHand.forEach(card => {
+                aiHandEl.appendChild(renderCard(card, !revealAI));
+            });
+        }
+        
+        // Render community cards
+        if (communityEl) {
+            communityEl.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                if (i < communityCards.length) {
+                    communityEl.appendChild(renderCard(communityCards[i]));
+                } else {
+                    const slot = document.createElement('div');
+                    slot.className = 'card-slot';
+                    communityEl.appendChild(slot);
                 }
             }
         }
@@ -141,96 +232,178 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
         }
     }
 
+    function updateButtons() {
+        const actionBtn = q('#action-btn');
+        if (!actionBtn) return;
+        
+        switch (gamePhase) {
+            case 'idle':
+                actionBtn.textContent = 'Deal';
+                actionBtn.disabled = false;
+                break;
+            case 'dealt':
+                actionBtn.textContent = 'Bet';
+                actionBtn.disabled = false;
+                break;
+            case 'bet':
+                actionBtn.textContent = 'Turn';
+                actionBtn.disabled = false;
+                break;
+            case 'turn':
+                actionBtn.textContent = 'River';
+                actionBtn.disabled = false;
+                break;
+            case 'river':
+                actionBtn.textContent = 'Deal';
+                actionBtn.disabled = false;
+                break;
+            case 'showdown':
+                actionBtn.textContent = 'Deal';
+                actionBtn.disabled = false;
+                break;
+        }
+    }
+
     function clearGame() {
         playerHand = [];
         aiHand = [];
+        communityCards = [];
         deck = createDeck();
         shuffle(deck);
-        gamePhase = 'betting';
+        gamePhase = 'idle';
+        pot = 0;
+        playerBet = 0;
+        aiBet = 0;
         
-        const playerHandEl = q('#player-hand');
-        const aiHandEl = q('#ai-hand');
         const playerResultEl = q('#player-hand-result');
         const aiResultEl = q('#ai-hand-result');
-        const statusEl = q('#status-message');
         
-        if (playerHandEl) playerHandEl.innerHTML = '';
-        if (aiHandEl) aiHandEl.innerHTML = '';
         if (playerResultEl) playerResultEl.textContent = '';
         if (aiResultEl) aiResultEl.textContent = '';
-        if (statusEl) statusEl.textContent = 'Click Deal to play';
         
-        // Reset button
-        const dealBtn = q('#deal-btn');
-        if (dealBtn) dealBtn.disabled = false;
+        // Start with 3 community cards (flop) already visible
+        communityCards = [deck.pop(), deck.pop(), deck.pop()];
+        
+        renderHands(false);
+        updatePot();
+        updateButtons();
+        showStatus('Click Deal to get your cards');
+    }
+
+    // --- Game Flow ---
+    function handleAction() {
+        switch (gamePhase) {
+            case 'idle':
+                deal();
+                break;
+            case 'dealt':
+                placeBet();
+                break;
+            case 'bet':
+                dealTurn();
+                break;
+            case 'turn':
+                dealRiver();
+                break;
+            case 'river':
+                showdown();
+                break;
+            case 'showdown':
+                clearGame();
+                break;
+        }
     }
 
     function deal() {
-        if (gamePhase !== 'betting') return;
         if (currentBet > balance) {
             showStatus('Not enough balance!');
             return;
         }
         
-        balance -= currentBet;
-        updateBalance();
-        
-        // Deal 5 cards
-        deck = createDeck();
-        shuffle(deck);
-        playerHand = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
-        aiHand = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+        // Deal 2 cards to player and AI
+        playerHand = [deck.pop(), deck.pop()];
+        aiHand = [deck.pop(), deck.pop()];
         
         renderHands(false);
-        gamePhase = 'playing';
-        showStatus('Dealing 5 cards...');
+        gamePhase = 'dealt';
+        showStatus('Cards dealt! Click Bet to continue');
+        updateButtons();
+    }
+
+    function placeBet() {
+        balance -= currentBet;
+        pot = currentBet * 2; // Player and AI both bet
+        updateBalance();
+        updatePot();
         
-        // Reveal and evaluate after delay
+        gamePhase = 'bet';
+        showStatus('Bet placed! Click Turn for next card');
+        updateButtons();
+    }
+
+    function dealTurn() {
+        communityCards.push(deck.pop());
+        renderHands(false);
+        
+        gamePhase = 'turn';
+        showStatus('Turn dealt! Click River for final card');
+        updateButtons();
+    }
+
+    function dealRiver() {
+        communityCards.push(deck.pop());
+        renderHands(false);
+        
+        gamePhase = 'river';
+        showStatus('River dealt! Showdown...');
+        updateButtons();
+        
+        // Auto-trigger showdown after a short delay
         setTimeout(() => {
-            renderHands(true);
-            showStatus('Revealing hands...');
+            showdown();
+        }, 1000);
+    }
+
+    function showdown() {
+        renderHands(true);
+        
+        const playerEval = evaluate7CardHand(playerHand, communityCards);
+        const aiEval = evaluate7CardHand(aiHand, communityCards);
+        
+        const playerResultEl = q('#player-hand-result');
+        const aiResultEl = q('#ai-hand-result');
+        
+        if (playerResultEl) playerResultEl.textContent = playerEval.name;
+        if (aiResultEl) aiResultEl.textContent = aiEval.name;
+        
+        setTimeout(() => {
+            if (playerEval.rank > aiEval.rank) {
+                const winAmount = pot;
+                balance += winAmount;
+                showStatus(`You win! ${playerEval.name} beats ${aiEval.name}. +$${winAmount}`);
+            } else if (aiEval.rank > playerEval.rank) {
+                showStatus(`AI wins! ${aiEval.name} beats ${playerEval.name}. -$${currentBet}`);
+            } else {
+                balance += currentBet;
+                showStatus(`Tie! Bet returned. Both have ${playerEval.name}.`);
+            }
             
-            const playerEval = evaluateHand(playerHand);
-            const aiEval = evaluateHand(aiHand);
-            
-            // Show hand rankings
-            const playerResultEl = q('#player-hand-result');
-            const aiResultEl = q('#ai-hand-result');
-            if (playerResultEl) playerResultEl.textContent = playerEval.name;
-            if (aiResultEl) aiResultEl.textContent = aiEval.name;
-            
-            setTimeout(() => {
-                if (playerEval.rank > aiEval.rank) {
-                    const winAmount = Math.floor(currentBet * playerEval.multiplier);
-                    balance += winAmount;
-                    showStatus(`You win! ${playerEval.name} beats ${aiEval.name}. +$${winAmount - currentBet}`);
-                } else if (aiEval.rank > playerEval.rank) {
-                    showStatus(`AI wins! ${aiEval.name} beats ${playerEval.name}. -$${currentBet}`);
-                } else {
-                    balance += currentBet; // Push
-                    showStatus(`Tie! Both have ${playerEval.name}. Bet returned.`);
-                }
-                
-                updateBalance();
-                gamePhase = 'result';
-                
-                // Auto-reset after delay
-                setTimeout(() => {
-                    clearGame();
-                }, 3000);
-            }, 500);
+            updateBalance();
+            pot = 0;
+            updatePot();
+            gamePhase = 'showdown';
+            updateButtons();
         }, 1000);
     }
 
     // --- Event Listeners ---
-    const dealBtn = q('#deal-btn');
-    if (dealBtn) {
-        dealBtn.addEventListener('click', deal);
-    }
+    const actionBtn = q('#action-btn');
+    if (actionBtn) actionBtn.addEventListener('click', handleAction);
 
     // --- Initialize ---
     clearGame();
     updateBalance();
+    updateCurrentBet();
 };
 
 // Auto-initialize for standalone usage
