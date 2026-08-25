@@ -2999,10 +2999,16 @@ io.on('connection', (socket) => {
         if (!playerData) return;
 
         const game = games[playerData.gameId];
-        if (game.status !== 'playing') return;
+        if (!game || game.status !== 'playing') return;
 
         const player = game.players.find(p => p && p.id === socket.id);
         if (!player || !player.inJail) return;
+
+        // Prevent multiple payments - check if already rolling or not their turn
+        if (game.gameState.rolling || game.gameState.currentPlayer !== socket.id) {
+            socket.emit('gameError', 'Cannot pay to leave jail right now');
+            return;
+        }
 
         if (player.money >= 150) {
             player.money -= 150;

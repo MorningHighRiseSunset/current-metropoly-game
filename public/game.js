@@ -2576,13 +2576,15 @@ function updateUI(options = {}) {
         const allHumanPlayersSelectedTokens = humanPlayers.every(p => p.tokenIndex !== undefined);
 
         const isPlaying = gameState.status === 'playing' || !!gameState.currentPlayer;
+        const myPlayerData = players.find(p => p && p.id === myPlayerId);
         canRollDice = Boolean(
             isPlaying &&
             myPlayerId &&
             gameState.currentPlayer &&
             myPlayerId === gameState.currentPlayer &&
             !gameState.diceRolled &&
-            allHumanPlayersSelectedTokens // Can only roll if all human players have selected tokens
+            allHumanPlayersSelectedTokens && // Can only roll if all human players have selected tokens
+            (!myPlayerData || !myPlayerData.inJail) // Can't roll dice when in jail
         );
 
         const rollDiceBtn = document.getElementById('rollDiceBtn');
@@ -2614,13 +2616,25 @@ function updateUI(options = {}) {
     // Handle jail button visibility
     const myPlayerData = players.find(p => p && p.id === myPlayerId);
     const payJailBtn = document.getElementById('payJailBtn');
+    const rollDiceBtn = document.getElementById('rollDiceBtn');
+    
     if (payJailBtn && myPlayerData) {
-        if (myPlayerData.inJail && gameState.currentPlayer === myPlayerId) {
+        if (myPlayerData.inJail && gameState.currentPlayer === myPlayerId && !gameState.diceRolled) {
             payJailBtn.style.display = 'block';
             payJailBtn.textContent = 'Pay $150 to Leave Jail';
-            payJailBtn.disabled = myPlayerData.money < 150;
+            payJailBtn.disabled = myPlayerData.money < 150 || payJailInProgress;
+            
+            // Hide roll dice button when in jail to prevent confusion
+            if (rollDiceBtn) {
+                rollDiceBtn.style.display = 'none';
+            }
         } else {
             payJailBtn.style.display = 'none';
+            
+            // Show roll dice button when not in jail
+            if (rollDiceBtn && !gameState.diceRolled && !myPlayerData.inJail) {
+                rollDiceBtn.style.display = 'block';
+            }
         }
     }
 }
@@ -3311,6 +3325,12 @@ socket.on('playerOutOfJail', (data) => {
     if (player) {
         player.inJail = false;
         player.jailTurns = 0;
+        
+        // Reset pay jail progress when player gets out of jail
+        if (data.playerId === myPlayerId) {
+            payJailInProgress = false;
+        }
+        
         updateUI();
         addLogEntry(`${getPlayerDisplayName(player)} got out of jail (${data.method})`, 'system');
         
@@ -3319,6 +3339,12 @@ socket.on('playerOutOfJail', (data) => {
             const payJailBtn = document.getElementById('payJailBtn');
             if (payJailBtn) {
                 payJailBtn.style.display = 'none';
+            }
+            
+            // Show roll dice button again
+            const rollDiceBtn = document.getElementById('rollDiceBtn');
+            if (rollDiceBtn) {
+                rollDiceBtn.style.display = 'block';
             }
         }
     }
@@ -3329,6 +3355,12 @@ socket.on('stillInJail', (data) => {
     if (player) {
         player.inJail = true;
         player.jailTurns = data.jailTurns;
+        
+        // Reset pay jail progress if this is the current player
+        if (data.playerId === myPlayerId) {
+            payJailInProgress = false;
+        }
+        
         updateUI();
     }
 });
@@ -3358,8 +3390,30 @@ socket.on('passedGo', (data) => {
 });
 
 // Pay to get out of jail
+let payJailInProgress = false;
 function payToGetOutOfJail() {
+    if (payJailInProgress) return; // Prevent multiple clicks
+    payJailInProgress = true;
+    
+    const payJailBtn = document.getElementById('payJailBtn');
+    if (payJailBtn) {
+        payJailBtn.disabled = true;
+        payJailBtn.textContent = 'Processing...';
+    }
+    
     socket.emit('payJail');
+    
+    // Reset after a timeout (in case of error)
+    setTimeout(() => {
+        payJailInProgress = false;
+        if (payJailBtn) {
+            const myPlayerData = players.find(p => p && p.id === myPlayerId);
+            if (myPlayerData && myPlayerData.inJail && gameState.currentPlayer === myPlayerId) {
+                payJailBtn.disabled = myPlayerData.money < 150;
+                payJailBtn.textContent = 'Pay $150 to Leave Jail';
+            }
+        }
+    }, 3000);
 }
 
 // Show card modal
