@@ -746,13 +746,31 @@ let propertyMediaSession = 0;
 function stopVideoElement(video) {
     if (!video) return;
     video._intentionalStop = true;
-    video.pause();
-    video.currentTime = 0;
-    video.loop = false;
-    video.autoplay = false;
-    video.removeAttribute('src');
-    video.querySelectorAll('source').forEach(source => source.remove());
-    video.load();
+    
+    // More aggressive video stopping
+    try {
+        video.pause();
+        video.currentTime = 0;
+        video.loop = false;
+        video.autoplay = false;
+        video.muted = true;
+        video.volume = 0;
+        
+        // Remove source and reload to ensure audio stops
+        video.removeAttribute('src');
+        video.querySelectorAll('source').forEach(source => {
+            source.removeAttribute('src');
+            source.remove();
+        });
+        video.load();
+        
+        // Remove from DOM if it's still there
+        if (video.parentNode) {
+            video.parentNode.removeChild(video);
+        }
+    } catch (e) {
+        console.error('Error stopping video:', e);
+    }
 }
 
 // Theme toggle functionality
@@ -2150,8 +2168,9 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
 }
 
 function closePropertyModal() {
-    if (activeAiLandingPlayerId) return;
+    // Always cleanup videos, even for AI landing
     cleanupPropertyVideo();
+    
     const propertyActions = document.getElementById('propertyActions');
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
     if (propertyActions && !activePropertyDecision) {
@@ -2201,7 +2220,10 @@ function buildPropertyDetailsHtml(spaceData) {
 // Show property information
 function showPropertyInfo(spaceData, options = {}) {
     const { showDecisionActions = false, viewerLabel = null } = options;
+    
+    // Force cleanup any existing videos before showing new content
     cleanupPropertyVideo();
+    
     const mediaSession = propertyMediaSession;
 
     const modal = propertyModal;
@@ -2367,6 +2389,23 @@ function cleanupPropertyVideo() {
     if (propertyModal) {
         propertyModal.querySelectorAll('video').forEach(stopVideoElement);
     }
+    
+    // Global cleanup: stop ALL videos on the page to prevent audio clashes
+    document.querySelectorAll('video').forEach(stopVideoElement);
+    
+    // Also check and stop any audio elements
+    document.querySelectorAll('audio').forEach(audio => {
+        try {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.removeAttribute('src');
+            if (audio.parentNode) {
+                audio.parentNode.removeChild(audio);
+            }
+        } catch (e) {
+            console.error('Error stopping audio:', e);
+        }
+    });
 }
 
 // Update players list
@@ -3211,6 +3250,9 @@ socket.on('turnChanged', (data) => {
         dismissPropertyDecisionUI();
     }
     
+    // Force cleanup videos when turn changes to prevent audio clashes
+    cleanupPropertyVideo();
+    
     if (data.gameState) {
         gameState = data.gameState;
     } else if (gameState) {
@@ -3628,6 +3670,10 @@ socket.on('aiLandingEnded', (data) => {
     if (data.playerId !== activeAiLandingPlayerId) return;
     activeAiLandingPlayerId = null;
     closeCasinoGame();
+    
+    // Force cleanup videos when AI landing ends
+    cleanupPropertyVideo();
+    
     dismissPropertyDecisionUI();
 });
 
