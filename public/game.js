@@ -1476,7 +1476,7 @@ function openCasinoGame(gameName, observerOptions = null) {
     const playerMoney = observePlayer ? observePlayer.money : (currentPlayer ? currentPlayer.money : 2500);
 
     casinoTitle.textContent = isObserver
-        ? `🎥 ${playerLabel} playing ${gameName} (Watching)`
+        ? `🎲 ${playerLabel} playing ${gameName}`
         : `Play ${gameName}`;
 
     if (closeCasinoBtn) {
