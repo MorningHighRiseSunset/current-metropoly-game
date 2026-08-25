@@ -95,6 +95,7 @@ let isAiVsAiGame = false;
 let activeAiLandingPlayerId = null;
 let observerCasinoStartBalance = null;
 let activePlayerCasinoGame = null; // Track if human player is actively playing casino
+let casinoPlayCounts = {}; // Track how many times each player has played casino (max 5)
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -1179,13 +1180,12 @@ function updatePropertyDecisionUI() {
                 waitingForBuyResult = true;
                 socket.emit('buyProperty', { position: activePropertyDecision.position });
                 dismissPropertyDecisionUI();
-                if (!isCasino) {
-                    setTimeout(() => {
-                        if (gameState && gameState.currentPlayer === myPlayerId) {
-                            endTurnNow();
-                        }
-                    }, 500);
-                }
+                // Auto-end turn after buying (including casino properties)
+                setTimeout(() => {
+                    if (gameState && gameState.currentPlayer === myPlayerId) {
+                        endTurnNow();
+                    }
+                }, 500);
             } else {
                 alert(`Not enough money to buy this ${typeLabel.toLowerCase()}.`);
             }
@@ -1274,6 +1274,21 @@ function beginLandingDecision({ spaceData, position, isRent = false, owner = nul
     activePropertyDecision = { spaceData, position, isRent, owner };
 
     if (spaceData.isCasino && !currentPlayer.isAI) {
+        // Check casino play count limit (max 5 times per player)
+        const playerId = currentPlayer.id || myPlayerId;
+        if (!casinoPlayCounts[playerId]) {
+            casinoPlayCounts[playerId] = 0;
+        }
+        
+        if (casinoPlayCounts[playerId] >= 5) {
+            alert('You have reached the maximum of 5 casino plays per game.');
+            openLandingPropertyModal(spaceData);
+            return;
+        }
+        
+        // Increment play count
+        casinoPlayCounts[playerId]++;
+        
         if (propertyModal) propertyModal.classList.add('hidden');
         cleanupPropertyVideo();
         openCasinoGame(spaceData.casinoGame);
@@ -3072,7 +3087,12 @@ socket.on('propertyPurchased', (data) => {
             clearPropertyDecisionTimer();
             dismissPropertyDecisionUI();
             updateUI();
-            endTurnNow();
+            // Auto-end turn after buying casino property
+            setTimeout(() => {
+                if (gameState && gameState.currentPlayer === myPlayerId) {
+                    endTurnNow();
+                }
+            }, 500);
         }
     }
 });
@@ -3090,6 +3110,12 @@ socket.on('propertyPassed', (data) => {
         clearPropertyDecisionTimer();
         dismissPropertyDecisionUI();
         updateUI();
+        // Auto-end turn after passing on property (including casino)
+        setTimeout(() => {
+            if (gameState && gameState.currentPlayer === myPlayerId) {
+                endTurnNow();
+            }
+        }, 500);
     }
 });
 
