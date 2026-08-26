@@ -3609,29 +3609,31 @@ socket.on('aiLandingStarted', (data) => {
     }
 
     activeAiLandingPlayerId = data.playerId;
-    const player = players.find((p) => p && p.id === data.playerId);
-    const spaceData = boardConfig[data.position];
-    if (!spaceData) return;
+    // AI player UI disabled - don't show property info when AI lands
+    // const player = players.find((p) => p && p.id === data.playerId);
+    // const spaceData = boardConfig[data.position];
+    // if (!spaceData) return;
 
-    const label = `${getPlayerDisplayName(player)} landed on ${spaceData.name}`;
-    showPropertyInfo(spaceData, {
-        showDecisionActions: false,
-        viewerLabel: data.willBuy
-            ? `${label} — watching property video, then may buy...`
-            : `${label} — viewing property...`
-    });
+    // const label = `${getPlayerDisplayName(player)} landed on ${spaceData.name}`;
+    // showPropertyInfo(spaceData, {
+    //     showDecisionActions: false,
+    //     viewerLabel: data.willBuy
+    //         ? `${label} — watching property video, then may buy...`
+    //         : `${label} — viewing property...`
+    // });
 });
 
 socket.on('aiCasinoStarted', (data) => {
     if (data.playerId !== activeAiLandingPlayerId || !data.casinoGame) return;
 
-    const player = players.find((p) => p && p.id === data.playerId);
-    if (!player) return;
+    // AI player UI disabled - don't show casino game when AI plays
+    // const player = players.find((p) => p && p.id === data.playerId);
+    // if (!player) return;
 
-    openCasinoGame(data.casinoGame, {
-        player,
-        playerLabel: getPlayerDisplayName(player)
-    });
+    // openCasinoGame(data.casinoGame, {
+    //     player,
+    //     playerLabel: getPlayerDisplayName(player)
+    // });
 });
 
 socket.on('aiCasinoComplete', (data) => {
@@ -3655,15 +3657,16 @@ socket.on('aiCasinoComplete', (data) => {
     );
     updateUI();
 
-    if (player && typeof player.position === 'number') {
-        const spaceData = boardConfig[player.position];
-        if (spaceData) {
-            showPropertyInfo(spaceData, {
-                showDecisionActions: false,
-                viewerLabel: `${getPlayerDisplayName(player)} — casino done (${sign}$${Math.abs(data.winnings)}), deciding on property...`
-            });
-        }
-    }
+    // AI player UI disabled - don't show property info after AI casino
+    // if (player && typeof player.position === 'number') {
+    //     const spaceData = boardConfig[player.position];
+    //     if (spaceData) {
+    //         showPropertyInfo(spaceData, {
+    //             showDecisionActions: false,
+    //             viewerLabel: `${getPlayerDisplayName(player)} — casino done (${sign}$${Math.abs(data.winnings)}), deciding on property...`
+    //         });
+    //     }
+    // }
 });
 
 socket.on('aiLandingEnded', (data) => {
