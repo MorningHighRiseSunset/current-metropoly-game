@@ -290,7 +290,10 @@ function renderLobbies(gameList) {
     //     html += liveGames.map(game => renderLiveGameCard(game)).join('');
     // }
 
-    lobbiesList.innerHTML = html;
+    // Only update if lobbiesList exists (we removed it from the new layout)
+    if (lobbiesList) {
+        lobbiesList.innerHTML = html;
+    }
 }
 
 function renderLobbyCard(lobby) {
@@ -636,11 +639,11 @@ socket.on('lobbyJoined', (data) => {
     currentGameId = gameId;
     persistLobbyIdentity(gameId, playerUid);
 
-    if (isHost) {
-        // Show game lobby section in middle
-        gameLobbySection.classList.remove('hidden');
-        updatePlayersList(players, document.getElementById('playersList'));
+    // Show game lobby section in middle for both host and non-host
+    gameLobbySection.classList.remove('hidden');
+    updatePlayersList(players, document.getElementById('playersList'));
 
+    if (isHost) {
         // Show start game button if there are at least 2 players OR 1 player + AI
         const actualPlayerCount = players.filter(p => p !== null).length;
         const hasAIPlayers = players.some(p => p && p.isAI);
@@ -648,10 +651,8 @@ socket.on('lobbyJoined', (data) => {
             startGameBtn.classList.remove('hidden');
         }
     } else {
-        // Hide game lobby section and show lobby
-        gameLobbySection.classList.add('hidden');
-        lobbySection.classList.remove('hidden');
-        updatePlayersList(players, document.getElementById('lobbyPlayersList'));
+        // Hide start button for non-host
+        startGameBtn.classList.add('hidden');
     }
 });
 
@@ -704,17 +705,32 @@ socket.on('playerJoined', (data) => {
 
 socket.on('playerLeft', (data) => {
     const { playerId, players, newHost } = data;
-    
+
     if (isHost) {
         updatePlayersList(players, document.getElementById('playersList'));
-        
+
         const actualPlayerCount = players.filter(p => p !== null).length;
         if (actualPlayerCount < 2 || !isHost) {
             startGameBtn.classList.add('hidden');
         }
     } else {
+        // Check if host left
+        if (newHost === null || players.length === 0) {
+            // Host left, close lobby box
+            showModal('The host has left the lobby. Returning to main menu.');
+            setTimeout(() => {
+                hideModal();
+                gameLobbySection.classList.add('hidden');
+                lobbySection.classList.add('hidden');
+                currentGameId = null;
+                isHost = false;
+                clearSpectatorIdentity();
+            }, 2000);
+            return;
+        }
+
         updatePlayersList(players, document.getElementById('lobbyPlayersList'));
-        
+
         if (playerId === socket.id) {
             // We were kicked or something went wrong
             location.reload();
