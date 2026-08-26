@@ -36,8 +36,6 @@ function getModelPath(localPath) {
 
 // DOM Elements
 const createGameBtn = document.getElementById('createGameBtn');
-const joinGameBtn = document.getElementById('joinGameBtn');
-const joinGameCodeInput = document.getElementById('joinGameCodeInput');
 const startGameBtn = document.getElementById('startGameBtn');
 const modalOkBtn = document.getElementById('modalOkBtn');
 const modalClose = document.querySelector('.close');
@@ -49,8 +47,8 @@ const settingsModal = document.getElementById('settingsModal');
 const settingsModalClose = document.querySelector('.modal-close');
 const refreshLobbiesBtn = document.getElementById('refreshLobbiesBtn');
 const lobbiesList = document.getElementById('lobbiesList');
-const gameCodeDisplay = document.getElementById('gameCodeDisplay');
-const copyCodeBtn = document.getElementById('copyCodeBtn');
+const gameLinkDisplay = document.getElementById('gameLinkDisplay');
+const copyLinkBtn = document.getElementById('copyLinkBtn');
 
 const gameMenu = document.querySelector('.lobby-container');
 const gameLobbySection = document.getElementById('gameLobbySection');
@@ -61,6 +59,7 @@ const modalMessage = document.getElementById('modalMessage');
 let currentGameId = null;
 let isHost = false;
 let availableLobbies = [];
+let autoStartOnJoin = false;
 const PUBLIC_SHARE_ORIGIN = 'https://vegas-metropoly.vercel.app';
 
 // Console command for testing: create AI vs AI game (2 AIs only — you spectate)
@@ -168,12 +167,16 @@ function saveLastPlayerName() {
 
 function autoJoinFromUrlIfPresent() {
     const params = new URLSearchParams(window.location.search);
-    const gameIdFromUrl = (params.get('gameId') || '').trim().toUpperCase();
+    const gameIdFromUrl = (params.get('game') || '').trim().toUpperCase();
     if (!gameIdFromUrl) return;
 
-    const gameIdInput = document.getElementById('gameId');
-    gameIdInput.value = gameIdFromUrl;
-    joinGameBtn.click();
+    console.log('Auto-joining lobby from URL:', gameIdFromUrl);
+    
+    // Emit join lobby event
+    socket.emit('joinLobby', { gameId: gameIdFromUrl });
+    
+    // Set flag to auto-start game when player joins
+    autoStartOnJoin = true;
 }
 
 // Theme toggle functionality
@@ -406,31 +409,11 @@ function clearSpectatorIdentity() {
 //     });
 // }
 
-// Join game by code input
-joinGameBtn.addEventListener('click', () => {
-    const gameCode = joinGameCodeInput.value.trim().toUpperCase();
-    if (!gameCode) {
-        showModal('Please enter a game code');
-        return;
-    }
-    if (gameCode.length !== 8) {
-        showModal('Game code must be 8 characters');
-        return;
-    }
-    joinLobby(gameCode);
-});
-
-// Allow Enter key to submit
-joinGameCodeInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        joinGameBtn.click();
-    }
-});
-
-// Copy game code button
-copyCodeBtn.addEventListener('click', () => {
+// Copy game link button
+copyLinkBtn.addEventListener('click', () => {
     if (currentGameId) {
-        copyToClipboard(currentGameId, copyCodeBtn);
+        const lobbyLink = `${window.location.origin}/?game=${currentGameId}`;
+        copyToClipboard(lobbyLink, copyLinkBtn);
     }
 });
 
@@ -615,12 +598,13 @@ socket.on('gameCreated', (data) => {
     currentGameId = gameId;
     persistLobbyIdentity(gameId, playerUid);
 
-    // Display game code
-    if (gameCodeDisplay) {
-        gameCodeDisplay.textContent = gameId;
+    // Display direct link to lobby
+    if (gameLinkDisplay) {
+        const lobbyLink = `${window.location.origin}/?game=${gameId}`;
+        gameLinkDisplay.textContent = lobbyLink;
     }
 
-    // Show game lobby sectionin middle
+    // Show game lobby section in middle
     gameLobbySection.classList.remove('hidden');
     updatePlayersList(players, document.getElementById('playersList'));
 
@@ -649,6 +633,15 @@ socket.on('lobbyJoined', (data) => {
         const hasAIPlayers = players.some(p => p && p.isAI);
         if ((actualPlayerCount >= 2 || (actualPlayerCount >= 1 && hasAIPlayers)) && isHost) {
             startGameBtn.classList.remove('hidden');
+        }
+        
+        // Auto-start game if player joined via direct link
+        if (autoStartOnJoin) {
+            console.log('Auto-starting game after joining via direct link...');
+            autoStartOnJoin = false;
+            setTimeout(() => {
+                startGameBtn.click();
+            }, 500);
         }
     } else {
         // Hide start button for non-host
