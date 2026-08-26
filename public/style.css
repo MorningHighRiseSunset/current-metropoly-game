@@ -163,8 +163,7 @@ body::before {
 }
 
 .game-code-display {
-    background: rgba(102, 126, 234, 0.1);
-    border: 2px solid rgba(102, 126, 234, 0.3);
+    background: linear-gradient(145deg, #2d2d2d, #3d3d3d);
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 24px;
