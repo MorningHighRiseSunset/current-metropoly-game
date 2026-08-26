@@ -36,17 +36,22 @@ function getModelPath(localPath) {
 
 // DOM Elements
 const createGameBtn = document.getElementById('createGameBtn');
+const joinGameBtn = document.getElementById('joinGameBtn');
+const joinGameCodeInput = document.getElementById('joinGameCodeInput');
 const startGameBtn = document.getElementById('startGameBtn');
 const modalOkBtn = document.getElementById('modalOkBtn');
 const modalClose = document.querySelector('.close');
-const addAiBtn = document.getElementById('addAiBtn');
-const removeAiBtn = document.getElementById('removeAiBtn');
+// AI buttons commented out - use console command instead
+// const addAiBtn = document.getElementById('addAiBtn');
+// const removeAiBtn = document.getElementById('removeAiBtn');
 const themeToggle = document.getElementById('themeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
 const settingsModalClose = document.querySelector('.modal-close');
 const refreshLobbiesBtn = document.getElementById('refreshLobbiesBtn');
 const lobbiesList = document.getElementById('lobbiesList');
+const gameCodeDisplay = document.getElementById('gameCodeDisplay');
+const copyCodeBtn = document.getElementById('copyCodeBtn');
 
 const gameMenu = document.querySelector('.lobby-container');
 const gameCreatedSection = document.getElementById('gameCreatedSection');
@@ -65,14 +70,14 @@ window.createAiVsAiGame = function() {
     console.log('createAiVsAiGame called');
     console.log('Socket connected:', socket.connected);
     console.log('Socket ID:', socket.id);
-    
+
     const createGame = () => {
         console.log('Creating AI vs AI game (2 AIs, no human players)...');
 
         const spectatorName = generateRandomPlayerName();
         const gameId = generateGameId();
         console.log('Generated gameId:', gameId, 'spectatorName:', spectatorName);
-        
+
         sessionStorage.setItem('metropoly_spectator_name', spectatorName);
 
         socket.once('aiVsAiGameCreated', (data) => {
@@ -82,22 +87,22 @@ window.createAiVsAiGame = function() {
             console.log('Redirecting to game page...');
             window.location.href = `/game/${data.gameId}?spectate=1`;
         });
-        
+
         // Add timeout to detect if server doesn't respond
         setTimeout(() => {
             socket.emit('addAIPlayer', { gameId });
             console.log('Added AI player 1');
-            
+
             // Add second AI
             setTimeout(() => {
                 socket.emit('addAIPlayer', { gameId });
                 console.log('Added AI player 2');
-                
+
                 // Start game
                 setTimeout(() => {
                     socket.emit('startGame');
                     console.log('Game started! Redirecting to game page...');
-                    
+
                     // Redirect to game page as spectator
                     setTimeout(() => {
                         window.location.href = `/game/${gameId}`;
@@ -106,8 +111,38 @@ window.createAiVsAiGame = function() {
             }, 500);
         }, 500);
     };
-    
+
     createGame();
+};
+
+// Console command to add AI player to current game (host only)
+// Usage in browser console: addAI()
+window.addAI = function() {
+    if (!currentGameId) {
+        console.error('No game created yet! Create a game first.');
+        return;
+    }
+    if (!isHost) {
+        console.error('Only the host can add AI players!');
+        return;
+    }
+    console.log('Adding AI player to game:', currentGameId);
+    socket.emit('addAIPlayer', { gameId: currentGameId });
+};
+
+// Console command to remove AI player from current game (host only)
+// Usage in browser console: removeAI()
+window.removeAI = function() {
+    if (!currentGameId) {
+        console.error('No game created yet!');
+        return;
+    }
+    if (!isHost) {
+        console.error('Only the host can remove AI players!');
+        return;
+    }
+    console.log('Removing AI player from game:', currentGameId);
+    socket.emit('removeAIPlayer', { gameId: currentGameId });
 };
 
 // Alias for common typo
@@ -227,9 +262,10 @@ function renderLobbies(gameList) {
     availableLobbies = gameList || [];
 
     const openLobbies = availableLobbies.filter(g => g.isJoinable);
-    const liveGames = availableLobbies.filter(g => g.isWatchable);
+    // Spectate ability commented out
+    // const liveGames = availableLobbies.filter(g => g.isWatchable);
 
-    if (openLobbies.length === 0 && liveGames.length === 0) {
+    if (openLobbies.length === 0) {
         lobbiesList.innerHTML = `
             <div class="no-lobbies">
                 <div class="no-lobbies-icon">🎯</div>
@@ -247,10 +283,11 @@ function renderLobbies(gameList) {
         html += openLobbies.map(lobby => renderLobbyCard(lobby)).join('');
     }
 
-    if (liveGames.length > 0) {
-        html += `<div class="lobby-section-label lobby-section-label--live">Games In Progress</div>`;
-        html += liveGames.map(game => renderLiveGameCard(game)).join('');
-    }
+    // Spectate ability commented out
+    // if (liveGames.length > 0) {
+    //     html += `<div class="lobby-section-label lobby-section-label--live">Games In Progress</div>`;
+    //     html += liveGames.map(game => renderLiveGameCard(game)).join('');
+    // }
 
     lobbiesList.innerHTML = html;
 }
@@ -288,41 +325,42 @@ function renderLobbyCard(lobby) {
     `;
 }
 
-function renderLiveGameCard(game) {
-    const playerCount = game.players ? game.players.length : 0;
-    const spectatorCount = game.spectatorCount || 0;
-    const hostName = game.hostName || (game.players && game.players[0] ? game.players[0].name : 'Host');
-    const statusLabel = game.status === 'starting' ? 'Starting' : 'In Progress';
+// Spectate ability commented out
+// function renderLiveGameCard(game) {
+//     const playerCount = game.players ? game.players.length : 0;
+//     const spectatorCount = game.spectatorCount || 0;
+//     const hostName = game.hostName || (game.players && game.players[0] ? game.players[0].name : 'Host');
+//     const statusLabel = game.status === 'starting' ? 'Starting' : 'In Progress';
 
-    return `
-        <div class="lobby-card lobby-card--live" data-game-id="${game.gameId}">
-            <div class="lobby-card-header">
-                <span class="lobby-game-id">${game.gameId}</span>
-                <span class="lobby-status status-live">${statusLabel}</span>
-            </div>
-            <div class="lobby-card-body">
-                <div class="lobby-info">
-                    <div class="lobby-info-item">
-                        <span class="lobby-info-icon">👥</span>
-                        <span class="lobby-info-text">${playerCount} Players</span>
-                    </div>
-                    <div class="lobby-info-item">
-                        <span class="lobby-info-icon">👑</span>
-                        <span class="lobby-info-text">Host: ${hostName}</span>
-                    </div>
-                    ${spectatorCount > 0 ? `
-                    <div class="lobby-info-item">
-                        <span class="lobby-info-icon">👁️</span>
-                        <span class="lobby-info-text">${spectatorCount} Watching</span>
-                    </div>` : ''}
-                </div>
-                <button class="btn btn-watch" onclick="watchGame('${game.gameId}')">
-                    Watch Game
-                </button>
-            </div>
-        </div>
-    `;
-}
+//     return `
+//         <div class="lobby-card lobby-card--live" data-game-id="${game.gameId}">
+//             <div class="lobby-card-header">
+//                 <span class="lobby-game-id">${game.gameId}</span>
+//                 <span class="lobby-status status-live">${statusLabel}</span>
+//             </div>
+//             <div class="lobby-card-body">
+//                 <div class="lobby-info">
+//                     <div class="lobby-info-item">
+//                         <span class="lobby-info-icon">👥</span>
+//                         <span class="lobby-info-text">${playerCount} Players</span>
+//                     </div>
+//                     <div class="lobby-info-item">
+//                         <span class="lobby-info-icon">👑</span>
+//                         <span class="lobby-info-text">Host: ${hostName}</span>
+//                     </div>
+//                     ${spectatorCount > 0 ? `
+//                     <div class="lobby-info-item">
+//                         <span class="lobby-info-icon">👁️</span>
+//                         <span class="lobby-info-text">${spectatorCount} Watching</span>
+//                     </div>` : ''}
+//                 </div>
+//                 <button class="btn btn-watch" onclick="watchGame('${game.gameId}')">
+//                     Watch Game
+//                 </button>
+//             </div>
+//         </div>
+//     `;
+// }
 
 // Join lobby from list
 function joinLobby(gameId) {
@@ -353,16 +391,44 @@ function clearSpectatorIdentity() {
     sessionStorage.removeItem('metropoly_ai_vs_ai');
 }
 
-// Watch an in-progress game as a spectator
-function watchGame(gameId) {
-    const spectatorName = generateRandomPlayerName();
-    sessionStorage.setItem('metropoly_spectator_name', spectatorName);
-    currentGameId = gameId;
-    socket.emit('joinAsSpectator', {
-        gameId,
-        spectatorName
-    });
-}
+// Spectate ability commented out
+// function watchGame(gameId) {
+//     const spectatorName = generateRandomPlayerName();
+//     sessionStorage.setItem('metropoly_spectator_name', spectatorName);
+//     currentGameId = gameId;
+//     socket.emit('joinAsSpectator', {
+//         gameId,
+//         spectatorName
+//     });
+// }
+
+// Join game by code input
+joinGameBtn.addEventListener('click', () => {
+    const gameCode = joinGameCodeInput.value.trim().toUpperCase();
+    if (!gameCode) {
+        showModal('Please enter a game code');
+        return;
+    }
+    if (gameCode.length !== 8) {
+        showModal('Game code must be 8 characters');
+        return;
+    }
+    joinLobby(gameCode);
+});
+
+// Allow Enter key to submit
+joinGameCodeInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        joinGameBtn.click();
+    }
+});
+
+// Copy game code button
+copyCodeBtn.addEventListener('click', () => {
+    if (currentGameId) {
+        copyToClipboard(currentGameId, copyCodeBtn);
+    }
+});
 
 // Show modal message
 function showModal(message) {
@@ -504,35 +570,34 @@ startGameBtn.addEventListener('click', () => {
     }, 50);
 });
 
-// Add AI player
-addAiBtn.addEventListener('click', () => {
-    if (!isHost) {
-        showModal('Only the host can add AI players!');
-        return;
-    }
+// AI add/remove buttons commented out - use console command instead
+// addAiBtn.addEventListener('click', () => {
+//     if (!isHost) {
+//         showModal('Only the host can add AI players!');
+//         return;
+//     }
 
-    if (!currentGameId) {
-        showModal('No game created yet!');
-        return;
-    }
+//     if (!currentGameId) {
+//         showModal('No game created yet!');
+//         return;
+//     }
 
-    socket.emit('addAIPlayer', { gameId: currentGameId });
-});
+//     socket.emit('addAIPlayer', { gameId: currentGameId });
+// });
 
-// Remove AI player
-removeAiBtn.addEventListener('click', () => {
-    if (!isHost) {
-        showModal('Only the host can remove AI players!');
-        return;
-    }
+// removeAiBtn.addEventListener('click', () => {
+//     if (!isHost) {
+//         showModal('Only the host can remove AI players!');
+//         return;
+//     }
 
-    if (!currentGameId) {
-        showModal('No game created yet!');
-        return;
-    }
+//     if (!currentGameId) {
+//         showModal('No game created yet!');
+//         return;
+//     }
 
-    socket.emit('removeAIPlayer', { gameId: currentGameId });
-});
+//     socket.emit('removeAIPlayer', { gameId: currentGameId });
+// });
 
 // Modal close handlers
 modalClose.addEventListener('click', hideModal);
@@ -541,17 +606,22 @@ modalOkBtn.addEventListener('click', hideModal);
 // Socket event handlers
 socket.on('gameCreated', (data) => {
     const { gameId, players, playerUid } = data;
-    
+
     isHost = true;
     currentGameId = gameId;
     persistLobbyIdentity(gameId, playerUid);
-    
+
+    // Display game code
+    if (gameCodeDisplay) {
+        gameCodeDisplay.textContent = gameId;
+    }
+
     // Hide menu and lobby, show game created section
     if (gameMenu) gameMenu.classList.add('hidden');
     if (lobbySection) lobbySection.classList.add('hidden');
     gameCreatedSection.classList.remove('hidden');
     updatePlayersList(players, document.getElementById('playersList'));
-    
+
     // Show start game button if there are at least 2 players OR 1 player + AI
     const actualPlayerCount = players.filter(p => p !== null).length;
     const hasAIPlayers = players.some(p => p && p.isAI);

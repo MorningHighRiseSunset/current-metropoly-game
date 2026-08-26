@@ -123,40 +123,48 @@
                 <div class="create-game-card">
                     <div class="card-icon">🎲</div>
                     <h2>Create New Game</h2>
-                    <p class="card-description">Start a new game lobby and invite friends to play</p>
+                    <p class="card-description">Start a new game lobby and share the code with friends</p>
                     <button id="createGameBtn" class="btn btn-primary btn-large">
                         <span class="btn-icon">➕</span>
                         Create Game
                     </button>
                 </div>
 
-                <!-- Available Lobbies Section -->
-                <div class="lobbies-section">
-                    <div class="lobbies-header">
-                        <h2>🎮 Games</h2>
-                        <button id="refreshLobbiesBtn" class="btn btn-refresh">
-                            <span class="refresh-icon">🔄</span>
+                <!-- Join Game Section -->
+                <div class="create-game-card">
+                    <div class="card-icon">🎮</div>
+                    <h2>Join Game</h2>
+                    <p class="card-description">Enter a game code to join an existing lobby</p>
+                    <div class="join-game-input">
+                        <input type="text" id="joinGameCodeInput" placeholder="Enter game code" maxlength="8" style="padding: 12px; border-radius: 8px; border: 2px solid rgba(155, 89, 182, 0.5); background: rgba(0, 0, 0, 0.3); color: white; font-size: 16px; text-align: center; text-transform: uppercase; width: 200px;">
+                        <button id="joinGameBtn" class="btn btn-primary btn-large">
+                            <span class="btn-icon">🔗</span>
+                            Join
                         </button>
-                    </div>
-                    <p class="lobbies-subtitle">Join open lobbies or watch games in progress</p>
-                    <div id="lobbiesList" class="lobbies-list">
-                        <div class="loading-lobbies">Loading lobbies...</div>
                     </div>
                 </div>
             </div>
 
             <div id="gameCreatedSection" class="hidden">
                 <div class="game-lobby-container">
+                    <div class="game-code-display">
+                        <h3>Share this code with friends:</h3>
+                        <div class="code-box">
+                            <span id="gameCodeDisplay" class="game-code">---</span>
+                            <button id="copyCodeBtn" class="btn btn-copy">📋 Copy</button>
+                        </div>
+                    </div>
                     <div class="players-card">
                         <div class="card-header">
                             <h3>Players</h3>
                         </div>
                         <div class="card-body">
                             <div id="playersList" class="players-list"></div>
-                            <div class="ai-controls">
+                            <!-- AI controls commented out - use console command instead -->
+                            <!-- <div class="ai-controls">
                                 <button id="addAiBtn" class="btn btn-secondary">+ Add AI</button>
                                 <button id="removeAiBtn" class="btn btn-secondary">- Remove AI</button>
-                            </div>
+                            </div> -->
                             <button id="startGameBtn" class="btn btn-success hidden">Start Game</button>
                         </div>
                     </div>

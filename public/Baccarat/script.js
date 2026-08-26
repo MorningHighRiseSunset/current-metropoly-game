@@ -7,6 +7,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     const suits = ['♠', '♥', '♦', '♣'];
     const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
+    let currentBetAmount = 100; // Default bet amount
     let bets = []; // Array of active bets: {type, amount}
     let playerHand = [];
     let bankerHand = [];
@@ -173,13 +174,13 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
             return;
         }
         
-        if (balance < 100) {
+        if (balance < currentBetAmount) {
             showStatus('Not enough balance!');
             return;
         }
         
-        balance -= 100;
-        bets.push({ type, amount: 100 });
+        balance -= currentBetAmount;
+        bets.push({ type, amount: currentBetAmount });
         
         // Update UI
         const betAreas = container.querySelectorAll('.bet-area');
@@ -190,7 +191,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         });
         
         updateBalance();
-        showStatus(`${type.toUpperCase()} bet placed. Click Deal to begin.`);
+        showStatus(`${type.toUpperCase()} bet of $${currentBetAmount} placed. Click Deal to begin.`);
     }
 
     function deal() {
@@ -414,6 +415,15 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
                 updateBalance();
                 showStatus('Bets cleared');
             }
+        });
+    }
+
+    // Bet amount selector
+    const betAmountSelector = q('#bet-amount-selector');
+    if (betAmountSelector) {
+        betAmountSelector.addEventListener('change', (e) => {
+            currentBetAmount = parseInt(e.target.value);
+            showStatus(`Bet amount changed to $${currentBetAmount}`);
         });
     }
 

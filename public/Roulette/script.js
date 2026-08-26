@@ -3,6 +3,7 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
     // --- State ---
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
     let currentBet = 100;
+    let selectedBetAmount = 100; // Default bet amount
     let selectedBet = null;
     let selectedNumber = null; // For specific number bets
     let isSpinning = false;
@@ -84,6 +85,10 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
     function updateBalance() {
         const balanceEl = q('#balance');
         if (balanceEl) balanceEl.textContent = balance;
+        
+        const currentBetDisplay = q('#current-bet-display');
+        if (currentBetDisplay) currentBetDisplay.textContent = selectedBetAmount;
+        
         if (typeof updateMainGameBalance === 'function') {
             updateMainGameBalance(balance);
         } else if (container && typeof CustomEvent === 'function') {
@@ -113,12 +118,13 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
             showResult('Please select a specific number!');
             return;
         }
-        if (balance < currentBet) {
+        if (balance < selectedBetAmount) {
             showResult('Not enough balance!');
             return;
         }
 
-        balance -= currentBet;
+        currentBet = selectedBetAmount;
+        balance -= selectedBetAmount;
         updateBalance();
         isSpinning = true;
 
@@ -314,6 +320,15 @@ window.initRouletteMinigame = function(container, playerMoney, updateMainGameBal
     
     // Generate number betting grid
     generateNumberGrid();
+    
+    // Bet amount selector
+    const betAmountSelector = q('#bet-amount-selector');
+    if (betAmountSelector) {
+        betAmountSelector.addEventListener('change', (e) => {
+            selectedBetAmount = parseInt(e.target.value);
+            updateBalance();
+        });
+    }
     
     updateBalance();
     showResult('Select a bet type or number to begin!');

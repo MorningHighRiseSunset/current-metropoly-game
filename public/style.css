@@ -105,7 +105,7 @@ body::before {
 /* Lobby Container */
 .lobby-container {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 1fr 1fr;
     gap: 40px;
     max-width: 1200px;
     margin: 0 auto;
@@ -149,9 +149,67 @@ body::before {
 }
 
 .card-description {
+    font-size: 1rem;
     color: var(--text-secondary);
     margin-bottom: 32px;
-    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.join-game-input {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+.game-code-display {
+    background: rgba(102, 126, 234, 0.1);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.game-code-display h3 {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+}
+
+.code-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 16px 24px;
+    border-radius: 12px;
+}
+
+.game-code {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-primary);
+    letter-spacing: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+.btn-copy {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-copy:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .btn-large {

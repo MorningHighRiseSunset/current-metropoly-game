@@ -8,6 +8,7 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
     const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
     let currentBet = 0;
+    let selectedBetAmount = 100; // Default bet amount
     let playerHand = [];
     let dealerHand = [];
     let deck = [];
@@ -55,6 +56,10 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
     function updateBalance() {
         const balanceEl = q('#balance');
         if (balanceEl) balanceEl.textContent = `$${balance}`;
+        
+        const currentBetDisplay = q('#current-bet-display');
+        if (currentBetDisplay) currentBetDisplay.textContent = selectedBetAmount;
+        
         if (typeof updateMainGameBalance === 'function') {
             updateMainGameBalance(balance);
         } else if (container && typeof CustomEvent === 'function') {
@@ -179,13 +184,13 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
 
     function placeBet(amount) {
         if (gamePhase !== 'betting') return;
-        if (amount > balance) {
+        if (selectedBetAmount > balance) {
             showResult('Not enough balance!');
             return;
         }
         
-        currentBet = amount;
-        balance -= amount;
+        currentBet = selectedBetAmount;
+        balance -= selectedBetAmount;
         updateBalance();
         
         // Start game
@@ -313,7 +318,16 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
     const standBtn = q('#stand-btn');
     
     if (dealBtn) {
-        dealBtn.addEventListener('click', () => placeBet(100));
+        dealBtn.addEventListener('click', () => placeBet(selectedBetAmount));
+    }
+
+    // Bet amount selector
+    const betAmountSelector = q('#bet-amount-selector');
+    if (betAmountSelector) {
+        betAmountSelector.addEventListener('change', (e) => {
+            selectedBetAmount = parseInt(e.target.value);
+            updateBalance();
+        });
     }
     
     if (hitBtn) {

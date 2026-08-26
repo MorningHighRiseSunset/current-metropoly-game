@@ -8,6 +8,7 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
     const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
     let currentBet = 100;
+    let selectedBetAmount = 100; // Default bet amount
     let pot = 0;
     let playerHand = [];
     let aiHand = [];

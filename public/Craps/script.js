@@ -2,6 +2,7 @@
 window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBalance) {
     // Game state
     let balance = bankroll;
+    let selectedBetAmount = 100; // Default bet amount
     let phase = 'comeout';
     let point = null;
     let bets = []; // Array of active bets: {type, amount, point, number}
@@ -71,19 +72,20 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
         }
     }
     
-    function addBet(type, amount = 100) {
-        if (balance < amount) {
+    function addBet(type, amount = null) {
+        const betAmount = amount || selectedBetAmount;
+        if (balance < betAmount) {
             showResult('Not enough balance!');
             return false;
         }
         
-        balance -= amount;
+        balance -= betAmount;
         
         // Handle place bets
         if (['4', '5', '6', '8', '9', '10'].includes(type)) {
-            bets.push({ type: `place-${type}`, amount, number: parseInt(type) });
+            bets.push({ type: `place-${type}`, amount: betAmount, number: parseInt(type) });
         } else {
-            bets.push({ type, amount });
+            bets.push({ type, amount: betAmount });
         }
         
         updateUI();
@@ -408,6 +410,14 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
         } else if (container && typeof CustomEvent === 'function') {
             container.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance}}));
         }
+    }
+    
+    // Bet amount selector
+    const betAmountSelector = container.querySelector('#bet-amount-selector');
+    if (betAmountSelector) {
+        betAmountSelector.addEventListener('change', (e) => {
+            selectedBetAmount = parseInt(e.target.value);
+        });
     }
     
     updateUI();
