@@ -226,13 +226,15 @@ initThemeToggle();
 // Initialize helicopter animation
 initHelicopterAnimation();
 
-// Fetch lobbies on page load
-fetchLobbies();
+// Fetch lobbies on page load (commented out since we removed lobbies list)
+// fetchLobbies();
 
-// Refresh lobbies button
-refreshLobbiesBtn.addEventListener('click', () => {
-    fetchLobbies();
-});
+// Refresh lobbies button (commented out since we removed lobbies list)
+// if (refreshLobbiesBtn) {
+//     refreshLobbiesBtn.addEventListener('click', () => {
+//         fetchLobbies();
+//     });
+// }
 
 // Make joinLobby available globally for onclick handlers
 window.joinLobby = joinLobby;
