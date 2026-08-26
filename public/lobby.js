@@ -875,6 +875,7 @@ function initHelicopterAnimation() {
     // Animation state
     let animationState = {
         active: false,
+        type: 'flyby', // 'flyby', 'circle', 'figure8', 'spiral', 'hover'
         direction: 'right', // 'left' or 'right'
         progress: 0,
         duration: 8000, // 8 seconds
@@ -896,26 +897,58 @@ function initHelicopterAnimation() {
         if (animationState.active) {
             const elapsed = performance.now() - animationState.startTime;
             const t = Math.min(elapsed / animationState.duration, 1);
-            
-            // Flight path: fly towards camera (Z axis), then veer and exit
-            const progress = t;
-            
-            if (animationState.direction === 'right') {
-                // Left to right flight - one smooth continuous animation
-                helicopterModel.position.x = -600 + progress * 800; // Start WAY off-screen left (-600), fly to off-screen right (200)
-                helicopterModel.position.y = 5 + progress * 35; // Move up smoothly (5 to 40)
-                // Smooth Z curve: start far, come close, go away using sine wave - closer to screen
-                helicopterModel.position.z = -120 + Math.sin(progress * Math.PI) * 90; 
-                helicopterModel.scale.setScalar(0.25 + Math.sin(progress * Math.PI) * 0.7); // Smooth scale: small -> big -> small
-                helicopterModel.rotation.y = progress * 45 * (Math.PI / 180); // Smooth turn right
-            } else {
-                // Right to left flight - one smooth continuous animation
-                helicopterModel.position.x = 600 - progress * 800; // Start WAY off-screen right (600), fly to off-screen left (-200)
-                helicopterModel.position.y = 5 + progress * 35; // Move up smoothly (5 to 40)
-                // Smooth Z curve: start far, come close, go away using sine wave - closer to screen
-                helicopterModel.position.z = -120 + Math.sin(progress * Math.PI) * 90;
-                helicopterModel.scale.setScalar(0.25 + Math.sin(progress * Math.PI) * 0.7); // Smooth scale: small -> big -> small
-                helicopterModel.rotation.y = 180 * (Math.PI / 180) - progress * 45 * (Math.PI / 180); // Smooth turn left
+
+            if (animationState.type === 'flyby') {
+                // Original flyby animation
+                if (animationState.direction === 'right') {
+                    helicopterModel.position.x = -600 + t * 800;
+                    helicopterModel.position.y = 5 + t * 35;
+                    helicopterModel.position.z = -120 + Math.sin(t * Math.PI) * 90;
+                    helicopterModel.scale.setScalar(0.25 + Math.sin(t * Math.PI) * 0.7);
+                    helicopterModel.rotation.y = t * 45 * (Math.PI / 180);
+                } else {
+                    helicopterModel.position.x = 600 - t * 800;
+                    helicopterModel.position.y = 5 + t * 35;
+                    helicopterModel.position.z = -120 + Math.sin(t * Math.PI) * 90;
+                    helicopterModel.scale.setScalar(0.25 + Math.sin(t * Math.PI) * 0.7);
+                    helicopterModel.rotation.y = 180 * (Math.PI / 180) - t * 45 * (Math.PI / 180);
+                }
+            } else if (animationState.type === 'circle') {
+                // Circular flight pattern
+                const radius = 150;
+                const angle = t * Math.PI * 2;
+                helicopterModel.position.x = Math.cos(angle) * radius;
+                helicopterModel.position.y = 30 + Math.sin(angle * 2) * 10;
+                helicopterModel.position.z = Math.sin(angle) * radius;
+                helicopterModel.scale.setScalar(0.4);
+                helicopterModel.rotation.y = angle + Math.PI / 2;
+            } else if (animationState.type === 'figure8') {
+                // Figure-8 pattern
+                const scale = 120;
+                helicopterModel.position.x = Math.sin(t * Math.PI * 2) * scale;
+                helicopterModel.position.y = 30 + Math.sin(t * Math.PI * 4) * 15;
+                helicopterModel.position.z = Math.sin(t * Math.PI * 4) * scale * 0.5;
+                helicopterModel.scale.setScalar(0.4);
+                helicopterModel.rotation.y = Math.atan2(
+                    Math.cos(t * Math.PI * 2) * scale * Math.PI * 2,
+                    Math.cos(t * Math.PI * 4) * scale * Math.PI * 2
+                );
+            } else if (animationState.type === 'spiral') {
+                // Spiral ascent/descent
+                const radius = 100 - t * 50;
+                const angle = t * Math.PI * 4;
+                helicopterModel.position.x = Math.cos(angle) * radius;
+                helicopterModel.position.y = 10 + t * 40;
+                helicopterModel.position.z = Math.sin(angle) * radius;
+                helicopterModel.scale.setScalar(0.3 + t * 0.2);
+                helicopterModel.rotation.y = angle + Math.PI / 2;
+            } else if (animationState.type === 'hover') {
+                // Hover with gentle movement
+                helicopterModel.position.x = Math.sin(t * Math.PI * 2) * 30;
+                helicopterModel.position.y = 40 + Math.sin(t * Math.PI * 3) * 5;
+                helicopterModel.position.z = Math.sin(t * Math.PI * 2.5) * 20;
+                helicopterModel.scale.setScalar(0.5);
+                helicopterModel.rotation.y = Math.sin(t * Math.PI) * 0.2;
             }
 
             helicopterModel.visible = true;
@@ -924,7 +957,7 @@ function initHelicopterAnimation() {
             if (t >= 1) {
                 animationState.active = false;
                 helicopterModel.visible = false;
-                
+
                 // Schedule next flight
                 const nextFlight = Math.random() * 15000 + 15000;
                 setTimeout(triggerHelicopter, nextFlight);
@@ -937,13 +970,19 @@ function initHelicopterAnimation() {
 
     function triggerHelicopter() {
         if (!helicopterModel) return;
-        
-        // Randomly choose direction
-        animationState.direction = Math.random() > 0.5 ? 'right' : 'left';
+
+        // Randomly choose animation type
+        const types = ['flyby', 'flyby', 'circle', 'figure8', 'spiral', 'hover'];
+        animationState.type = types[Math.floor(Math.random() * types.length)];
+
+        if (animationState.type === 'flyby') {
+            animationState.direction = Math.random() > 0.5 ? 'right' : 'left';
+        }
+
         animationState.active = true;
         animationState.startTime = performance.now();
-        
-        console.log(`Helicopter flying ${animationState.direction}`);
+
+        console.log(`Helicopter animation: ${animationState.type}${animationState.type === 'flyby' ? ' ' + animationState.direction : ''}`);
     }
 
     // Handle window resize
