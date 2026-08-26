@@ -119,7 +119,7 @@
             <div id="helicopter-container" class="helicopter-container"></div>
 
             <div class="lobby-container">
-                <!-- Create Game Section -->
+                <!-- Create Game Section (Left) -->
                 <div class="create-game-card">
                     <div class="card-icon">🎲</div>
                     <h2>Create New Game</h2>
@@ -130,7 +130,34 @@
                     </button>
                 </div>
 
-                <!-- Join Game Section -->
+                <!-- Game Lobby Section (Middle) -->
+                <div id="gameLobbySection" class="game-lobby-section hidden">
+                    <div class="game-lobby-container">
+                        <div class="game-code-display">
+                            <h3>Share this code with friends:</h3>
+                            <div class="code-box">
+                                <span id="gameCodeDisplay" class="game-code">---</span>
+                                <button id="copyCodeBtn" class="btn btn-copy">📋 Copy</button>
+                            </div>
+                        </div>
+                        <div class="players-card">
+                            <div class="card-header">
+                                <h3>Players</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="playersList" class="players-list"></div>
+                                <!-- AI controls commented out - use console command instead -->
+                                <!-- <div class="ai-controls">
+                                    <button id="addAiBtn" class="btn btn-secondary">+ Add AI</button>
+                                    <button id="removeAiBtn" class="btn btn-secondary">- Remove AI</button>
+                                </div> -->
+                                <button id="startGameBtn" class="btn btn-success hidden">Start Game</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Join Game Section (Right) -->
                 <div class="create-game-card">
                     <div class="card-icon">🎮</div>
                     <h2>Join Game</h2>
@@ -141,32 +168,6 @@
                             <span class="btn-icon">🔗</span>
                             Join
                         </button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="gameCreatedSection" class="hidden">
-                <div class="game-lobby-container">
-                    <div class="game-code-display">
-                        <h3>Share this code with friends:</h3>
-                        <div class="code-box">
-                            <span id="gameCodeDisplay" class="game-code">---</span>
-                            <button id="copyCodeBtn" class="btn btn-copy">📋 Copy</button>
-                        </div>
-                    </div>
-                    <div class="players-card">
-                        <div class="card-header">
-                            <h3>Players</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="playersList" class="players-list"></div>
-                            <!-- AI controls commented out - use console command instead -->
-                            <!-- <div class="ai-controls">
-                                <button id="addAiBtn" class="btn btn-secondary">+ Add AI</button>
-                                <button id="removeAiBtn" class="btn btn-secondary">- Remove AI</button>
-                            </div> -->
-                            <button id="startGameBtn" class="btn btn-success hidden">Start Game</button>
-                        </div>
                     </div>
                 </div>
             </div>

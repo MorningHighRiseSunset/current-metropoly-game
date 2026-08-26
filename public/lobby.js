@@ -54,7 +54,7 @@ const gameCodeDisplay = document.getElementById('gameCodeDisplay');
 const copyCodeBtn = document.getElementById('copyCodeBtn');
 
 const gameMenu = document.querySelector('.lobby-container');
-const gameCreatedSection = document.getElementById('gameCreatedSection');
+const gameLobbySection = document.getElementById('gameLobbySection');
 const lobbySection = document.getElementById('lobbySection');
 const messageModal = document.getElementById('messageModal');
 const modalMessage = document.getElementById('modalMessage');
@@ -618,10 +618,8 @@ socket.on('gameCreated', (data) => {
         gameCodeDisplay.textContent = gameId;
     }
 
-    // Hide menu and lobby, show game created section
-    if (gameMenu) gameMenu.classList.add('hidden');
-    if (lobbySection) lobbySection.classList.add('hidden');
-    gameCreatedSection.classList.remove('hidden');
+    // Show game lobby sectionin middle
+    gameLobbySection.classList.remove('hidden');
     updatePlayersList(players, document.getElementById('playersList'));
 
     // Show start game button if there are at least 2 players OR 1 player + AI
@@ -634,18 +632,14 @@ socket.on('gameCreated', (data) => {
 
 socket.on('lobbyJoined', (data) => {
     const { gameId, playerId, playerUid, isHost: hostStatus, players } = data;
-    
+
     isHost = hostStatus;
     currentGameId = gameId;
     persistLobbyIdentity(gameId, playerUid);
-    
-    // Hide menu
-    if (gameMenu) gameMenu.classList.add('hidden');
-    
+
     if (isHost) {
-        // Hide lobby and show game created section
-        if (lobbySection) lobbySection.classList.add('hidden');
-        gameCreatedSection.classList.remove('hidden');
+        // Show game lobby section in middle
+        gameLobbySection.classList.remove('hidden');
         updatePlayersList(players, document.getElementById('playersList'));
 
         // Show start game button if there are at least 2 players OR 1 player + AI
@@ -655,8 +649,8 @@ socket.on('lobbyJoined', (data) => {
             startGameBtn.classList.remove('hidden');
         }
     } else {
-        // Hide game created section and show lobby
-        gameCreatedSection.classList.add('hidden');
+        // Hide game lobby section and show lobby
+        gameLobbySection.classList.add('hidden');
         lobbySection.classList.remove('hidden');
         updatePlayersList(players, document.getElementById('lobbyPlayersList'));
     }
@@ -665,18 +659,17 @@ socket.on('lobbyJoined', (data) => {
 socket.on('lobbyDeleted', (data) => {
     const { gameId, reason } = data;
     showModal(`Lobby deleted: ${reason}`);
-    
+
     // Clear game state
     currentGameId = null;
     isHost = false;
     clearSpectatorIdentity();
-    
+
     // Return to lobby menu
     setTimeout(() => {
         hideModal();
-        gameCreatedSection.classList.add('hidden');
+        gameLobbySection.classList.add('hidden');
         lobbySection.classList.add('hidden');
-        gameMenu.classList.remove('hidden');
         fetchLobbies();
     }, 2000);
 });
