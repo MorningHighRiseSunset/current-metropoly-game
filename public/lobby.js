@@ -41,9 +41,8 @@ const joinGameCodeInput = document.getElementById('joinGameCodeInput');
 const startGameBtn = document.getElementById('startGameBtn');
 const modalOkBtn = document.getElementById('modalOkBtn');
 const modalClose = document.querySelector('.close');
-// AI buttons commented out - use console command instead
-// const addAiBtn = document.getElementById('addAiBtn');
-// const removeAiBtn = document.getElementById('removeAiBtn');
+const addAiBtn = document.getElementById('addAiBtn');
+const removeAiBtn = document.getElementById('removeAiBtn');
 const themeToggle = document.getElementById('themeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
@@ -572,34 +571,34 @@ startGameBtn.addEventListener('click', () => {
     }, 50);
 });
 
-// AI add/remove buttons commented out - use console command instead
-// addAiBtn.addEventListener('click', () => {
-//     if (!isHost) {
-//         showModal('Only the host can add AI players!');
-//         return;
-//     }
+// AI add/remove buttons (now in settings modal)
+addAiBtn.addEventListener('click', () => {
+    if (!isHost) {
+        showModal('Only the host can add AI players!');
+        return;
+    }
 
-//     if (!currentGameId) {
-//         showModal('No game created yet!');
-//         return;
-//     }
+    if (!currentGameId) {
+        showModal('No game created yet!');
+        return;
+    }
 
-//     socket.emit('addAIPlayer', { gameId: currentGameId });
-// });
+    socket.emit('addAIPlayer', { gameId: currentGameId });
+});
 
-// removeAiBtn.addEventListener('click', () => {
-//     if (!isHost) {
-//         showModal('Only the host can remove AI players!');
-//         return;
-//     }
+removeAiBtn.addEventListener('click', () => {
+    if (!isHost) {
+        showModal('Only the host can remove AI players!');
+        return;
+    }
 
-//     if (!currentGameId) {
-//         showModal('No game created yet!');
-//         return;
-//     }
+    if (!currentGameId) {
+        showModal('No game created yet!');
+        return;
+    }
 
-//     socket.emit('removeAIPlayer', { gameId: currentGameId });
-// });
+    socket.emit('removeAIPlayer', { gameId: currentGameId });
+});
 
 // Modal close handlers
 modalClose.addEventListener('click', hideModal);
