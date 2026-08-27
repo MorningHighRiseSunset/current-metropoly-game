@@ -634,7 +634,7 @@ socket.on('lobbyJoined', (data) => {
         if ((actualPlayerCount >= 2 || (actualPlayerCount >= 1 && hasAIPlayers)) && isHost) {
             startGameBtn.classList.remove('hidden');
         }
-        
+
         // Auto-start game if player joined via direct link
         if (autoStartOnJoin) {
             console.log('Auto-starting game after joining via direct link...');
@@ -646,6 +646,14 @@ socket.on('lobbyJoined', (data) => {
     } else {
         // Hide start button for non-host
         startGameBtn.classList.add('hidden');
+
+        // Auto-start game if this player joined via direct link and there are enough players
+        if (autoStartOnJoin) {
+            console.log('Auto-starting game after second player joined via direct link...');
+            autoStartOnJoin = false;
+            // Notify host to start game
+            socket.emit('requestStartGame', { gameId });
+        }
     }
 });
 
@@ -671,9 +679,9 @@ socket.on('playerJoined', (data) => {
     console.log('playerJoined received:', data);
     console.log('isHost:', isHost);
     console.log('currentGameId:', currentGameId);
-    
+
     const { player, players } = data;
-    
+
     if (isHost) {
         console.log('Updating host player list with:', players);
         const playersListElement = document.getElementById('playersList');
@@ -685,6 +693,15 @@ socket.on('playerJoined', (data) => {
         if ((actualPlayerCount >= 2 || (actualPlayerCount >= 1 && hasAIPlayers)) && isHost) {
             console.log('Showing start game button');
             startGameBtn.classList.remove('hidden');
+
+            // Auto-start game if a player joined via direct link
+            if (autoStartOnJoin) {
+                console.log('Auto-starting game after player joined via direct link...');
+                autoStartOnJoin = false;
+                setTimeout(() => {
+                    startGameBtn.click();
+                }, 500);
+            }
         }
     } else {
         console.log('Not host, not updating');
