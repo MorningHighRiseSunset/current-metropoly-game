@@ -181,9 +181,6 @@ function autoJoinFromUrlIfPresent() {
         gameId: gameIdFromUrl,
         playerName: playerName
     });
-
-    // Set flag to auto-start game when player joins
-    autoStartOnJoin = true;
 }
 
 // Theme toggle functionality
@@ -640,12 +637,9 @@ socket.on('lobbyJoined', (data) => {
         const hasAIPlayers = players.some(p => p && p.isAI);
         if ((actualPlayerCount >= 2 || (actualPlayerCount >= 1 && hasAIPlayers)) && isHost) {
             startGameBtn.classList.remove('hidden');
-        }
 
-        // Auto-start game if player joined via direct link
-        if (autoStartOnJoin) {
-            console.log('Auto-starting game after joining via direct link...');
-            autoStartOnJoin = false;
+            // Auto-start game if enough players
+            console.log('Auto-starting game after joining lobby with enough players...');
             setTimeout(() => {
                 startGameBtn.click();
             }, 500);
@@ -653,14 +647,6 @@ socket.on('lobbyJoined', (data) => {
     } else {
         // Hide start button for non-host
         startGameBtn.classList.add('hidden');
-
-        // Auto-start game if this player joined via direct link and there are enough players
-        if (autoStartOnJoin) {
-            console.log('Auto-starting game after second player joined via direct link...');
-            autoStartOnJoin = false;
-            // Notify host to start game
-            socket.emit('requestStartGame', { gameId });
-        }
     }
 });
 
@@ -703,14 +689,11 @@ socket.on('playerJoined', (data) => {
             console.log('Showing start game button');
             startGameBtn.classList.remove('hidden');
 
-            // Auto-start game if a player joined via direct link
-            if (autoStartOnJoin) {
-                console.log('Auto-starting game after player joined via direct link...');
-                autoStartOnJoin = false;
-                setTimeout(() => {
-                    startGameBtn.click();
-                }, 500);
-            }
+            // Auto-start game when enough players join
+            console.log('Auto-starting game after player joined...');
+            setTimeout(() => {
+                startGameBtn.click();
+            }, 500);
         }
     }
 });
