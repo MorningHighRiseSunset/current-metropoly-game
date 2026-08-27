@@ -171,10 +171,17 @@ function autoJoinFromUrlIfPresent() {
     if (!gameIdFromUrl) return;
 
     console.log('Auto-joining lobby from URL:', gameIdFromUrl);
-    
-    // Emit join lobby event
-    socket.emit('joinLobby', { gameId: gameIdFromUrl });
-    
+
+    // Generate player name and set current game ID
+    const playerName = generateRandomPlayerName();
+    currentGameId = gameIdFromUrl;
+
+    // Emit join lobby event with playerName
+    socket.emit('joinLobby', {
+        gameId: gameIdFromUrl,
+        playerName: playerName
+    });
+
     // Set flag to auto-start game when player joins
     autoStartOnJoin = true;
 }
