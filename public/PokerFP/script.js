@@ -401,6 +401,14 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
     const actionBtn = q('#action-btn');
     if (actionBtn) actionBtn.addEventListener('click', handleAction);
 
+    const betSelector = q('#bet-amount-selector');
+    if (betSelector) {
+        betSelector.addEventListener('change', (e) => {
+            selectedBetAmount = parseInt(e.target.value) || 100;
+            updateCurrentBet();
+        });
+    }
+
     // --- Initialize ---
     clearGame();
     updateBalance();

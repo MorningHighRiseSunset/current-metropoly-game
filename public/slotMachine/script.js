@@ -20,6 +20,11 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
         }
     }
 
+    function updateCurrentBetDisplay() {
+        const currentBetEl = q('#current-bet');
+        if (currentBetEl) currentBetEl.textContent = currentBet;
+    }
+
     function showResult(text, isWin = false) {
         const resultEl = q('#result');
         if (resultEl) {
@@ -152,8 +157,17 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
         spinBtn.addEventListener('click', spin);
     }
 
+    const betSelector = q('#bet-amount-selector');
+    if (betSelector) {
+        betSelector.addEventListener('change', (e) => {
+            currentBet = parseInt(e.target.value) || 100;
+            updateCurrentBetDisplay();
+        });
+    }
+
     // --- Initialize ---
     updateBalance();
+    updateCurrentBetDisplay();
     showResult('Click Spin to play!');
 };
 
