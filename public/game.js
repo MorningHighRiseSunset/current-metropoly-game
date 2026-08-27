@@ -2335,6 +2335,16 @@ function showPropertyInfo(spaceData, options = {}) {
                 pendingPropertyVideo = null;
                 mediaCache[cacheKey] = frame.cloneNode(true);
                 currentPropertyVideo = video;
+                
+                // Set video duration limits based on property
+                if (spaceData.name === 'Bet MGM') {
+                    video.addEventListener('timeupdate', () => {
+                        if (video.currentTime >= 9) {
+                            video.pause();
+                        }
+                    });
+                }
+                
                 video.play().catch(() => {});
             });
         } else if (mediaCache[cacheKey]) {
