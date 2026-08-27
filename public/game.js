@@ -2667,19 +2667,19 @@ function updateUI(options = {}) {
     const payJailBtn = document.getElementById('payJailBtn');
     const rollDiceBtn = document.getElementById('rollDiceBtn');
     
-    if (payJailBtn && myPlayerData) {
+    if (payJailBtn && myPlayerData && gameState) {
         if (myPlayerData.inJail && gameState.currentPlayer === myPlayerId && !gameState.diceRolled) {
             payJailBtn.style.display = 'block';
             payJailBtn.textContent = 'Pay $150 to Leave Jail';
             payJailBtn.disabled = myPlayerData.money < 150 || payJailInProgress;
-            
+
             // Hide roll dice button when in jail to prevent confusion
             if (rollDiceBtn) {
                 rollDiceBtn.style.display = 'none';
             }
         } else {
             payJailBtn.style.display = 'none';
-            
+
             // Show roll dice button when not in jail
             if (rollDiceBtn && !gameState.diceRolled && !myPlayerData.inJail) {
                 rollDiceBtn.style.display = 'block';
