@@ -991,7 +991,15 @@ function tileHasLandingMedia(position) {
 
 function handlePlayerLanding(playerId, newPosition) {
     // console.log('handlePlayerLanding called:', { playerId, newPosition, myPlayerId, isCurrentPlayer: playerId === myPlayerId });
-    
+
+    // Show jail video when landing on JAIL (10) or GO TO JAIL (30)
+    if (newPosition === 10 || newPosition === 30) {
+        const jailSpace = boardConfig[newPosition];
+        if (jailSpace) {
+            showPropertyInfo(jailSpace);
+        }
+    }
+
     // Show buy modal for unowned properties (this will show after property modal)
     if (playerId === myPlayerId) {
         const spaceData = getUnownedPurchasableSpace(newPosition);
@@ -1099,7 +1107,7 @@ function endTurnNow() {
 function canEndTurnNow() {
     if (!gameState || !myPlayerId) return false;
     if (gameState.currentPlayer !== myPlayerId) return false;
-    if (!gameState.diceRolled) return false;
+    if (gameState.diceRolled === undefined || !gameState.diceRolled) return false;
     if (waitingForBuyResult) return false;
     return true;
 }
@@ -1143,7 +1151,7 @@ function scheduleClientAutoEndTurn(playerId, oldPosition, newPosition) {
     clientAutoEndTurnTimer = setTimeout(() => {
         clientAutoEndTurnTimer = null;
         if (!gameState || gameState.currentPlayer !== myPlayerId) return;
-        if (!gameState.diceRolled) return;
+        if (gameState.diceRolled === undefined || !gameState.diceRolled) return;
         if (activePropertyDecision || waitingForBuyResult) return;
         endTurnNow();
     }, delay);
@@ -2631,7 +2639,7 @@ function updateUI(options = {}) {
             myPlayerId &&
             gameState.currentPlayer &&
             myPlayerId === gameState.currentPlayer &&
-            !gameState.diceRolled &&
+            gameState.diceRolled !== undefined && !gameState.diceRolled &&
             allHumanPlayersSelectedTokens && // Can only roll if all human players have selected tokens
             (!myPlayerData || !myPlayerData.inJail) // Can't roll dice when in jail
         );
@@ -2681,7 +2689,7 @@ function updateUI(options = {}) {
             payJailBtn.style.display = 'none';
 
             // Show roll dice button when not in jail
-            if (rollDiceBtn && !gameState.diceRolled && !myPlayerData.inJail) {
+            if (rollDiceBtn && gameState.diceRolled !== undefined && !gameState.diceRolled && !myPlayerData.inJail) {
                 rollDiceBtn.style.display = 'block';
             }
         }
@@ -3359,12 +3367,23 @@ socket.on('playerSentToJail', (data) => {
                 data.playerId,
                 oldPosition,
                 newPosition,
-                undefined,
+                () => {
+                    // Show jail video after animation completes
+                    const jailSpace = boardConfig[10];
+                    if (jailSpace) {
+                        showPropertyInfo(jailSpace);
+                    }
+                },
                 getBestMoveDirection(oldPosition, newPosition)
             );
         } else {
             player.position = newPosition;
             update3DTokenPositions();
+            // Show jail video if already at jail position
+            const jailSpace = boardConfig[10];
+            if (jailSpace) {
+                showPropertyInfo(jailSpace);
+            }
         }
         updateTokens();
         updateUI();
