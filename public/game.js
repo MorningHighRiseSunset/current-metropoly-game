@@ -5271,6 +5271,28 @@ socket.on('requestPeerId', (data) => {
     }
 });
 
+// Console command to load jail UI for testing
+window.showJailUI = function() {
+    const jailSpace = boardConfig[10]; // JAIL position
+    if (jailSpace) {
+        showPropertyInfo(jailSpace);
+        console.log('Jail UI loaded');
+    } else {
+        console.error('JAIL space not found');
+    }
+};
+
+// Console command to load Go to Jail UI for testing
+window.showGoToJailUI = function() {
+    const goToJailSpace = boardConfig[30]; // GO TO JAIL position
+    if (goToJailSpace) {
+        showPropertyInfo(goToJailSpace);
+        console.log('Go to Jail UI loaded');
+    } else {
+        console.error('Go to Jail space not found');
+    }
+};
+
 // Setup video chat UI when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupVideoChatUI);
