@@ -682,11 +682,13 @@ socket.on('playerJoined', (data) => {
 
     const { player, players } = data;
 
+    // Update player list for both host and non-host (both use same playersList element now)
+    const playersListElement = document.getElementById('playersList');
+    console.log('playersList element:', playersListElement);
+    updatePlayersList(players, playersListElement);
+
     if (isHost) {
         console.log('Updating host player list with:', players);
-        const playersListElement = document.getElementById('playersList');
-        console.log('playersList element:', playersListElement);
-        updatePlayersList(players, playersListElement);
 
         const actualPlayerCount = players.filter(p => p !== null).length;
         const hasAIPlayers = players.some(p => p && p.isAI);
@@ -702,13 +704,6 @@ socket.on('playerJoined', (data) => {
                     startGameBtn.click();
                 }, 500);
             }
-        }
-    } else {
-        console.log('Not host, not updating');
-        // Also update non-host player list
-        const lobbyPlayersListElement = document.getElementById('lobbyPlayersList');
-        if (lobbyPlayersListElement) {
-            updatePlayersList(players, lobbyPlayersListElement);
         }
     }
 });
@@ -752,17 +747,12 @@ socket.on('gameStarted', (data) => {
     console.log('LOBBY: Received gameStarted event:', data);
     console.log('LOBBY: Current game ID:', currentGameId);
     console.log('LOBBY: Socket ID:', socket.id);
-    
-    // Non-host players need to redirect when they receive gameStarted
-    // The host already redirected when clicking the start button
-    if (!isHost) {
-        console.log('LOBBY: Non-host player redirecting to game page...');
-        setTimeout(() => {
-            window.location.href = `/game/${currentGameId}`;
-        }, 50);
-    } else {
-        console.log('LOBBY: Host already redirected, ignoring gameStarted in lobby');
-    }
+
+    // All players redirect to game page when game starts
+    console.log('LOBBY: Redirecting to game page...');
+    setTimeout(() => {
+        window.location.href = `/game/${currentGameId}`;
+    }, 50);
 });
 
 socket.on('spectatorJoined', (data) => {
