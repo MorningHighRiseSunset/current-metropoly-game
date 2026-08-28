@@ -1006,6 +1006,23 @@ function handlePlayerLanding(playerId, newPosition) {
         if (spaceData) {
             // console.log('Starting property decision for:', spaceData.name);
             startPropertyDecision(spaceData, newPosition);
+        } else {
+            // Check if landing on a casino property (owned or unowned)
+            const casinoSpace = boardConfig[newPosition];
+            if (casinoSpace && casinoSpace.isCasino && !currentPlayer.isAI) {
+                // Open casino game for owned casino properties
+                const playerId = currentPlayer.id || myPlayerId;
+                if (!casinoPlayCounts[playerId]) {
+                    casinoPlayCounts[playerId] = 0;
+                }
+                
+                if (casinoPlayCounts[playerId] >= 5) {
+                    alert('You have reached the maximum of 5 casino plays per game.');
+                } else {
+                    casinoPlayCounts[playerId]++;
+                    openCasinoGame(casinoSpace.casinoGame);
+                }
+            }
         }
         // Rent payment UI is now handled by server via showRentPayment event
     }
@@ -1124,6 +1141,7 @@ function dismissPropertyDecisionUI() {
         decisionPrompt.textContent = '';
     }
     activeAiLandingPlayerId = null;
+    cleanupPropertyVideo(); // Ensure video stops when dismissing decision UI
     closePropertyModal();
 }
 
