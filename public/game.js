@@ -992,7 +992,7 @@ function tileHasLandingMedia(position) {
 function handlePlayerLanding(playerId, newPosition) {
     // console.log('handlePlayerLanding called:', { playerId, newPosition, myPlayerId, isCurrentPlayer: playerId === myPlayerId });
 
-    // Show jail video when landing on JAIL (10) or GO TO JAIL (30)
+    // Show jail video when landing on JAIL (10) or GO TO JAIL (30) - for ALL players including AI
     if (newPosition === 10 || newPosition === 30) {
         const jailSpace = boardConfig[newPosition];
         if (jailSpace) {

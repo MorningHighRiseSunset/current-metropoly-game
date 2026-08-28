@@ -644,12 +644,12 @@ function executeAIRollDice(game, aiPlayer) {
                             // sendToJail already calls advanceTurn internally
                         } else if (landedSpace.type === 'property' || landedSpace.type === 'railroad' || landedSpace.type === 'utility') {
                             if (DISABLE_AI_PROPERTY_PURCHASES) {
-                                setTimeout(() => gameRuntime.advanceTurn(game), 500);
+                                gameRuntime.advanceTurn(game);
                             } else {
-                                setTimeout(() => executeAIPropertyDecision(game, aiPlayer, landedSpace), 1000);
+                                executeAIPropertyDecision(game, aiPlayer, landedSpace);
                             }
                         } else {
-                            setTimeout(() => gameRuntime.advanceTurn(game), 500);
+                            gameRuntime.advanceTurn(game);
                         }
                     }, getRollAnimationMs(total));
                 } else {
@@ -848,12 +848,12 @@ function executeAIRollDice(game, aiPlayer) {
                     // sendToJail already calls advanceTurn internally
                 } else if (landedSpace.type === 'property' || landedSpace.type === 'railroad' || landedSpace.type === 'utility') {
                     if (DISABLE_AI_PROPERTY_PURCHASES) {
-                        setTimeout(() => gameRuntime.advanceTurn(game), 500);
+                        gameRuntime.advanceTurn(game);
                     } else {
-                        setTimeout(() => executeAIPropertyDecision(game, aiPlayer, landedSpace), 1000);
+                        executeAIPropertyDecision(game, aiPlayer, landedSpace);
                     }
                 } else {
-                    setTimeout(() => gameRuntime.advanceTurn(game), 500);
+                    gameRuntime.advanceTurn(game);
                 }
             } catch (err) {
                 console.error('AI land-on-tile error:', err);
