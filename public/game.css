@@ -431,8 +431,9 @@ body {
 }
 
 .sidebar-panel--properties {
-    flex: 0 0 auto;
-    max-height: 35%;
+    flex: 1 1 auto;
+    min-height: 220px;
+    max-height: none;
 }
 
 .sidebar-panel--chat {
@@ -452,7 +453,10 @@ body {
 }
 
 .properties-list.panel-scroll {
-    max-height: 100px;
+    flex: 1;
+    min-height: 180px;
+    max-height: none;
+    overflow-y: auto;
 }
 
 .chat-messages.panel-scroll {

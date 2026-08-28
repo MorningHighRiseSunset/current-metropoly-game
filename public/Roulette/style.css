@@ -202,7 +202,6 @@ body {
   margin: 0;
   border-radius: 50%;
   position: relative;
-  animation: rotate 24s infinite linear;
 }
 
 .plate:after,

@@ -439,7 +439,7 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
                 }
                 const fadeTick = runDiceFadeOutAnimation(
                     [dice1Mesh, dice2Mesh],
-                    280,
+                    150,
                     () => { diceFadeAnimFrame = null; }
                 );
                 if (fadeTick) {
@@ -994,9 +994,13 @@ function handlePlayerLanding(playerId, newPosition) {
 
     // Show jail video when landing on JAIL (10) or GO TO JAIL (30) - for ALL players including AI
     if (newPosition === 10 || newPosition === 30) {
-        const jailSpace = boardConfig[newPosition];
-        if (jailSpace) {
-            showPropertyInfo(jailSpace);
+        if (playerId === myPlayerId) {
+            showJailProceedUI(newPosition);
+        } else {
+            const jailSpace = boardConfig[newPosition];
+            if (jailSpace) {
+                showPropertyInfo(jailSpace);
+            }
         }
     }
 
@@ -1129,13 +1133,36 @@ function canEndTurnNow() {
     return true;
 }
 
+function hidePropertyActionButtons() {
+    const propertyActions = document.getElementById('propertyActions');
+    const propertyConfirmBtn = document.getElementById('propertyConfirmBtn');
+    const propertyPassBtn = document.getElementById('propertyPassBtn');
+    const propertyProceedBtn = document.getElementById('propertyProceedBtn');
+    if (propertyActions) propertyActions.classList.add('hidden');
+    if (propertyConfirmBtn) propertyConfirmBtn.classList.remove('hidden');
+    if (propertyPassBtn) propertyPassBtn.classList.remove('hidden');
+    if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
+}
+
+function showJailProceedUI(position) {
+    const spaceData = boardConfig[position];
+    if (!spaceData) return;
+    showPropertyInfo(spaceData, { showProceedButton: true });
+}
+
+function handleJailProceed() {
+    dismissPropertyDecisionUI();
+    if (gameState && gameState.currentPlayer === myPlayerId) {
+        endTurnNow();
+    }
+}
+
 function dismissPropertyDecisionUI() {
     clearPropertyDecisionTimer();
     activePropertyDecision = null;
     waitingForBuyResult = false;
-    const propertyActions = document.getElementById('propertyActions');
+    hidePropertyActionButtons();
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
-    if (propertyActions) propertyActions.classList.add('hidden');
     if (decisionPrompt) {
         decisionPrompt.classList.add('hidden');
         decisionPrompt.textContent = '';
@@ -2257,7 +2284,7 @@ function buildPropertyDetailsHtml(spaceData) {
 
 // Show property information
 function showPropertyInfo(spaceData, options = {}) {
-    const { showDecisionActions = false, viewerLabel = null } = options;
+    const { showDecisionActions = false, showProceedButton = false, viewerLabel = null } = options;
     
     // Force cleanup any existing videos before showing new content
     cleanupPropertyVideo();
@@ -2272,6 +2299,9 @@ function showPropertyInfo(spaceData, options = {}) {
     const mediaContainer = document.getElementById('propertyMedia') || document.getElementById('property-media');
     const loadingIndicator = document.getElementById('loadingIndicator');
     const propertyActions = document.getElementById('propertyActions');
+    const propertyConfirmBtn = document.getElementById('propertyConfirmBtn');
+    const propertyPassBtn = document.getElementById('propertyPassBtn');
+    const propertyProceedBtn = document.getElementById('propertyProceedBtn');
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
     
     if (!modal || !title || !content || !mediaContainer) {
@@ -2291,15 +2321,29 @@ function showPropertyInfo(spaceData, options = {}) {
     }
 
     if (propertyActions) {
-        if (showDecisionActions) {
+        if (showProceedButton) {
             propertyActions.classList.remove('hidden');
+            if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
+            if (propertyPassBtn) propertyPassBtn.classList.add('hidden');
+            if (propertyProceedBtn) propertyProceedBtn.classList.remove('hidden');
+        } else if (showDecisionActions) {
+            propertyActions.classList.remove('hidden');
+            if (propertyConfirmBtn) propertyConfirmBtn.classList.remove('hidden');
+            if (propertyPassBtn) propertyPassBtn.classList.remove('hidden');
+            if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
         } else {
             propertyActions.classList.add('hidden');
+            if (propertyConfirmBtn) propertyConfirmBtn.classList.remove('hidden');
+            if (propertyPassBtn) propertyPassBtn.classList.remove('hidden');
+            if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
         }
     }
 
     if (decisionPrompt) {
-        if (viewerLabel) {
+        if (showProceedButton) {
+            decisionPrompt.textContent = 'Watch the video, then click Proceed to end your turn.';
+            decisionPrompt.classList.remove('hidden');
+        } else if (viewerLabel) {
             decisionPrompt.textContent = viewerLabel;
             decisionPrompt.classList.remove('hidden');
         } else if (!showDecisionActions) {
@@ -2709,7 +2753,7 @@ function updateUI(options = {}) {
     }
 
     // Show roll dice button normally (including when in jail)
-    if (rollDiceBtn && gameState.diceRolled !== undefined && !gameState.diceRolled) {
+    if (rollDiceBtn && gameState && gameState.diceRolled !== undefined && !gameState.diceRolled) {
         rollDiceBtn.style.display = 'block';
     }
 }
@@ -2769,6 +2813,16 @@ function onDiceRollSequenceComplete(playerId, newPosition, diceData) {
             // startPropertyDecision calls updateUI(), so we don't call it again
             DiceRollSequenceManager.completeSequence(playerId);
             return;
+        }
+        if (newPosition === 10 || newPosition === 30) {
+            showJailProceedUI(newPosition);
+            DiceRollSequenceManager.completeSequence(playerId);
+            return;
+        }
+    } else if (newPosition === 10 || newPosition === 30) {
+        const jailSpace = boardConfig[newPosition];
+        if (jailSpace) {
+            showPropertyInfo(jailSpace);
         }
     }
     
@@ -3386,10 +3440,13 @@ socket.on('playerSentToJail', (data) => {
                 oldPosition,
                 newPosition,
                 () => {
-                    // Show jail video after animation completes
-                    const jailSpace = boardConfig[10];
-                    if (jailSpace) {
-                        showPropertyInfo(jailSpace);
+                    if (data.playerId === myPlayerId) {
+                        showJailProceedUI(10);
+                    } else {
+                        const jailSpace = boardConfig[10];
+                        if (jailSpace) {
+                            showPropertyInfo(jailSpace);
+                        }
                     }
                 },
                 getBestMoveDirection(oldPosition, newPosition)
@@ -3397,10 +3454,13 @@ socket.on('playerSentToJail', (data) => {
         } else {
             player.position = newPosition;
             update3DTokenPositions();
-            // Show jail video if already at jail position
-            const jailSpace = boardConfig[10];
-            if (jailSpace) {
-                showPropertyInfo(jailSpace);
+            if (data.playerId === myPlayerId) {
+                showJailProceedUI(10);
+            } else {
+                const jailSpace = boardConfig[10];
+                if (jailSpace) {
+                    showPropertyInfo(jailSpace);
+                }
             }
         }
         updateTokens();

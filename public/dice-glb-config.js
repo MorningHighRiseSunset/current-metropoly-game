@@ -6,11 +6,11 @@ const DICE_GLB_CONFIG = {
     scale: 0.45,
     separation: 3.0,
     restOffsetY: 0.2,
-    rollDurationMs: 2100,
-    settleHoldMs: 1400,
-    tossHeight: 2.5,
+    rollDurationMs: 850,
+    settleHoldMs: 80,
+    tossHeight: 2.8,
     /** Must match server.js getRollAnimationMs perTileMs and game.js TOKEN_STEP_DURATION_MS */
-    tokenStepMs: 80,
+    tokenStepMs: 40,
     faceEuler: {
         1: { x: 0, y: 0, z: 0 },
         2: { x: 0, y: 0, z: 0 },

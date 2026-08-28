@@ -39,8 +39,8 @@ const CASINO_GAMES_BY_POSITION = {
     37: 'Roulette'
 };
 
-const AI_LANDING_VIDEO_MS = 9000;
-const AI_CASINO_PLAY_MS = 10000;
+const AI_LANDING_VIDEO_MS = 0;
+const AI_CASINO_PLAY_MS = 2200;
 
 // Get local IP addresses for external access
 function getLocalIPAddresses() {
@@ -392,8 +392,8 @@ function checkGameWinner(game) {
 
 // Client dice roll + token step animation (must match public/dice-glb-config.js + game.js)
 function getRollAnimationMs(rollTotal) {
-    const diceRollMs = 2000;
-    const diceSettleMs = 1500;
+    const diceRollMs = 850;
+    const diceSettleMs = 80;
     const perTileMs = 40;
     return diceRollMs + diceSettleMs + Math.max(0, rollTotal) * perTileMs;
 }
@@ -538,7 +538,7 @@ function checkAndExecuteAITurn(game) {
         const stillCurrent = game.players.find(p => p && p.id === game.gameState.currentPlayer);
         if (!stillCurrent || !stillCurrent.isAI || game.gameState.diceRolled) return;
         executeAIRollDice(game, stillCurrent);
-    }, 1500);
+    }, 150);
 }
 
 function executeAIRollDice(game, aiPlayer) {
@@ -654,7 +654,7 @@ function executeAIRollDice(game, aiPlayer) {
                     }, getRollAnimationMs(total));
                 } else {
                     // Doubles - check for next AI turn after delay
-                    setTimeout(() => checkAndExecuteAITurn(game), 2000);
+                    setTimeout(() => checkAndExecuteAITurn(game), 400);
                 }
             }, 500);
             return;
@@ -864,7 +864,7 @@ function executeAIRollDice(game, aiPlayer) {
         }, getRollAnimationMs(total));
     } else {
         // Doubles - check for next AI turn after delay
-        setTimeout(() => checkAndExecuteAITurn(game), 2000);
+        setTimeout(() => checkAndExecuteAITurn(game), 400);
     }
 }
 
@@ -901,7 +901,7 @@ function completeAiCasinoRound(game, aiPlayer, property, willBuy, casinoGame) {
         players: game.players
     });
 
-    setTimeout(() => finishAiPropertyDecision(game, aiPlayer, property, willBuy), 800);
+    setTimeout(() => finishAiPropertyDecision(game, aiPlayer, property, willBuy), 50);
 }
 
 function scheduleAiPropertyLanding(game, aiPlayer, property) {
@@ -979,10 +979,8 @@ function finishAiPropertyDecision(game, aiPlayer, property, willBuy) {
         });
     }
 
-    setTimeout(() => {
-        io.to(game.id).emit('aiLandingEnded', { playerId: aiPlayer.id });
-        setTimeout(() => gameRuntime.advanceTurn(game), 800);
-    }, willBuy ? 1200 : 600);
+    io.to(game.id).emit('aiLandingEnded', { playerId: aiPlayer.id });
+    gameRuntime.advanceTurn(game);
 }
 
 function executeAIPropertyDecision(game, aiPlayer, property) {
@@ -2032,7 +2030,9 @@ io.on('connection', (socket) => {
                     }
                     scheduleAutoAdvanceTurn(game, socket.id, 600);
                 } else if (landedSpace.position === 30) {
-                    sendToJail(game, currentPlayer);
+                    sendToJail(game, currentPlayer, { advanceTurn: currentPlayer.isAI });
+                } else if (landedSpace.position === 10) {
+                    // Visiting jail — wait for player to click Proceed
                 } else if (
                     landedSpace.type === 'property' ||
                     landedSpace.type === 'railroad' ||
@@ -2209,7 +2209,7 @@ io.on('connection', (socket) => {
 
         setTimeout(() => {
             checkAndExecuteAITurn(game);
-        }, 1200);
+        }, 150);
     }
 
     // End turn for bankrupt player — use same advance path as normal end turn
@@ -2404,10 +2404,10 @@ io.on('connection', (socket) => {
             players: game.players
         });
         
-        if (options.advanceTurn !== false) {
+        if (options.advanceTurn !== false && player.isAI) {
             setTimeout(() => {
                 advanceTurn(game);
-            }, 1000);
+            }, 300);
         }
     }
 
