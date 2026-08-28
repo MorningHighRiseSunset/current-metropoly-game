@@ -1879,14 +1879,28 @@ io.on('connection', (socket) => {
         
         // Handle jail dice rolling
         if (currentPlayer.inJail) {
+            // Deduct $150 to roll while in jail
+            if (currentPlayer.money < 150) {
+                socket.emit('gameError', 'Need $150 to roll while in jail!');
+                return;
+            }
+
+            currentPlayer.money -= 150;
+            currentPlayer.jailTurns++;
+
             const roll = rollDiceWithRareDoubles(currentPlayer.position);
             const dice1 = roll.dice1;
             const dice2 = roll.dice2;
             const total = dice1 + dice2;
             const isDoubles = roll.isDoubles;
 
-            currentPlayer.jailTurns++;
-            
+            io.to(game.id).emit('jailPaid', {
+                playerId: socket.id,
+                newMoney: currentPlayer.money,
+                players: game.players
+            });
+            checkGameWinner(game);
+
             io.to(playerData.gameId).emit('diceRolled', {
                 playerId: socket.id,
                 roll: { dice1, dice2, total },
@@ -1896,84 +1910,45 @@ io.on('connection', (socket) => {
                 players: game.players
             });
 
-            if (isDoubles) {
-                // Got out of jail with doubles
-                currentPlayer.inJail = false;
-                currentPlayer.jailTurns = 0;
-                
-                io.to(game.id).emit('playerOutOfJail', {
+            // Always let player out of jail after paying to roll
+            currentPlayer.inJail = false;
+            currentPlayer.jailTurns = 0;
+
+            io.to(game.id).emit('playerOutOfJail', {
+                playerId: socket.id,
+                method: 'roll',
+                players: game.players
+            });
+
+            // Move player
+            const jailOldPosition = currentPlayer.position;
+            currentPlayer.position = (currentPlayer.position + total) % 40;
+
+            // Check for GO bonus (passed or landed on GO)
+            if (jailOldPosition > currentPlayer.position || currentPlayer.position === 0) {
+                currentPlayer.money += 200;
+                io.to(game.id).emit('goBonus', {
                     playerId: socket.id,
-                    method: 'roll',
+                    amount: 200,
+                    newMoney: currentPlayer.money,
                     players: game.players
                 });
-                
-                // Move player
-                const jailOldPosition = currentPlayer.position;
-                currentPlayer.position = (currentPlayer.position + total) % 40;
-                
-                // Check for GO bonus (passed or landed on GO)
-                if (jailOldPosition > currentPlayer.position || currentPlayer.position === 0) {
-                    currentPlayer.money += 200;
-                    io.to(game.id).emit('goBonus', {
-                        playerId: socket.id,
-                        amount: 200,
-                        newMoney: currentPlayer.money,
-                        players: game.players
-                    });
-                    checkGameWinner(game);
-                }
-
-                io.to(game.id).emit('playerMoved', {
-                    playerId: socket.id,
-                    oldPosition: jailOldPosition,
-                    newPosition: currentPlayer.position,
-                    players: game.players,
-                    message: `${currentPlayer.name} rolled doubles and left jail!`
-                });
-                
-                setTimeout(() => {
-                    checkRentPayment(game, currentPlayer, jailOldPosition);
-                    scheduleAutoAdvanceTurn(game, socket.id, getPostRollTurnDelay(total));
-                }, 600);
-            } else if (currentPlayer.jailTurns >= 3) {
-                // Failed 3 times, must pay $50
-                if (currentPlayer.money >= 50) {
-                    currentPlayer.money -= 50;
-                    currentPlayer.inJail = false;
-                    currentPlayer.jailTurns = 0;
-                    
-                    io.to(game.id).emit('jailPaid', {
-                        playerId: socket.id,
-                        newMoney: currentPlayer.money,
-                        players: game.players
-                    });
-                    checkGameWinner(game);
-                    
-                    io.to(game.id).emit('playerOutOfJail', {
-                        playerId: socket.id,
-                        method: 'forced-pay',
-                        players: game.players
-                    });
-                    
-                    // Move player
-                    const oldPosition = currentPlayer.position;
-                    currentPlayer.position = (currentPlayer.position + total) % 40;
-                    
-                    setTimeout(() => {
-                        checkRentPayment(game, currentPlayer, oldPosition);
-                        scheduleAutoAdvanceTurn(game, socket.id, getPostRollTurnDelay(total));
-                    }, 600);
-                } else {
-                    socket.emit('gameError', 'Must pay $50 to get out of jail but you don\'t have enough money!');
-                }
-            } else {
-                io.to(playerData.gameId).emit('stillInJail', {
-                    playerId: socket.id,
-                    jailTurns: currentPlayer.jailTurns
-                });
-                scheduleAutoAdvanceTurn(game, socket.id, 1500);
+                checkGameWinner(game);
             }
-            
+
+            io.to(game.id).emit('playerMoved', {
+                playerId: socket.id,
+                oldPosition: jailOldPosition,
+                newPosition: currentPlayer.position,
+                players: game.players,
+                message: `${currentPlayer.name} paid $150 to roll and left jail!`
+            });
+
+            setTimeout(() => {
+                checkRentPayment(game, currentPlayer, jailOldPosition);
+                scheduleAutoAdvanceTurn(game, socket.id, getPostRollTurnDelay(total));
+            }, 600);
+
             game.gameState.diceRolled = true;
             return;
         }

@@ -2640,8 +2640,7 @@ function updateUI(options = {}) {
             gameState.currentPlayer &&
             myPlayerId === gameState.currentPlayer &&
             gameState.diceRolled !== undefined && !gameState.diceRolled &&
-            allHumanPlayersSelectedTokens && // Can only roll if all human players have selected tokens
-            (!myPlayerData || !myPlayerData.inJail) // Can't roll dice when in jail
+            allHumanPlayersSelectedTokens // Can only roll if all human players have selected tokens
         );
 
         const rollDiceBtn = document.getElementById('rollDiceBtn');
@@ -2670,29 +2669,18 @@ function updateUI(options = {}) {
         updateTokens();
     }
     
-    // Handle jail button visibility
+    // Handle jail button visibility - always hide payJailBtn
     const myPlayerData = players.find(p => p && p.id === myPlayerId);
     const payJailBtn = document.getElementById('payJailBtn');
     const rollDiceBtn = document.getElementById('rollDiceBtn');
     
-    if (payJailBtn && myPlayerData && gameState) {
-        if (myPlayerData.inJail && gameState.currentPlayer === myPlayerId && !gameState.diceRolled) {
-            payJailBtn.style.display = 'block';
-            payJailBtn.textContent = 'Pay $150 to Leave Jail';
-            payJailBtn.disabled = myPlayerData.money < 150 || payJailInProgress;
+    if (payJailBtn) {
+        payJailBtn.style.display = 'none';
+    }
 
-            // Hide roll dice button when in jail to prevent confusion
-            if (rollDiceBtn) {
-                rollDiceBtn.style.display = 'none';
-            }
-        } else {
-            payJailBtn.style.display = 'none';
-
-            // Show roll dice button when not in jail
-            if (rollDiceBtn && gameState.diceRolled !== undefined && !gameState.diceRolled && !myPlayerData.inJail) {
-                rollDiceBtn.style.display = 'block';
-            }
-        }
+    // Show roll dice button normally (including when in jail)
+    if (rollDiceBtn && gameState.diceRolled !== undefined && !gameState.diceRolled) {
+        rollDiceBtn.style.display = 'block';
     }
 }
 
