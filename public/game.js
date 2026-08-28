@@ -849,7 +849,7 @@ const boardConfig = [
     { name: 'Chance', type: 'chance', position: 22 },
     { name: 'Wynn Las Vegas', type: 'property', color: '#FFFF00', price: 192, rent: [32, 65, 195, 580, 800, 950], position: 23, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'Roulette' },
     { name: 'County Fair', type: 'property', color: '#FFFF00', price: 180, rent: [30, 60, 180, 540, 750, 900], position: 24, address: '1301 W Whipple Ave, Logandale, NV 89021' },
-    { name: 'Shriners Children\'s Open', type: 'property', color: '#008000', price: 192, rent: [32, 65, 195, 580, 800, 950], position: 25, address: '' },
+    { name: 'Shriners Children\'s Open', type: 'property', color: '#008000', price: 192, rent: [32, 65, 195, 580, 800, 950], position: 25, address: '1700 Village Center Circle Las Vegas NV 89134' },
     { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', price: 210, rent: [35, 70, 210, 630, 875, 1050], position: 26, address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104 (Little White Wedding Chapel)' },
     { name: 'Community Cards', type: 'community-chest', position: 27 },
     { name: 'Sphere', type: 'property', color: '#008000', price: 240, rent: [40, 80, 240, 720, 1000, 1200], position: 28, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
