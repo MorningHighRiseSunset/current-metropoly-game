@@ -107,7 +107,7 @@ function getBoardSpaces() {
         { name: 'Chance', type: 'chance', position: 22 },
         { name: 'Wynn Las Vegas', type: 'property', color: '#FFFF00', group: 'yellow', price: 320, rent: [35, 71, 214, 638, 880, 1045], position: 23, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'County Fair', type: 'property', color: '#FFFF00', group: 'yellow', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 24, address: '' },
-        { name: 'Golf Course', type: 'property', color: '#008000', group: 'green', price: 320, rent: [35, 71, 214, 638, 880, 1045], position: 25, address: '' },
+        { name: 'Shriners Children\'s Open', type: 'property', color: '#008000', group: 'green', price: 320, rent: [35, 71, 214, 638, 880, 1045], position: 25, address: '' },
         { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', group: 'green', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 26, address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104 (Little White Wedding Chapel)' },
         { name: 'Community Cards', type: 'community-chest', position: 27 },
         { name: 'Sphere', type: 'property', color: '#008000', group: 'green', price: 400, rent: [44, 88, 264, 792, 1100, 1320], position: 28, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
