@@ -4330,7 +4330,8 @@ function createMonopolyFaceTexture(spaceData, row, col) {
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#f5f8fc';
         ctx.font = '900 58px "Arial Black", "Impact", sans-serif';
-        const bodyLines = wrapCanvasLines(ctx, spaceData.name, inner.w - 15, 3);
+        const displayName = spaceData.isCasino ? '★ ' + spaceData.name : spaceData.name;
+        const bodyLines = wrapCanvasLines(ctx, displayName, inner.w - 15, 3);
         const sub = tileSubLabel(spaceData);
         const lineH = 62;
         const extra = sub ? 1 : 0;
