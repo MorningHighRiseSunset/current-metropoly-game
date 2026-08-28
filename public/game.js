@@ -2100,9 +2100,21 @@ function pickAlternatePropertyVideo(videos, position) {
     if (videos.length === 1) return videos[0];
 
     const lastVideo = lastPlayedPropertyVideos[position];
-    const alternatives = lastVideo ? videos.filter(v => v !== lastVideo) : videos;
-    const pool = alternatives.length > 0 ? alternatives : videos;
-    return pool[Math.floor(Math.random() * pool.length)];
+    if (!lastVideo) {
+        // First visit, return first video
+        return videos[0];
+    }
+
+    // Find index of last played video
+    const lastIndex = videos.indexOf(lastVideo);
+    if (lastIndex === -1) {
+        // Last video not in list (shouldn't happen), return first
+        return videos[0];
+    }
+
+    // Return next video in array, wrapping around to start
+    const nextIndex = (lastIndex + 1) % videos.length;
+    return videos[nextIndex];
 }
 
 function applyMediaFrameOrientation(frame, element) {
@@ -2300,7 +2312,7 @@ function showPropertyInfo(spaceData, options = {}) {
             const video = cloned.querySelector('video');
             if (video) {
                 currentPropertyVideo = video;
-                video.muted = true;
+                video.muted = false;
                 video.loop = false;
                 video.currentTime = 0;
                 video.play().catch(() => {});
@@ -2312,7 +2324,7 @@ function showPropertyInfo(spaceData, options = {}) {
             const frame = createMediaFrame(video);
             video.src = selectedVideo;
             video.autoplay = true;
-            video.muted = true;
+            video.muted = false;
             video.loop = false;
             video.playsInline = true;
             video.controls = true;
