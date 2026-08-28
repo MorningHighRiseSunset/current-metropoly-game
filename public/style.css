@@ -104,23 +104,26 @@ body::before {
 
 /* Lobby Container */
 .lobby-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     gap: 40px;
     max-width: 1400px;
     margin: 0 auto;
+    justify-content: center;
 }
 
 .game-lobby-section {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    max-width: 300px;
 }
 
 /* Create Game Card */
 .create-game-card {
     background: var(--card-bg);
-    padding: 60px 40px;
+    padding: 8px 6px;
     border-radius: 24px;
     border: 1px solid var(--card-border);
     box-shadow: 0 20px 40px var(--shadow-color);
@@ -132,7 +135,8 @@ body::before {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 400px;
+    min-height: 120px;
+    max-width: 200px;
 }
 
 .create-game-card:hover {
@@ -141,8 +145,8 @@ body::before {
 }
 
 .card-icon {
-    font-size: 4rem;
-    margin-bottom: 24px;
+    font-size: 2rem;
+    margin-bottom: 8px;
     animation: bounce 2s ease-in-out infinite;
 }
 
@@ -152,16 +156,16 @@ body::before {
 }
 
 .create-game-card h2 {
-    font-size: 2rem;
+    font-size: 1rem;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     color: var(--text-primary);
 }
 
 .card-description {
-    font-size: 1rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
-    margin-bottom: 32px;
+    margin-bottom: 12px;
     line-height: 1.6;
 }
 
@@ -177,15 +181,15 @@ body::before {
     background: linear-gradient(145deg, #2d2d2d, #3d3d3d);
     border: 1px solid #4a4a4a;
     border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 8px;
+    margin-bottom: 8px;
     text-align: center;
 }
 
 .game-code-display h3 {
     color: var(--text-primary);
-    font-size: 1.1rem;
-    margin-bottom: 16px;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
 }
 
 .code-box {
@@ -193,12 +197,12 @@ body::before {
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.3);
-    padding: 16px 24px;
+    padding: 8px 12px;
     border-radius: 12px;
 }
 
 .game-code {
-    font-size: 1rem;
+    font-size: 0.7rem;
     font-weight: 600;
     color: var(--accent-primary);
     letter-spacing: 1px;
@@ -210,29 +214,29 @@ body::before {
 
 .btn-copy {
     width: 100%;
-    padding: 8px 20px;
+    padding: 4px 10px;
     background: linear-gradient(135deg, #667eea, #764ba2);
     border: none;
     border-radius: 8px;
     color: white;
-    font-size: 0.9rem;
+    font-size: 0.7rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 12px;
+    margin-top: 6px;
 }
 
 .ai-controls-inline {
     display: flex;
-    gap: 12px;
+    gap: 6px;
     justify-content: center;
-    margin-top: 12px;
+    margin-top: 6px;
 }
 
 .ai-controls-inline .btn-secondary {
     flex: 1;
-    padding: 8px 16px;
-    font-size: 0.85rem;
+    padding: 4px 8px;
+    font-size: 0.6rem;
 }
 
 .btn-copy:hover {
@@ -241,15 +245,15 @@ body::before {
 }
 
 .btn-large {
-    padding: 20px 40px;
-    font-size: 1.125rem;
+    padding: 4px 8px;
+    font-size: 0.6rem;
     display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 4px;
 }
 
 .btn-icon {
-    font-size: 1.25rem;
+    font-size: 0.8rem;
 }
 
 /* Lobbies Section */
@@ -757,10 +761,10 @@ header p {
 }
 
 .btn {
-    padding: 16px 32px;
+    padding: 6px 12px;
     border: none;
-    border-radius: 12px;
-    font-size: 1rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -880,9 +884,10 @@ header p {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
-    gap: 12px;
-    max-width: 700px;
+    gap: 6px;
+    max-width: 300px;
     margin: 0 auto;
+    align-items: start;
 }
 
 .game-id-card {
@@ -896,20 +901,21 @@ header p {
 .players-card {
     grid-column: 1 / -1;
     background: linear-gradient(145deg, #2d2d2d, #3d3d3d);
-    border-radius: 16px;
+    border-radius: 8px;
     border: 1px solid #4a4a4a;
     overflow: hidden;
+    padding: 2px;
 }
 
 #startGameBtn {
     width: 100%;
-    margin-top: 16px;
-    padding: 14px 24px;
+    margin-top: 6px;
+    padding: 4px 8px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 1rem;
+    border-radius: 4px;
+    font-size: 0.6rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -938,13 +944,13 @@ header p {
 
 .card-header {
     background: rgba(0, 0, 0, 0.2);
-    padding: 16px 20px;
+    padding: 3px 6px;
     border-bottom: 1px solid #4a4a4a;
 }
 
 .card-header h3 {
     color: #ffffff;
-    font-size: 1.1rem;
+    font-size: 0.5rem;
     font-weight: 600;
     margin: 0;
     letter-spacing: 0.3px;
@@ -952,7 +958,7 @@ header p {
 }
 
 .card-body {
-    padding: 20px;
+    padding: 2px;
 }
 
 .game-id-large {
@@ -987,11 +993,11 @@ header p {
 }
 
 .players-list {
-    min-height: 100px;
-    margin-bottom: 24px;
+    min-height: 50px;
+    margin-bottom: 8px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 4px;
 }
 
 .ai-controls {
@@ -1111,8 +1117,8 @@ header p {
 
 .player-item {
     background: var(--card-bg);
-    padding: 20px 24px;
-    border-radius: 16px;
+    padding: 4px 6px;
+    border-radius: 4px;
     border: 1px solid var(--card-border);
     display: flex;
     justify-content: space-between;
@@ -1148,16 +1154,16 @@ header p {
 .player-name {
     font-weight: 600;
     color: var(--text-primary);
-    font-size: 1.1rem;
+    font-size: 0.6rem;
     letter-spacing: -0.3px;
 }
 
 .player-badge {
     background: linear-gradient(135deg, #4a9eff 0%, #2563eb 100%);
     color: white;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 600;

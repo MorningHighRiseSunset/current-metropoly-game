@@ -295,11 +295,11 @@ body {
 .player-card {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
+    gap: 4px;
+    padding: 3px 4px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 8px;
+    border-radius: 4px;
     transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     min-width: 0;
 }
@@ -320,9 +320,9 @@ body {
 
 .player-card-avatar {
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -358,7 +358,7 @@ body {
 
 .player-card-name {
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.6rem;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -398,7 +398,7 @@ body {
 }
 
 .player-card-money {
-    font-size: 0.8rem;
+    font-size: 0.6rem;
     font-weight: 700;
     color: #3dd68c;
     font-variant-numeric: tabular-nums;
@@ -1649,9 +1649,9 @@ body {
 }
 
 .modal-content--large {
-    max-width: 55vw;
-    width: 55vw;
-    height: 55vh;
+    max-width: 75vw;
+    width: 75vw;
+    height: 75vh;
     display: flex;
     flex-direction: column;
     padding: 15px;
@@ -1664,16 +1664,25 @@ body {
     overflow: hidden;
     border-radius: 8px;
     background: #000;
-    min-height: 300px;
-    max-height: 55vh;
+    min-height: 600px;
+    max-height: 70vh;
+    width: 100%;
+    position: relative;
+    scrollbar-width: none;
+}
+
+.casino-game-container::-webkit-scrollbar {
+    display: none;
 }
 
 .casino-iframe {
     width: 100%;
     height: 100%;
-    min-height: 300px;
+    min-height: 600px;
     border: none;
     display: block;
+    transform: scale(0.75);
+    transform-origin: top center;
 }
 
 .modal-close {
