@@ -89,7 +89,8 @@ let isAiVsAiGame = false;
 let activeAiLandingPlayerId = null;
 let observerCasinoStartBalance = null;
 let activePlayerCasinoGame = null; // Track if human player is actively playing casino
-let casinoPlayCounts = {}; // Track how many times each player has played casino (max 5)
+let casinoPlayCounts = {}; // Track how many times each player has played casino (max 3)
+let manuallyOpenedModal = false; // Track if property modal was opened by manual click
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -953,6 +954,7 @@ function on3DBoardClick(event) {
     else if (col === 10) position = 10 + row;
     
     if (position !== undefined && position !== null && boardConfig[position]) {
+        manuallyOpenedModal = true;
         showPropertyInfo(boardConfig[position]);
     }
 }
@@ -973,11 +975,23 @@ function tileHasLandingMedia(position) {
 }
 
 function handlePlayerLanding(playerId, newPosition) {
-    // Show property info for ALL spaces when landing (only for human player)
+    // Show property info for spaces with media, properties, or jail (only for human player)
+    // Skip chance, community chest, tax, and other special spaces that have their own UI
+    // Also skip if modal was already opened manually by clicking on the square
     const spaceData = boardConfig[newPosition];
-    if (spaceData && playerId === myPlayerId) {
-        showPropertyInfo(spaceData);
+    if (spaceData && playerId === myPlayerId && !manuallyOpenedModal) {
+        const hasMedia = tileHasLandingMedia(newPosition);
+        const isProperty = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
+        const isJail = newPosition === 10 || newPosition === 30;
+        const isSpecialSpace = spaceData.type === 'chance' || spaceData.type === 'community-chest' || spaceData.type === 'tax';
+
+        if ((hasMedia || isProperty || isJail) && !isSpecialSpace) {
+            showPropertyInfo(spaceData);
+        }
     }
+
+    // Reset manual flag after landing
+    manuallyOpenedModal = false;
 
     // Show jail proceed UI specifically for the current player
     if (newPosition === 10 || newPosition === 30) {
@@ -1001,8 +1015,8 @@ function handlePlayerLanding(playerId, newPosition) {
                     casinoPlayCounts[playerId] = 0;
                 }
 
-                if (casinoPlayCounts[playerId] >= 5) {
-                    alert('You have reached the maximum of 5 casino plays per game.');
+                if (casinoPlayCounts[playerId] >= 3) {
+                    alert('You have reached the maximum of 3 casino plays per game.');
                 } else {
                     casinoPlayCounts[playerId]++;
                     openCasinoGame(casinoSpace.casinoGame);
@@ -1326,18 +1340,18 @@ function beginLandingDecision({ spaceData, position, isRent = false, owner = nul
     activePropertyDecision = { spaceData, position, isRent, owner };
 
     if (spaceData.isCasino && !currentPlayer.isAI) {
-        // Check casino play count limit (max 5 times per player)
+        // Check casino play count limit (max 3 times per player)
         const playerId = currentPlayer.id || myPlayerId;
         if (!casinoPlayCounts[playerId]) {
             casinoPlayCounts[playerId] = 0;
         }
-        
-        if (casinoPlayCounts[playerId] >= 5) {
-            alert('You have reached the maximum of 5 casino plays per game.');
+
+        if (casinoPlayCounts[playerId] >= 3) {
+            alert('You have reached the maximum of 3 casino plays per game.');
             openLandingPropertyModal(spaceData);
             return;
         }
-        
+
         // Increment play count
         casinoPlayCounts[playerId]++;
         
