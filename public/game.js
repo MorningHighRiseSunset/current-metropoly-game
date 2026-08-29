@@ -1625,7 +1625,6 @@ function openCasinoGame(gameName, observerOptions = null) {
                 return;
             }
 
-            const iframeDoc = iframe.contentWindow.document;
             const container = getCasinoGameContainer(iframeDoc, gameName);
             if (!container) {
                 console.error('[Casino] Container not found for:', gameName);
