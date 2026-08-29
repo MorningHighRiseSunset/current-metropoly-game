@@ -973,9 +973,9 @@ function tileHasLandingMedia(position) {
 }
 
 function handlePlayerLanding(playerId, newPosition) {
-    // Show property info for ALL spaces when landing (for all players)
+    // Show property info for ALL spaces when landing (only for human player)
     const spaceData = boardConfig[newPosition];
-    if (spaceData) {
+    if (spaceData && playerId === myPlayerId) {
         showPropertyInfo(spaceData);
     }
 
@@ -1634,7 +1634,6 @@ function openCasinoGame(gameName, observerOptions = null) {
             }
 
             initFn(container, playerMoney, syncCasinoBalance);
-            fitCasinoIframeToModal(iframe);
 
             if (isObserver) {
                 triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc);
