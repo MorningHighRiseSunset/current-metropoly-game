@@ -786,6 +786,10 @@ function initThemeToggle() {
     // Settings modal
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
+            // Stop hover videos immediately when settings modal opens
+            if (typeof hideTileHoverImmediately === 'function') {
+                hideTileHoverImmediately();
+            }
             settingsModal.classList.remove('hidden');
         });
     }
@@ -1176,6 +1180,12 @@ function dismissPropertyDecisionUI() {
     }
     activeAiLandingPlayerId = null;
     cleanupPropertyVideo(); // Ensure video stops when dismissing decision UI
+    
+    // Stop hover videos immediately when dismissing UI
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
+    
     closePropertyModal();
 }
 
@@ -1568,6 +1578,11 @@ function openCasinoGame(gameName, observerOptions = null) {
         activePlayerCasinoGame = gameName;
     }
 
+    // Stop hover videos immediately when casino modal opens
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
+
     // Load casino game in iframe with initialization parameters
     const gamePath = `/${gameName}/index.html`;
     
@@ -1690,6 +1705,11 @@ function closeCasinoGame() {
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoContainer = document.getElementById('casinoGameContainer');
     const closeCasinoBtn = document.getElementById('closeCasinoBtn');
+
+    // Stop hover videos immediately when casino closes
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
 
     if (activeCasinoBalanceSync) {
         flushCasinoBalanceFromIframe(casinoContainer);
@@ -2265,6 +2285,11 @@ function closePropertyModal() {
     // Always cleanup videos, even for AI landing
     cleanupPropertyVideo();
 
+    // Stop hover videos immediately when modal closes
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
+
     // Hide decision prompt
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
     if (decisionPrompt) {
@@ -2315,6 +2340,11 @@ function showPropertyInfo(spaceData, options = {}) {
 
     // Force cleanup any existing videos before showing new content
     cleanupPropertyVideo();
+
+    // Stop hover videos immediately when modal opens
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
 
     const mediaSession = propertyMediaSession;
 
@@ -3579,6 +3609,11 @@ function payToGetOutOfJail() {
 
 // Show card modal
 function showCardModal(cardType, message, action) {
+    // Stop hover videos immediately when card modal opens
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
+
     // Initialize card modal elements if not already done
     if (!cardModal) {
         cardModal = document.getElementById('cardModal');
@@ -3676,6 +3711,11 @@ socket.on('chatMessage', (data) => {
 });
 
 function showGameWonModal(data) {
+    // Stop hover videos immediately when game over modal opens
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
+
     const modal = gameOverModal;
     if (!modal) return;
 
@@ -3933,6 +3973,11 @@ function showTokenSelection() {
         return;
     }
 
+    // Stop hover videos immediately when token modal opens
+    if (typeof hideTileHoverImmediately === 'function') {
+        hideTileHoverImmediately();
+    }
+
     updateTokenOptions();
     tokenModal.classList.remove('hidden');
 }
@@ -4022,6 +4067,12 @@ if (endTurnBtn) {
 document.querySelectorAll('.modal-close').forEach(closeBtn => {
     closeBtn.addEventListener('click', (e) => {
         const modal = e.target.closest('.modal');
+        
+        // Stop hover videos immediately when any modal closes
+        if (typeof hideTileHoverImmediately === 'function') {
+            hideTileHoverImmediately();
+        }
+        
         if (modal === propertyModal) {
             if (activePropertyDecision) {
                 if (activePropertyDecision.isRent) {
@@ -4048,6 +4099,11 @@ document.querySelectorAll('.modal-close').forEach(closeBtn => {
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
+            // Stop hover videos immediately when clicking outside modal
+            if (typeof hideTileHoverImmediately === 'function') {
+                hideTileHoverImmediately();
+            }
+            
             if (modal === propertyModal) {
                 if (activePropertyDecision) {
                     if (activePropertyDecision.isRent) {
@@ -5404,6 +5460,12 @@ function initializeModalElements() {
     settingsBtn = document.getElementById('settingsBtn');
     settingsModal = document.getElementById('settingsModal');
     settingsModalClose = document.querySelector('#settingsModal .modal-close');
+    
+    // Setup proceed button handler
+    const propertyProceedBtn = document.getElementById('propertyProceedBtn');
+    if (propertyProceedBtn) {
+        propertyProceedBtn.addEventListener('click', handleJailProceed);
+    }
 }
 
 // Setup video chat UI when DOM is ready

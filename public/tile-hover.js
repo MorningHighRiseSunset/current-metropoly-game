@@ -17,8 +17,12 @@ function hideTileHoverImmediately() {
         currentVideo.pause();
         currentVideo = null;
     }
-    tileHoverMedia.innerHTML = '';
-    tileHoverPreview.classList.add('hidden');
+    if (tileHoverMedia) {
+        tileHoverMedia.innerHTML = '';
+    }
+    if (tileHoverPreview) {
+        tileHoverPreview.classList.add('hidden');
+    }
 }
 
 function showTileHover(tilePosition) {

@@ -26,10 +26,10 @@
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
             background: 
                 radial-gradient(circle at 20% 80%, rgba(155, 89, 182, 0.15) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(142, 68, 173, 0.15) 0%, transparent 50%);
@@ -44,8 +44,8 @@
         
         .slot-container {
             width: 100%;
-            max-width: 280px;
-            padding: 8px;
+            max-width: 1600px;
+            padding: 20px;
             text-align: center;
             position: relative;
             z-index: 1;
@@ -89,17 +89,19 @@
         .reels {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding: 15px;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 25px;
             background: linear-gradient(145deg, #1a1a2e, #16213e);
-            border-radius: 15px;
-            border: 4px solid #8b5cf6;
+            border-radius: 20px;
+            border: 6px solid #8b5cf6;
             box-shadow: 
                 0 0 60px rgba(155, 89, 182, 0.3),
                 inset 0 0 30px rgba(0, 0, 0, 0.5);
             position: relative;
             overflow: hidden;
+            transform: scale(0.7);
+            transform-origin: top center;
         }
         
         .reels::before {
@@ -124,14 +126,14 @@
         }
         
         .reel {
-            width: 60px;
-            height: 70px;
+            width: 100px;
+            height: 120px;
             background: linear-gradient(145deg, #ffffff, #f0f0f0);
-            border-radius: 10px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
+            font-size: 48px;
             box-shadow: 
                 inset 0 4px 8px rgba(0,0,0,0.2),
                 0 8px 16px rgba(0,0,0,0.3);
