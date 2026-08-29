@@ -972,10 +972,16 @@ function tileHasLandingMedia(position) {
 }
 
 function handlePlayerLanding(playerId, newPosition) {
-    // Show property info for ALL spaces when landing (for all players)
+    // Show property info for spaces with media (videos/images) or properties
     const spaceData = boardConfig[newPosition];
     if (spaceData) {
-        showPropertyInfo(spaceData);
+        const hasMedia = tileHasLandingMedia(newPosition);
+        const isProperty = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
+        const isJail = newPosition === 10 || newPosition === 30;
+
+        if (hasMedia || isProperty || isJail) {
+            showPropertyInfo(spaceData);
+        }
     }
 
     // Show jail proceed UI specifically for the current player
