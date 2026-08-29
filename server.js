@@ -1874,7 +1874,7 @@ io.on('connection', (socket) => {
             socket.emit('gameError', 'Current player not found');
             return;
         }
-        
+
         // Handle jail dice rolling
         if (currentPlayer.inJail) {
             // Deduct $150 to roll while in jail
@@ -2000,6 +2000,15 @@ io.on('connection', (socket) => {
             message: isDoubles ? `${currentPlayer.name} rolled doubles!` : `${currentPlayer.name} rolled ${dice1} and ${dice2}`
         });
 
+        // Emit playerMoved for human players to trigger landing UI
+        io.to(playerData.gameId).emit('playerMoved', {
+            playerId: socket.id,
+            oldPosition: oldPosition,
+            newPosition: currentPlayer.position,
+            players: game.players,
+            direction: 'forward'
+        });
+
         // Only check for rent and special spaces if NOT doubles (after roll animation)
         if (!isDoubles) {
             const landActionDelay = getRollAnimationMs(total);
@@ -2011,10 +2020,14 @@ io.on('connection', (socket) => {
 
                 if (landedSpace.type === 'chance') {
                     drawChanceCard(game, currentPlayer);
-                    scheduleAutoAdvanceTurn(game, socket.id, getCardEffectAnimationMs());
+                    if (currentPlayer.isAI) {
+                        scheduleAutoAdvanceTurn(game, socket.id, getCardEffectAnimationMs());
+                    }
                 } else if (landedSpace.type === 'community-chest') {
                     drawCommunityChestCard(game, currentPlayer);
-                    scheduleAutoAdvanceTurn(game, socket.id, getCardEffectAnimationMs());
+                    if (currentPlayer.isAI) {
+                        scheduleAutoAdvanceTurn(game, socket.id, getCardEffectAnimationMs());
+                    }
                 } else if (landedSpace.type === 'tax') {
                     if (currentPlayer.money >= landedSpace.amount) {
                         currentPlayer.money -= landedSpace.amount;
@@ -2028,7 +2041,10 @@ io.on('connection', (socket) => {
                     } else {
                         socket.emit('gameError', `Not enough money to pay ${landedSpace.name} of $${landedSpace.amount}`);
                     }
-                    scheduleAutoAdvanceTurn(game, socket.id, 600);
+                    // Don't auto-advance turn for human players - let them view UI first
+                    if (currentPlayer.isAI) {
+                        scheduleAutoAdvanceTurn(game, socket.id, 600);
+                    }
                 } else if (landedSpace.position === 30) {
                     sendToJail(game, currentPlayer, { advanceTurn: currentPlayer.isAI });
                 } else if (landedSpace.position === 10) {
@@ -2041,7 +2057,10 @@ io.on('connection', (socket) => {
                     // Unowned: client shows buy modal. Owned: rent handled above.
                     // Turn ends only when the player clicks End Turn (or buy/pass then End Turn).
                 } else {
-                    scheduleAutoAdvanceTurn(game, socket.id, 600);
+                    // Only auto-advance for AI players
+                    if (currentPlayer.isAI) {
+                        scheduleAutoAdvanceTurn(game, socket.id, 600);
+                    }
                 }
             }, landActionDelay);
         }

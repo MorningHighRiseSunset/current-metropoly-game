@@ -68,6 +68,7 @@ const socket = io(SOCKET_SERVER_URL, {
     reconnectionDelayMax: 5000,
     timeout: 10000
 });
+
 let gameState = null;
 let myPlayerId = null;
 let players = [];
@@ -972,16 +973,10 @@ function tileHasLandingMedia(position) {
 }
 
 function handlePlayerLanding(playerId, newPosition) {
-    // Show property info for spaces with media (videos/images) or properties
+    // Show property info for ALL spaces when landing (for all players)
     const spaceData = boardConfig[newPosition];
     if (spaceData) {
-        const hasMedia = tileHasLandingMedia(newPosition);
-        const isProperty = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
-        const isJail = newPosition === 10 || newPosition === 30;
-
-        if (hasMedia || isProperty || isJail) {
-            showPropertyInfo(spaceData);
-        }
+        showPropertyInfo(spaceData);
     }
 
     // Show jail proceed UI specifically for the current player
@@ -2244,18 +2239,16 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
 function closePropertyModal() {
     // Always cleanup videos, even for AI landing
     cleanupPropertyVideo();
-    
-    const propertyActions = document.getElementById('propertyActions');
+
+    // Hide decision prompt
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
-    if (propertyActions && !activePropertyDecision) {
-        propertyActions.classList.add('hidden');
-    }
-    if (decisionPrompt && !activePropertyDecision) {
+    if (decisionPrompt) {
         decisionPrompt.classList.add('hidden');
         decisionPrompt.textContent = '';
     }
-    if (propertyModal) {
-        propertyModal.classList.add('hidden');
+    const modal = propertyModal || document.getElementById('propertyModal');
+    if (modal) {
+        modal.classList.add('hidden');
     }
 }
 
@@ -2294,13 +2287,14 @@ function buildPropertyDetailsHtml(spaceData) {
 // Show property information
 function showPropertyInfo(spaceData, options = {}) {
     const { showDecisionActions = false, showProceedButton = false, viewerLabel = null } = options;
-    
+
     // Force cleanup any existing videos before showing new content
     cleanupPropertyVideo();
-    
+
     const mediaSession = propertyMediaSession;
 
-    const modal = propertyModal;
+    // Re-query modal elements if not initialized (handles case where socket events fire before DOM ready)
+    const modal = propertyModal || document.getElementById('propertyModal');
     const title = document.getElementById('propertyTitle');
     const subtitle = document.getElementById('propertySubtitle');
     const colorBar = document.getElementById('propertyColorBar');
@@ -2312,9 +2306,9 @@ function showPropertyInfo(spaceData, options = {}) {
     const propertyPassBtn = document.getElementById('propertyPassBtn');
     const propertyProceedBtn = document.getElementById('propertyProceedBtn');
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
-    
+
     if (!modal || !title || !content || !mediaContainer) {
-        console.error('Modal elements not found!');
+        console.error('Modal elements not found!', { modal, title, content, mediaContainer });
         return;
     }
     
@@ -2478,8 +2472,9 @@ function cleanupPropertyVideo() {
         mediaContainer.innerHTML = '';
     }
 
-    if (propertyModal) {
-        propertyModal.querySelectorAll('video').forEach(stopVideoElement);
+    const modal = propertyModal || document.getElementById('propertyModal');
+    if (modal) {
+        modal.querySelectorAll('video').forEach(stopVideoElement);
     }
     
     // Global cleanup: stop ALL videos on the page to prevent audio clashes
@@ -3288,7 +3283,9 @@ socket.on('playerMoved', (data) => {
         if (player.tokenIndex !== undefined && !tokenModels[playerId]) {
             loadTokenModel(player.tokenIndex, player);
         }
-        const afterMove = () => handlePlayerLanding(playerId, newPosition);
+        const afterMove = () => {
+            handlePlayerLanding(playerId, newPosition);
+        };
 
         if (oldPosition !== newPosition) {
             player.position = oldPosition;
