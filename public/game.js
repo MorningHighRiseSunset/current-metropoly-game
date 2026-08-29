@@ -202,6 +202,7 @@ const tokenData = [
 
 // Track last played videos for each tile to prevent repeats
 const lastPlayedPropertyVideos = {};
+let lastLandingUiKey = null;
 
 // Helper function to get model path (supports CDN)
 function getModelPath(localPath) {
@@ -742,29 +743,19 @@ const settingsModalClose = document.querySelector('#settingsModal .modal-close')
 let currentPropertyVideo = null;
 let pendingPropertyVideo = null;
 let propertyMediaSession = 0;
+let currentPropertyMediaPosition = null;
 
 function stopVideoElement(video) {
     if (!video) return;
+    if (video.id === 'localVideo' || video.id === 'remoteVideo') return;
     video._intentionalStop = true;
-    
-    // More aggressive video stopping
+
     try {
         video.pause();
-        video.currentTime = 0;
-        video.loop = false;
         video.autoplay = false;
         video.muted = true;
-        video.volume = 0;
-        
-        // Remove source and reload to ensure audio stops
         video.removeAttribute('src');
-        video.querySelectorAll('source').forEach(source => {
-            source.removeAttribute('src');
-            source.remove();
-        });
-        video.load();
-        
-        // Remove from DOM if it's still there
+        video.querySelectorAll('source').forEach(source => source.remove());
         if (video.parentNode) {
             video.parentNode.removeChild(video);
         }
@@ -989,17 +980,24 @@ function tileHasLandingMedia(position) {
     return media.videos.length > 0 || media.images.length > 0;
 }
 
-function handlePlayerLanding(playerId, newPosition) {
-    // console.log('handlePlayerLanding called:', { playerId, newPosition, myPlayerId, isCurrentPlayer: playerId === myPlayerId });
+function claimLandingUi(playerId, position) {
+    const key = `${playerId}:${position}`;
+    if (lastLandingUiKey === key) return false;
+    lastLandingUiKey = key;
+    return true;
+}
 
+function handlePlayerLanding(playerId, newPosition) {
     // Show jail video when landing on JAIL (10) or GO TO JAIL (30) - for ALL players including AI
     if (newPosition === 10 || newPosition === 30) {
-        if (playerId === myPlayerId) {
-            showJailProceedUI(newPosition);
-        } else {
-            const jailSpace = boardConfig[newPosition];
-            if (jailSpace) {
-                showPropertyInfo(jailSpace);
+        if (claimLandingUi(playerId, newPosition)) {
+            if (playerId === myPlayerId) {
+                showJailProceedUI(newPosition);
+            } else {
+                const jailSpace = boardConfig[newPosition];
+                if (jailSpace) {
+                    showPropertyInfo(jailSpace);
+                }
             }
         }
     }
@@ -1008,8 +1006,9 @@ function handlePlayerLanding(playerId, newPosition) {
     if (playerId === myPlayerId) {
         const spaceData = getUnownedPurchasableSpace(newPosition);
         if (spaceData) {
-            // console.log('Starting property decision for:', spaceData.name);
-            startPropertyDecision(spaceData, newPosition);
+            if (claimLandingUi(playerId, newPosition)) {
+                startPropertyDecision(spaceData, newPosition);
+            }
         } else {
             // Check if landing on a casino property (owned or unowned)
             const casinoSpace = boardConfig[newPosition];
@@ -1587,6 +1586,28 @@ function openCasinoGame(gameName, observerOptions = null) {
     // Attach onload handler BEFORE setting src to ensure it always fires
     iframe.onload = function() {
         try {
+            const iframeDoc = iframe.contentWindow.document;
+            const embedFit = iframeDoc.createElement('style');
+            embedFit.textContent = `
+                html, body {
+                    width: 100% !important;
+                    height: 100% !important;
+                    min-height: 0 !important;
+                    max-height: 100% !important;
+                    overflow: hidden !important;
+                    box-sizing: border-box !important;
+                }
+                body {
+                    margin: 0 !important;
+                    padding: 8px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    transform-origin: center center !important;
+                }
+            `;
+            iframeDoc.head.appendChild(embedFit);
+
             // Get the appropriate initialization function name based on game
             const initFunctionNames = {
                 'Baccarat': 'initBaccaratMinigame',
@@ -1631,6 +1652,7 @@ function openCasinoGame(gameName, observerOptions = null) {
             }
 
             initFn(container, playerMoney, syncCasinoBalance);
+            fitCasinoIframeToModal(iframe);
 
             if (isObserver) {
                 triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc);
@@ -2367,31 +2389,22 @@ function showPropertyInfo(spaceData, options = {}) {
             ? `${spaceData.position}_${selectedVideo}`
             : `${spaceData.position}_${media.name}`;
 
-        if (selectedVideo && mediaCache[cacheKey]) {
-            lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
-            const cloned = mediaCache[cacheKey].cloneNode(true);
-            mediaContainer.appendChild(cloned);
-            const video = cloned.querySelector('video');
-            if (video) {
-                currentPropertyVideo = video;
-                video.muted = false;
-                video.loop = false;
-                video.currentTime = 0;
-                video.play().catch(() => {});
-            }
-        } else if (selectedVideo) {
+        if (selectedVideo) {
             lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
 
             const video = document.createElement('video');
             const frame = createMediaFrame(video);
-            video.src = selectedVideo;
-            video.autoplay = true;
-            video.muted = false;
-            video.loop = false;
             video.playsInline = true;
+            video.setAttribute('playsinline', '');
+            video.setAttribute('webkit-playsinline', '');
             video.controls = true;
-            video.preload = 'auto';
+            video.loop = false;
+            video.preload = 'metadata';
+            video.muted = true;
+            video.autoplay = true;
+            video.src = selectedVideo;
             pendingPropertyVideo = video;
+            currentPropertyMediaPosition = spaceData.position;
             mediaContainer.appendChild(frame);
 
             video.addEventListener('error', () => {
@@ -2803,30 +2816,16 @@ function updateUI(options = {}) {
 // Consolidated callback that triggers after token animation completes
 function onDiceRollSequenceComplete(playerId, newPosition, diceData) {
     DiceRollSequenceManager.markUIOpening(playerId);
-    
-    // Only trigger property decision UI for the current player (not observers)
-    if (playerId === myPlayerId) {
-        const spaceData = getUnownedPurchasableSpace(newPosition);
-        if (spaceData) {
-            // console.log('[DiceRoll] Opening property decision for:', spaceData.name);
-            startPropertyDecision(spaceData, newPosition);
-            // startPropertyDecision calls updateUI(), so we don't call it again
-            DiceRollSequenceManager.completeSequence(playerId);
-            return;
-        }
-        if (newPosition === 10 || newPosition === 30) {
-            showJailProceedUI(newPosition);
-            DiceRollSequenceManager.completeSequence(playerId);
-            return;
-        }
-    } else if (newPosition === 10 || newPosition === 30) {
-        const jailSpace = boardConfig[newPosition];
-        if (jailSpace) {
-            showPropertyInfo(jailSpace);
-        }
+
+    // Jail pay-to-roll emits diceRolled with no movement; the real landing comes from playerMoved.
+    if (diceData && diceData.oldPosition !== undefined && diceData.oldPosition === newPosition) {
+        DiceRollSequenceManager.completeSequence(playerId);
+        updateUI();
+        return;
     }
     
-    // Mark sequence as complete and update UI (only if property decision didn't already)
+    // Landing UI is opened from playerMoved → handlePlayerLanding so we
+    // never start two property videos for the same tile.
     DiceRollSequenceManager.completeSequence(playerId);
     updateUI();
 }
@@ -3343,6 +3342,8 @@ socket.on('turnChanged', (data) => {
     // Force cleanup videos when turn changes to prevent audio clashes
     cleanupPropertyVideo();
     
+    lastLandingUiKey = null;
+
     if (data.gameState) {
         gameState = data.gameState;
     } else if (gameState) {

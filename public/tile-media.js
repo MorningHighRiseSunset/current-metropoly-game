@@ -36,29 +36,30 @@ function logVideoUrlConstruction(localPath, result, context) {
 */
 
 function getVideoUrl(localPath) {
-    const USE_VIDEO_CDN = window.USE_VIDEO_CDN || false;
-    let VIDEO_CDN_BASE_URL = window.VIDEO_CDN_BASE_URL || '';
-    // R2 public URLs must use HTTPS on HTTPS pages (avoid mixed-content blocking)
-    if (VIDEO_CDN_BASE_URL.startsWith('http://')) {
-        VIDEO_CDN_BASE_URL = VIDEO_CDN_BASE_URL.replace(/^http:\/\//, 'https://');
+    if (!localPath) return localPath;
+    if (/^https?:\/\//i.test(localPath)) {
+        return localPath.replace(/^http:\/\//i, 'https://');
     }
 
-    let result;
+    const USE_VIDEO_CDN = window.USE_VIDEO_CDN || false;
+    let VIDEO_CDN_BASE_URL = (window.VIDEO_CDN_BASE_URL || '').trim();
+    VIDEO_CDN_BASE_URL = VIDEO_CDN_BASE_URL.replace(/^http:\/\//i, 'https://').replace(/\/+$/, '');
+
+    const normalized = localPath.startsWith('/') ? localPath : `/${localPath}`;
+
     if (USE_VIDEO_CDN && VIDEO_CDN_BASE_URL) {
-        // Preserve the full path including Videos/ folder, just encode the filename
-        const parts = localPath.split('/');
-        const filename = parts.pop();
-        const encodedFilename = encodeURIComponent(filename);
-        const path = parts.join('/');
-        result = `${VIDEO_CDN_BASE_URL}${path}/${encodedFilename}`;
-    } else {
-        // For local paths, encode the filename to handle spaces
-        const parts = localPath.split('/');
-        const filename = parts.pop();
-        const encodedFilename = encodeURIComponent(filename);
-        result = parts.join('/') + '/' + encodedFilename;
+        try {
+            return new URL(normalized.replace(/^\//, ''), `${VIDEO_CDN_BASE_URL}/`).href;
+        } catch (e) {
+            const parts = normalized.split('/');
+            const filename = encodeURIComponent(parts.pop());
+            return `${VIDEO_CDN_BASE_URL}${parts.join('/')}/${filename}`;
+        }
     }
-    return result;
+
+    const parts = normalized.split('/');
+    const filename = encodeURIComponent(parts.pop());
+    return `${parts.join('/')}/${filename}`;
 }
 
 // Tile media mapping (videos and images for each tile)
@@ -70,7 +71,7 @@ const tileMediaRaw = {
     3: { name: 'Las Vegas Grand Prix', videos: ['/Videos/LV Grand Prix.mp4', '/Videos/LV Grand Prix End (1).mp4'], images: [] },
     4: { name: 'Income Tax', videos: [], images: [] },
     5: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
-    6: { name: 'Speed Vegas Off Roading', videos: [], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] },
+    6: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1 (1).mp4', '/Videos/Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] },
     7: { name: 'Chance', videos: [], images: [] },
     8: { name: 'Las Vegas Golden Knights', videos: ['/Videos/LV GKnights 1 (1).mp4', '/Videos/LV GKnights 2 (1).mp4', '/Videos/LV Golden Knights (1).mp4'], images: ['/images/230613231941-04-knights-stanley-cup-061323.jpg'] },
     9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/MavHeli 2 (1).mp4', '/Videos/MavHeli 3 (1).mp4'], images: ['/images/HelicopterRidesNight.jpg', '/images/702-helicopters.webp'] },
@@ -103,7 +104,7 @@ const tileMediaRaw = {
     36: { name: 'Venetian', videos: [], images: [] },
     37: { name: 'The Cosmopolitan', videos: ['/Videos/The Cosmopolitan1.mp4', '/Videos/The Cosmopolitan2.mp4', '/Videos/The Cosmopolitan3.mp4'], images: ['/images/cosmopolitan.jpg'] },
     38: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
-    39: { name: 'Speed Vegas Off Roading', videos: [], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] }
+    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1 (1).mp4', '/Videos/Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] }
 };
 
 // Proxy to convert URLs on access
