@@ -1604,6 +1604,7 @@ function openCasinoGame(gameName, observerOptions = null) {
                     align-items: center !important;
                     justify-content: center !important;
                     transform-origin: center center !important;
+                    transform: scale(1.15) !important;
                 }
             `;
             iframeDoc.head.appendChild(embedFit);
