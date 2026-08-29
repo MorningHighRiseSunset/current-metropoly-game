@@ -18,11 +18,11 @@ body {
 
 .craps-game {
     width: 100%;
-    max-width: 1800px;
+    max-width: 500px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 25px;
+    gap: 2px;
 }
 
 .game-header {
@@ -31,33 +31,34 @@ body {
 }
 
 .game-header h1 {
-    font-size: 2.5em;
+    font-size: 1em;
     color: #FFD700;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 
 .game-info {
     display: flex;
     justify-content: center;
-    gap: 30px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 3px;
+    flex-wrap: wrap;
 }
 
 .info-item {
-    font-size: 1.2em;
+    font-size: 0.7em;
     color: #fff;
     background: linear-gradient(135deg, #2c3e50, #34495e);
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: 2px solid #FFD700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #FFD700;
 }
 
 .phase-info {
     display: flex;
     justify-content: center;
-    gap: 40px;
-    font-size: 1.1em;
+    gap: 15px;
+    font-size: 0.7em;
     color: #fff;
 }
 
@@ -68,13 +69,11 @@ body {
 .craps-table {
     width: 100%;
     background: linear-gradient(135deg, #0d5c2e 0%, #0a4a25 50%, #086609 100%);
-    border: 10px solid #8B4513;
-    border-radius: 25px;
-    padding: 30px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,0,0,0.3);
+    border: 2px solid #8B4513;
+    border-radius: 5px;
+    padding: 3px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.3);
     position: relative;
-    transform: scale(0.7);
-    transform-origin: top center;
 }
 
 .craps-table::before {
@@ -92,15 +91,15 @@ body {
 
 .table-section {
     display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 5px;
+    margin-bottom: 2px;
     position: relative;
     z-index: 1;
 }
 
 .top-section {
     justify-content: space-between;
-    padding: 0 50px;
+    padding: 0 20px;
 }
 
 .middle-section {
@@ -121,7 +120,7 @@ body {
 
 .place-bets {
     display: flex;
-    gap: 8px;
+    gap: 3px;
     flex-wrap: wrap;
     justify-content: center;
     flex: 1;
@@ -129,11 +128,11 @@ body {
 
 .bet-area {
     background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-    border: 3px solid #fff;
-    border-radius: 8px;
-    padding: 15px;
-    min-width: 100px;
-    min-height: 60px;
+    border: 1px solid #fff;
+    border-radius: 3px;
+    padding: 2px;
+    min-width: 25px;
+    min-height: 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -156,7 +155,7 @@ body {
 }
 
 .bet-label {
-    font-size: 0.9em;
+    font-size: 0.5em;
     font-weight: bold;
     color: #fff;
     text-align: center;
@@ -164,22 +163,22 @@ body {
 }
 
 .bet-number {
-    font-size: 1.8em;
+    font-size: 0.8em;
     font-weight: bold;
     color: #FFD700;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
 .payout {
-    font-size: 0.75em;
+    font-size: 0.6em;
     color: #FFD700;
-    margin-top: 5px;
+    margin-top: 3px;
     font-weight: bold;
 }
 
 .pass-line, .dont-pass {
     flex: 1;
-    max-width: 200px;
+    max-width: 120px;
     background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08));
 }
 
@@ -192,18 +191,18 @@ body {
 }
 
 .come, .dont-come {
-    width: 80px;
+    width: 50px;
     background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
 }
 
 .place-bet {
-    width: 70px;
-    min-width: 70px;
+    width: 45px;
+    min-width: 45px;
     background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
 }
 
 .field-bet {
-    width: 150px;
+    width: 100px;
     background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.08));
     border-color: #FFD700;
 }
@@ -216,8 +215,8 @@ body {
 }
 
 .center-bet {
-    width: 80px;
-    min-width: 80px;
+    width: 50px;
+    min-width: 50px;
     background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
 }
 
@@ -225,27 +224,28 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
-    padding: 20px;
-    background: rgba(0,0,0,0.2);
-    border-radius: 10px;
-    margin-top: 10px;
+    gap: 2px;
+    padding: 4px;
+    background: transparent;
+    border-radius: 0;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .dice-container {
     display: flex;
-    gap: 20px;
+    gap: 10px;
 }
 
 .dice {
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
     background: linear-gradient(145deg, #ffffff, #f0f0f0);
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2em;
+    font-size: 1.5em;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     border: 2px solid #333;
     color: #1a1a2e;
@@ -265,14 +265,14 @@ body {
 }
 
 .result {
-    font-size: 1.2em;
-    padding: 15px 30px;
+    font-size: 0.75em;
+    padding: 3px 10px;
     background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
     border: 2px solid #FFD700;
-    border-radius: 10px;
+    border-radius: 4px;
     color: #fff;
     text-align: center;
-    min-height: 50px;
+    min-height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -294,14 +294,15 @@ body {
     display: flex;
     gap: 15px;
     justify-content: center;
+    margin-top: 0;
 }
 
 .btn {
-    padding: 15px 30px;
-    font-size: 1em;
+    padding: 10px 20px;
+    font-size: 0.85em;
     font-weight: bold;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     background: linear-gradient(135deg, #FFD700, #DAA520);
