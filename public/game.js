@@ -17,37 +17,31 @@ function getConfiguredSocketServerUrl() {
 // Console commands to load minigames directly in the same page
 // Usage in browser console: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()
 window.loadBlackjack = function() {
-    console.log('Loading Blackjack minigame in overlay...');
     loadMinigameInOverlay('/BlackJack/index.html');
     return 'Blackjack loading...';
 };
 
 window.loadBaccarat = function() {
-    console.log('Loading Baccarat minigame in overlay...');
     loadMinigameInOverlay('/Baccarat/index.html');
     return 'Baccarat loading...';
 };
 
 window.loadRoulette = function() {
-    console.log('Loading Roulette minigame in overlay...');
     loadMinigameInOverlay('/Roulette/index.html');
     return 'Roulette loading...';
 };
 
 window.loadPoker = function() {
-    console.log('Loading Poker minigame in overlay...');
     loadMinigameInOverlay('/PokerFP/index.html');
     return 'Poker loading...';
 };
 
 window.loadSlots = function() {
-    console.log('Loading Slot Machine minigame in overlay...');
     loadMinigameInOverlay('/slotMachine/index.html');
     return 'Slots loading...';
 };
 
 window.loadCraps = function() {
-    console.log('Loading Craps minigame in overlay...');
     loadMinigameInOverlay('/Craps/index.html');
     return 'Craps loading...';
 };
@@ -64,7 +58,6 @@ function loadMinigameInOverlay(url) {
     openCasinoGame(gameName, playerBalance);
 }
 
-console.log('Minigame console commands loaded: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()');
 
 const SOCKET_SERVER_URL = getConfiguredSocketServerUrl();
 const socket = io(SOCKET_SERVER_URL, {
@@ -202,7 +195,6 @@ const tokenData = [
 
 // Track last played videos for each tile to prevent repeats
 const lastPlayedPropertyVideos = {};
-let lastLandingUiKey = null;
 
 // Helper function to get model path (supports CDN)
 function getModelPath(localPath) {
@@ -980,20 +972,11 @@ function tileHasLandingMedia(position) {
     return media.videos.length > 0 || media.images.length > 0;
 }
 
-function claimLandingUi(playerId, position) {
-    const key = `${playerId}:${position}`;
-    if (lastLandingUiKey === key) return false;
-    lastLandingUiKey = key;
-    return true;
-}
-
 function handlePlayerLanding(playerId, newPosition) {
     // Show property info for ALL spaces when landing (for all players)
-    if (claimLandingUi(playerId, newPosition)) {
-        const spaceData = boardConfig[newPosition];
-        if (spaceData) {
-            showPropertyInfo(spaceData);
-        }
+    const spaceData = boardConfig[newPosition];
+    if (spaceData) {
+        showPropertyInfo(spaceData);
     }
 
     // Show jail proceed UI specifically for the current player
@@ -3340,8 +3323,6 @@ socket.on('turnChanged', (data) => {
     
     // Force cleanup videos when turn changes to prevent audio clashes
     cleanupPropertyVideo();
-    
-    lastLandingUiKey = null;
 
     if (data.gameState) {
         gameState = data.gameState;
@@ -4248,8 +4229,6 @@ function start3DScene() {
     updateThreeCamera();
     scene3DInitialized = true;
 
-    console.log(`3D board ready: ${Object.keys(boardMeshes).length} tiles`);
-
     const resizeTarget = boardViewport || boardContainer;
     if (resizeTarget && !resizeObserver) {
         resizeObserver = new ResizeObserver(() => resize3DScene());
@@ -4509,9 +4488,6 @@ function createPremiumBoardTile(spaceData, row, col) {
                     ferrisWheel.userData.isFerrisWheel = true;
                     ferrisWheel.userData.lastUpdate = 0;
                     
-                    console.log('Ferris wheel added to scene at position:', ferrisWheel.position);
-                    console.log('Ferris wheel scale:', ferrisWheel.scale);
-                    
                     // Optimize model for performance but keep it visible
                     ferrisWheel.traverse((child) => {
                         if (child.isMesh) {
@@ -4530,9 +4506,7 @@ function createPremiumBoardTile(spaceData, row, col) {
                             }
                         }
                     });
-                    
-                    console.log('Ferris wheel loaded with', gltf.animations.length, 'animations');
-                    
+
                     // Setup animation mixer if model has animations
                     if (gltf.animations && gltf.animations.length > 0) {
                         const mixer = new THREE.AnimationMixer(ferrisWheel);
@@ -4546,15 +4520,10 @@ function createPremiumBoardTile(spaceData, row, col) {
                     }
                     
                     group.add(ferrisWheel);
-                    console.log('Ferris wheel added to group. Group children count:', group.children.length);
                 },
                 function(xhr) {
                     if (xhr.lengthComputable) {
                         const percentComplete = xhr.loaded / xhr.total * 100;
-                        // Only log at milestones to reduce console spam
-                        if (percentComplete >= 100 || percentComplete % 25 < 1) {
-                            console.log(`Loading Ferris Wheel: ${percentComplete.toFixed(0)}%`);
-                        }
                     }
                 },
                 function(error) {
@@ -4702,10 +4671,8 @@ function createCenterCarousel(parentGroup) {
     ]);
 
     const allImages = buildCarouselImageList(baseImages, casinoGameImages);
-    
+
     // Use sequential track-based ordering instead of randomization
-    console.log(`Total carousel images: ${allImages.length}`);
-    
     if (allImages.length === 0) return;
     
     const textureLoader = new THREE.TextureLoader();
@@ -5095,7 +5062,6 @@ function initializePeerJS() {
     });
 
     peer.on('open', (id) => {
-        console.log('PeerJS connected with ID:', id);
         myPeerId = id;
         updateConnectionStatus('Ready to call');
         // Share peer ID with other players via socket
@@ -5279,30 +5245,21 @@ function updateConnectionStatus(status) {
 
 // Video chat UI event listeners
 function setupVideoChatUI() {
-    console.log('setupVideoChatUI called');
     const startVideoCallBtn = document.getElementById('startVideoCall');
     const endVideoCallBtn = document.getElementById('endVideoCall');
 
-    console.log('startVideoCallBtn:', startVideoCallBtn, 'endVideoCallBtn:', endVideoCallBtn);
-
     // Initialize PeerJS on load
     if (!peer) {
-        console.log('Initializing PeerJS from setupVideoChatUI');
         initializePeerJS();
     }
 
     if (startVideoCallBtn) {
         startVideoCallBtn.addEventListener('click', startVideoCall);
-        console.log('Added click listener to startVideoCallBtn');
-    } else {
-        console.log('startVideoCallBtn not found');
     }
 
     if (endVideoCallBtn) {
         endVideoCallBtn.addEventListener('click', endVideoCall);
     }
-
-    console.log('Setting up socket event listeners for video call');
 }
 
 // Set up socket event listeners globally (not inside setupVideoChatUI)
