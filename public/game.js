@@ -783,11 +783,13 @@ function initThemeToggle() {
     }
 
     // Close modal when clicking outside
-    settingsModal.addEventListener('click', (e) => {
-        if (e.target === settingsModal) {
-            settingsModal.classList.add('hidden');
-        }
-    });
+    if (settingsModal) {
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.add('hidden');
+            }
+        });
+    }
 }
 
 function setTheme(theme) {
@@ -798,9 +800,6 @@ function setTheme(theme) {
         themeToggle.textContent = theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode';
     }
 }
-
-// Initialize theme toggle on page load
-initThemeToggle();
 
 // Token selection state
 let pendingTokenSelection = null;
@@ -5379,9 +5378,11 @@ function initializeModalElements() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         initializeModalElements();
+        initThemeToggle();
         setupVideoChatUI();
     });
 } else {
     initializeModalElements();
+    initThemeToggle();
     setupVideoChatUI();
 }
