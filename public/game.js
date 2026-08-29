@@ -716,20 +716,20 @@ let isRightMouseDown = false;
 let lastMouseX = 0;
 let lastMouseY = 0;
 
-// Modal elements
-const propertyModal = document.getElementById('propertyModal');
-const gameOverModal = document.getElementById('gameOverModal');
-const gameOverTitle = document.getElementById('gameOverTitle');
-const gameOverContent = document.getElementById('gameOverContent');
+// Modal elements (initialized after DOM is ready)
+let propertyModal = null;
+let gameOverModal = null;
+let gameOverTitle = null;
+let gameOverContent = null;
 let cardModal = null;
 let cardTitle = null;
 let cardContent = null;
 let cardOkBtn = null;
-const confirmTokenBtn = document.getElementById('confirmTokenBtn');
-const themeToggle = document.getElementById('themeToggle');
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsModal = document.getElementById('settingsModal');
-const settingsModalClose = document.querySelector('#settingsModal .modal-close');
+let confirmTokenBtn = null;
+let themeToggle = null;
+let settingsBtn = null;
+let settingsModal = null;
+let settingsModalClose = null;
 
 // Video cleanup
 let currentPropertyVideo = null;
@@ -5358,9 +5358,30 @@ window.showGoToJailUI = function() {
     }
 };
 
+// Initialize modal elements when DOM is ready
+function initializeModalElements() {
+    propertyModal = document.getElementById('propertyModal');
+    gameOverModal = document.getElementById('gameOverModal');
+    gameOverTitle = document.getElementById('gameOverTitle');
+    gameOverContent = document.getElementById('gameOverContent');
+    cardModal = document.getElementById('cardModal');
+    cardTitle = document.getElementById('cardTitle');
+    cardContent = document.getElementById('cardContent');
+    cardOkBtn = document.getElementById('cardOkBtn');
+    confirmTokenBtn = document.getElementById('confirmTokenBtn');
+    themeToggle = document.getElementById('themeToggle');
+    settingsBtn = document.getElementById('settingsBtn');
+    settingsModal = document.getElementById('settingsModal');
+    settingsModalClose = document.querySelector('#settingsModal .modal-close');
+}
+
 // Setup video chat UI when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupVideoChatUI);
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeModalElements();
+        setupVideoChatUI();
+    });
 } else {
+    initializeModalElements();
     setupVideoChatUI();
 }
