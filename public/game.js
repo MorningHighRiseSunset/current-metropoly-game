@@ -988,17 +988,18 @@ function claimLandingUi(playerId, position) {
 }
 
 function handlePlayerLanding(playerId, newPosition) {
-    // Show jail video when landing on JAIL (10) or GO TO JAIL (30) - for ALL players including AI
+    // Show property info for ALL spaces when landing (for all players)
+    if (claimLandingUi(playerId, newPosition)) {
+        const spaceData = boardConfig[newPosition];
+        if (spaceData) {
+            showPropertyInfo(spaceData);
+        }
+    }
+
+    // Show jail proceed UI specifically for the current player
     if (newPosition === 10 || newPosition === 30) {
-        if (claimLandingUi(playerId, newPosition)) {
-            if (playerId === myPlayerId) {
-                showJailProceedUI(newPosition);
-            } else {
-                const jailSpace = boardConfig[newPosition];
-                if (jailSpace) {
-                    showPropertyInfo(jailSpace);
-                }
-            }
+        if (playerId === myPlayerId) {
+            showJailProceedUI(newPosition);
         }
     }
 
@@ -1006,9 +1007,7 @@ function handlePlayerLanding(playerId, newPosition) {
     if (playerId === myPlayerId) {
         const spaceData = getUnownedPurchasableSpace(newPosition);
         if (spaceData) {
-            if (claimLandingUi(playerId, newPosition)) {
-                startPropertyDecision(spaceData, newPosition);
-            }
+            startPropertyDecision(spaceData, newPosition);
         } else {
             // Check if landing on a casino property (owned or unowned)
             const casinoSpace = boardConfig[newPosition];
@@ -1018,7 +1017,7 @@ function handlePlayerLanding(playerId, newPosition) {
                 if (!casinoPlayCounts[playerId]) {
                     casinoPlayCounts[playerId] = 0;
                 }
-                
+
                 if (casinoPlayCounts[playerId] >= 5) {
                     alert('You have reached the maximum of 5 casino plays per game.');
                 } else {
