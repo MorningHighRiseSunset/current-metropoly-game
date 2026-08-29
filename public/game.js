@@ -202,12 +202,24 @@ const lastPlayedPropertyVideos = {};
 function getModelPath(localPath) {
     const USE_CDN = window.USE_CDN || false;
     const CDN_BASE_URL = window.CDN_BASE_URL || '';
-    
+
     if (USE_CDN && CDN_BASE_URL) {
         // CDN_BASE_URL already includes /Models, so just replace the leading /Models
         return localPath.replace('/Models', CDN_BASE_URL);
     }
     return localPath;
+}
+
+// Helper function to get local path from CDN path
+function getLocalPath(cdnPath) {
+    // If it's already a local path, return it
+    if (cdnPath.startsWith('/Models')) {
+        return cdnPath;
+    }
+    // Otherwise, extract the model name and construct local path
+    const parts = cdnPath.split('/');
+    const modelName = parts[parts.length - 1];
+    return `/Models/${modelName}`;
 }
 
 // Dice initialization (no longer needed - procedurally generated)
@@ -3515,6 +3527,10 @@ socket.on('doublesRolled', (data) => {
     const player = players.find(p => p && p.id === data.playerId);
     if (player) {
         cancelClientAutoEndTurn();
+        // Update diceRolled state to allow another roll
+        if (gameState) {
+            gameState.diceRolled = false;
+        }
         if (player.id === myPlayerId) {
             updateUI();
         }
