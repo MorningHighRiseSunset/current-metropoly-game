@@ -1,142 +1,927 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roulette</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at center, #1a0a0a 0%, #0d0505 45%, #050202 100%);
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #f5e6c8;
+      overflow-x: hidden;
+      padding: 12px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, #f5e6c8 0%, #d4af37 45%, #f5e6c8 75%, #c9a227 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header p {
+      font-size: 0.75rem;
+      opacity: 0.65;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .main {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      align-items: flex-start;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ===== WHEEL SIDE ===== */
+    .wheel-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      flex: 0 0 auto;
+    }
+
+    .wheel-container {
+      width: min(92vw, 420px);
+      height: min(92vw, 420px);
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      filter: drop-shadow(0 16px 32px rgba(0,0,0,0.7));
+    }
+
+    .wheel-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .spin-btn {
+      position: relative;
+      padding: 0.85rem 2.8rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #1a0a0a;
+      background: linear-gradient(145deg, #f5e6c8 0%, #d4af37 45%, #b8860b 100%);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #8b6914, 0 8px 18px rgba(0,0,0,0.4);
+      transition: all 0.15s ease;
+    }
+    .spin-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 #8b6914, 0 12px 24px rgba(0,0,0,0.45); }
+    .spin-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #8b6914; }
+    .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .result {
+      min-height: 1.8rem;
+      font-size: 1.15rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .result .number {
+      display: inline-block;
+      min-width: 2.2rem;
+      padding: 0.1rem 0.5rem;
+      margin: 0 0.25rem;
+      border-radius: 5px;
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
+    .result .red { background: #8b1a1a; color: #fff; }
+    .result .black { background: #1a1a1a; color: #fff; }
+    .result .green { background: #0d5c2e; color: #fff; }
+
+    /* ===== TABLE SIDE ===== */
+    .table-side {
+      flex: 1 1 340px;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .balance-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(212,175,55,0.35);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .balance-bar .label { font-size: 0.7rem; opacity: 0.7; }
+    .balance-bar .value {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      color: #d4af37;
+      font-weight: 700;
+    }
+    .chip-select {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.65rem;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+      transition: transform 0.12s, box-shadow 0.12s;
+      user-select: none;
+    }
+    .chip:hover { transform: scale(1.08); }
+    .chip.active {
+      transform: scale(1.1);
+      box-shadow: 0 0 0 2px #d4af37, 0 3px 8px rgba(0,0,0,0.5);
+    }
+    .chip.c1  { background: #e8e8e8; color: #222; border-color: #bbb; }
+    .chip.c5  { background: #c62828; color: #fff; border-color: #fff; }
+    .chip.c25 { background: #1565c0; color: #fff; border-color: #fff; }
+    .chip.c100{ background: #2e7d32; color: #fff; border-color: #fff; }
+    .chip.c500{ background: #6a1b9a; color: #fff; border-color: #fff; }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      padding: 0.45rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      border-radius: 6px;
+      border: 1px solid rgba(212,175,55,0.4);
+      background: rgba(0,0,0,0.4);
+      color: #f5e6c8;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .action-btn:hover { background: rgba(212,175,55,0.2); }
+    .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Betting layout */
+    .betting-table {
+      background: #0a4a28;
+      border: 2px solid #d4af37;
+      border-radius: 6px;
+      padding: 5px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.3);
+      user-select: none;
+    }
+
+    .zeros-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      margin-bottom: 2px;
+    }
+    .zero-cell {
+      background: #0d5c2e;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+      transition: filter 0.12s;
+    }
+    .zero-cell:hover { filter: brightness(1.2); }
+
+    .numbers-and-cols {
+      display: flex;
+      gap: 2px;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      flex: 1;
+    }
+    .col-bets {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 36px;
+    }
+
+    .num-cell {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.78rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+      transition: filter 0.12s;
+    }
+    .num-cell:hover { filter: brightness(1.25); }
+    .num-cell.red { background: #9b1b1b; color: #fff; }
+    .num-cell.black { background: #1c1c1c; color: #fff; }
+
+    .col-bet {
+      background: #0a3d22;
+      color: #f5e6c8;
+      font-size: 0.6rem;
+      font-weight: 600;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      letter-spacing: 0.04em;
+      border: 1px solid rgba(212,175,55,0.35);
+      border-radius: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      min-height: 0;
+    }
+    .col-bet:hover { filter: brightness(1.3); }
+
+    .dozens-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2px;
+      margin-top: 2px;
+    }
+    .dozen-cell {
+      background: #0a3d22;
+      color: #f5e6c8;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      border: 1px solid rgba(212,175,55,0.35);
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .dozen-cell:hover { filter: brightness(1.3); }
+
+    .outside-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 2px;
+      margin-top: 2px;
+    }
+    .out-cell {
+      background: #0a3d22;
+      color: #f5e6c8;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 600;
+      border: 1px solid rgba(212,175,55,0.35);
+      border-radius: 2px;
+      cursor: pointer;
+      text-align: center;
+      line-height: 1.1;
+    }
+    .out-cell:hover { filter: brightness(1.3); }
+    .out-cell.red-out { background: #7a1515; }
+    .out-cell.black-out { background: #111; }
+
+    /* Chip marker on bets */
+    .bet-chip {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid #fff;
+      font-size: 0.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 5;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      bottom: 2px;
+      right: 2px;
+    }
+
+    .total-bet {
+      text-align: center;
+      font-size: 0.9rem;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+    .total-bet span { color: #d4af37; font-weight: 700; }
+
+    .message {
+      text-align: center;
+      min-height: 1.4rem;
+      font-size: 0.9rem;
+      color: #d4af37;
+    }
+
+    @media (max-width: 800px) {
+      .wheel-container { width: min(92vw, 340px); height: min(92vw, 340px); }
+      .table-side { max-width: 100%; }
+      .num-cell { height: 26px; font-size: 0.72rem; }
+      .zero-cell { height: 30px; font-size: 0.85rem; }
+    }
+  </style>
 </head>
 <body>
-<div class="main">
-  <div class="wheel-container">
-    <div class="plate" id="plate">
-      <ul class="inner">
-        <li class="number"><label><input type="radio" name="pit" value="32" /><span class="pit">32</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="15" /><span class="pit">15</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="19" /><span class="pit">19</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="4" /><span class="pit">4</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="21" /><span class="pit">21</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="2" /><span class="pit">2</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="25" /><span class="pit">25</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="17" /><span class="pit">17</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="34" /><span class="pit">34</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="6" /><span class="pit">6</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="27" /><span class="pit">27</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="13" /><span class="pit">13</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="36" /><span class="pit">36</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="11" /><span class="pit">11</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="30" /><span class="pit">30</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="8" /><span class="pit">8</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="23" /><span class="pit">23</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="10" /><span class="pit">10</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="5" /><span class="pit">5</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="24" /><span class="pit">24</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="16" /><span class="pit">16</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="33" /><span class="pit">33</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="1" /><span class="pit">1</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="20" /><span class="pit">20</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="14" /><span class="pit">14</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="31" /><span class="pit">31</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="9" /><span class="pit">9</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="22" /><span class="pit">22</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="18" /><span class="pit">18</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="29" /><span class="pit">29</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="7" /><span class="pit">7</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="28" /><span class="pit">28</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="12" /><span class="pit">12</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="35" /><span class="pit">35</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="3" /><span class="pit">3</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="26" /><span class="pit">26</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="0" /><span class="pit">0</span></label></li>
-        <li class="number"><label><input type="radio" name="pit" value="00" /><span class="pit">00</span></label></li>
-      </ul>
-      <div class="data">
-        <div class="data-inner">
-          <div class="mask"></div>
-          <div class="result">
-            <div class="result-number">00</div>
-            <div class="result-color">red</div>        
-          </div>
+
+  <div class="main">
+    <!-- LEFT: Wheel -->
+    <div class="wheel-side">
+      <div class="wheel-container">
+        <canvas id="wheel" width="800" height="800"></canvas>
+      </div>
+      <div class="wheel-controls">
+        <button class="spin-btn" id="spinBtn">Spin</button>
+        <div class="result" id="result"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Betting Board -->
+    <div class="table-side">
+      <div class="balance-bar">
+        <div>
+          <div class="label">Balance</div>
+          <div class="value" id="balance">$1,000</div>
+        </div>
+        <div class="chip-select" id="chipSelect">
+          <div class="chip c1 active" data-value="1">1</div>
+          <div class="chip c5" data-value="5">5</div>
+          <div class="chip c25" data-value="25">25</div>
+          <div class="chip c100" data-value="100">100</div>
+          <div class="chip c500" data-value="500">500</div>
+        </div>
+        <div class="actions">
+          <button class="action-btn" id="clearBtn">Clear Bets</button>
+          <button class="action-btn" id="rebetBtn" disabled>Rebet</button>
         </div>
       </div>
+
+      <div class="betting-table" id="bettingTable">
+        <!-- 0 and 00 -->
+        <div class="zeros-row">
+          <div class="zero-cell" data-bet="0">0</div>
+          <div class="zero-cell" data-bet="00">00</div>
+        </div>
+
+        <!-- Main number grid + column bets -->
+        <div class="numbers-and-cols">
+          <div class="main-grid" id="mainGrid"></div>
+          <div class="col-bets" id="colBets"></div>
+        </div>
+
+        <!-- Dozens -->
+        <div class="dozens-row">
+          <div class="dozen-cell" data-bet="1st12">1st 12</div>
+          <div class="dozen-cell" data-bet="2nd12">2nd 12</div>
+          <div class="dozen-cell" data-bet="3rd12">3rd 12</div>
+        </div>
+
+        <!-- Outside bets -->
+        <div class="outside-row">
+          <div class="out-cell" data-bet="1to18">1–18</div>
+          <div class="out-cell" data-bet="even">Even</div>
+          <div class="out-cell red-out" data-bet="red">Red</div>
+          <div class="out-cell black-out" data-bet="black">Black</div>
+          <div class="out-cell" data-bet="odd">Odd</div>
+          <div class="out-cell" data-bet="19to36">19–36</div>
+        </div>
+      </div>
+
+      <div class="total-bet">Total Bet: <span id="totalBet">$0</span></div>
+      <div class="message" id="message"></div>
     </div>
   </div>
 
-  <div class="betting-sidebar">
-    <div class="previous-results">
-      <ol class="previous-list">
-        <li class='visuallyhidden placeholder'>No results yet.</li>
-      </ol>
-    </div>
+  <script>
+    // ========== ROULETTE MINIGAME INITIALIZATION ==========
+    window.initRouletteMinigame = function(container, playerMoney, syncCasinoBalance) {
+      // Update balance with main game's balance
+      balance = typeof playerMoney === 'number' ? playerMoney : 1000;
+      updateMainGameBalance = typeof syncCasinoBalance === 'function' ? syncCasinoBalance : null;
 
-    <div class="game-info">
-      <div class="info-item">💰 Balance: $<span id="balance">2500</span></div>
-      <div class="info-item">🎯 Bet: $<span id="current-bet-display">100</span></div>
-      <div class="info-item">Bet Amount: 
-        <select id="bet-amount-selector" style="padding: 4px; border-radius: 4px; border: 1px solid #8b5cf6; background: rgba(0,0,0,0.3); color: white;">
-          <option value="10">$10</option>
-          <option value="25">$25</option>
-          <option value="50">$50</option>
-          <option value="100" selected>$100</option>
-          <option value="250">$250</option>
-          <option value="500">$500</option>
-          <option value="1000">$1000</option>
-        </select>
-      </div>
-    </div>
+      // Expose balance for main game to read
+      window.__casinoBalance = balance;
 
-    <div class="betting-options">
-      <button class="bet-btn" data-bet="red">🔴 Red (2x)</button>
-      <button class="bet-btn" data-bet="black">⚫ Black (2x)</button>
-      <button class="bet-btn" data-bet="even">⚖️ Even (2x)</button>
-      <button class="bet-btn" data-bet="odd">🎲 Odd (2x)</button>
-      <button class="bet-btn" data-bet="low">1-18 (2x)</button>
-      <button class="bet-btn" data-bet="high">19-36 (2x)</button>
-    </div>
+      // Update UI with new balance
+      updateUI();
+    };
 
-    <div class="number-betting">
-      <div class="number-betting-header">Pick a Specific Number (35x payout):</div>
-      <div class="number-grid" id="numberGrid">
-        <!-- Numbers will be generated by JavaScript -->
-      </div>
-    </div>
+    // ========== AMERICAN ROULETTE DATA ==========
+    // Clockwise sequence starting from 0
+    const numbers = [
+      0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1,
+      '00', 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2
+    ];
 
-    <div class="result" id="result">Select a bet type to begin!</div>
+    const reds = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
 
-    <div class="action-buttons">
-      <button type="button" class="btn" id="spin"><span class="btn-label">Spin</span></button>
-      <button type="button" class="btn btn-reset" id="reset"><span class="btn-label">New Game</span></button> 
-    </div>
-  </div>
-</div>
+    // Table layout: 3 columns × 12 rows (bottom to top is 1→12, 13→24, 25→36)
+    // Display order is rows from top (36,35,34) down to (3,2,1)
+    const tableNumbers = [
+      [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], // 3rd column (right)
+      [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], // 2nd column
+      [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]  // 1st column (left)
+    ];
+    // Actually standard visual: left column = 1,4,7...34 ; middle=2,5,8...35 ; right=3,6,9...36
+    // Top row is highest numbers.
 
-<script>
-// Get balance from URL parameter or use default
-function getBalanceFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    return parseInt(params.get('balance')) || window.playerMoney || 2500;
-}
+    // ========== STATE ==========
+    let balance = 1000;
+    let selectedChip = 1;
+    let bets = {};           // key → amount
+    let lastBets = {};
+    let isSpinning = false;
+    let updateMainGameBalance = null;
 
-// Check if loaded standalone (not in iframe)
-const isStandalone = window === window.top;
-if (isStandalone) {
-  window.playerMoney = 2500;
-  window.updateMainGameBalance = function(balance) {
-    // No-op in standalone mode
-  };
-} else {
-  window.playerMoney = getBalanceFromURL();
-}
-</script>
-<script src="script.js"></script>
-<script>
-// Auto-initialize
-document.addEventListener('DOMContentLoaded', function() {
-    const container = document.querySelector('.main');
-    if (container && window.initRouletteMinigame) {
-        window.initRouletteMinigame(container, window.playerMoney, window.updateMainGameBalance);
+    // ========== DOM ==========
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spinBtn');
+    const resultEl = document.getElementById('result');
+    const balanceEl = document.getElementById('balance');
+    const totalBetEl = document.getElementById('totalBet');
+    const messageEl = document.getElementById('message');
+    const clearBtn = document.getElementById('clearBtn');
+    const rebetBtn = document.getElementById('rebetBtn');
+
+    // ========== BUILD TABLE GRID ==========
+    function buildMainGrid() {
+      const mainGrid = document.getElementById('mainGrid');
+      const colBetsEl = document.getElementById('colBets');
+      mainGrid.innerHTML = '';
+      colBetsEl.innerHTML = '';
+
+      // Columns left→right: 1st (1,4,7…), 2nd (2,5,8…), 3rd (3,6,9…)
+      const cols = [
+        [1,4,7,10,13,16,19,22,25,28,31,34],
+        [2,5,8,11,14,17,20,23,26,29,32,35],
+        [3,6,9,12,15,18,21,24,27,30,33,36]
+      ];
+
+      // Top row = highest numbers (36,35,34)
+      for (let r = 11; r >= 0; r--) {
+        for (let c = 0; c < 3; c++) {
+          const n = cols[c][r];
+          const cell = document.createElement('div');
+          cell.className = 'num-cell ' + (reds.has(n) ? 'red' : 'black');
+          cell.textContent = n;
+          cell.dataset.bet = String(n);
+          cell.addEventListener('click', () => placeBet(String(n)));
+          mainGrid.appendChild(cell);
+        }
+      }
+
+      // Three tall "2 to 1" column bets
+      ['col1', 'col2', 'col3'].forEach(key => {
+        const cell = document.createElement('div');
+        cell.className = 'col-bet';
+        cell.textContent = '2 to 1';
+        cell.dataset.bet = key;
+        cell.style.flex = '1';
+        cell.addEventListener('click', () => placeBet(key));
+        colBetsEl.appendChild(cell);
+      });
     }
-});
-</script>
+
+    buildMainGrid();
+
+    // Attach listeners to zeros, dozens, outside
+    document.querySelectorAll('[data-bet]').forEach(el => {
+      if (!el.classList.contains('num-cell') && !el.classList.contains('col-bet')) {
+        el.addEventListener('click', () => placeBet(el.dataset.bet));
+      }
+    });
+
+    // Chip selection
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        selectedChip = parseInt(chip.dataset.value, 10);
+      });
+    });
+
+    clearBtn.addEventListener('click', clearBets);
+    rebetBtn.addEventListener('click', rebet);
+
+    // ========== BETTING LOGIC ==========
+    function placeBet(key) {
+      if (isSpinning) return;
+      if (balance < selectedChip) {
+        messageEl.textContent = 'Insufficient balance';
+        return;
+      }
+      if (!bets[key]) bets[key] = 0;
+      bets[key] += selectedChip;
+      balance -= selectedChip;
+      updateUI();
+      renderChips();
+      messageEl.textContent = '';
+    }
+
+    function clearBets() {
+      if (isSpinning) return;
+      // Refund
+      Object.values(bets).forEach(v => balance += v);
+      bets = {};
+      updateUI();
+      renderChips();
+      messageEl.textContent = '';
+    }
+
+    function rebet() {
+      if (isSpinning || Object.keys(lastBets).length === 0) return;
+      // Clear current first
+      Object.values(bets).forEach(v => balance += v);
+      bets = {};
+      const totalNeeded = Object.values(lastBets).reduce((a,b) => a+b, 0);
+      if (balance < totalNeeded) {
+        messageEl.textContent = 'Not enough balance to rebet';
+        updateUI();
+        return;
+      }
+      bets = { ...lastBets };
+      balance -= totalNeeded;
+      updateUI();
+      renderChips();
+      messageEl.textContent = 'Previous bets placed';
+    }
+
+    function updateUI() {
+      balanceEl.textContent = '$' + balance.toLocaleString();
+      const total = Object.values(bets).reduce((a,b) => a+b, 0);
+      totalBetEl.textContent = '$' + total;
+      rebetBtn.disabled = Object.keys(lastBets).length === 0;
+
+      // Update exposed balance for main game to read
+      window.__casinoBalance = balance;
+
+      // Sync balance with main game
+      if (typeof updateMainGameBalance === 'function') {
+        updateMainGameBalance(balance);
+      } else if (typeof CustomEvent === 'function') {
+        document.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance}}));
+      }
+    }
+
+    function renderChips() {
+      // Remove old chip markers
+      document.querySelectorAll('.bet-chip').forEach(c => c.remove());
+      for (const [key, amount] of Object.entries(bets)) {
+        if (amount <= 0) continue;
+        const el = document.querySelector(`[data-bet="${key}"]`);
+        if (!el) continue;
+        const chip = document.createElement('div');
+        chip.className = 'bet-chip';
+        chip.textContent = amount >= 1000 ? (amount/1000)+'k' : amount;
+        // Color by size
+        if (amount >= 500) chip.style.background = '#6a1b9a';
+        else if (amount >= 100) chip.style.background = '#2e7d32';
+        else if (amount >= 25) chip.style.background = '#1565c0';
+        else if (amount >= 5) chip.style.background = '#c62828';
+        else chip.style.background = '#e8e8e8';
+        chip.style.color = amount < 5 ? '#222' : '#fff';
+        el.style.position = 'relative';
+        el.appendChild(chip);
+      }
+    }
+
+    // ========== PAYOUT ==========
+    function getWinningNumber(finalWheelAngle, finalBallAngle) {
+      const sector = (Math.PI * 2) / numbers.length;
+      const rel = ((finalBallAngle - finalWheelAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+      let idx = Math.floor(((rel + Math.PI / 2) % (Math.PI * 2)) / sector);
+      idx = (idx + numbers.length) % numbers.length;
+      return numbers[idx];
+    }
+
+    function resolveBets(winner) {
+      let win = 0;
+      const w = winner; // number or '00'
+
+      for (const [key, amount] of Object.entries(bets)) {
+        if (amount <= 0) continue;
+        let pays = 0;
+
+        if (key === String(w) || (key === '00' && w === '00') || (key === '0' && w === 0)) {
+          pays = amount * 35; // straight up 35:1 + stake returned later as *36 total? Standard is 35:1 profit + stake back = 36×
+          // We treat pays as profit; we already deducted stake, so add stake + profit = amount * 36
+          win += amount * 36;
+        }
+        else if (key === 'red' && typeof w === 'number' && reds.has(w)) win += amount * 2;
+        else if (key === 'black' && typeof w === 'number' && !reds.has(w) && w !== 0) win += amount * 2;
+        else if (key === 'odd' && typeof w === 'number' && w % 2 === 1) win += amount * 2;
+        else if (key === 'even' && typeof w === 'number' && w % 2 === 0 && w !== 0) win += amount * 2;
+        else if (key === '1to18' && typeof w === 'number' && w >= 1 && w <= 18) win += amount * 2;
+        else if (key === '19to36' && typeof w === 'number' && w >= 19 && w <= 36) win += amount * 2;
+        else if (key === '1st12' && typeof w === 'number' && w >= 1 && w <= 12) win += amount * 3;
+        else if (key === '2nd12' && typeof w === 'number' && w >= 13 && w <= 24) win += amount * 3;
+        else if (key === '3rd12' && typeof w === 'number' && w >= 25 && w <= 36) win += amount * 3;
+        else if (key === 'col1' && typeof w === 'number' && [1,4,7,10,13,16,19,22,25,28,31,34].includes(w)) win += amount * 3;
+        else if (key === 'col2' && typeof w === 'number' && [2,5,8,11,14,17,20,23,26,29,32,35].includes(w)) win += amount * 3;
+        else if (key === 'col3' && typeof w === 'number' && [3,6,9,12,15,18,21,24,27,30,33,36].includes(w)) win += amount * 3;
+      }
+      return win;
+    }
+
+    // ========== WHEEL DRAWING ==========
+    const cx = 400, cy = 400;
+    const outerR = 380, pocketR = 310, numberR = 282, innerR = 92, hubR = 52;
+
+    let wheelAngle = 0;
+    let ballAngle = -Math.PI / 2 + 0.35;
+    let ballRadius = pocketR - 10;
+
+    function getColor(n) {
+      if (n === 0 || n === '00') return '#0a5c2e';
+      return reds.has(n) ? '#9b1b1b' : '#1c1c1c';
+    }
+
+    function drawWheel(angle) {
+      ctx.save();
+      ctx.clearRect(0, 0, 800, 800);
+
+      // Outer rim
+      const rimGrad = ctx.createRadialGradient(cx, cy, outerR - 30, cx, cy, outerR + 5);
+      rimGrad.addColorStop(0, '#3d2b1f');
+      rimGrad.addColorStop(0.4, '#5c4033');
+      rimGrad.addColorStop(0.7, '#8b6914');
+      rimGrad.addColorStop(1, '#2a1a10');
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+      ctx.fillStyle = rimGrad;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR - 8, 0, Math.PI * 2);
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+
+      const sector = (Math.PI * 2) / numbers.length;
+
+      for (let i = 0; i < numbers.length; i++) {
+        const start = i * sector - Math.PI / 2;
+        const end = start + sector;
+        const n = numbers[i];
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, pocketR, start, end);
+        ctx.closePath();
+        ctx.fillStyle = getColor(n);
+        ctx.fill();
+
+        // Divider
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(start) * innerR, Math.sin(start) * innerR);
+        ctx.lineTo(Math.cos(start) * pocketR, Math.sin(start) * pocketR);
+        ctx.strokeStyle = '#c9a227';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        // Number
+        const mid = start + sector / 2;
+        const tx = Math.cos(mid) * numberR;
+        const ty = Math.sin(mid) * numberR;
+        ctx.save();
+        ctx.translate(tx, ty);
+        ctx.rotate(mid + Math.PI / 2);
+        ctx.fillStyle = '#f8f0e0';
+        ctx.font = 'bold 18px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 2;
+        ctx.fillText(String(n), 0, 0);
+        ctx.restore();
+      }
+
+      // Inner rings
+      ctx.beginPath();
+      ctx.arc(0, 0, pocketR, 0, Math.PI * 2);
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      const feltGrad = ctx.createRadialGradient(0, 0, 15, 0, 0, innerR);
+      feltGrad.addColorStop(0, '#0f6b3a');
+      feltGrad.addColorStop(1, '#06351c');
+      ctx.beginPath();
+      ctx.arc(0, 0, innerR, 0, Math.PI * 2);
+      ctx.fillStyle = feltGrad;
+      ctx.fill();
+
+      // Hub
+      const hubGrad = ctx.createRadialGradient(-6, -6, 0, 0, 0, hubR);
+      hubGrad.addColorStop(0, '#f5e6c8');
+      hubGrad.addColorStop(0.45, '#d4af37');
+      hubGrad.addColorStop(1, '#5c4033');
+      ctx.beginPath();
+      ctx.arc(0, 0, hubR, 0, Math.PI * 2);
+      ctx.fillStyle = hubGrad;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, hubR - 7, 0, Math.PI * 2);
+      ctx.strokeStyle = '#2a1a10';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Center mark
+      ctx.beginPath();
+      ctx.moveTo(0, -12);
+      ctx.lineTo(9, 0);
+      ctx.lineTo(0, 12);
+      ctx.lineTo(-9, 0);
+      ctx.closePath();
+      ctx.fillStyle = '#1a0a0a';
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawBall(absAngle, radius) {
+      const bx = cx + Math.cos(absAngle) * radius;
+      const by = cy + Math.sin(absAngle) * radius;
+
+      ctx.beginPath();
+      ctx.arc(bx + 2.5, by + 3.5, 10, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fill();
+
+      const bg = ctx.createRadialGradient(bx - 3.5, by - 3.5, 1, bx, by, 11);
+      bg.addColorStop(0, '#fff');
+      bg.addColorStop(0.35, '#e0e0e0');
+      bg.addColorStop(0.75, '#a0a0a0');
+      bg.addColorStop(1, '#555');
+      ctx.beginPath();
+      ctx.arc(bx, by, 10.5, 0, Math.PI * 2);
+      ctx.fillStyle = bg;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(bx - 3, by - 3, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fill();
+    }
+
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+    function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
+
+    function spin() {
+      if (isSpinning) return;
+      const total = Object.values(bets).reduce((a,b) => a+b, 0);
+      if (total === 0) {
+        messageEl.textContent = 'Place at least one bet first';
+        return;
+      }
+
+      isSpinning = true;
+      spinBtn.disabled = true;
+      clearBtn.disabled = true;
+      rebetBtn.disabled = true;
+      resultEl.textContent = '';
+      messageEl.textContent = 'No more bets…';
+
+      lastBets = { ...bets };
+
+      // Play spin sound
+      const spinSound = new Audio('Sounds/spinopel-spinning-roulette-wheel-429832.mp3');
+      spinSound.volume = 0.4;
+      spinSound.play().catch(e => console.log('Audio play failed:', e));
+
+      const extraWheel = 4 + Math.random() * 3;
+      const extraBall = 7 + Math.random() * 4;
+      const targetWheel = wheelAngle + extraWheel * Math.PI * 2;
+      const targetBall = ballAngle - extraBall * Math.PI * 2;
+      const startRadius = pocketR - 8;
+      const endRadius = pocketR - 26;
+      const duration = 5800 + Math.random() * 1400;
+      const startTime = performance.now();
+      const startWheel = wheelAngle;
+      const startBall = ballAngle;
+
+      function animate(now) {
+        const t = Math.min(1, (now - startTime) / duration);
+        wheelAngle = startWheel + (targetWheel - startWheel) * easeOutCubic(t);
+        ballAngle = startBall + (targetBall - startBall) * easeOutQuart(t);
+
+        if (t < 0.7) {
+          ballRadius = startRadius;
+        } else {
+          const dropT = (t - 0.7) / 0.3;
+          ballRadius = startRadius + (endRadius - startRadius) * easeOutCubic(dropT);
+        }
+
+        drawWheel(wheelAngle);
+        drawBall(ballAngle, ballRadius);
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          wheelAngle = targetWheel;
+          ballAngle = targetBall;
+          ballRadius = endRadius;
+          drawWheel(wheelAngle);
+          drawBall(ballAngle, ballRadius);
+
+          const winner = getWinningNumber(wheelAngle, ballAngle);
+          const payout = resolveBets(winner);
+          balance += payout;
+
+          // Show result
+          let colorClass = 'green';
+          let label = (winner === 0 || winner === '00') ? 'Zero' : (reds.has(winner) ? 'Red' : 'Black');
+          if (winner !== 0 && winner !== '00') colorClass = reds.has(winner) ? 'red' : 'black';
+
+          resultEl.innerHTML = `Ball lands on <span class="number ${colorClass}">${winner}</span> ${label}`;
+
+          if (payout > 0) {
+            messageEl.textContent = `You win $${payout.toLocaleString()}!`;
+          } else {
+            messageEl.textContent = 'No win this round';
+          }
+
+          // Clear bets after spin (standard)
+          bets = {};
+          updateUI();
+          renderChips();
+
+          isSpinning = false;
+          spinBtn.disabled = false;
+          clearBtn.disabled = false;
+          rebetBtn.disabled = false;
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    spinBtn.addEventListener('click', spin);
+    window.addEventListener('keydown', e => {
+      if ((e.code === 'Space' || e.key === 'Enter') && !isSpinning) {
+        e.preventDefault();
+        spin();
+      }
+    });
+
+    // Initial draw
+    drawWheel(0);
+    drawBall(ballAngle, ballRadius);
+    updateUI();
+  </script>
 </body>
 </html>
