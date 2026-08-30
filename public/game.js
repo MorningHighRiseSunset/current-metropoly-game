@@ -2983,7 +2983,6 @@ function handleDiceRolledEvent(data) {
             };
 
             // Execute the stored player move animation after dice land
-            const pending = pendingRollTokenMoves[playerId];
             if (pending && pending.playerMoveData) {
                 const { playerId: movePlayerId, oldPosition: moveOldPosition, newPosition: moveNewPosition, direction } = pending.playerMoveData;
                 const player = players.find(p => p && p.id === movePlayerId);
