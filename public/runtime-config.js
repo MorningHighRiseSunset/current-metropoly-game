@@ -12,7 +12,7 @@ window.RUNTIME_CONFIG = window.RUNTIME_CONFIG || {
 
 // Video CDN configuration for R2 bucket storage
 window.USE_VIDEO_CDN = true;
-window.VIDEO_CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/metropoly-models';
+window.VIDEO_CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev';
 
 // Model CDN configuration for R2 bucket storage
 // Disabled due to SSL issues - models served from Vercel deployment
