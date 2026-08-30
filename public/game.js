@@ -1613,12 +1613,12 @@ function openCasinoGame(gameName, observerOptions = null) {
             
             // Different scales for different games for individual sizing
             const gameScales = {
-                'Roulette': 1.15,
-                'BlackJack': 0.85,
+                'Roulette': 0.9,
+                'BlackJack': 0.7,
                 'Baccarat': 0.85,
                 'Craps': 0.75,
                 'PokerFP': 0.85,
-                'slotMachine': 0.8
+                'slotMachine': 0.65
             };
             
             const scale = gameScales[gameName] || 0.85;
