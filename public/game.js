@@ -1267,6 +1267,11 @@ function updatePropertyDecisionUI() {
         confirmHandler = () => {
             if (canAfford) {
                 waitingForBuyResult = true;
+                // Stop any playing video/audio
+                if (currentPropertyVideo) {
+                    stopVideoElement(currentPropertyVideo);
+                    currentPropertyVideo = null;
+                }
                 socket.emit('buyProperty', { position: activePropertyDecision.position });
                 dismissPropertyDecisionUI();
                 // Auto-end turn after buying (including casino properties)
@@ -2952,13 +2957,20 @@ function handleDiceRolledEvent(data) {
             // Log the dice roll
             addLogEntry(message, 'system');
 
-            // Determine what happens after token animation
+            // Emit playerMoved so all clients see token movement after dice land
+            socket.emit('playerMoved', {
+                playerId: playerId,
+                oldPosition: oldPosition,
+                newPosition: newPosition,
+                direction: 'forward'
+            });
+
+            // Token animation is now handled by playerMoved event
+            // Just complete the sequence after animation finishes
             const onTokenAnimationComplete = () => {
                 if (!isDoublesRoll(data)) {
-                    // For non-doubles: trigger property decision
                     onDiceRollSequenceComplete(playerId, newPosition, data);
                 } else {
-                    // For doubles: show notification and let turn continue
                     const player = players.find(p => p && p.id === playerId);
                     if (player) {
                         showDoublesNotification(getPlayerDisplayName(player));
@@ -2967,22 +2979,16 @@ function handleDiceRolledEvent(data) {
                     updateUI();
                 }
                 
-                // Client-side auto-end-turn logic (for current player only)
                 if (playerId === myPlayerId && !isDoublesRoll(data)) {
                     scheduleClientAutoEndTurn(playerId, oldPosition, newPosition);
                 }
             };
 
-            // Animate token movement
-            if (player && moveSteps > 0) {
-                animateTokenMove(playerId, oldPosition, newPosition, onTokenAnimationComplete);
-            } else if (player) {
-                player.position = newPosition;
-                update3DTokenPositions();
-                onTokenAnimationComplete();
-            } else {
-                onTokenAnimationComplete();
-            }
+            // Store completion callback for playerMoved to use
+            pendingRollTokenMoves[playerId] = {
+                cancelled: false,
+                onComplete: onTokenAnimationComplete
+            };
         }
     });
 }
@@ -3335,8 +3341,6 @@ socket.on('lobbyDeleted', (data) => {
 socket.on('playerMoved', (data) => {
     const { playerId, newPosition, message, players: serverPlayers, direction = 'forward' } = data;
 
-    cancelPendingRollTokenMove(playerId);
-
     const existingPlayer = players.find(p => p && p.id === playerId);
     const oldPosition = data.oldPosition !== undefined
         ? data.oldPosition
@@ -3354,6 +3358,12 @@ socket.on('playerMoved', (data) => {
         }
         const afterMove = () => {
             handlePlayerLanding(playerId, newPosition);
+            // Call completion callback if this was from a dice roll
+            const pending = pendingRollTokenMoves[playerId];
+            if (pending && pending.onComplete) {
+                pending.onComplete();
+                delete pendingRollTokenMoves[playerId];
+            }
         };
 
         if (oldPosition !== newPosition) {
