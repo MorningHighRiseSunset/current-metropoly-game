@@ -651,7 +651,7 @@ function executeAIRollDice(game, aiPlayer) {
                         } else {
                             gameRuntime.advanceTurn(game);
                         }
-                    }, getRollAnimationMs(total));
+                    }, 5900); // Match dice animation duration (5 seconds + 900ms)
                 } else {
                     // Doubles - check for next AI turn after delay
                     setTimeout(() => checkAndExecuteAITurn(game), 400);
@@ -861,7 +861,7 @@ function executeAIRollDice(game, aiPlayer) {
                     setTimeout(() => gameRuntime.advanceTurn(game), 500);
                 }
             }
-        }, getRollAnimationMs(total));
+        }, 5900); // Match dice animation duration (5 seconds + 900ms)
     } else {
         // Doubles - check for next AI turn after delay
         setTimeout(() => checkAndExecuteAITurn(game), 400);
