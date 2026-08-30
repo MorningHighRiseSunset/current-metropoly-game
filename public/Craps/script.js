@@ -388,13 +388,26 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
                 }
             }
             
+            // Calculate net win/loss before removing bets
+            const totalBetAmount = bets.reduce((sum, bet) => sum + bet.amount, 0);
+            const netWin = winnings - totalBetAmount;
+            
             // Remove resolved bets
             bets = bets.filter(bet => !bet.remove);
             
             balance += winnings;
             
             if (results.length > 0) {
-                showResult(results.join(' | '), winnings > 0);
+                const resultText = results.join(' | ');
+                const isWin = netWin > 0;
+                
+                if (netWin > 0) {
+                    showResult(`${resultText} | +$${netWin}`, true);
+                } else if (netWin < 0) {
+                    showResult(`${resultText} | -$${Math.abs(netWin)}`, false);
+                } else {
+                    showResult(`${resultText} | $0`, false);
+                }
             } else {
                 showResult(`Rolled ${total}. Point is ${point}. Roll again!`);
             }

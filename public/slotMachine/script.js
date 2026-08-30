@@ -83,22 +83,56 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
 
         showResult('Spinning...');
 
-        // Spin for 2 seconds
+        // Generate final symbols
+        const symbol1 = getRandomSymbol();
+        const symbol2 = getRandomSymbol();
+        const symbol3 = getRandomSymbol();
+
+        // Rapidly change symbols during spin
+        let spinInterval1, spinInterval2, spinInterval3;
+        let spinCount1 = 0, spinCount2 = 0, spinCount3 = 0;
+
+        // Reel 1 spins for 1.5 seconds
+        spinInterval1 = setInterval(() => {
+            if (reel1) reel1.textContent = getRandomSymbol();
+            spinCount1++;
+            if (spinCount1 >= 30) {
+                clearInterval(spinInterval1);
+                if (reel1) {
+                    reel1.classList.remove('spinning');
+                    reel1.textContent = symbol1;
+                }
+            }
+        }, 50);
+
+        // Reel 2 spins for 2 seconds
+        spinInterval2 = setInterval(() => {
+            if (reel2) reel2.textContent = getRandomSymbol();
+            spinCount2++;
+            if (spinCount2 >= 40) {
+                clearInterval(spinInterval2);
+                if (reel2) {
+                    reel2.classList.remove('spinning');
+                    reel2.textContent = symbol2;
+                }
+            }
+        }, 50);
+
+        // Reel 3 spins for 2.5 seconds
+        spinInterval3 = setInterval(() => {
+            if (reel3) reel3.textContent = getRandomSymbol();
+            spinCount3++;
+            if (spinCount3 >= 50) {
+                clearInterval(spinInterval3);
+                if (reel3) {
+                    reel3.classList.remove('spinning');
+                    reel3.textContent = symbol3;
+                }
+            }
+        }, 50);
+
+        // Wait for all reels to stop
         setTimeout(() => {
-            // Remove spinning animation
-            if (reel1) reel1.classList.remove('spinning');
-            if (reel2) reel2.classList.remove('spinning');
-            if (reel3) reel3.classList.remove('spinning');
-
-            // Generate final symbols
-            const symbol1 = getRandomSymbol();
-            const symbol2 = getRandomSymbol();
-            const symbol3 = getRandomSymbol();
-
-            if (reel1) reel1.textContent = symbol1;
-            if (reel2) reel2.textContent = symbol2;
-            if (reel3) reel3.textContent = symbol3;
-
             // Check for wins
             let result = '';
             let winAmount = 0;
@@ -148,7 +182,7 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
                 if (reel2) reel2.classList.remove('winner');
                 if (reel3) reel3.classList.remove('winner');
             }, 3000);
-        }, 2000);
+        }, 2500);
     }
 
     // --- Event Listeners ---
