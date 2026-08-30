@@ -6,7 +6,7 @@ function createDice3D(container) {
     diceWrapper.id = 'dice-3d-wrapper';
     diceWrapper.style.position = 'absolute';
     diceWrapper.style.right = '40px';
-    diceWrapper.style.bottom = '40px';
+    diceWrapper.style.bottom = '80px';
     diceWrapper.style.width = '80px';
     diceWrapper.style.height = '80px';
     diceWrapper.style.perspective = '600px';
@@ -61,6 +61,10 @@ function createDice3D(container) {
         dice.style.transform = rotations[result-1] + ' scale(1.08)';
         setTimeout(() => {
             dice.style.transform = rotations[result-1];
+            // Pause for 6 seconds so players can see what they rolled before UI opens
+            setTimeout(() => {
+                // Dice result visible - ready for next action
+            }, 6000);
         }, 900);
     };
 

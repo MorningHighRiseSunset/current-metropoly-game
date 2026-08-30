@@ -7,7 +7,7 @@ function createThreeDice(container) {
     diceDiv.id = 'dice-threejs-wrapper';
     diceDiv.style.position = 'absolute';
     diceDiv.style.left = '120px';
-    diceDiv.style.bottom = '16px';
+    diceDiv.style.bottom = '60px';
     diceDiv.style.width = '60px';
     diceDiv.style.height = '60px';
     diceDiv.style.zIndex = '100';
@@ -101,6 +101,10 @@ function createThreeDice(container) {
             else {
                 diceMesh.rotation.x = x;
                 diceMesh.rotation.y = y;
+                // Pause for 6 seconds so players can see what they rolled before UI opens
+                setTimeout(() => {
+                    // Dice result visible - ready for next action
+                }, 6000);
             }
         }
         spin();
