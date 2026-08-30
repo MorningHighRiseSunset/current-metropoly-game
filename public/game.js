@@ -2957,16 +2957,8 @@ function handleDiceRolledEvent(data) {
             // Log the dice roll
             addLogEntry(message, 'system');
 
-            // Emit playerMoved so all clients see token movement after dice land
-            socket.emit('playerMoved', {
-                playerId: playerId,
-                oldPosition: oldPosition,
-                newPosition: newPosition,
-                direction: 'forward'
-            });
-
-            // Token animation is now handled by playerMoved event
-            // Just complete the sequence after animation finishes
+            // Token animation will be handled by playerMoved event
+            // Just wait for it to complete before triggering property decision
             const onTokenAnimationComplete = () => {
                 if (!isDoublesRoll(data)) {
                     onDiceRollSequenceComplete(playerId, newPosition, data);
@@ -2989,6 +2981,36 @@ function handleDiceRolledEvent(data) {
                 cancelled: false,
                 onComplete: onTokenAnimationComplete
             };
+
+            // Execute the stored player move animation after dice land
+            const pending = pendingRollTokenMoves[playerId];
+            if (pending && pending.playerMoveData) {
+                const { playerId: movePlayerId, oldPosition: moveOldPosition, newPosition: moveNewPosition, direction } = pending.playerMoveData;
+                const player = players.find(p => p && p.id === movePlayerId);
+                if (player) {
+                    const afterMove = () => {
+                        handlePlayerLanding(movePlayerId, moveNewPosition);
+                        if (pending.onComplete) {
+                            pending.onComplete();
+                        }
+                    };
+
+                    if (moveOldPosition !== moveNewPosition) {
+                        player.position = moveOldPosition;
+                        animateTokenMove(movePlayerId, moveOldPosition, moveNewPosition, afterMove, direction);
+                    } else {
+                        player.position = moveNewPosition;
+                        update3DTokenPositions();
+                        afterMove();
+                    }
+
+                    updateTokens();
+
+                    const spaceName = boardConfig[moveNewPosition]?.name || 'unknown space';
+                    addLogEntry(`${getPlayerDisplayName(player)} moved to ${spaceName}`, 'player');
+                }
+                delete pending.playerMoveData;
+            }
         }
     });
 }
@@ -3341,6 +3363,25 @@ socket.on('lobbyDeleted', (data) => {
 socket.on('playerMoved', (data) => {
     const { playerId, newPosition, message, players: serverPlayers, direction = 'forward' } = data;
 
+    // Don't cancel if this is the rolling player - diceRolled handler will animate
+    const pending = pendingRollTokenMoves[playerId];
+    if (!pending) {
+        cancelPendingRollTokenMove(playerId);
+    } else {
+        // This is the rolling player, delay animation until after dice completes
+        if (serverPlayers) {
+            players = serverPlayers;
+        }
+        // Store the move data to execute after dice animation
+        pending.playerMoveData = {
+            playerId,
+            newPosition,
+            direction,
+            oldPosition: data.oldPosition !== undefined ? data.oldPosition : (players.find(p => p && p.id === playerId)?.position || 0)
+        };
+        return;
+    }
+
     const existingPlayer = players.find(p => p && p.id === playerId);
     const oldPosition = data.oldPosition !== undefined
         ? data.oldPosition
@@ -3358,12 +3399,6 @@ socket.on('playerMoved', (data) => {
         }
         const afterMove = () => {
             handlePlayerLanding(playerId, newPosition);
-            // Call completion callback if this was from a dice roll
-            const pending = pendingRollTokenMoves[playerId];
-            if (pending && pending.onComplete) {
-                pending.onComplete();
-                delete pendingRollTokenMoves[playerId];
-            }
         };
 
         if (oldPosition !== newPosition) {

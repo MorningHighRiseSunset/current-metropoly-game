@@ -2000,8 +2000,14 @@ io.on('connection', (socket) => {
             message: isDoubles ? `${currentPlayer.name} rolled doubles!` : `${currentPlayer.name} rolled ${dice1} and ${dice2}`
         });
 
-        // playerMoved is now emitted from client after dice animation completes
-        // to prevent tokens from moving before dice land
+        // Emit playerMoved immediately - client will delay animation if needed
+        io.to(playerData.gameId).emit('playerMoved', {
+            playerId: socket.id,
+            oldPosition: oldPosition,
+            newPosition: currentPlayer.position,
+            players: game.players,
+            direction: 'forward'
+        });
 
         // Only check for rent and special spaces if NOT doubles (after roll animation)
         if (!isDoubles) {
