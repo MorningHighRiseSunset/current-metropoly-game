@@ -149,7 +149,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/api/config', (req, res) => {
     res.json({
         USE_VIDEO_CDN: process.env.USE_VIDEO_CDN === 'true' || true,
-        VIDEO_CDN_BASE_URL: process.env.VIDEO_CDN_BASE_URL || 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev',
+        VIDEO_CDN_BASE_URL: process.env.VIDEO_CDN_BASE_URL || 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/metropoly-models',
         USE_CDN: process.env.USE_CDN === 'true',
         CDN_BASE_URL: process.env.CDN_BASE_URL || 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models'
     });
