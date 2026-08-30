@@ -112,13 +112,16 @@ const tileMedia = new Proxy(tileMediaRaw, {
     get(target, prop) {
         const value = target[prop];
         if (value && typeof value === 'object') {
+            const result = { ...value };
             // Convert video URLs on access
             if (value.videos && Array.isArray(value.videos)) {
-                return {
-                    ...value,
-                    videos: value.videos.map(getVideoUrl)
-                };
+                result.videos = value.videos.map(getVideoUrl);
             }
+            // Convert image URLs on access
+            if (value.images && Array.isArray(value.images)) {
+                result.images = value.images.map(getVideoUrl);
+            }
+            return result;
         }
         return value;
     }
