@@ -1610,6 +1610,19 @@ function openCasinoGame(gameName, observerOptions = null) {
     iframe.onload = function() {
         try {
             const iframeDoc = iframe.contentWindow.document;
+            
+            // Different scales for different games for individual sizing
+            const gameScales = {
+                'Roulette': 1.15,
+                'BlackJack': 0.85,
+                'Baccarat': 0.85,
+                'Craps': 0.75,
+                'PokerFP': 0.85,
+                'slotMachine': 0.8
+            };
+            
+            const scale = gameScales[gameName] || 0.85;
+            
             const embedFit = iframeDoc.createElement('style');
             embedFit.textContent = `
                 html, body {
@@ -1627,7 +1640,7 @@ function openCasinoGame(gameName, observerOptions = null) {
                     align-items: center !important;
                     justify-content: center !important;
                     transform-origin: center center !important;
-                    transform: scale(1.15) !important;
+                    transform: scale(${scale}) !important;
                 }
             `;
             iframeDoc.head.appendChild(embedFit);

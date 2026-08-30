@@ -81,6 +81,15 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
         
         balance -= betAmount;
         
+        // Check if balance went negative
+        if (balance < 0) {
+            showResult('GAME OVER - You ran out of money!', false);
+            rollBtn.disabled = true;
+            clearBtn.disabled = true;
+            syncBalance();
+            return false;
+        }
+        
         // Handle place bets
         if (['4', '5', '6', '8', '9', '10'].includes(type)) {
             bets.push({ type: `place-${type}`, amount: betAmount, number: parseInt(type) });
@@ -153,6 +162,9 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
             dice2.classList.remove('rolling');
             dice1.textContent = d1;
             dice2.textContent = d2;
+            
+            // Pause for 3 seconds to show the result before allowing next roll
+            rollBtn.disabled = true;
             
             // Process each bet
             bets.forEach((bet, index) => {
@@ -397,6 +409,16 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
             
             balance += winnings;
             
+            // Check if balance went negative after this roll
+            if (balance < 0) {
+                showResult('GAME OVER - You ran out of money!', false);
+                rollBtn.disabled = true;
+                clearBtn.disabled = true;
+                updateUI();
+                syncBalance();
+                return;
+            }
+            
             if (results.length > 0) {
                 const resultText = results.join(' | ');
                 const isWin = netWin > 0;
@@ -414,6 +436,11 @@ window.initCrapsMinigame = function(container, bankroll = 2500, updateMainGameBa
             
             updateUI();
             syncBalance();
+            
+            // Re-enable roll button after 3 seconds pause
+            setTimeout(() => {
+                rollBtn.disabled = bets.length === 0;
+            }, 3000);
         }, 500);
     });
     

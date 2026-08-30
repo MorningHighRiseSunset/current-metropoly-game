@@ -16,8 +16,6 @@
 	border: 6px solid #8b5cf6;
 	perspective: 900px;
 	transform-style: preserve-3d;
-	transform: scale(0.85);
-	transform-origin: center center;
 }
 
 
