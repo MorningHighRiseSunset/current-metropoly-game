@@ -14,6 +14,13 @@ body {
 	box-shadow: 0 4px 24px #000a, 0 0 0 2px #8b5cf6;
 	padding: 24px 18px 18px 18px;
 	min-height: 600px;
+	scrollbar-width: none;
+	transform: scale(1.02);
+	transform-origin: center center;
+}
+
+.poker-container::-webkit-scrollbar {
+	display: none;
 }
 
 h1 {

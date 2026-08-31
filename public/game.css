@@ -1669,6 +1669,8 @@ body {
     width: 100%;
     position: relative;
     scrollbar-width: none;
+    transform: scale(1.02);
+    transform-origin: center center;
 }
 
 .casino-game-container::-webkit-scrollbar {

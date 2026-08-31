@@ -2048,7 +2048,12 @@ io.on('connection', (socket) => {
                 } else if (landedSpace.position === 30) {
                     sendToJail(game, currentPlayer, { advanceTurn: currentPlayer.isAI });
                 } else if (landedSpace.position === 10) {
-                    // Visiting jail — wait for player to click Proceed
+                    // Visiting jail — set diceRolled to true so player can end turn after clicking Proceed
+                    game.gameState.diceRolled = true;
+                    // Auto-advance turn for AI players
+                    if (currentPlayer.isAI) {
+                        scheduleAutoAdvanceTurn(game, socket.id, 600);
+                    }
                 } else if (
                     landedSpace.type === 'property' ||
                     landedSpace.type === 'railroad' ||

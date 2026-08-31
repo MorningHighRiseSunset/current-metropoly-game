@@ -228,6 +228,13 @@ body {
     position: relative;
     overflow: visible;
     animation: fadeIn 1.2s cubic-bezier(.4,0,.2,1);
+    scrollbar-width: none;
+    transform: scale(1.02);
+    transform-origin: center center;
+}
+
+.container::-webkit-scrollbar {
+    display: none;
 }
 
 @keyframes fadeIn {

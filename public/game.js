@@ -1010,8 +1010,8 @@ function handlePlayerLanding(playerId, newPosition) {
     // Reset manual flag after landing
     manuallyOpenedModal = false;
 
-    // Show jail proceed UI specifically for the current player
-    if (newPosition === 10 || newPosition === 30) {
+    // Show jail proceed UI specifically for the current player (only for visiting jail, not go to jail)
+    if (newPosition === 10) {
         if (playerId === myPlayerId) {
             showJailProceedUI(newPosition);
         }
@@ -3536,8 +3536,9 @@ socket.on('playerSentToJail', (data) => {
                 oldPosition,
                 newPosition,
                 () => {
+                    // Don't show jail proceed UI when sent to jail (only show for visiting jail)
                     if (data.playerId === myPlayerId) {
-                        showJailProceedUI(10);
+                        // Player was sent to jail - no proceed button needed, turn is already ended by server
                     } else {
                         const jailSpace = boardConfig[10];
                         if (jailSpace) {
@@ -3551,7 +3552,7 @@ socket.on('playerSentToJail', (data) => {
             player.position = newPosition;
             update3DTokenPositions();
             if (data.playerId === myPlayerId) {
-                showJailProceedUI(10);
+                // Player was sent to jail - no proceed button needed, turn is already ended by server
             } else {
                 const jailSpace = boardConfig[10];
                 if (jailSpace) {

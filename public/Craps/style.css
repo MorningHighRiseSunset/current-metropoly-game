@@ -23,6 +23,13 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 2px;
+    scrollbar-width: none;
+    transform: scale(1.02);
+    transform-origin: center center;
+}
+
+.craps-game::-webkit-scrollbar {
+    display: none;
 }
 
 .game-header {
