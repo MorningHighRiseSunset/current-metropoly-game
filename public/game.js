@@ -3195,6 +3195,12 @@ socket.on('gameStarted', (data) => {
     gameState = data.gameState;
     players = data.players;
 
+    // Ensure diceRolled is false on game start
+    if (gameState) {
+        gameState.diceRolled = false;
+        gameState.turnPhase = 'roll';
+    }
+
     if (!isSpectator) {
         currentPlayer = resolveLocalPlayer(players);
         if (currentPlayer) {
@@ -3448,6 +3454,9 @@ socket.on('turnChanged', (data) => {
 
     if (data.gameState) {
         gameState = data.gameState;
+        // Always reset diceRolled for the new player's turn
+        gameState.diceRolled = false;
+        gameState.turnPhase = 'roll';
     } else if (gameState) {
         gameState.currentPlayer = data.nextPlayer;
         gameState.diceRolled = false;
