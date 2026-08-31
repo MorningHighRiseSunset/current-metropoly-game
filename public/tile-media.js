@@ -49,11 +49,10 @@ function getVideoUrl(localPath) {
 
     if (USE_VIDEO_CDN && VIDEO_CDN_BASE_URL) {
         try {
-            // Encode the entire path to handle special characters properly
-            const parts = normalized.split('/');
-            const encodedParts = parts.map(part => encodeURIComponent(part));
-            const encodedPath = encodedParts.join('/');
-            return new URL(encodedPath.replace(/^\//, ''), `${VIDEO_CDN_BASE_URL}/`).href;
+            // CDN serves from /Videos/ instead of /Videos/Cropped/, keep the Cropped/ in local path
+            // Replace spaces with %20 for CDN URLs
+            const pathWithEncodedSpaces = normalized.replace(/ /g, '%20');
+            return `${VIDEO_CDN_BASE_URL}${pathWithEncodedSpaces}`;
         } catch (e) {
             const parts = normalized.split('/');
             const filename = encodeURIComponent(parts.pop());
@@ -75,19 +74,19 @@ const tileMediaRaw = {
     3: { name: 'Las Vegas Grand Prix', videos: ['/Videos/Cropped/LV Grand Prix.mp4', '/Videos/Cropped/LV Grand Prix End (1).mp4'], images: [] },
     4: { name: 'Income Tax', videos: [], images: [] },
     5: { name: 'Las Vegas Monorail', videos: ['/Videos/Cropped/Las Vegas Monorail1.mp4', '/Videos/Cropped/Las Vegas Monorail2.mp4'], images: [] },
-    6: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Cropped/Offroading 1 (1).mp4', '/Videos/Cropped/Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] },
+    6: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Cropped/Offroading1 (1).mp4', '/Videos/Cropped/Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] },
     7: { name: 'Chance', videos: [], images: [] },
-    8: { name: 'Las Vegas Golden Knights', videos: ['/Videos/Cropped/LV GKnights 1 (1).mp4', '/Videos/Cropped/LV GKnights 2 (1).mp4', '/Videos/Cropped/LV Golden Knights (1).mp4'], images: ['/images/230613231941-04-knights-stanley-cup-061323.jpg'] },
-    9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/Cropped/MavHeli 2 (1).mp4', '/Videos/Cropped/MavHeli 3 (1).mp4'], images: ['/images/HelicopterRidesNight.jpg', '/images/702-helicopters.webp'] },
+    8: { name: 'Las Vegas Golden Knights', videos: ['/Videos/Cropped/LV GKnights1 (1).mp4', '/Videos/Cropped/LV GKnights2 (1).mp4', '/Videos/Cropped/LV Golden Knights (1).mp4'], images: ['/images/230613231941-04-knights-stanley-cup-061323.jpg'] },
+    9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/Cropped/MavHeli2 (1).mp4', '/Videos/Cropped/MavHeli3 (1).mp4'], images: ['/images/HelicopterRidesNight.jpg', '/images/702-helicopters.webp'] },
     10: { name: 'JAIL', videos: ['/Videos/Cropped/Imgoingtojail.mp4', '/Videos/Cropped/Jailclip4.mp4', '/Videos/Cropped/Jailclip5.mp4', '/Videos/Cropped/Jailmoment2(cropped).mp4', '/Videos/Cropped/jailclip6.mp4_1743296163946.mp4', '/Videos/Cropped/jailmoment3(cropped).mp4'], images: ['/images/17509129_web1_INMATE-WHISPERER-FEB28-23__001-1.webp'] },
-    11: { name: 'Brothel', videos: ['/Videos/Cropped/BrothelVid (1).mp4'], images: [] },
+    11: { name: 'Brothel', videos: ['/Videos/Cropped/Brothel1.mp4'], images: [] },
     12: { name: 'Electric Company', videos: [], images: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Images/yellow_light_bulb.jpg'] },
-    13: { name: 'Bet MGM', videos: ['/Videos/Cropped/MGMBoxing 1 (1).mp4', '/Videos/Cropped/MGMBoxing 3 (1).mp4'], images: ['/images/BetMGM.jpg'] },
+    13: { name: 'Bet MGM', videos: ['/Videos/Cropped/MGMBoxing1 (1).mp4', '/Videos/Cropped/MGMBoxing3 (1).mp4'], images: ['/images/BetMGM.jpg'] },
     14: { name: 'Las Vegas Monorail', videos: ['/Videos/Cropped/Las Vegas Monorail1.mp4', '/Videos/Cropped/Las Vegas Monorail2.mp4'], images: [] },
     15: { name: 'Bellagio', videos: ['/Videos/Cropped/Bellagio2.mp4'], images: ['/images/bellagio.jpg'] },
-    16: { name: 'Las Vegas Aces', videos: ['/Videos/Cropped/WNBA (1).mp4', '/Videos/Cropped/WNBAHL2 (1).mp4', '/Videos/Cropped/WNBAHL3 (1).mp4', '/Videos/Cropped/WNBAHL4 (1).mp4'], images: [] },
+    16: { name: 'Las Vegas Aces', videos: ['/Videos/Cropped/WNBA1 (1).mp4', '/Videos/Cropped/WNBAHL2 (1).mp4', '/Videos/Cropped/WNBAHL3 (1).mp4', '/Videos/Cropped/WNBAHL4 (1).mp4'], images: [] },
     17: { name: 'Community Cards', videos: [], images: [] },
-    18: { name: 'Horseback Riding', videos: ['/Videos/Cropped/horse6 (1).mp4'], images: [] },
+    18: { name: 'Horseback Riding', videos: ['/Videos/Cropped/horse6.mp4'], images: [] },
     19: { name: 'Resorts World Theatre', videos: ['/Videos/Cropped/Resorts World Theatre1.mp4', '/Videos/Cropped/Resorts World Theatre2.mp4', '/Videos/Cropped/Resorts World Theatre3.mp4', '/Videos/Cropped/Resorts World Theatre4.mp4'], images: ['/images/ResortsWorldTheater.jpg', '/images/Richling-house-of-blues-sunset.webp'] },
     20: { name: 'FREE PARKING', videos: [], images: ['/images/free parking.jpg'] },
     21: { name: 'Hard Rock Hotel', videos: ['/Videos/Cropped/Hard Rock Hotel.mp4'], images: [] },
@@ -108,7 +107,7 @@ const tileMediaRaw = {
     36: { name: 'Venetian', videos: [], images: [] },
     37: { name: 'The Cosmopolitan', videos: ['/Videos/Cropped/The Cosmopolitan1.mp4', '/Videos/Cropped/The Cosmopolitan2.mp4', '/Videos/Cropped/The Cosmopolitan3.mp4'], images: ['/images/cosmopolitan.jpg'] },
     38: { name: 'Las Vegas Monorail', videos: ['/Videos/Cropped/Las Vegas Monorail1.mp4', '/Videos/Cropped/Las Vegas Monorail2.mp4'], images: [] },
-    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Cropped/Offroading 1 (1).mp4', '/Videos/Cropped/Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] }
+    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Cropped/Offroading1 (1).mp4', '/Videos/Cropped/Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4'], images: ['/images/SpeedVegasOffroading.jpg', '/images/SV_OFF_ROAD_TRACK_GALLERY_6.jpg'] }
 };
 
 // Proxy to convert URLs on access
