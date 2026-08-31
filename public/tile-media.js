@@ -49,7 +49,11 @@ function getVideoUrl(localPath) {
 
     if (USE_VIDEO_CDN && VIDEO_CDN_BASE_URL) {
         try {
-            return new URL(normalized.replace(/^\//, ''), `${VIDEO_CDN_BASE_URL}/`).href;
+            // Encode the entire path to handle special characters properly
+            const parts = normalized.split('/');
+            const encodedParts = parts.map(part => encodeURIComponent(part));
+            const encodedPath = encodedParts.join('/');
+            return new URL(encodedPath.replace(/^\//, ''), `${VIDEO_CDN_BASE_URL}/`).href;
         } catch (e) {
             const parts = normalized.split('/');
             const filename = encodeURIComponent(parts.pop());
