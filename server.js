@@ -2425,7 +2425,8 @@ io.on('connection', (socket) => {
             playerId: player.id,
             oldPosition: oldPosition,
             newPosition: 10,
-            players: game.players
+            players: game.players,
+            reason: 'sentToJail'
         });
         
         if (options.advanceTurn !== false && player.isAI) {

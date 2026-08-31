@@ -1011,7 +1011,8 @@ function handlePlayerLanding(playerId, newPosition) {
     manuallyOpenedModal = false;
 
     // Show jail proceed UI specifically for the current player (only for visiting jail, not go to jail)
-    if (newPosition === 10) {
+    // Only show if this is not a "send to jail" situation (which happens from position 30)
+    if (newPosition === 10 && data.reason !== 'sentToJail') {
         if (playerId === myPlayerId) {
             showJailProceedUI(newPosition);
         }
@@ -1165,7 +1166,10 @@ function showJailProceedUI(position) {
 function handleJailProceed() {
     dismissPropertyDecisionUI();
     if (gameState && gameState.currentPlayer === myPlayerId) {
-        endTurnNow();
+        // Ensure we can actually end the turn
+        if (canEndTurnNow()) {
+            endTurnNow();
+        }
     }
 }
 
@@ -3410,6 +3414,9 @@ socket.on('playerMoved', (data) => {
         }
 
         updateTokens();
+        
+        // Reset canRollDice to ensure proper state after move
+        canRollDice = false;
 
         const spaceName = boardConfig[newPosition]?.name || 'unknown space';
         addLogEntry(`${getPlayerDisplayName(player)} moved to ${spaceName}`, 'player');
@@ -3446,6 +3453,10 @@ socket.on('turnChanged', (data) => {
         gameState.diceRolled = false;
         gameState.turnPhase = 'roll';
     }
+    
+    // Reset canRollDice to ensure proper state
+    canRollDice = false;
+    
     lastTurnAnnouncementPlayerId = null;
     revealPlayerToken(data.nextPlayer);
     updateUI();
@@ -3561,6 +3572,10 @@ socket.on('playerSentToJail', (data) => {
             }
         }
         updateTokens();
+        
+        // Reset canRollDice to ensure proper state
+        canRollDice = false;
+        
         updateUI();
         addLogEntry(`${getPlayerDisplayName(player)} was sent to jail!`, 'system');
     }
@@ -3575,6 +3590,8 @@ socket.on('playerOutOfJail', (data) => {
         // Reset pay jail progress when player gets out of jail
         if (data.playerId === myPlayerId) {
             payJailInProgress = false;
+            // Reset canRollDice to ensure proper state
+            canRollDice = false;
         }
         
         updateUI();
@@ -3621,6 +3638,8 @@ socket.on('doublesRolled', (data) => {
             gameState.diceRolled = false;
         }
         if (player.id === myPlayerId) {
+            // Reset canRollDice to ensure proper state for doubles
+            canRollDice = false;
             updateUI();
         }
         
