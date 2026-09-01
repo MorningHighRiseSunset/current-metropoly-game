@@ -2538,6 +2538,15 @@ function showPropertyInfo(spaceData, options = {}) {
                         });
                     }
                     
+                    // Play last 10 seconds of Sphere videos
+                    if (spaceData.name === 'Sphere') {
+                        video.addEventListener('loadedmetadata', () => {
+                            if (video.duration > 10) {
+                                video.currentTime = video.duration - 10;
+                            }
+                        }, { once: true });
+                    }
+                    
                     video.play().catch(() => {});
                 });
             };
