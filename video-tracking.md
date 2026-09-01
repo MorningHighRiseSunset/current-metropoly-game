@@ -48,6 +48,131 @@ The following video files exist in the local `Videos/` directory:
 - Some files have "(1)" suffixes indicating duplicates or versions
 - One file is 0 bytes: `tapDancingWomen (1).mp4`
 
+## Video Inventory Comparison
+
+### Videos Referenced in tile-media.js (48 files)
+
+| Position | Property | Video Files |
+|----------|----------|-------------|
+| 1 | Las Vegas Raiders | LVRaidersVid.mp4 |
+| 3 | Las Vegas Grand Prix | LV Grand Prix.mp4, LV Grand Prix End (1).mp4 |
+| 5 | Las Vegas Monorail | Las Vegas Monorail1.mp4, Las Vegas Monorail2.mp4 |
+| 6 | Speed Vegas Off Roading | Offroading1 (1).mp4, Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4 |
+| 8 | Las Vegas Golden Knights | LV GKnights1 (1).mp4, LV GKnights2 (1).mp4, LV Golden Knights (1).mp4 |
+| 9 | Maverick Helicopter Rides | MavHeli2 (1).mp4, MavHeli3 (1).mp4 |
+| 10 | JAIL | Imgoingtojail.mp4, Jailclip4.mp4, Jailclip5.mp4, Jailmoment2(cropped).mp4, jailclip6.mp4_1743296163946.mp4, jailmoment3(cropped).mp4 |
+| 11 | Brothel | Brothel1.mp4 |
+| 13 | Bet MGM | MGMBoxing1 (1).mp4, MGMBoxing3 (1).mp4 |
+| 14 | Las Vegas Monorail | Las Vegas Monorail1.mp4, Las Vegas Monorail2.mp4 |
+| 15 | Bellagio | Bellagio2.mp4 |
+| 16 | Las Vegas Aces | WNBA1 (1).mp4, WNBAHL2 (1).mp4, WNBAHL3 (1).mp4, WNBAHL4 (1).mp4 |
+| 18 | Horseback Riding | horse6.mp4 |
+| 19 | Resorts World Theatre | Resorts World Theatre1.mp4, Resorts World Theatre2.mp4, Resorts World Theatre3.mp4, Resorts World Theatre4.mp4 |
+| 21 | Hard Rock Hotel | Hard Rock Hotel.mp4 |
+| 23 | Wynn Las Vegas | Wynn Las Vegas1.mp4, Wynn Las Vegas2.mp4, Wynn Las Vegas3.mp4 |
+| 26 | Las Vegas Little White Wedding Chapel | Las Vegas Little White Wedding Chapel1.mp4, Las Vegas Little White Wedding Chapel2.mp4 |
+| 28 | Sphere | Sphere1.mp4, Sphere2.mp4 |
+| 30 | GO TO JAIL | Imgoingtojail.mp4, Jailclip4.mp4, Jailclip5.mp4, Jailmoment2(cropped).mp4, jailclip6.mp4_1743296163946.mp4, jailmoment3(cropped).mp4 |
+| 31 | Caesars Palace | Caesars Palace1.mp4, Caesars Palace3.mp4, Caesars Palace4.mp4 |
+| 32 | Santa Fe Hotel and Casino | Santa Fe Hotel And Casino1.mp4, Santa Fe Hotel And Casino2.mp4 |
+| 35 | House of Blues | House Of Blues1.mp4, House Of Blues2.mp4, House Of Blues3.mp4 |
+| 37 | The Cosmopolitan | The Cosmopolitan1.mp4, The Cosmopolitan2.mp4, The Cosmopolitan3.mp4 |
+| 38 | Las Vegas Monorail | Las Vegas Monorail1.mp4, Las Vegas Monorail2.mp4 |
+| 39 | Speed Vegas Off Roading | Offroading1 (1).mp4, Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4 |
+
+### Local Files Available (38 files)
+
+| File | Size | Status |
+|------|------|--------|
+| BrothelVid (1).mp4 | 3.9MB | ⚠️ Renamed to Brothel1.mp4 in config |
+| Imgoingtojail.mp4 | 799KB | ✅ Used |
+| Jailclip4.mp4 | 3.7MB | ✅ Used |
+| Jailclip5.mp4 | 3.9MB | ✅ Used |
+| Jailmoment2(cropped).mp4 | 2.5MB | ✅ Used |
+| LV GKnights 1 (1).mp4 | 4.3MB | ⚠️ Renamed to LV GKnights1 (1).mp4 in config |
+| LV GKnights 2 (1).mp4 | 4.3MB | ⚠️ Renamed to LV GKnights2 (1).mp4 in config |
+| LV GKnights 3 (1).mp4 | 5.7MB | ❌ Not referenced in config |
+| LV Golden Knights (1).mp4 | 4.3MB | ✅ Used |
+| LV Golden Knights (2).mp4 | 4.3MB | ❌ Not referenced in config |
+| LV Grand Prix End (1).mp4 | 5.7MB | ✅ Used |
+| LV Grand Prix.mp4 | 4.6MB | ✅ Used |
+| LVRaiders 2 (1).mp4 | 5.4MB | ❌ Not referenced in config |
+| LVRaiders 3 (1).mp4 | 5.9MB | ❌ Not referenced in config |
+| LVRaiders 4 (1).mp4 | 5.5MB | ❌ Not referenced in config |
+| LVRaiders 5 (1).mp4 | 6.5MB | ❌ Not referenced in config |
+| LVRaidersVid.mp4 | 2.6MB | ✅ Used |
+| MGM 2.mp4 | 8.2MB | ❌ Not referenced in config |
+| MGMBoxing 1 (1).mp4 | 4.3MB | ⚠️ Renamed to MGMBoxing1 (1).mp4 in config |
+| MGMBoxing 3 (1).mp4 | 5.6MB | ⚠️ Renamed to MGMBoxing3 (1).mp4 in config |
+| MavHeli 1.mp4 (1).mp4 | 4.6MB | ❌ Not referenced in config (MavHeli1 missing) |
+| MavHeli 2 (1).mp4 | 3.5MB | ⚠️ Renamed to MavHeli2 (1).mp4 in config |
+| MavHeli 3 (1).mp4 | 3.7MB | ⚠️ Renamed to MavHeli3 (1).mp4 in config |
+| Monorail (1).mp4 | 6.1MB | ❌ Not referenced in config |
+| Offroading 1 (1).mp4 | 5.8MB | ⚠️ Renamed to Offroading1 (1).mp4 in config |
+| Shriners 1 (1).mp4 | 2.8MB | ❌ Not referenced in config |
+| Shriners 3 (1).mp4 | 3.0MB | ❌ Not referenced in config |
+| Shriners 4 (1).mp4 | 1.4MB | ❌ Not referenced in config |
+| Sphere (1).mp4 | 5.5MB | ❌ Not referenced in config |
+| Vegas Off-Road Experience at Speed Vegas Motorsport Park (1).mp4 | 6.2MB | ✅ Used |
+| WNBA (1).mp4 | 48.9MB | ⚠️ Renamed to WNBA1 (1).mp4 in config |
+| WNBAHL2 (1).mp4 | 1.0MB | ✅ Used |
+| WNBAHL3 (1).mp4 | 1.6MB | ✅ Used |
+| WNBAHL4 (1).mp4 | 1.5MB | ✅ Used |
+| horse6 (1).mp4 | 6.3MB | ⚠️ Renamed to horse6.mp4 in config |
+| jailclip6.mp4_1743296163946.mp4 | 4.8MB | ✅ Used |
+| jailmoment3(cropped).mp4 | 2.9MB | ✅ Used |
+| tapDancingWomen (1).mp4 | 0 bytes | ❌ Corrupted file |
+
+### Missing Videos (Referenced in config but not in local directory)
+
+| Video File | Property |
+|------------|----------|
+| Las Vegas Monorail1.mp4 | Las Vegas Monorail (positions 5, 14, 38) |
+| Las Vegas Monorail2.mp4 | Las Vegas Monorail (positions 5, 14, 38) |
+| Bellagio2.mp4 | Bellagio (position 15) |
+| Resorts World Theatre1.mp4 | Resorts World Theatre (position 19) |
+| Resorts World Theatre2.mp4 | Resorts World Theatre (position 19) |
+| Resorts World Theatre3.mp4 | Resorts World Theatre (position 19) |
+| Resorts World Theatre4.mp4 | Resorts World Theatre (position 19) |
+| Hard Rock Hotel.mp4 | Hard Rock Hotel (position 21) |
+| Wynn Las Vegas1.mp4 | Wynn Las Vegas (position 23) |
+| Wynn Las Vegas2.mp4 | Wynn Las Vegas (position 23) |
+| Wynn Las Vegas3.mp4 | Wynn Las Vegas (position 23) |
+| Las Vegas Little White Wedding Chapel1.mp4 | Las Vegas Little White Wedding Chapel (position 26) |
+| Las Vegas Little White Wedding Chapel2.mp4 | Las Vegas Little White Wedding Chapel (position 26) |
+| Sphere1.mp4 | Sphere (position 28) |
+| Sphere2.mp4 | Sphere (position 28) |
+| Caesars Palace1.mp4 | Caesars Palace (position 31) |
+| Caesars Palace3.mp4 | Caesars Palace (position 31) |
+| Caesars Palace4.mp4 | Caesars Palace (position 31) |
+| Santa Fe Hotel And Casino1.mp4 | Santa Fe Hotel and Casino (position 32) |
+| Santa Fe Hotel And Casino2.mp4 | Santa Fe Hotel and Casino (position 32) |
+| House Of Blues1.mp4 | House of Blues (position 35) |
+| House Of Blues2.mp4 | House of Blues (position 35) |
+| House Of Blues3.mp4 | House of Blues (position 35) |
+| The Cosmopolitan1.mp4 | The Cosmopolitan (position 37) |
+| The Cosmopolitan2.mp4 | The Cosmopolitan (position 37) |
+| The Cosmopolitan3.mp4 | The Cosmopolitan (position 37) |
+
+### Extra Files (In local directory but not referenced in config)
+
+| File | Notes |
+|------|-------|
+| LV GKnights 3 (1).mp4 | Extra Golden Knights video |
+| LV Golden Knights (2).mp4 | Extra Golden Knights video |
+| LVRaiders 2 (1).mp4 | Extra Raiders video |
+| LVRaiders 3 (1).mp4 | Extra Raiders video |
+| LVRaiders 4 (1).mp4 | Extra Raiders video |
+| LVRaiders 5 (1).mp4 | Extra Raiders video |
+| MGM 2.mp4 | Extra MGM video |
+| MavHeli 1.mp4 (1).mp4 | MavHeli1 (missing from config) |
+| Monorail (1).mp4 | Extra Monorail video |
+| Shriners 1 (1).mp4 | Shriners Children's Open video (property has no videos in config) |
+| Shriners 3 (1).mp4 | Shriners Children's Open video (property has no videos in config) |
+| Shriners 4 (1).mp4 | Shriners Children's Open video (property has no videos in config) |
+| Sphere (1).mp4 | Extra Sphere video |
+| tapDancingWomen (1).mp4 | Corrupted (0 bytes) |
+
 ## Verification Needed
 
 To determine if CDN videos are full originals or replacements:
