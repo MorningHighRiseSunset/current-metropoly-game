@@ -2451,56 +2451,72 @@ function showPropertyInfo(spaceData, options = {}) {
         if (selectedVideo) {
             lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
 
-            const video = document.createElement('video');
-            const frame = createMediaFrame(video);
-            video.playsInline = true;
-            video.setAttribute('playsinline', '');
-            video.setAttribute('webkit-playsinline', '');
-            video.controls = true;
-            video.loop = false;
-            video.preload = 'metadata';
-            video.muted = true;
-            video.autoplay = true;
-            video.src = selectedVideo;
-            pendingPropertyVideo = video;
-            currentPropertyMediaPosition = spaceData.position;
-            mediaContainer.appendChild(frame);
+            // Fallback logic: try other videos if selected one fails
+            const triedVideos = [selectedVideo];
+            const loadVideoWithFallback = (videoUrl) => {
+                const video = document.createElement('video');
+                const frame = createMediaFrame(video);
+                video.playsInline = true;
+                video.setAttribute('playsinline', '');
+                video.setAttribute('webkit-playsinline', '');
+                video.controls = true;
+                video.loop = false;
+                video.preload = 'metadata';
+                video.muted = true;
+                video.autoplay = true;
+                video.src = videoUrl;
+                pendingPropertyVideo = video;
+                currentPropertyMediaPosition = spaceData.position;
+                mediaContainer.appendChild(frame);
 
-            video.addEventListener('error', () => {
-                if (video._intentionalStop || mediaSession !== propertyMediaSession) return;
-                pendingPropertyVideo = null;
-                logVideoLoadError(video, {
-                    propertyName: media.name,
-                    position: spaceData.position,
-                    intendedSrc: selectedVideo,
-                    fromCache: false
-                });
-                if (!showPropertyImages(media, spaceData, mediaContainer, cacheKey) && loadingIndicator) {
-                    mediaContainer.innerHTML = '';
-                    loadingIndicator.textContent = 'Media unavailable';
-                }
-            });
-
-            video.addEventListener('loadeddata', () => {
-                if (mediaSession !== propertyMediaSession) {
+                video.addEventListener('error', () => {
+                    if (video._intentionalStop || mediaSession !== propertyMediaSession) return;
                     stopVideoElement(video);
-                    return;
-                }
-                pendingPropertyVideo = null;
-                mediaCache[cacheKey] = frame.cloneNode(true);
-                currentPropertyVideo = video;
-                
-                // Set video duration limits based on property
-                if (spaceData.name === 'Bet MGM') {
-                    video.addEventListener('timeupdate', () => {
-                        if (video.currentTime >= 9) {
-                            video.pause();
+                    pendingPropertyVideo = null;
+                    
+                    // Try next video in array
+                    const nextVideo = media.videos.find(v => !triedVideos.includes(v));
+                    if (nextVideo) {
+                        triedVideos.push(nextVideo);
+                        loadVideoWithFallback(nextVideo);
+                    } else {
+                        // All videos failed, fall back to images
+                        logVideoLoadError(video, {
+                            propertyName: media.name,
+                            position: spaceData.position,
+                            intendedSrc: videoUrl,
+                            fromCache: false
+                        });
+                        if (!showPropertyImages(media, spaceData, mediaContainer, cacheKey) && loadingIndicator) {
+                            mediaContainer.innerHTML = '';
+                            loadingIndicator.textContent = 'Media unavailable';
                         }
-                    });
-                }
-                
-                video.play().catch(() => {});
-            });
+                    }
+                });
+
+                video.addEventListener('loadeddata', () => {
+                    if (mediaSession !== propertyMediaSession) {
+                        stopVideoElement(video);
+                        return;
+                    }
+                    pendingPropertyVideo = null;
+                    mediaCache[cacheKey] = frame.cloneNode(true);
+                    currentPropertyVideo = video;
+                    
+                    // Set video duration limits based on property
+                    if (spaceData.name === 'Bet MGM') {
+                        video.addEventListener('timeupdate', () => {
+                            if (video.currentTime >= 9) {
+                                video.pause();
+                            }
+                        });
+                    }
+                    
+                    video.play().catch(() => {});
+                });
+            };
+
+            loadVideoWithFallback(selectedVideo);
         } else if (mediaCache[cacheKey]) {
             const cloned = mediaCache[cacheKey].cloneNode(true);
             mediaContainer.appendChild(cloned);
