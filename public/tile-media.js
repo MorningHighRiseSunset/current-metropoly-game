@@ -98,7 +98,7 @@ const tileMediaRaw = {
     26: { name: 'Las Vegas Little White Wedding Chapel', videos: ['/Videos/Cropped/Las Vegas Little White Wedding Chapel1.mp4', '/Videos/Cropped/Las Vegas Little White Wedding Chapel2.mp4'], images: [] },
     27: { name: 'Community Cards', videos: [], images: [] },
     28: { name: 'Sphere', videos: ['/Videos/Cropped/Sphere1.mp4', '/Videos/Cropped/Sphere2.mp4'], images: ['/images/LasVegasSphere.jpg', '/images/thesphere.jpg', '/images/PIX-1-Exosphere-Architecture.jpg'] },
-    29: { name: 'Water Works', videos: [], images: ['/Images/water.png'] },
+    29: { name: 'Water Works', videos: [], images: ['/Images/water works.png'] },
     30: { name: 'GO TO JAIL', videos: ['/Videos/Cropped/Imgoingtojail.mp4', '/Videos/Cropped/Jailclip4.mp4', '/Videos/Cropped/Jailclip5.mp4', '/Videos/Cropped/Jailmoment2(cropped).mp4', '/Videos/Cropped/jailclip6.mp4_1743296163946.mp4', '/Videos/Cropped/jailmoment3(cropped).mp4'], images: ['/images/17509129_web1_INMATE-WHISPERER-FEB28-23__001-1.webp'] },
     31: { name: 'Caesars Palace', videos: ['/Videos/Cropped/Caesars Palace1.mp4', '/Videos/Cropped/Caesars Palace3.mp4', '/Videos/Cropped/Caesars Palace4.mp4'], images: ['/images/welcome-to-caesars-palace.jpg'] },
     32: { name: 'Santa Fe Hotel and Casino', videos: ['/Videos/Cropped/Santa Fe Hotel And Casino1.mp4', '/Videos/Cropped/Santa Fe Hotel And Casino2.mp4'], images: ['/images/santafecasino.jpg'] },
