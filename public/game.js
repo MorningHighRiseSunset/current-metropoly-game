@@ -4019,14 +4019,14 @@ socket.on('aiLandingStarted', (data) => {
 socket.on('aiCasinoStarted', (data) => {
     if (data.playerId !== activeAiLandingPlayerId || !data.casinoGame) return;
 
-    // AI player UI disabled - don't show casino game when AI plays
-    // const player = players.find((p) => p && p.id === data.playerId);
-    // if (!player) return;
+    const player = players.find((p) => p && p.id === data.playerId);
+    if (!player) return;
 
-    // openCasinoGame(data.casinoGame, {
-    //     player,
-    //     playerLabel: getPlayerDisplayName(player)
-    // });
+    // Show AI playing casino game in observer mode
+    openCasinoGame(data.casinoGame, {
+        player,
+        playerLabel: `${getPlayerDisplayName(player)} (AI)`
+    });
 });
 
 socket.on('aiCasinoComplete', (data) => {
