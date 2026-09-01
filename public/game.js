@@ -2299,7 +2299,11 @@ function logVideoLoadError(video, context) {
 }
 
 function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
-    if (!media.images || media.images.length === 0) return false;
+    console.log(`[showPropertyImages] Called for ${media.name}, images:`, media.images);
+    if (!media.images || media.images.length === 0) {
+        console.log(`[showPropertyImages] No images available for ${media.name}`);
+        return false;
+    }
     const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
     console.log(`[Image Load] Loading image for ${media.name}:`, randomImage);
     const img = document.createElement('img');
@@ -2486,6 +2490,8 @@ function showPropertyInfo(spaceData, options = {}) {
             : `${spaceData.position}_${media.name}`;
 
         console.log(`[showPropertyInfo] Selected video:`, selectedVideo);
+        console.log(`[showPropertyInfo] media.images exists:`, !!media.images);
+        console.log(`[showPropertyInfo] media.images.length:`, media.images ? media.images.length : 'N/A');
 
         if (selectedVideo) {
             lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
@@ -2566,30 +2572,18 @@ function showPropertyInfo(spaceData, options = {}) {
 
             loadVideoWithFallback(selectedVideo);
         } else if (mediaCache[cacheKey]) {
+            console.log(`[showPropertyInfo] Loading from cache for ${spaceData.name}`);
             const cloned = mediaCache[cacheKey].cloneNode(true);
             mediaContainer.appendChild(cloned);
         } else if (media.images && media.images.length > 0) {
-            const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
-            const img = document.createElement('img');
-            img.src = randomImage;
-            img.alt = media.name;
-            img.loading = 'lazy';
-            const imgFrame = createMediaFrame(img);
-
-            img.addEventListener('load', () => {
-                mediaContainer.innerHTML = '';
-                mediaContainer.appendChild(imgFrame);
-                mediaCache[cacheKey] = imgFrame.cloneNode(true);
-            });
-
-            img.addEventListener('error', () => {
-                mediaContainer.innerHTML = '';
-                if (loadingIndicator) loadingIndicator.textContent = 'Image unavailable';
-            });
+            console.log(`[showPropertyInfo] Loading images for ${spaceData.name}`);
+            showPropertyImages(media, spaceData, mediaContainer, cacheKey);
         } else {
+            console.log(`[showPropertyInfo] No media available for ${spaceData.name}`);
             mediaContainer.innerHTML = '';
         }
     } else {
+        console.log(`[showPropertyInfo] No tileMedia for position ${spaceData.position}`);
         mediaContainer.innerHTML = '';
     }
     
