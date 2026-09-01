@@ -2300,6 +2300,7 @@ function logVideoLoadError(video, context) {
 
 function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     console.log(`[showPropertyImages] Called for ${media.name}, images:`, media.images);
+    console.log(`[showPropertyImages] mediaContainer:`, mediaContainer);
     if (!media.images || media.images.length === 0) {
         console.log(`[showPropertyImages] No images available for ${media.name}`);
         return false;
@@ -2310,12 +2311,18 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     img.src = randomImage;
     img.alt = media.name;
     img.loading = 'lazy';
+    console.log(`[Image Load] Created img element, complete:`, img.complete);
     const imgFrame = createMediaFrame(img);
+    console.log(`[Image Load] Created frame:`, imgFrame);
 
     const handleImageLoad = () => {
         console.log(`[Image Load] Successfully loaded image for ${media.name}`);
+        console.log(`[Image Load] mediaContainer before clear:`, mediaContainer.innerHTML);
         mediaContainer.innerHTML = '';
+        console.log(`[Image Load] mediaContainer after clear:`, mediaContainer.innerHTML);
         mediaContainer.appendChild(imgFrame);
+        console.log(`[Image Load] mediaContainer after append:`, mediaContainer.innerHTML);
+        console.log(`[Image Load] imgFrame children:`, imgFrame.children.length);
         mediaCache[cacheKey] = imgFrame.cloneNode(true);
     };
 
@@ -2331,6 +2338,8 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     if (img.complete) {
         console.log(`[Image Load] Image already loaded (cached) for ${media.name}`);
         handleImageLoad();
+    } else {
+        console.log(`[Image Load] Image not complete, waiting for load event`);
     }
 
     return true;
