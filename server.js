@@ -431,15 +431,16 @@ function getNextPlayerIndex(game, fromIndex) {
 // Helper function to roll dice with rare doubles
 function rollDiceWithRareDoubles(currentPosition = 0) {
     const BACCARAT_POSITION = 36; // Venetian - Baccarat square
-    
+    const CRAPS_POSITION = 32; // Santa Fe Hotel and Casino - Craps square
+
     let dice1, dice2, total, newPosition;
-    
+
     do {
         dice1 = Math.floor(Math.random() * 6) + 1;
         dice2 = Math.floor(Math.random() * 6) + 1;
         total = dice1 + dice2;
         newPosition = (currentPosition + total) % 40;
-        
+
         // Only 5% chance of allowing doubles (very rare)
         if (dice1 === dice2 && Math.random() > 0.05) {
             // Reroll dice2 to avoid doubles
@@ -451,16 +452,15 @@ function rollDiceWithRareDoubles(currentPosition = 0) {
             total = dice1 + dice2;
             newPosition = (currentPosition + total) % 40;
         }
-        
-        // Extremely low chance (0.1%) to allow landing on Baccarat
-        // If it would land on Baccarat, 99.9% chance to re-roll
-        if (newPosition === BACCARAT_POSITION && Math.random() > 0.001) {
+
+        // Impossible to land on Baccarat or Craps - always re-roll
+        if (newPosition === BACCARAT_POSITION || newPosition === CRAPS_POSITION) {
             continue; // Re-roll
         }
-        
+
         break; // Accept this roll
     } while (true);
-    
+
     return { dice1, dice2, isDoubles: dice1 === dice2 };
 }
 
