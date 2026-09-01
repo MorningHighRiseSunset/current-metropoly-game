@@ -91,6 +91,8 @@ let observerCasinoStartBalance = null;
 let activePlayerCasinoGame = null; // Track if human player is actively playing casino
 let casinoPlayCounts = {}; // Track how many times each player has played casino (max 3)
 let manuallyOpenedModal = false; // Track if property modal was opened by manual click
+let aiMoves = []; // Track last 5 AI moves
+let aiMovesEl = null; // DOM element for AI moves display
 
 // ========== DICE ROLL SEQUENCE STATE MACHINE ==========
 // Manages the complete flow: DICE_ROLLING → TOKEN_MOVING → UI_OPENING → COMPLETE
@@ -1236,8 +1238,9 @@ function updatePropertyDecisionUI() {
     const propertyActions = document.getElementById('propertyActions');
     const propertyConfirmBtn = document.getElementById('propertyConfirmBtn');
     const propertyPassBtn = document.getElementById('propertyPassBtn');
+    const propertyPayRentBtn = document.getElementById('propertyPayRentBtn');
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
-    if (!propertyActions || !propertyConfirmBtn || !propertyPassBtn) return;
+    if (!propertyActions || !propertyConfirmBtn || !propertyPassBtn || !propertyPayRentBtn) return;
 
     const isRentDecision = activePropertyDecision.isRent;
     const canAfford = currentPlayer && currentPlayer.money >= activePropertyDecision.spaceData.price;
@@ -1258,15 +1261,25 @@ function updatePropertyDecisionUI() {
         confirmLabel = 'Pay Rent';
         passLabel = 'Pass';
         promptText = `Owned by ${owner.name}. Pay $${rent} to continue.`;
-        confirmHandler = () => {
-            if (currentPlayer && currentPlayer.money >= rent) {
-                socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
-                dismissPropertyDecisionUI();
-                endTurnNow();
-            } else {
-                alert('Not enough money to pay rent!');
-            }
-        };
+        
+        // Update the Pay Rent button specifically
+        if (propertyPayRentBtn) {
+            propertyPayRentBtn.textContent = `Pay Rent ($${rent})`;
+            propertyPayRentBtn.onclick = () => {
+                if (currentPlayer && currentPlayer.money >= rent) {
+                    socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
+                    dismissPropertyDecisionUI();
+                    endTurnNow();
+                } else {
+                    alert('Not enough money to pay rent!');
+                }
+            };
+        }
+        
+        // Hide the confirm button when in rent mode
+        if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
+        if (propertyPassBtn) propertyPassBtn.classList.add('hidden');
+        if (propertyPayRentBtn) propertyPayRentBtn.classList.remove('hidden');
     } else {
         confirmHandler = () => {
             if (canAfford) {
@@ -1295,18 +1308,17 @@ function updatePropertyDecisionUI() {
         decisionPrompt.classList.remove('hidden');
     }
 
-    propertyConfirmBtn.textContent = confirmLabel;
-    propertyPassBtn.textContent = passLabel;
-    propertyConfirmBtn.onclick = confirmHandler;
-    propertyPassBtn.onclick = () => {
-        if (!activePropertyDecision) return;
-        if (isRentDecision) {
-            alert('You must pay rent to continue.');
-            return;
-        }
-        socket.emit('passProperty', { position: activePropertyDecision.position });
-        dismissPropertyDecisionUI();
-    };
+    if (!isRentDecision) {
+        propertyConfirmBtn.textContent = confirmLabel;
+        propertyPassBtn.textContent = passLabel;
+        propertyConfirmBtn.onclick = confirmHandler;
+        propertyPassBtn.onclick = () => {
+            if (!activePropertyDecision) return;
+            socket.emit('passProperty', { position: activePropertyDecision.position });
+            dismissPropertyDecisionUI();
+        };
+    }
+    
     propertyActions.classList.remove('hidden');
 }
 
@@ -1359,7 +1371,8 @@ function finishLandingDecisionUI() {
 }
 
 function openLandingPropertyModal(spaceData) {
-    showPropertyInfo(spaceData, { showDecisionActions: true });
+    const isRent = activePropertyDecision && activePropertyDecision.isRent;
+    showPropertyInfo(spaceData, { showDecisionActions: true, isRent });
     updatePropertyDecisionUI();
 }
 
@@ -2359,7 +2372,7 @@ function buildPropertyDetailsHtml(spaceData) {
 
 // Show property information
 function showPropertyInfo(spaceData, options = {}) {
-    const { showDecisionActions = false, showProceedButton = false, viewerLabel = null } = options;
+    const { showDecisionActions = false, showProceedButton = false, viewerLabel = null, isRent = false } = options;
 
     // Force cleanup any existing videos before showing new content
     cleanupPropertyVideo();
@@ -2382,6 +2395,7 @@ function showPropertyInfo(spaceData, options = {}) {
     const propertyActions = document.getElementById('propertyActions');
     const propertyConfirmBtn = document.getElementById('propertyConfirmBtn');
     const propertyPassBtn = document.getElementById('propertyPassBtn');
+    const propertyPayRentBtn = document.getElementById('propertyPayRentBtn');
     const propertyProceedBtn = document.getElementById('propertyProceedBtn');
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
 
@@ -2406,16 +2420,25 @@ function showPropertyInfo(spaceData, options = {}) {
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
             if (propertyPassBtn) propertyPassBtn.classList.add('hidden');
+            if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.remove('hidden');
+        } else if (isRent) {
+            propertyActions.classList.remove('hidden');
+            if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
+            if (propertyPassBtn) propertyPassBtn.classList.add('hidden');
+            if (propertyPayRentBtn) propertyPayRentBtn.classList.remove('hidden');
+            if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
         } else if (showDecisionActions) {
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.remove('hidden');
             if (propertyPassBtn) propertyPassBtn.classList.remove('hidden');
+            if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
         } else {
             propertyActions.classList.add('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.remove('hidden');
             if (propertyPassBtn) propertyPassBtn.classList.remove('hidden');
+            if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
         }
     }
@@ -2423,6 +2446,9 @@ function showPropertyInfo(spaceData, options = {}) {
     if (decisionPrompt) {
         if (showProceedButton) {
             decisionPrompt.textContent = 'Watch the video, then click Proceed to end your turn.';
+            decisionPrompt.classList.remove('hidden');
+        } else if (isRent) {
+            decisionPrompt.textContent = 'You landed on an owned property. Pay rent to continue.';
             decisionPrompt.classList.remove('hidden');
         } else if (viewerLabel) {
             decisionPrompt.textContent = viewerLabel;
@@ -2713,6 +2739,54 @@ function addChatMessage(sender, message) {
     // Auto-scroll to bottom
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
     // console.log('Message added to chat, total messages:', chatMessagesEl.children.length);
+}
+
+// Add AI move to tracker
+function addAiMove(playerName, action, details) {
+    const move = {
+        playerName,
+        action,
+        details,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    // Add to beginning of array
+    aiMoves.unshift(move);
+    
+    // Keep only last 5 moves
+    if (aiMoves.length > 5) {
+        aiMoves.pop();
+    }
+    
+    // Update UI
+    updateAiMovesDisplay();
+}
+
+// Update AI moves display in UI
+function updateAiMovesDisplay() {
+    if (!aiMovesEl) {
+        aiMovesEl = document.getElementById('aiMoves');
+    }
+    
+    if (!aiMovesEl) return;
+    
+    aiMovesEl.innerHTML = '';
+    
+    if (aiMoves.length === 0) {
+        aiMovesEl.innerHTML = '<div style="color: #888; font-size: 0.85rem; padding: 8px;">No AI moves yet</div>';
+        return;
+    }
+    
+    aiMoves.forEach(move => {
+        const moveEl = document.createElement('div');
+        moveEl.className = 'ai-move-entry';
+        moveEl.innerHTML = `
+            <span class="ai-player-name">${move.playerName}</span>
+            <span class="ai-action">${move.action}</span>
+            <span class="ai-timestamp">${move.timestamp}</span>
+        `;
+        aiMovesEl.appendChild(moveEl);
+    });
 }
 
 // Helper function to get display name for a player
@@ -3300,6 +3374,11 @@ socket.on('propertyPurchased', (data) => {
         updateUI();
         addLogEntry(`${getPlayerDisplayName(player)} bought ${propertyName} for $${boardConfig[position].price}`, 'property');
 
+        // Track AI move
+        if (player.isAI) {
+            addAiMove(getPlayerDisplayName(player), 'bought', `${propertyName} for $${boardConfig[position].price}`);
+        }
+
         // Update property display on board
         if (boardSpaces[position]) {
             boardSpaces[position].style.borderLeft = `4px solid ${player.color || '#4a9eff'}`;
@@ -3327,6 +3406,7 @@ socket.on('propertyPassed', (data) => {
 
     if (player && player.isAI) {
         addLogEntry(`${getPlayerDisplayName(player)} passed on ${propertyName}`, 'property');
+        addAiMove(player.name, 'passed on', propertyName);
     }
     
     if (playerId === myPlayerId) {
@@ -3519,6 +3599,14 @@ socket.on('rentPaid', (data) => {
         owner.money = data.newOwnerMoney;
         updateUI();
         addLogEntry(`${payer.name} paid $${data.amount} rent to ${owner.name} for ${data.property.name}`, 'system');
+
+        // Track AI moves
+        if (payer.isAI) {
+            addAiMove(payer.name, 'paid rent', `$${data.amount} to ${owner.name} for ${data.property.name}`);
+        }
+        if (owner.isAI) {
+            addAiMove(owner.name, 'received rent', `$${data.amount} from ${payer.name} for ${data.property.name}`);
+        }
     }
 });
 
@@ -3917,6 +4005,12 @@ socket.on('aiCasinoComplete', (data) => {
         `${getPlayerDisplayName(player)} finished ${data.casinoGame}: ${sign}$${Math.abs(data.winnings)}`,
         'system'
     );
+
+    // Track AI move
+    if (player && player.isAI) {
+        addAiMove(player.name, 'played casino', `${data.casinoGame}: ${sign}$${Math.abs(data.winnings)}`);
+    }
+
     updateUI();
 
     // AI player UI disabled - don't show property info after AI casino
@@ -4107,6 +4201,10 @@ function setupChatListeners() {
     chatMessagesEl = document.getElementById('chatMessages');
     chatInputEl = document.getElementById('chatInput');
     sendChatBtn = document.getElementById('sendChatBtn');
+    
+    // Initialize AI moves display
+    aiMovesEl = document.getElementById('aiMoves');
+    updateAiMovesDisplay();
 
     // console.log('Chat elements initialized:', { chatMessagesEl, chatInputEl, sendChatBtn });
 

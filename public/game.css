@@ -283,6 +283,10 @@ body {
     margin-top: 10px;
 }
 
+.players-sidebar .sidebar-panel--ai-moves {
+    margin-top: 10px;
+}
+
 .players-list {
     flex: 1;
     min-height: 0;
@@ -438,6 +442,50 @@ body {
 
 .sidebar-panel--chat {
     flex: 0 0 auto;
+}
+
+.sidebar-panel--ai-moves {
+    flex: 0 0 auto;
+    min-height: 120px;
+    max-height: 200px;
+}
+
+.ai-moves.panel-scroll {
+    max-height: 120px;
+    margin-bottom: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 8px;
+    border: none;
+}
+
+.ai-move-entry {
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    background: rgba(74, 158, 255, 0.1);
+    border-left: 3px solid #4a9eff;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.ai-move-entry:last-child {
+    margin-bottom: 0;
+}
+
+.ai-move-entry .ai-player-name {
+    font-weight: 600;
+    color: #4a9eff;
+}
+
+.ai-move-entry .ai-action {
+    color: #e0e0e0;
+}
+
+.ai-move-entry .ai-timestamp {
+    font-size: 0.75rem;
+    color: #888;
+    margin-left: 4px;
 }
 
 .sidebar-panel--log {
@@ -2198,6 +2246,17 @@ body {
 
 #propertyPassBtn:hover {
     background: rgba(255, 255, 255, 0.12);
+}
+
+#propertyPayRentBtn {
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(230, 126, 34, 0.25);
+}
+
+#propertyPayRentBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(230, 126, 34, 0.35);
 }
 
 #casinoGameModal {
