@@ -2300,7 +2300,6 @@ function logVideoLoadError(video, context) {
 
 function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     console.log(`[showPropertyImages] Called for ${media.name}, images:`, media.images);
-    console.log(`[showPropertyImages] mediaContainer:`, mediaContainer);
     if (!media.images || media.images.length === 0) {
         console.log(`[showPropertyImages] No images available for ${media.name}`);
         return false;
@@ -2308,52 +2307,17 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
     console.log(`[Image Load] Loading image for ${media.name}:`, randomImage);
 
-    // Try fetching the image first to check if it exists
-    fetch(randomImage, { mode: 'no-cors' })
-        .then(() => {
-            console.log(`[Image Load] Fetch succeeded for ${media.name}`);
-            const img = document.createElement('img');
-            img.crossOrigin = 'anonymous';
-            img.src = randomImage;
-            img.alt = media.name;
-            console.log(`[Image Load] Created img element, complete:`, img.complete);
-            const imgFrame = createMediaFrame(img);
-            console.log(`[Image Load] Created frame:`, imgFrame);
+    mediaContainer.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = randomImage;
+    img.alt = media.name;
+    img.style.width = '100%';
+    img.style.height = 'auto';
+    img.style.objectFit = 'contain';
+    mediaContainer.appendChild(img);
 
-            const handleImageLoad = () => {
-                console.log(`[Image Load] Successfully loaded image for ${media.name}`);
-                console.log(`[Image Load] Image dimensions:`, img.naturalWidth, 'x', img.naturalHeight);
-                console.log(`[Image Load] mediaContainer before clear:`, mediaContainer.innerHTML);
-                mediaContainer.innerHTML = '';
-                console.log(`[Image Load] mediaContainer after clear:`, mediaContainer.innerHTML);
-                mediaContainer.appendChild(imgFrame);
-                console.log(`[Image Load] mediaContainer after append:`, mediaContainer.innerHTML);
-                console.log(`[Image Load] imgFrame children:`, imgFrame.children.length);
-                mediaCache[cacheKey] = imgFrame.cloneNode(true);
-            };
-
-            const handleImageError = () => {
-                console.error(`[Image Error] Failed to load image for ${media.name}:`, randomImage);
-                console.error(`[Image Error] img.error:`, img.error);
-                mediaContainer.innerHTML = '';
-            };
-
-            img.addEventListener('load', handleImageLoad);
-            img.addEventListener('error', handleImageError);
-
-            if (img.complete) {
-                console.log(`[Image Load] Image already loaded (cached) for ${media.name}`);
-                handleImageLoad();
-            } else {
-                console.log(`[Image Load] Image not complete, waiting for load event`);
-            }
-        })
-        .catch((error) => {
-            console.error(`[Image Load] Fetch failed for ${media.name}:`, error);
-            console.error(`[Image Load] URL that failed:`, randomImage);
-            mediaContainer.innerHTML = `<div style="color: red; padding: 10px;">Image failed to load: ${randomImage}</div>`;
-        });
-
+    console.log(`[Image Load] Appended img to container for ${media.name}`);
+    mediaCache[cacheKey] = mediaContainer.cloneNode(true);
     return true;
 }
 
