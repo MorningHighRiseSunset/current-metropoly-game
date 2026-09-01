@@ -2794,9 +2794,8 @@ function updateAiMovesDisplay() {
         const moveEl = document.createElement('div');
         moveEl.className = 'ai-move-entry';
         moveEl.innerHTML = `
-            <span class="ai-player-name">${move.playerName}</span>
+            <span class="ai-player">${move.playerName}</span>
             <span class="ai-action">${move.action}</span>
-            <span class="ai-timestamp">${move.timestamp}</span>
         `;
         aiMovesEl.appendChild(moveEl);
     });
