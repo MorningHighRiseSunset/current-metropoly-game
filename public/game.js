@@ -2377,6 +2377,8 @@ function buildPropertyDetailsHtml(spaceData) {
 function showPropertyInfo(spaceData, options = {}) {
     const { showDecisionActions = false, showProceedButton = false, viewerLabel = null, isRent = false } = options;
 
+    console.log(`[showPropertyInfo] Called for ${spaceData.name} (position ${spaceData.position}, type ${spaceData.type})`);
+
     // Force cleanup any existing videos before showing new content
     cleanupPropertyVideo();
 
@@ -2464,11 +2466,17 @@ function showPropertyInfo(spaceData, options = {}) {
     
     // Clear previous media
     mediaContainer.innerHTML = '';
-    
+
     // Load media from tileMedia if available
+    console.log(`[showPropertyInfo] tileMedia exists:`, !!tileMedia);
+    console.log(`[showPropertyInfo] tileMedia[${spaceData.position}]:`, tileMedia ? tileMedia[spaceData.position] : 'N/A');
+
     if (tileMedia && tileMedia[spaceData.position]) {
         const media = tileMedia[spaceData.position];
-        
+        console.log(`[showPropertyInfo] Media object:`, media);
+        console.log(`[showPropertyInfo] Videos:`, media.videos);
+        console.log(`[showPropertyInfo] Images:`, media.images);
+
         // Video loading code
         const selectedVideo = (media.videos && media.videos.length > 0)
             ? pickAlternatePropertyVideo(media.videos, spaceData.position)
@@ -2476,6 +2484,8 @@ function showPropertyInfo(spaceData, options = {}) {
         const cacheKey = selectedVideo
             ? `${spaceData.position}_${selectedVideo}`
             : `${spaceData.position}_${media.name}`;
+
+        console.log(`[showPropertyInfo] Selected video:`, selectedVideo);
 
         if (selectedVideo) {
             lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
