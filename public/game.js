@@ -1166,6 +1166,12 @@ function showJailProceedUI(position) {
 }
 
 function handleJailProceed() {
+    // Stop any playing video/audio before proceeding
+    if (currentPropertyVideo) {
+        stopVideoElement(currentPropertyVideo);
+        currentPropertyVideo = null;
+    }
+    cleanupPropertyVideo();
     dismissPropertyDecisionUI();
     if (gameState && gameState.currentPlayer === myPlayerId) {
         // Ensure we can actually end the turn
@@ -1267,6 +1273,12 @@ function updatePropertyDecisionUI() {
             propertyPayRentBtn.textContent = `Pay Rent ($${rent})`;
             propertyPayRentBtn.onclick = () => {
                 if (currentPlayer && currentPlayer.money >= rent) {
+                    // Stop any playing video/audio before paying rent
+                    if (currentPropertyVideo) {
+                        stopVideoElement(currentPropertyVideo);
+                        currentPropertyVideo = null;
+                    }
+                    cleanupPropertyVideo();
                     socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
                     dismissPropertyDecisionUI();
                     endTurnNow();
@@ -1289,6 +1301,7 @@ function updatePropertyDecisionUI() {
                     stopVideoElement(currentPropertyVideo);
                     currentPropertyVideo = null;
                 }
+                cleanupPropertyVideo();
                 socket.emit('buyProperty', { position: activePropertyDecision.position });
                 dismissPropertyDecisionUI();
                 // Auto-end turn after buying (including casino properties)
@@ -1314,6 +1327,12 @@ function updatePropertyDecisionUI() {
         propertyConfirmBtn.onclick = confirmHandler;
         propertyPassBtn.onclick = () => {
             if (!activePropertyDecision) return;
+            // Stop any playing video/audio before passing
+            if (currentPropertyVideo) {
+                stopVideoElement(currentPropertyVideo);
+                currentPropertyVideo = null;
+            }
+            cleanupPropertyVideo();
             socket.emit('passProperty', { position: activePropertyDecision.position });
             dismissPropertyDecisionUI();
         };
@@ -2376,7 +2395,7 @@ function buildPropertyDetailsHtml(spaceData) {
 
 // Show property information
 function showPropertyInfo(spaceData, options = {}) {
-    const { showDecisionActions = false, showProceedButton = false, viewerLabel = null, isRent = false } = options;
+    const { showDecisionActions = false, showProceedButton = false, viewerLabel = null, isRent = false, isAI = false } = options;
 
     console.log(`[showPropertyInfo] Called for ${spaceData.name} (position ${spaceData.position}, type ${spaceData.type})`);
 
@@ -2422,7 +2441,10 @@ function showPropertyInfo(spaceData, options = {}) {
     }
 
     if (propertyActions) {
-        if (showProceedButton) {
+        if (isAI) {
+            // Hide all buttons for AI - this is just a viewer mode
+            propertyActions.classList.add('hidden');
+        } else if (showProceedButton) {
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
             if (propertyPassBtn) propertyPassBtn.classList.add('hidden');
@@ -2552,15 +2574,20 @@ function showPropertyInfo(spaceData, options = {}) {
                                 video.pause();
                             }
                         });
-                    }
-                    
-                    // Play last 10 seconds of Sphere videos
-                    if (spaceData.name === 'Sphere') {
+                    } else if (spaceData.name === 'Sphere') {
+                        // Play last 10 seconds of Sphere videos
                         video.addEventListener('loadedmetadata', () => {
                             if (video.duration > 10) {
                                 video.currentTime = video.duration - 10;
                             }
                         }, { once: true });
+                    } else {
+                        // General 10-second limit for all other videos
+                        video.addEventListener('timeupdate', () => {
+                            if (video.currentTime >= 10) {
+                                video.pause();
+                            }
+                        });
                     }
                     
                     video.play().catch(() => {});
@@ -2571,6 +2598,32 @@ function showPropertyInfo(spaceData, options = {}) {
         } else if (mediaCache[cacheKey]) {
             console.log(`[showPropertyInfo] Loading from cache for ${spaceData.name}`);
             const cloned = mediaCache[cacheKey].cloneNode(true);
+            
+            // Apply duration limits to cached videos
+            const cachedVideo = cloned.querySelector('video');
+            if (cachedVideo) {
+                if (spaceData.name === 'Bet MGM') {
+                    cachedVideo.addEventListener('timeupdate', () => {
+                        if (cachedVideo.currentTime >= 9) {
+                            cachedVideo.pause();
+                        }
+                    });
+                } else if (spaceData.name === 'Sphere') {
+                    cachedVideo.addEventListener('loadedmetadata', () => {
+                        if (cachedVideo.duration > 10) {
+                            cachedVideo.currentTime = cachedVideo.duration - 10;
+                        }
+                    }, { once: true });
+                } else {
+                    // General 10-second limit for all other videos
+                    cachedVideo.addEventListener('timeupdate', () => {
+                        if (cachedVideo.currentTime >= 10) {
+                            cachedVideo.pause();
+                        }
+                    });
+                }
+            }
+            
             mediaContainer.appendChild(cloned);
         } else if (media.images && media.images.length > 0 && spaceData.type === 'utility') {
             console.log(`[showPropertyInfo] Loading images for ${spaceData.name}`);
@@ -2756,6 +2809,7 @@ function addChatMessage(sender, message) {
 
 // Add AI move to tracker
 function addAiMove(playerName, action, details) {
+    console.log(`[AI Move] ${playerName} ${action} ${details}`);
     const move = {
         playerName,
         action,
@@ -2796,6 +2850,7 @@ function updateAiMovesDisplay() {
         moveEl.innerHTML = `
             <span class="ai-player">${move.playerName}</span>
             <span class="ai-action">${move.action}</span>
+            ${move.details ? `<span class="ai-details">${move.details}</span>` : ''}
         `;
         aiMovesEl.appendChild(moveEl);
     });
@@ -4001,18 +4056,19 @@ socket.on('aiLandingStarted', (data) => {
     }
 
     activeAiLandingPlayerId = data.playerId;
-    // AI player UI disabled - don't show property info when AI lands
-    // const player = players.find((p) => p && p.id === data.playerId);
-    // const spaceData = boardConfig[data.position];
-    // if (!spaceData) return;
+    // Show AI landing UI with property info
+    const player = players.find((p) => p && p.id === data.playerId);
+    const spaceData = boardConfig[data.position];
+    if (!spaceData) return;
 
-    // const label = `${getPlayerDisplayName(player)} landed on ${spaceData.name}`;
-    // showPropertyInfo(spaceData, {
-    //     showDecisionActions: false,
-    //     viewerLabel: data.willBuy
-    //         ? `${label} — watching property video, then may buy...`
-    //         : `${label} — viewing property...`
-    // });
+    const label = `${getPlayerDisplayName(player)} (AI) landed on ${spaceData.name}`;
+    showPropertyInfo(spaceData, {
+        showDecisionActions: false,
+        viewerLabel: data.willBuy
+            ? `${label} — watching property video, then may buy...`
+            : `${label} — viewing property...`,
+        isAI: true
+    });
 });
 
 socket.on('aiCasinoStarted', (data) => {
@@ -4321,6 +4377,12 @@ document.querySelectorAll('.modal-close').forEach(closeBtn => {
                 if (activePropertyDecision.isRent) {
                     alert('You must pay rent to continue.');
                 } else {
+                    // Stop any playing video/audio before passing
+                    if (currentPropertyVideo) {
+                        stopVideoElement(currentPropertyVideo);
+                        currentPropertyVideo = null;
+                    }
+                    cleanupPropertyVideo();
                     socket.emit('passProperty', { position: activePropertyDecision.position });
                     dismissPropertyDecisionUI();
                 }
@@ -4352,6 +4414,12 @@ document.querySelectorAll('.modal').forEach(modal => {
                     if (activePropertyDecision.isRent) {
                         alert('You must pay rent to continue.');
                     } else {
+                        // Stop any playing video/audio before passing
+                        if (currentPropertyVideo) {
+                            stopVideoElement(currentPropertyVideo);
+                            currentPropertyVideo = null;
+                        }
+                        cleanupPropertyVideo();
                         socket.emit('passProperty', { position: activePropertyDecision.position });
                         dismissPropertyDecisionUI();
                     }

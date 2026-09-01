@@ -39,7 +39,7 @@ const CASINO_GAMES_BY_POSITION = {
     37: 'Roulette'
 };
 
-const AI_LANDING_VIDEO_MS = 0;
+const AI_LANDING_VIDEO_MS = 10000;
 const AI_CASINO_PLAY_MS = 2200;
 
 // Get local IP addresses for external access
@@ -739,12 +739,8 @@ function executeAIRollDice(game, aiPlayer) {
                     setTimeout(() => gameRuntime.advanceTurn(game), 500);
                 }, 600);
             } else {
-                // Can't pay, end turn
-                io.to(game.id).emit('stillInJail', {
-                    playerId: aiPlayer.id,
-                    jailTurns: aiPlayer.jailTurns
-                });
-                setTimeout(() => gameRuntime.advanceTurn(game), 500);
+                // Can't pay - AI loses the game
+                handleBankruptcy(game, aiPlayer, null, 50);
             }
         } else {
             // Still in jail, end turn
@@ -1879,7 +1875,8 @@ io.on('connection', (socket) => {
         if (currentPlayer.inJail) {
             // Deduct $150 to roll while in jail
             if (currentPlayer.money < 150) {
-                socket.emit('gameError', 'Need $150 to roll while in jail!');
+                // Player doesn't have enough money to roll while in jail - they lose the game
+                handleBankruptcy(game, currentPlayer, null, 150);
                 return;
             }
 
@@ -2192,7 +2189,10 @@ io.on('connection', (socket) => {
     // Advance turn to next player (strict round-robin by array order, skips null/bankrupt)
     function advanceTurn(game) {
         if (game.status !== 'playing') return;
-        if (game._advancingTurn) return;
+        if (game._advancingTurn) {
+            console.log('[advanceTurn] Already advancing turn, skipping');
+            return;
+        }
         cancelScheduledTurnEnd(game, game.gameState.currentPlayer);
         game._advancingTurn = true;
 
@@ -2209,12 +2209,14 @@ io.on('connection', (socket) => {
         const nextPlayer = game.players[nextIndex];
 
         if (!nextPlayer) {
+            console.error('[advanceTurn] No next player found');
             game._advancingTurn = false;
             return;
         }
 
         // Same player only if nobody else is active (should not happen in normal play)
         if (nextPlayer.id === game.gameState.currentPlayer) {
+            console.error('[advanceTurn] Next player is same as current player');
             game._advancingTurn = false;
             return;
         }
@@ -2477,7 +2479,8 @@ io.on('connection', (socket) => {
                         players: game.players
                     });
                 } else {
-                    socket.emit('gameError', 'Not enough money to pay $50');
+                    // Player doesn't have enough money to pay $50 - they lose the game
+                    handleBankruptcy(game, player, null, 50);
                 }
                 break;
                 
@@ -3055,7 +3058,8 @@ io.on('connection', (socket) => {
                 movePlayerToken(game, player, total);
             }
         } else {
-            socket.emit('gameError', 'Not enough money to pay $150 to get out of jail');
+            // Player doesn't have enough money to pay jail fee - they lose the game
+            handleBankruptcy(game, player, null, 150);
         }
     });
 

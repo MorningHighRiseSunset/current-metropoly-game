@@ -446,17 +446,22 @@ body {
 
 .sidebar-panel--ai-moves {
     flex: 0 0 auto;
-    min-height: 120px;
-    max-height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    display: flex;
+    flex-direction: column;
 }
 
 .ai-moves.panel-scroll {
-    max-height: 120px;
+    flex: 1;
+    min-height: 0;
+    max-height: 250px;
     margin-bottom: 8px;
     background: rgba(0, 0, 0, 0.25);
     border-radius: 8px;
     padding: 8px;
     border: none;
+    overflow-y: auto;
 }
 
 .ai-move-entry {
@@ -473,13 +478,26 @@ body {
     margin-bottom: 0;
 }
 
-.ai-move-entry .ai-player-name {
+.ai-move-entry .ai-player {
     font-weight: 600;
     color: #4a9eff;
 }
 
 .ai-move-entry .ai-action {
     color: #e0e0e0;
+}
+
+.ai-move-entry .ai-details {
+    color: #aaa;
+    font-size: 0.8rem;
+    margin-left: 4px;
+}
+
+.ai-move-entry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
 }
 
 .ai-move-entry .ai-timestamp {
