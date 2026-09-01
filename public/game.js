@@ -2308,6 +2308,7 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
     console.log(`[Image Load] Loading image for ${media.name}:`, randomImage);
     const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
     img.src = randomImage;
     img.alt = media.name;
     img.loading = 'lazy';
@@ -2317,6 +2318,7 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
 
     const handleImageLoad = () => {
         console.log(`[Image Load] Successfully loaded image for ${media.name}`);
+        console.log(`[Image Load] Image dimensions:`, img.naturalWidth, 'x', img.naturalHeight);
         console.log(`[Image Load] mediaContainer before clear:`, mediaContainer.innerHTML);
         mediaContainer.innerHTML = '';
         console.log(`[Image Load] mediaContainer after clear:`, mediaContainer.innerHTML);
@@ -2328,6 +2330,7 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
 
     const handleImageError = () => {
         console.error(`[Image Error] Failed to load image for ${media.name}:`, randomImage);
+        console.error(`[Image Error] img.error:`, img.error);
         mediaContainer.innerHTML = '';
     };
 
@@ -2340,6 +2343,17 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
         handleImageLoad();
     } else {
         console.log(`[Image Load] Image not complete, waiting for load event`);
+
+        // Fallback: check if image loaded after 3 seconds
+        setTimeout(() => {
+            if (img.naturalWidth > 0) {
+                console.log(`[Image Load] Timeout fallback - image loaded:`, img.naturalWidth, 'x', img.naturalHeight);
+                handleImageLoad();
+            } else {
+                console.error(`[Image Load] Timeout fallback - image failed to load for ${media.name}`);
+                handleImageError();
+            }
+        }, 3000);
     }
 
     return true;
