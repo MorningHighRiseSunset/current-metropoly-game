@@ -2311,16 +2311,28 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     img.alt = media.name;
     img.loading = 'lazy';
     const imgFrame = createMediaFrame(img);
-    img.addEventListener('load', () => {
+
+    const handleImageLoad = () => {
         console.log(`[Image Load] Successfully loaded image for ${media.name}`);
         mediaContainer.innerHTML = '';
         mediaContainer.appendChild(imgFrame);
         mediaCache[cacheKey] = imgFrame.cloneNode(true);
-    });
-    img.addEventListener('error', () => {
+    };
+
+    const handleImageError = () => {
         console.error(`[Image Error] Failed to load image for ${media.name}:`, randomImage);
         mediaContainer.innerHTML = '';
-    });
+    };
+
+    img.addEventListener('load', handleImageLoad);
+    img.addEventListener('error', handleImageError);
+
+    // Check if image is already loaded (cached)
+    if (img.complete) {
+        console.log(`[Image Load] Image already loaded (cached) for ${media.name}`);
+        handleImageLoad();
+    }
+
     return true;
 }
 
