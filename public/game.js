@@ -2572,7 +2572,7 @@ function showPropertyInfo(spaceData, options = {}) {
             console.log(`[showPropertyInfo] Loading from cache for ${spaceData.name}`);
             const cloned = mediaCache[cacheKey].cloneNode(true);
             mediaContainer.appendChild(cloned);
-        } else if (media.images && media.images.length > 0) {
+        } else if (media.images && media.images.length > 0 && spaceData.type === 'utility') {
             console.log(`[showPropertyInfo] Loading images for ${spaceData.name}`);
             showPropertyImages(media, spaceData, mediaContainer, cacheKey);
         } else {
