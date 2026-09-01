@@ -2307,54 +2307,52 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     }
     const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
     console.log(`[Image Load] Loading image for ${media.name}:`, randomImage);
-    const img = document.createElement('img');
-    img.crossOrigin = 'anonymous';
-    img.src = randomImage;
-    img.alt = media.name;
-    img.loading = 'lazy';
-    console.log(`[Image Load] Created img element, complete:`, img.complete);
-    const imgFrame = createMediaFrame(img);
-    console.log(`[Image Load] Created frame:`, imgFrame);
 
-    const handleImageLoad = () => {
-        console.log(`[Image Load] Successfully loaded image for ${media.name}`);
-        console.log(`[Image Load] Image dimensions:`, img.naturalWidth, 'x', img.naturalHeight);
-        console.log(`[Image Load] mediaContainer before clear:`, mediaContainer.innerHTML);
-        mediaContainer.innerHTML = '';
-        console.log(`[Image Load] mediaContainer after clear:`, mediaContainer.innerHTML);
-        mediaContainer.appendChild(imgFrame);
-        console.log(`[Image Load] mediaContainer after append:`, mediaContainer.innerHTML);
-        console.log(`[Image Load] imgFrame children:`, imgFrame.children.length);
-        mediaCache[cacheKey] = imgFrame.cloneNode(true);
-    };
+    // Try fetching the image first to check if it exists
+    fetch(randomImage, { mode: 'no-cors' })
+        .then(() => {
+            console.log(`[Image Load] Fetch succeeded for ${media.name}`);
+            const img = document.createElement('img');
+            img.crossOrigin = 'anonymous';
+            img.src = randomImage;
+            img.alt = media.name;
+            console.log(`[Image Load] Created img element, complete:`, img.complete);
+            const imgFrame = createMediaFrame(img);
+            console.log(`[Image Load] Created frame:`, imgFrame);
 
-    const handleImageError = () => {
-        console.error(`[Image Error] Failed to load image for ${media.name}:`, randomImage);
-        console.error(`[Image Error] img.error:`, img.error);
-        mediaContainer.innerHTML = '';
-    };
+            const handleImageLoad = () => {
+                console.log(`[Image Load] Successfully loaded image for ${media.name}`);
+                console.log(`[Image Load] Image dimensions:`, img.naturalWidth, 'x', img.naturalHeight);
+                console.log(`[Image Load] mediaContainer before clear:`, mediaContainer.innerHTML);
+                mediaContainer.innerHTML = '';
+                console.log(`[Image Load] mediaContainer after clear:`, mediaContainer.innerHTML);
+                mediaContainer.appendChild(imgFrame);
+                console.log(`[Image Load] mediaContainer after append:`, mediaContainer.innerHTML);
+                console.log(`[Image Load] imgFrame children:`, imgFrame.children.length);
+                mediaCache[cacheKey] = imgFrame.cloneNode(true);
+            };
 
-    img.addEventListener('load', handleImageLoad);
-    img.addEventListener('error', handleImageError);
+            const handleImageError = () => {
+                console.error(`[Image Error] Failed to load image for ${media.name}:`, randomImage);
+                console.error(`[Image Error] img.error:`, img.error);
+                mediaContainer.innerHTML = '';
+            };
 
-    // Check if image is already loaded (cached)
-    if (img.complete) {
-        console.log(`[Image Load] Image already loaded (cached) for ${media.name}`);
-        handleImageLoad();
-    } else {
-        console.log(`[Image Load] Image not complete, waiting for load event`);
+            img.addEventListener('load', handleImageLoad);
+            img.addEventListener('error', handleImageError);
 
-        // Fallback: check if image loaded after 3 seconds
-        setTimeout(() => {
-            if (img.naturalWidth > 0) {
-                console.log(`[Image Load] Timeout fallback - image loaded:`, img.naturalWidth, 'x', img.naturalHeight);
+            if (img.complete) {
+                console.log(`[Image Load] Image already loaded (cached) for ${media.name}`);
                 handleImageLoad();
             } else {
-                console.error(`[Image Load] Timeout fallback - image failed to load for ${media.name}`);
-                handleImageError();
+                console.log(`[Image Load] Image not complete, waiting for load event`);
             }
-        }, 3000);
-    }
+        })
+        .catch((error) => {
+            console.error(`[Image Load] Fetch failed for ${media.name}:`, error);
+            console.error(`[Image Load] URL that failed:`, randomImage);
+            mediaContainer.innerHTML = `<div style="color: red; padding: 10px;">Image failed to load: ${randomImage}</div>`;
+        });
 
     return true;
 }
