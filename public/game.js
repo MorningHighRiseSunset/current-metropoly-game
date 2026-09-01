@@ -1263,7 +1263,7 @@ function updatePropertyDecisionUI() {
 
     if (isRentDecision) {
         const owner = activePropertyDecision.owner;
-        const rent = calculateRentAmount(spaceData, owner);
+        const rent = calculateRentAmount(spaceData, owner, activePropertyDecision.rentAmount, activePropertyDecision.diceRoll);
         confirmLabel = 'Pay Rent';
         passLabel = 'Pass';
         promptText = `Owned by ${owner.name}. Pay $${rent} to continue.`;
@@ -1395,13 +1395,13 @@ function openLandingPropertyModal(spaceData) {
     updatePropertyDecisionUI();
 }
 
-function beginLandingDecision({ spaceData, position, isRent = false, owner = null }) {
+function beginLandingDecision({ spaceData, position, isRent = false, owner = null, rentAmount = null, diceRoll = null }) {
     if (!spaceData || isSpectator) return;
     if (!currentPlayer) return;
     cancelClientAutoEndTurn();
     clearPropertyDecisionTimer();
     waitingForBuyResult = false;
-    activePropertyDecision = { spaceData, position, isRent, owner };
+    activePropertyDecision = { spaceData, position, isRent, owner, rentAmount, diceRoll };
 
     if (spaceData.isCasino && !currentPlayer.isAI) {
         // Check casino play count limit (max 3 times per player)
@@ -1440,11 +1440,19 @@ function startRentDecision(ownedData, position) {
         spaceData: ownedData.spaceData,
         position,
         isRent: true,
-        owner: ownedData.owner
+        owner: ownedData.owner,
+        rentAmount: ownedData.rentAmount,
+        diceRoll: ownedData.diceRoll
     });
 }
 
-function calculateRentAmount(spaceData, owner) {
+function calculateRentAmount(spaceData, owner, serverRentAmount = null, diceRoll = null) {
+    // If server provided rent amount (important for utilities), use it
+    if (serverRentAmount !== null && serverRentAmount !== undefined) {
+        console.log('[calculateRentAmount] Using server rent amount:', serverRentAmount);
+        return serverRentAmount;
+    }
+    
     if (!spaceData || !spaceData.rent) return 0;
     
     // Calculate rent based on property type and buildings
@@ -1465,6 +1473,11 @@ function calculateRentAmount(spaceData, owner) {
     const ownsAllInGroup = colorGroup.every(p => owner.properties.includes(p.position));
     if (ownsAllInGroup && (!owner.houses || !owner.houses[spaceData.position] || owner.houses[spaceData.position] === 0)) {
         rent = rent * 2; // Double rent for monopoly with no buildings
+    }
+    
+    // For utilities, need dice roll multiplier (but server should provide this)
+    if (spaceData.type === 'utility' && diceRoll) {
+        rent = rent * diceRoll.total;
     }
     
     return rent;
@@ -3707,11 +3720,21 @@ socket.on('playerMoneyUpdate', (data) => {
 
 // Handle show rent payment UI
 socket.on('showRentPayment', (data) => {
+    console.log('[showRentPayment] Received rent payment event:', data);
     if (data.playerId === myPlayerId) {
         const spaceData = data.property;
         const owner = players.find(p => p && p.id === data.ownerId);
         if (spaceData && owner) {
-            startRentDecision({ spaceData, owner }, data.position);
+            // Use the rent amount from server (important for utilities)
+            const rentData = {
+                spaceData, 
+                owner, 
+                rentAmount: data.rentAmount,
+                diceRoll: data.diceRoll
+            };
+            startRentDecision(rentData, data.position);
+        } else {
+            console.error('[showRentPayment] Missing spaceData or owner:', { spaceData, owner, data });
         }
     }
 });

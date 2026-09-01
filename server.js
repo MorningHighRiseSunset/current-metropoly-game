@@ -2083,12 +2083,36 @@ io.on('connection', (socket) => {
             if (owner) {
                 // For human players, emit event to show rent UI (manual payment)
                 if (!player.isAI) {
+                    let rent = calculateRent(landedSpace, owner, game);
+                    
+                    // Special handling for utilities - need dice roll
+                    let diceRoll = null;
+                    if (landedSpace.type === 'utility') {
+                        const roll = rollDiceWithRareDoubles(player.position);
+                        const dice1 = roll.dice1;
+                        const dice2 = roll.dice2;
+                        const diceTotal = dice1 + dice2;
+                        rent = rent * diceTotal; // Apply multiplier to dice roll
+                        diceRoll = { dice1, dice2, total: diceTotal };
+                        
+                        io.to(game.id).emit('utilityRentCalculated', {
+                            playerId: player.id,
+                            ownerId: owner.id,
+                            dice1: dice1,
+                            dice2: dice2,
+                            multiplier: rent / diceTotal,
+                            finalRent: rent
+                        });
+                    }
+                    
                     io.to(game.id).emit('showRentPayment', {
                         playerId: player.id,
                         ownerId: owner.id,
                         position: newPosition,
                         property: landedSpace,
-                        ownerName: owner.name
+                        ownerName: owner.name,
+                        rentAmount: rent,
+                        diceRoll: diceRoll
                     });
                 } else {
                     // AI players pay rent automatically
