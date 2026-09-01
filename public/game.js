@@ -2301,17 +2301,20 @@ function logVideoLoadError(video, context) {
 function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     if (!media.images || media.images.length === 0) return false;
     const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+    console.log(`[Image Load] Loading image for ${media.name}:`, randomImage);
     const img = document.createElement('img');
     img.src = randomImage;
     img.alt = media.name;
     img.loading = 'lazy';
     const imgFrame = createMediaFrame(img);
     img.addEventListener('load', () => {
+        console.log(`[Image Load] Successfully loaded image for ${media.name}`);
         mediaContainer.innerHTML = '';
         mediaContainer.appendChild(imgFrame);
         mediaCache[cacheKey] = imgFrame.cloneNode(true);
     });
     img.addEventListener('error', () => {
+        console.error(`[Image Error] Failed to load image for ${media.name}:`, randomImage);
         mediaContainer.innerHTML = '';
     });
     return true;
@@ -3531,6 +3534,11 @@ socket.on('playerMoved', (data) => {
 
         const spaceName = boardConfig[newPosition]?.name || 'unknown space';
         addLogEntry(`${getPlayerDisplayName(player)} moved to ${spaceName}`, 'player');
+
+        // Track AI move
+        if (player.isAI) {
+            addAiMove(getPlayerDisplayName(player), 'moved to', spaceName);
+        }
     }
 });
 
@@ -3586,6 +3594,11 @@ socket.on('cardDrawn', (data) => {
             showCardModal(data.cardType, data.card.message, data.action);
         }
         addLogEntry(`${getPlayerDisplayName(player)} drew ${data.cardType}: ${data.card.message}`, 'system');
+
+        // Track AI move
+        if (player.isAI) {
+            addAiMove(getPlayerDisplayName(player), `drew ${data.cardType}`, data.card.message);
+        }
     }
 });
 
@@ -3596,6 +3609,11 @@ socket.on('taxPaid', (data) => {
         player.money = data.newMoney;
         updateUI();
         addLogEntry(`${getPlayerDisplayName(player)} paid $${data.amount} for ${data.taxName}`, 'system');
+
+        // Track AI move
+        if (player.isAI) {
+            addAiMove(getPlayerDisplayName(player), 'paid tax', `$${data.amount} for ${data.taxName}`);
+        }
     }
 });
 
@@ -3662,6 +3680,11 @@ socket.on('playerSentToJail', (data) => {
         player.jailTurns = 0;
         revealPlayerToken(data.playerId);
 
+        // Track AI move
+        if (player.isAI) {
+            addAiMove(getPlayerDisplayName(player), 'sent to jail', '');
+        }
+
         if (oldPosition !== newPosition) {
             player.position = oldPosition;
             animateTokenMove(
@@ -3708,14 +3731,19 @@ socket.on('playerOutOfJail', (data) => {
     if (player) {
         player.inJail = false;
         player.jailTurns = 0;
-        
+
+        // Track AI move
+        if (player.isAI) {
+            addAiMove(getPlayerDisplayName(player), 'got out of jail', data.method);
+        }
+
         // Reset pay jail progress when player gets out of jail
         if (data.playerId === myPlayerId) {
             payJailInProgress = false;
             // Reset canRollDice to ensure proper state
             canRollDice = false;
         }
-        
+
         updateUI();
         addLogEntry(`${getPlayerDisplayName(player)} got out of jail (${data.method})`, 'system');
         
@@ -3777,6 +3805,11 @@ socket.on('passedGo', (data) => {
         player.money = data.newMoney;
         updateUI();
         addLogEntry(`${getPlayerDisplayName(player)} collected $${data.amount} for passing GO!`, 'system');
+
+        // Track AI move
+        if (player.isAI) {
+            addAiMove(getPlayerDisplayName(player), 'passed GO', `collected $${data.amount}`);
+        }
     }
 });
 
