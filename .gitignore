@@ -28,3 +28,6 @@ Thumbs.db
 .env*.local
 
 .vercel
+
+# Videos (loaded from CDN)
+Videos/
