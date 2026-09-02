@@ -1019,8 +1019,11 @@ function handlePlayerLanding(playerId, newPosition) {
 
     // Show jail proceed UI specifically for the current player (only for visiting jail, not go to jail)
     // Only show if this is not a "send to jail" situation (which happens from position 30)
-    if (newPosition === 10 && data.reason !== 'sentToJail') {
-        if (playerId === myPlayerId) {
+    if (newPosition === 10) {
+        const player = players.find(p => p && p.id === playerId);
+        // Only show proceed UI if player is not already in jail (meaning they just visited)
+        // If they're already in jail, it means they were sent there and their turn is already handled
+        if (player && !player.inJail && playerId === myPlayerId) {
             showJailProceedUI(newPosition);
         }
     }
