@@ -718,7 +718,7 @@ function executeAIRollDice(game, aiPlayer) {
                 aiPlayer.money -= 50;
                 aiPlayer.inJail = false;
                 aiPlayer.jailTurns = 0;
-                
+
                 io.to(game.id).emit('jailPaid', {
                     playerId: aiPlayer.id,
                     newMoney: aiPlayer.money,
@@ -732,9 +732,44 @@ function executeAIRollDice(game, aiPlayer) {
                     players: game.players
                 });
 
-                // Move AI player
+                // Roll new dice after paying to get out of jail
+                const newRoll = rollDiceWithRareDoubles(aiPlayer.position);
+                const newDice1 = newRoll.dice1;
+                const newDice2 = newRoll.dice2;
+                const newTotal = newDice1 + newDice2;
+
+                io.to(game.id).emit('diceRolled', {
+                    playerId: aiPlayer.id,
+                    roll: { dice1: newDice1, dice2: newDice2, total: newTotal },
+                    oldPosition: aiPlayer.position,
+                    newPosition: aiPlayer.position,
+                    gameState: game.gameState,
+                    players: game.players
+                });
+
+                // Move AI player with new roll
                 const oldPosition = aiPlayer.position;
-                aiPlayer.position = (aiPlayer.position + total) % 40;
+                aiPlayer.position = (aiPlayer.position + newTotal) % 40;
+
+                // Check for GO bonus
+                if (oldPosition > aiPlayer.position || aiPlayer.position === 0) {
+                    aiPlayer.money += 200;
+                    io.to(game.id).emit('goBonus', {
+                        playerId: aiPlayer.id,
+                        amount: 200,
+                        newMoney: aiPlayer.money,
+                        players: game.players
+                    });
+                    checkGameWinner(game);
+                }
+
+                io.to(game.id).emit('playerMoved', {
+                    playerId: aiPlayer.id,
+                    oldPosition: oldPosition,
+                    newPosition: aiPlayer.position,
+                    players: game.players,
+                    message: `${aiPlayer.name} paid $50 to leave jail and moved!`
+                });
 
                 setTimeout(() => {
                     gameRuntime.checkRentPayment(game, aiPlayer, oldPosition);
