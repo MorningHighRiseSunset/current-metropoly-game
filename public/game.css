@@ -1821,7 +1821,7 @@ body {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 @keyframes tokenBounce {

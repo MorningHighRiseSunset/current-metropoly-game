@@ -41,6 +41,8 @@ const CASINO_GAMES_BY_POSITION = {
 
 const AI_LANDING_VIDEO_MS = 10000;
 const AI_CASINO_PLAY_MS = 2200;
+const MAX_CASINO_PLAYS_HUMAN = 5;
+const MAX_CASINO_PLAYS_AI = 3;
 
 // Get local IP addresses for external access
 function getLocalIPAddresses() {
@@ -934,6 +936,22 @@ function scheduleAiPropertyLanding(game, aiPlayer, property) {
 
     setTimeout(() => {
         if (isCasino) {
+            // Track AI casino play counts
+            if (!game.aiCasinoPlayCounts) {
+                game.aiCasinoPlayCounts = {};
+            }
+            if (!game.aiCasinoPlayCounts[aiPlayer.id]) {
+                game.aiCasinoPlayCounts[aiPlayer.id] = 0;
+            }
+
+            // Check AI casino play limit (max 3)
+            if (game.aiCasinoPlayCounts[aiPlayer.id] >= MAX_CASINO_PLAYS_AI) {
+                // Skip casino, just decide on property
+                finishAiPropertyDecision(game, aiPlayer, property, willBuy);
+                return;
+            }
+
+            game.aiCasinoPlayCounts[aiPlayer.id]++;
             game.pendingAiCasino = { playerId: aiPlayer.id, winnings: null };
 
             io.to(game.id).emit('aiCasinoStarted', {

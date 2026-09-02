@@ -89,7 +89,7 @@ let isAiVsAiGame = false;
 let activeAiLandingPlayerId = null;
 let observerCasinoStartBalance = null;
 let activePlayerCasinoGame = null; // Track if human player is actively playing casino
-let casinoPlayCounts = {}; // Track how many times each player has played casino (max 3)
+let casinoPlayCounts = {}; // Track how many times each player has played casino (max 5 for humans, 3 for AI)
 let manuallyOpenedModal = false; // Track if property modal was opened by manual click
 let aiMoves = []; // Track last 5 AI moves
 let aiMovesEl = null; // DOM element for AI moves display
@@ -1039,8 +1039,8 @@ function handlePlayerLanding(playerId, newPosition) {
                     casinoPlayCounts[playerId] = 0;
                 }
 
-                if (casinoPlayCounts[playerId] >= 3) {
-                    alert('You have reached the maximum of 3 casino plays per game.');
+                if (casinoPlayCounts[playerId] >= 5) {
+                    alert('You have reached the maximum of 5 casino plays per game.');
                 } else {
                     casinoPlayCounts[playerId]++;
                     openCasinoGame(casinoSpace.casinoGame);
@@ -1408,14 +1408,14 @@ function beginLandingDecision({ spaceData, position, isRent = false, owner = nul
     activePropertyDecision = { spaceData, position, isRent, owner, rentAmount, diceRoll };
 
     if (spaceData.isCasino && !currentPlayer.isAI) {
-        // Check casino play count limit (max 3 times per player)
+        // Check casino play count limit (max 5 times per player for humans)
         const playerId = currentPlayer.id || myPlayerId;
         if (!casinoPlayCounts[playerId]) {
             casinoPlayCounts[playerId] = 0;
         }
 
-        if (casinoPlayCounts[playerId] >= 3) {
-            alert('You have reached the maximum of 3 casino plays per game.');
+        if (casinoPlayCounts[playerId] >= 5) {
+            alert('You have reached the maximum of 5 casino plays per game.');
             openLandingPropertyModal(spaceData);
             return;
         }
@@ -2561,16 +2561,21 @@ function showPropertyInfo(spaceData, options = {}) {
                         triedVideos.push(nextVideo);
                         loadVideoWithFallback(nextVideo);
                     } else {
-                        // All videos failed, fall back to images
+                        // All videos failed, fall back to images only for utilities
                         logVideoLoadError(video, {
                             propertyName: media.name,
                             position: spaceData.position,
                             intendedSrc: videoUrl,
                             fromCache: false
                         });
-                        if (!showPropertyImages(media, spaceData, mediaContainer, cacheKey) && loadingIndicator) {
+                        if (spaceData.type === 'utility') {
+                            if (!showPropertyImages(media, spaceData, mediaContainer, cacheKey) && loadingIndicator) {
+                                mediaContainer.innerHTML = '';
+                                loadingIndicator.textContent = 'Media unavailable';
+                            }
+                        } else {
                             mediaContainer.innerHTML = '';
-                            loadingIndicator.textContent = 'Media unavailable';
+                            if (loadingIndicator) loadingIndicator.textContent = 'Media unavailable';
                         }
                     }
                 });
@@ -2615,10 +2620,14 @@ function showPropertyInfo(spaceData, options = {}) {
         } else if (mediaCache[cacheKey]) {
             console.log(`[showPropertyInfo] Loading from cache for ${spaceData.name}`);
             const cloned = mediaCache[cacheKey].cloneNode(true);
-            
+
             // Apply duration limits to cached videos
             const cachedVideo = cloned.querySelector('video');
             if (cachedVideo) {
+                // Track cached video so it can be stopped
+                currentPropertyVideo = cachedVideo;
+                currentPropertyMediaPosition = spaceData.position;
+
                 if (spaceData.name === 'Bet MGM') {
                     cachedVideo.addEventListener('timeupdate', () => {
                         if (cachedVideo.currentTime >= 9) {
@@ -2640,7 +2649,7 @@ function showPropertyInfo(spaceData, options = {}) {
                     });
                 }
             }
-            
+
             mediaContainer.appendChild(cloned);
         } else if (media.images && media.images.length > 0 && spaceData.type === 'utility') {
             console.log(`[showPropertyInfo] Loading images for ${spaceData.name}`);
@@ -4089,10 +4098,11 @@ socket.on('aiLandingStarted', (data) => {
     if (!spaceData) return;
 
     const label = `${getPlayerDisplayName(player)} (AI) landed on ${spaceData.name}`;
+    const isUtility = spaceData.type === 'utility';
     showPropertyInfo(spaceData, {
         showDecisionActions: false,
         viewerLabel: data.willBuy
-            ? `${label} — watching property video, then may buy...`
+            ? `${label} — ${isUtility ? 'viewing property' : 'watching property video'}, then may buy...`
             : `${label} — viewing property...`,
         isAI: true
     });
