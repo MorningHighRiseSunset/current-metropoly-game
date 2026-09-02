@@ -4520,6 +4520,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (cardModal) {
                     cardModal.classList.add('hidden');
                 }
+                // End turn after closing card modal
+                if (gameState && gameState.currentPlayer === myPlayerId) {
+                    endTurnNow();
+                }
             });
         }
     }
