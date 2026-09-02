@@ -4087,6 +4087,7 @@ socket.on('gameWon', (data) => {
 });
 
 socket.on('aiLandingStarted', (data) => {
+    console.log('[aiLandingStarted] Received:', data);
     if (data.players) {
         players = data.players;
     }
@@ -4095,8 +4096,12 @@ socket.on('aiLandingStarted', (data) => {
     // Show AI landing UI with property info
     const player = players.find((p) => p && p.id === data.playerId);
     const spaceData = boardConfig[data.position];
-    if (!spaceData) return;
+    if (!spaceData) {
+        console.error('[aiLandingStarted] Space data not found for position:', data.position);
+        return;
+    }
 
+    console.log('[aiLandingStarted] Showing property info for:', spaceData.name);
     const label = `${getPlayerDisplayName(player)} (AI) landed on ${spaceData.name}`;
     const isUtility = spaceData.type === 'utility';
     showPropertyInfo(spaceData, {
