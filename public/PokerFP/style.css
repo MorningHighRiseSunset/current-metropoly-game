@@ -7,15 +7,15 @@ body {
 }
 
 .poker-container {
-	width: 400px;
+	width: 340px;
 	margin: 40px auto;
 	background: linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);
 	border-radius: 18px;
 	box-shadow: 0 4px 24px #000a, 0 0 0 2px #8b5cf6;
-	padding: 24px 18px 18px 18px;
-	min-height: 600px;
+	padding: 20px 16px 16px 16px;
+	min-height: 550px;
 	scrollbar-width: none;
-	transform: scale(1.02);
+	transform: scale(1.12);
 	transform-origin: center center;
 }
 
@@ -62,15 +62,15 @@ h1 {
 
 
 .card {
-	width: 54px;
-	height: 78px;
+	width: 58px;
+	height: 82px;
 	background: #fff;
 	border-radius: 7px;
 	box-shadow: 0 2px 8px #0005;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 1.5em;
+	font-size: 1.6em;
 	color: #222;
 	position: relative;
 	border: 2px solid #b2b2b2;

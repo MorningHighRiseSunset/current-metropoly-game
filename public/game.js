@@ -1006,7 +1006,8 @@ function handlePlayerLanding(playerId, newPosition) {
         const isSpecialSpace = spaceData.type === 'chance' || spaceData.type === 'community-chest' || spaceData.type === 'tax';
 
         // Check if property is owned by another player (rent situation)
-        const isOwned = spaceData.owner && spaceData.owner !== playerId;
+        const owner = players.find(p => p && p.properties && p.properties.includes(newPosition) && p.id !== playerId);
+        const isOwned = !!owner;
 
         if ((hasMedia || isProperty || isJail) && !isSpecialSpace && !isOwned) {
             showPropertyInfo(spaceData);
