@@ -3828,12 +3828,11 @@ socket.on('playerOutOfJail', (data) => {
 
         updateUI();
         addLogEntry(`${getPlayerDisplayName(player)} got out of jail (${data.method})`, 'system');
-        
+
         // If this is the current player and they got out of jail, show roll dice button
-            const rollDiceBtn = document.getElementById('rollDiceBtn');
-            if (rollDiceBtn) {
-                rollDiceBtn.style.display = 'block';
-            }
+        const rollDiceBtn = document.getElementById('rollDiceBtn');
+        if (rollDiceBtn) {
+            rollDiceBtn.style.display = 'block';
         }
     }
 });
