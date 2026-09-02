@@ -997,6 +997,7 @@ function handlePlayerLanding(playerId, newPosition) {
     // Show property info for spaces with media, properties, or jail (only for human player)
     // Skip chance, community chest, tax, and other special spaces that have their own UI
     // Also skip if modal was already opened manually by clicking on the square
+    // Skip if property is owned (rent UI will be shown separately)
     const spaceData = boardConfig[newPosition];
     if (spaceData && playerId === myPlayerId && !manuallyOpenedModal) {
         const hasMedia = tileHasLandingMedia(newPosition);
@@ -1004,7 +1005,10 @@ function handlePlayerLanding(playerId, newPosition) {
         const isJail = newPosition === 10 || newPosition === 30;
         const isSpecialSpace = spaceData.type === 'chance' || spaceData.type === 'community-chest' || spaceData.type === 'tax';
 
-        if ((hasMedia || isProperty || isJail) && !isSpecialSpace) {
+        // Check if property is owned by another player (rent situation)
+        const isOwned = spaceData.owner && spaceData.owner !== playerId;
+
+        if ((hasMedia || isProperty || isJail) && !isSpecialSpace && !isOwned) {
             showPropertyInfo(spaceData);
         }
     }
