@@ -994,6 +994,7 @@ function tileHasLandingMedia(position) {
 }
 
 function handlePlayerLanding(playerId, newPosition) {
+    console.log('[handlePlayerLanding] Called - playerId:', playerId, 'newPosition:', newPosition, 'gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
     // Show property info for spaces with media, properties, or jail (only for human player)
     // Skip chance, community chest, tax, and other special spaces that have their own UI
     // Also skip if modal was already opened manually by clicking on the square
@@ -1172,6 +1173,7 @@ function showJailProceedUI(position) {
 }
 
 function handleJailProceed() {
+    console.log('[handleJailProceed] Called - gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
     // Stop any playing video/audio before proceeding
     if (currentPropertyVideo) {
         stopVideoElement(currentPropertyVideo);
@@ -1183,6 +1185,8 @@ function handleJailProceed() {
         // Ensure we can actually end the turn
         if (canEndTurnNow()) {
             endTurnNow();
+        } else {
+            console.log('[handleJailProceed] Cannot end turn - canEndTurnNow returned false');
         }
     }
 }
@@ -2545,7 +2549,7 @@ function showPropertyInfo(spaceData, options = {}) {
                 video.controls = true;
                 video.loop = false;
                 video.preload = 'metadata';
-                video.muted = true;
+                video.muted = false;
                 video.autoplay = true;
                 video.src = videoUrl;
                 pendingPropertyVideo = video;
@@ -2667,7 +2671,9 @@ function showPropertyInfo(spaceData, options = {}) {
             mediaContainer.appendChild(cloned);
 
             // Play the cached video after appending (for viewing, not auto-play)
-            cachedVideo.play().catch(() => {});
+            if (cachedVideo) {
+                cachedVideo.play().catch(() => {});
+            }
         } else if (media.images && media.images.length > 0 && spaceData.type === 'utility') {
             console.log(`[showPropertyInfo] Loading images for ${spaceData.name}`);
             showPropertyImages(media, spaceData, mediaContainer, cacheKey);
@@ -2981,18 +2987,17 @@ function updateUI(options = {}) {
 
         const isPlaying = gameState.status === 'playing' || !!gameState.currentPlayer;
         const myPlayerData = players.find(p => p && p.id === myPlayerId);
-        canRollDice = Boolean(
-            isPlaying &&
-            myPlayerId &&
-            gameState.currentPlayer &&
-            myPlayerId === gameState.currentPlayer &&
-            gameState.diceRolled !== undefined && !gameState.diceRolled &&
-            allHumanPlayersSelectedTokens // Can only roll if all human players have selected tokens
-        );
+        if (gameState && gameState.currentPlayer === myPlayerId) {
+            canRollDice = (
+                gameState.diceRolled !== undefined && !gameState.diceRolled &&
+                allHumanPlayersSelectedTokens // Can only roll if all human players have selected tokens
+            );
+            console.log('[updateUI] Set canRollDice:', canRollDice, 'gameState.diceRolled:', gameState.diceRolled, 'allHumanPlayersSelectedTokens:', allHumanPlayersSelectedTokens);
 
-        const rollDiceBtn = document.getElementById('rollDiceBtn');
-        if (rollDiceBtn) {
-            rollDiceBtn.disabled = !canRollDice;
+            const rollDiceBtn = document.getElementById('rollDiceBtn');
+            if (rollDiceBtn) {
+                rollDiceBtn.disabled = !canRollDice;
+            }
         }
 
         const endTurnBtn = document.getElementById('endTurnBtn');
@@ -3104,6 +3109,11 @@ function handleDiceRolledEvent(data) {
 
     // Update game state from server
     if (data.gameState) {
+        console.log('[handleDiceRolledEvent] Updating gameState:', {
+            diceRolled: data.gameState.diceRolled,
+            currentPlayer: data.gameState.currentPlayer,
+            myPlayerId: myPlayerId
+        });
         gameState = data.gameState;
     }
 
@@ -3826,6 +3836,7 @@ socket.on('playerSentToJail', (data) => {
 });
 
 socket.on('playerOutOfJail', (data) => {
+    console.log('[playerOutOfJail] Received - playerId:', data.playerId, 'method:', data.method, 'gameState.diceRolled:', gameState?.diceRolled);
     const player = players.find(p => p && p.id === data.playerId);
     if (player) {
         player.inJail = false;
@@ -3838,6 +3849,7 @@ socket.on('playerOutOfJail', (data) => {
 
         // Reset canRollDice to ensure proper state
         if (data.playerId === myPlayerId) {
+            console.log('[playerOutOfJail] Resetting canRollDice to false for current player');
             canRollDice = false;
         }
 
@@ -3926,6 +3938,8 @@ function showCardModal(cardType, message, action) {
         </div>
     `;
     cardModal.classList.remove('hidden');
+
+    console.log('[showCardModal] Card modal shown - gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
 }
 
 // Show doubles notification
@@ -4343,8 +4357,11 @@ function setupChatListeners() {
 const rollDiceBtn = document.getElementById('rollDiceBtn');
 if (rollDiceBtn) {
     rollDiceBtn.addEventListener('click', () => {
+        console.log('[rollDiceBtn] Clicked - canRollDice:', canRollDice, 'gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
         if (canRollDice) {
             socket.emit('rollDice');
+        } else {
+            console.log('[rollDiceBtn] Cannot roll - canRollDice is false');
         }
     });
 }
