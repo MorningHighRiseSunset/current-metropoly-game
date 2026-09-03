@@ -2588,7 +2588,14 @@ function showPropertyInfo(spaceData, options = {}) {
                         return;
                     }
                     pendingPropertyVideo = null;
-                    mediaCache[cacheKey] = frame.cloneNode(true);
+                    const cachedFrame = frame.cloneNode(true);
+                    // Remove autoplay from cached video to prevent autoplay when cloned
+                    const cachedVideo = cachedFrame.querySelector('video');
+                    if (cachedVideo) {
+                        cachedVideo.removeAttribute('autoplay');
+                        cachedVideo.autoplay = false;
+                    }
+                    mediaCache[cacheKey] = cachedFrame;
                     currentPropertyVideo = video;
                     
                     // Set video duration limits based on property
@@ -2626,6 +2633,11 @@ function showPropertyInfo(spaceData, options = {}) {
             // Apply duration limits to cached videos
             const cachedVideo = cloned.querySelector('video');
             if (cachedVideo) {
+                // Stop autoplay for cached videos to prevent them from playing automatically
+                cachedVideo.removeAttribute('autoplay');
+                cachedVideo.autoplay = false;
+                cachedVideo.pause();
+
                 // Track cached video so it can be stopped
                 currentPropertyVideo = cachedVideo;
                 currentPropertyMediaPosition = spaceData.position;
@@ -2653,6 +2665,9 @@ function showPropertyInfo(spaceData, options = {}) {
             }
 
             mediaContainer.appendChild(cloned);
+
+            // Play the cached video after appending (for viewing, not auto-play)
+            cachedVideo.play().catch(() => {});
         } else if (media.images && media.images.length > 0 && spaceData.type === 'utility') {
             console.log(`[showPropertyInfo] Loading images for ${spaceData.name}`);
             showPropertyImages(media, spaceData, mediaContainer, cacheKey);
