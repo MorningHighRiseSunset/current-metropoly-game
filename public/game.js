@@ -698,6 +698,46 @@ function cancelPendingRollTokenMove(playerId) {
     cancelTokenAnimation(playerId);
 }
 
+function executePendingRollMove(pending) {
+    if (!pending || pending.cancelled || pending.moveStarted) return;
+    const move = pending.playerMoveData;
+    if (!move) return;
+
+    pending.moveStarted = true;
+    pending.playerMoveData = null;
+
+    const { playerId: movePlayerId, oldPosition: moveOldPosition, newPosition: moveNewPosition, direction } = move;
+    const player = players.find(p => p && p.id === movePlayerId);
+    const afterMove = () => {
+        handlePlayerLanding(movePlayerId, moveNewPosition);
+        if (typeof pending.onComplete === 'function') {
+            pending.onComplete();
+        }
+    };
+
+    if (!player) {
+        afterMove();
+        return;
+    }
+
+    if (moveOldPosition !== moveNewPosition) {
+        player.position = moveOldPosition;
+        animateTokenMove(movePlayerId, moveOldPosition, moveNewPosition, afterMove, direction);
+    } else {
+        player.position = moveNewPosition;
+        update3DTokenPositions();
+        afterMove();
+    }
+
+    updateTokens();
+
+    const spaceName = boardConfig[moveNewPosition]?.name || 'unknown space';
+    addLogEntry(`${getPlayerDisplayName(player)} moved to ${spaceName}`, 'player');
+    if (player.isAI) {
+        addAiMove(getPlayerDisplayName(player), 'moved to', spaceName);
+    }
+}
+
 // Three.js BoxGeometry face order: +X, -X, +Y, -Y, +Z, -Z
 // 3D board layout (matches CSS 11×11 grid proportions)
 const BOARD_LAYOUT = {
@@ -1027,6 +1067,11 @@ function handlePlayerLanding(playerId, newPosition) {
         if (player && !player.inJail && playerId === myPlayerId) {
             showJailProceedUI(newPosition);
         }
+    }
+
+    // GO / Free Parking have no buy/rent UI — show Proceed so the turn can end
+    if ((newPosition === 0 || newPosition === 20) && playerId === myPlayerId) {
+        showJailProceedUI(newPosition);
     }
 
     // Show buy modal for unowned properties (this will show after property modal)
@@ -3115,6 +3160,11 @@ function handleDiceRolledEvent(data) {
             myPlayerId: myPlayerId
         });
         gameState = data.gameState;
+        if (gameState.diceRolled && gameState.currentPlayer === myPlayerId) {
+            canRollDice = false;
+            const rollBtn = document.getElementById('rollDiceBtn');
+            if (rollBtn) rollBtn.disabled = true;
+        }
     }
 
     if (data.players) {
@@ -3159,13 +3209,13 @@ function handleDiceRolledEvent(data) {
                 DiceRollSequenceManager.cancelSequence(playerId);
                 return;
             }
-            delete pendingRollTokenMoves[playerId];
 
             // Log the dice roll
             addLogEntry(message, 'system');
 
-            // Token animation will be handled by playerMoved event
-            // Just wait for it to complete before triggering property decision
+            // Token animation may already be stored on this pending object (playerMoved
+            // usually arrives during the dice animation). Keep the same object so
+            // playerMoveData and onComplete stay together.
             const onTokenAnimationComplete = () => {
                 if (!isDoublesRoll(data)) {
                     onDiceRollSequenceComplete(playerId, newPosition, data);
@@ -3183,39 +3233,11 @@ function handleDiceRolledEvent(data) {
                 }
             };
 
-            // Store completion callback for playerMoved to use
-            pendingRollTokenMoves[playerId] = {
-                cancelled: false,
-                onComplete: onTokenAnimationComplete
-            };
+            pending.onComplete = onTokenAnimationComplete;
+            pending.diceLanded = true;
 
-            // Execute the stored player move animation after dice land
-            if (pending && pending.playerMoveData) {
-                const { playerId: movePlayerId, oldPosition: moveOldPosition, newPosition: moveNewPosition, direction } = pending.playerMoveData;
-                const player = players.find(p => p && p.id === movePlayerId);
-                if (player) {
-                    const afterMove = () => {
-                        handlePlayerLanding(movePlayerId, moveNewPosition);
-                        if (pending.onComplete) {
-                            pending.onComplete();
-                        }
-                    };
-
-                    if (moveOldPosition !== moveNewPosition) {
-                        player.position = moveOldPosition;
-                        animateTokenMove(movePlayerId, moveOldPosition, moveNewPosition, afterMove, direction);
-                    } else {
-                        player.position = moveNewPosition;
-                        update3DTokenPositions();
-                        afterMove();
-                    }
-
-                    updateTokens();
-
-                    const spaceName = boardConfig[moveNewPosition]?.name || 'unknown space';
-                    addLogEntry(`${getPlayerDisplayName(player)} moved to ${spaceName}`, 'player');
-                }
-                delete pending.playerMoveData;
+            if (pending.playerMoveData) {
+                executePendingRollMove(pending);
             }
         }
     });
@@ -3581,22 +3603,23 @@ socket.on('playerMoved', (data) => {
 
     // Don't cancel if this is the rolling player - diceRolled handler will animate
     const pending = pendingRollTokenMoves[playerId];
-    if (!pending) {
-        cancelPendingRollTokenMove(playerId);
-    } else {
-        // This is the rolling player, delay animation until after dice completes
+    if (pending && !pending.cancelled) {
         if (serverPlayers) {
             players = serverPlayers;
         }
-        // Store the move data to execute after dice animation
         pending.playerMoveData = {
             playerId,
             newPosition,
             direction,
             oldPosition: data.oldPosition !== undefined ? data.oldPosition : (players.find(p => p && p.id === playerId)?.position || 0)
         };
+        // Dice already finished: run the move now. Otherwise wait for onLand.
+        if (pending.diceLanded) {
+            executePendingRollMove(pending);
+        }
         return;
     }
+    cancelPendingRollTokenMove(playerId);
 
     const existingPlayer = players.find(p => p && p.id === playerId);
     const oldPosition = data.oldPosition !== undefined
@@ -4358,7 +4381,9 @@ const rollDiceBtn = document.getElementById('rollDiceBtn');
 if (rollDiceBtn) {
     rollDiceBtn.addEventListener('click', () => {
         console.log('[rollDiceBtn] Clicked - canRollDice:', canRollDice, 'gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
-        if (canRollDice) {
+        if (canRollDice && !(gameState && gameState.diceRolled)) {
+            canRollDice = false;
+            rollDiceBtn.disabled = true;
             socket.emit('rollDice');
         } else {
             console.log('[rollDiceBtn] Cannot roll - canRollDice is false');
