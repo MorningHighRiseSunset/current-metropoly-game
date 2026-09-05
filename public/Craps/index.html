@@ -285,19 +285,13 @@
       }
     }
     
-    // Get balance from URL parameter or use default
-    function getBalanceFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      return parseInt(params.get('balance')) || window.playerMoney || 1000;
-    }
-    
     // Get observer mode from URL parameter
     function isObserverMode() {
       const params = new URLSearchParams(window.location.search);
       return params.get('observer') === 'true';
     }
     
-    // Auto-initialize for both standalone and iframe usage
+    // Auto-initialize for standalone usage only
     document.addEventListener('DOMContentLoaded', function() {
       // Add iframe mode class if needed
       if (isInIframe()) {
@@ -307,10 +301,12 @@
       // Set observer mode flag for AI auto-play
       window.__isObserverMode = isObserverMode();
       
-      const container = document.querySelector('.craps-game');
-      if (container && window.initCrapsMinigame) {
-        const balance = getBalanceFromURL();
-        window.initCrapsMinigame(container, balance, window.updateMainGameBalance);
+      // Only auto-initialize in standalone mode (not iframe)
+      if (!isInIframe()) {
+        const container = document.querySelector('.craps-game');
+        if (container && window.initCrapsMinigame) {
+          window.initCrapsMinigame(container, 1000, null);
+        }
       }
     });
   </script>

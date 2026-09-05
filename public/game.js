@@ -1083,18 +1083,8 @@ function handlePlayerLanding(playerId, newPosition) {
             // Check if landing on a casino property (owned or unowned)
             const casinoSpace = boardConfig[newPosition];
             if (casinoSpace && casinoSpace.isCasino && !currentPlayer.isAI) {
-                // Open casino game for owned casino properties
-                const playerId = currentPlayer.id || myPlayerId;
-                if (!casinoPlayCounts[playerId]) {
-                    casinoPlayCounts[playerId] = 0;
-                }
-
-                if (casinoPlayCounts[playerId] >= 5) {
-                    alert('You have reached the maximum of 5 casino plays per game.');
-                } else {
-                    casinoPlayCounts[playerId]++;
-                    openCasinoGame(casinoSpace.casinoGame);
-                }
+                // Open casino game for casino properties
+                openCasinoGame(casinoSpace.casinoGame);
             }
         }
         // Rent payment UI is now handled by server via showRentPayment event
@@ -1459,21 +1449,7 @@ function beginLandingDecision({ spaceData, position, isRent = false, owner = nul
     activePropertyDecision = { spaceData, position, isRent, owner, rentAmount, diceRoll };
 
     if (spaceData.isCasino && !currentPlayer.isAI) {
-        // Check casino play count limit (max 5 times per player for humans)
-        const playerId = currentPlayer.id || myPlayerId;
-        if (!casinoPlayCounts[playerId]) {
-            casinoPlayCounts[playerId] = 0;
-        }
-
-        if (casinoPlayCounts[playerId] >= 5) {
-            alert('You have reached the maximum of 5 casino plays per game.');
-            openLandingPropertyModal(spaceData);
-            return;
-        }
-
-        // Increment play count
-        casinoPlayCounts[playerId]++;
-        
+        // Open casino game for casino properties
         if (propertyModal) propertyModal.classList.add('hidden');
         cleanupPropertyVideo();
         openCasinoGame(spaceData.casinoGame);
@@ -2659,6 +2635,12 @@ function showPropertyInfo(spaceData, options = {}) {
                                 video.currentTime = video.duration - 10;
                             }
                         }, { once: true });
+                        // Ensure Sphere video plays until the end
+                        video.addEventListener('timeupdate', () => {
+                            if (video.currentTime >= video.duration - 0.5) {
+                                video.pause();
+                            }
+                        });
                     } else {
                         // General 10-second limit for all other videos
                         video.addEventListener('timeupdate', () => {
@@ -2701,6 +2683,12 @@ function showPropertyInfo(spaceData, options = {}) {
                             cachedVideo.currentTime = cachedVideo.duration - 10;
                         }
                     }, { once: true });
+                    // Ensure Sphere video plays until the end
+                    cachedVideo.addEventListener('timeupdate', () => {
+                        if (cachedVideo.currentTime >= cachedVideo.duration - 0.5) {
+                            cachedVideo.pause();
+                        }
+                    });
                 } else {
                     // General 10-second limit for all other videos
                     cachedVideo.addEventListener('timeupdate', () => {
