@@ -3,7 +3,7 @@ class CrapsGame {
   constructor() {
     this.balance = 1000;
     this.currentBet = 0;
-    this.selectedChip = 0;
+    this.selectedChip = window.__selectedChip || 0; // Use synced chip value if available
     this.bets = {};
     this.point = null;
     this.gamePhase = 'come-out'; // 'come-out' or 'point'
@@ -47,6 +47,7 @@ class CrapsGame {
     document.querySelectorAll('.chip').forEach(chip => {
       chip.addEventListener('click', () => {
         this.selectedChip = parseInt(chip.dataset.value);
+        window.__selectedChip = this.selectedChip; // Sync across minigames
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
       });

@@ -4,7 +4,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
     let currentBets = { PLAYER: 0, BANKER: 0, TIE: 0, PLAYER_PAIR: 0, BANKER_PAIR: 0 };
     let betChipValues = { PLAYER: 0, BANKER: 0, TIE: 0, PLAYER_PAIR: 0, BANKER_PAIR: 0 }; // Track which chip value was used for each bet
-    let selectedChip = 25;
+    let selectedChip = window.__selectedChip || 25; // Use synced chip value if available
     let playerHand = [];
     let bankerHand = [];
     let shoe = [];
@@ -254,6 +254,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     // --- Game actions ---
     window.baccaratSelectChip = (value) => {
         selectedChip = value;
+        window.__selectedChip = value; // Sync across minigames
         render();
     };
 
