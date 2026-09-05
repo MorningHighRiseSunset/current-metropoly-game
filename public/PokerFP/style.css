@@ -7,7 +7,8 @@ body {
 }
 
 .poker-container {
-	width: 240px;
+	width: 100%;
+	max-width: 400px;
 	margin: 40px auto;
 	background: linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);
 	border-radius: 18px;
@@ -15,8 +16,6 @@ body {
 	padding: 18px 14px 14px 14px;
 	min-height: 500px;
 	scrollbar-width: none;
-	transform: scale(1.6);
-	transform-origin: center center;
 }
 
 .poker-container::-webkit-scrollbar {
