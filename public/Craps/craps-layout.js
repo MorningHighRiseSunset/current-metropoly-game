@@ -551,6 +551,12 @@ window.initCrapsMinigame = function(container, playerMoney, syncCasinoBalance) {
 window.__crapsAutoPlay = function(betAmount) {
   if (!window.crapsGameInstance) return;
   
+  // Only auto-play if in observer mode (AI player)
+  if (window.__isObserverMode !== true) {
+    console.log('[Craps] Auto-play blocked - not in observer mode');
+    return;
+  }
+  
   const game = window.crapsGameInstance;
   
   // Select a chip value based on the bet amount

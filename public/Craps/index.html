@@ -291,12 +291,21 @@
       return parseInt(params.get('balance')) || window.playerMoney || 1000;
     }
     
+    // Get observer mode from URL parameter
+    function isObserverMode() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('observer') === 'true';
+    }
+    
     // Auto-initialize for both standalone and iframe usage
     document.addEventListener('DOMContentLoaded', function() {
       // Add iframe mode class if needed
       if (isInIframe()) {
         document.body.classList.add('iframe-mode');
       }
+      
+      // Set observer mode flag for AI auto-play
+      window.__isObserverMode = isObserverMode();
       
       const container = document.querySelector('.craps-game');
       if (container && window.initCrapsMinigame) {

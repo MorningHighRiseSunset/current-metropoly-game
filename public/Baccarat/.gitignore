@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*~
+*.log
+.DS_Store
+.env
+.env.*
+dist
+.vscode
+.idea
+.wrangler
+.playwright-cli/
+output/

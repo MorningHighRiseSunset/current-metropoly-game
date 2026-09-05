@@ -1692,7 +1692,7 @@ function openCasinoGame(gameName, observerOptions = null) {
     }
 
     // Load casino game in iframe with initialization parameters
-    const gamePath = `/${gameName}/index.html`;
+    const gamePath = `/${gameName}/index.html?observer=${isObserver ? 'true' : 'false'}`;
     
     // Create iframe without src first to avoid race condition
     const iframe = document.createElement('iframe');
