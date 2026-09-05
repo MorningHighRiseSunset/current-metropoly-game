@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Craps Layout</title>
+  <link rel="stylesheet" href="craps-layout.css">
+</head>
+<body>
+  <div class="table">
+    <div class="table-content">
+      <!-- Left side "No Call Bets" -->
+      <div class="far-left">
+        No Call Bets
+      </div>
+
+      <!-- Main center -->
+      <div class="main">
+        <div class="top-row">
+          <div class="dc betting-area" data-bet-type="dont-come">DC</div>
+          <div class="betting-area" data-bet-type="place-4">4</div>
+          <div class="betting-area" data-bet-type="place-5">5</div>
+          <div class="betting-area" data-bet-type="place-6">6</div>
+          <div class="betting-area" data-bet-type="place-8">8</div>
+          <div class="betting-area" data-bet-type="place-9">9</div>
+          <div class="betting-area" data-bet-type="place-10">10</div>
+          <div class="betting-area" data-bet-type="on">ON</div>
+        </div>
+        <div class="dont-pass betting-area" data-bet-type="dont-pass">DON'T PASS BAR 12</div>
+        <div class="come betting-area" data-bet-type="come">C O M E</div>
+        <div class="field betting-area" data-bet-type="field">
+          <div class="field-nums">2 &nbsp; 3 &nbsp; 4 &nbsp; 9 &nbsp; 10 &nbsp; 11 &nbsp; 12</div>
+          <div class="field-label">F I E L D</div>
+        </div>
+        <div class="dont-come betting-area" data-bet-type="dont-come">DON'T COME</div>
+        <div class="pass-line betting-area" data-bet-type="pass-line">P A S S &nbsp; L I N E</div>
+      </div>
+
+      <!-- Right props -->
+      <div class="props">
+        <div class="prop any-seven betting-area" data-bet-type="any-seven">any seven 4-1</div>
+        <div class="prop split">
+          <div class="betting-area" data-bet-type="hard-4">hard 4</div>
+          <div class="betting-area" data-bet-type="hard-6">hard 6</div>
+        </div>
+        <div class="prop split">
+          <div class="betting-area" data-bet-type="hard-8">hard 8</div>
+          <div class="betting-area" data-bet-type="hard-10">hard 10</div>
+        </div>
+        <div class="prop split">
+          <div class="betting-area" data-bet-type="two">two</div>
+          <div class="betting-area" data-bet-type="three">three</div>
+        </div>
+        <div class="prop horn betting-area" data-bet-type="horn">— HORN —</div>
+        <div class="prop split">
+          <div class="betting-area" data-bet-type="eleven">eleven</div>
+          <div class="betting-area" data-bet-type="twelve">twelve</div>
+        </div>
+        <div class="prop any-craps betting-area" data-bet-type="any-craps">
+          <div>any craps</div>
+          <div class="odds">7 to 1</div>
+        </div>
+      </div>
+    </div>
+    <!-- Bottom "No Call Bets" -->
+    <div class="no-call-bets">No Call Bets</div>
+  </div>
+
+  <!-- Game Controls -->
+  <div class="game-controls">
+    <div class="player-info">
+      <div class="balance">Balance: $<span id="balance">1000</span></div>
+      <div class="current-bet">Current Bet: $<span id="current-bet">0</span></div>
+      <div class="win-loss">Win/Loss: $<span id="win-loss">0</span></div>
+    </div>
+    
+    <div class="dice-area">
+      <div class="dice-container">
+        <div class="dice" id="dice1">
+          <div class="face front"><span></span></div>
+          <div class="face back"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="face right"><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="face left"><span></span><span></span></div>
+          <div class="face top"><span></span><span></span><span></span></div>
+          <div class="face bottom"><span></span><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="dice-container">
+        <div class="dice" id="dice2">
+          <div class="face front"><span></span></div>
+          <div class="face back"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="face right"><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="face left"><span></span><span></span></div>
+          <div class="face top"><span></span><span></span><span></span></div>
+          <div class="face bottom"><span></span><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="total">Total: <span id="total">-</span></div>
+    </div>
+
+    <div class="chip-selector">
+      <div class="chip" data-value="5">$5</div>
+      <div class="chip" data-value="10">$10</div>
+      <div class="chip" data-value="25">$25</div>
+      <div class="chip" data-value="100">$100</div>
+      <div class="chip active" data-value="0">Clear</div>
+    </div>
+
+    <div class="game-buttons">
+      <button id="roll-btn" class="btn roll-btn">Roll Dice</button>
+      <button id="clear-bets-btn" class="btn clear-btn">Clear Bets</button>
+      <button id="instructions-btn" class="btn instructions-btn">Instructions</button>
+    </div>
+
+    <div class="game-status" id="game-status">Place your bets!</div>
+  </div>
+
+  <!-- Instructions Modal -->
+  <div id="instructions-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>How to Play Craps</h2>
+        <button class="close-btn" id="close-instructions">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h3>Basic Rules</h3>
+        <p><strong>Come-Out Roll:</strong> First roll of a new round. Roll 7 or 11 to win on Pass Line, 2, 3, or 12 (craps) to lose. Any other number becomes the "point."</p>
+        
+        <p><strong>Point Phase:</strong> Once a point is established, keep rolling until you either:</p>
+        <ul>
+          <li>Roll the point again → Pass Line wins</li>
+          <li>Roll 7 → Pass Line loses (seven out)</li>
+        </ul>
+        
+        <h3>Betting Options</h3>
+        <ul>
+          <li><strong>Pass Line:</strong> Bet on shooter winning. Pays 1:1</li>
+          <li><strong>Don't Pass:</strong> Bet on shooter losing. Pays 1:1</li>
+          <li><strong>Come:</strong> Like Pass Line, but placed after point is established</li>
+          <li><strong>Don't Come:</strong> Like Don't Pass, but placed after point is established</li>
+          <li><strong>Field:</strong> Bet on 2, 3, 4, 9, 10, 11, or 12. Pays 1:1 (2:1 on 2 or 12)</li>
+          <li><strong>Any Seven:</strong> Bet on next roll being 7. Pays 4:1</li>
+          <li><strong>Any Craps:</strong> Bet on 2, 3, or 12. Pays 7:1</li>
+          <li><strong>Hard Ways:</strong> Bet on specific doubles (4, 6, 8, 10). High payouts</li>
+          <li><strong>Place Bets:</strong> Bet on specific numbers (4, 5, 6, 8, 9, 10)</li>
+        </ul>
+        
+        <h3>How to Play</h3>
+        <ol>
+          <li>Select a chip value ($5, $10, $25, $100)</li>
+          <li>Click on betting areas to place bets</li>
+          <li>Click "Roll Dice" to roll</li>
+          <li>Watch your balance and win/loss tracking</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <script src="craps-layout.js"></script>
+</body>
+</html>

@@ -1644,8 +1644,6 @@ function triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc) {
                     if (typeof win.__crapsAutoPlay === 'function') {
                         win.__crapsAutoPlay(50);
                     }
-                    await delay(800);
-                    click('#dice-threejs-wrapper button');
                     break;
                 default:
                     break;
