@@ -912,11 +912,17 @@ function simulateAiCasinoWinnings() {
 
 function completeAiCasinoRound(game, aiPlayer, property, willBuy, casinoGame) {
     const pending = game.pendingAiCasino;
-    const winnings = (pending && typeof pending.winnings === 'number')
+    let winnings = (pending && typeof pending.winnings === 'number')
         ? pending.winnings
         : simulateAiCasinoWinnings();
     game.pendingAiCasino = null;
 
+    // Prevent AI from going negative after casino
+    if (aiPlayer.money + winnings < 0) {
+        // Set winnings to bring balance to 0
+        winnings = -aiPlayer.money;
+    }
+    
     aiPlayer.money += winnings;
     checkGameWinner(game);
 

@@ -561,6 +561,11 @@
         messageEl.textContent = 'Insufficient balance';
         return;
       }
+      // Prevent betting if balance would go negative
+      if (balance - selectedChip < 0) {
+        messageEl.textContent = 'Insufficient balance';
+        return;
+      }
       if (!bets[key]) bets[key] = 0;
       bets[key] += selectedChip;
       balance -= selectedChip;

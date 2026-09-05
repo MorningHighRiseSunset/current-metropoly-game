@@ -321,6 +321,12 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
             return;
         }
         
+        // Prevent betting if balance would go negative
+        if (balance - currentBet < 0) {
+            showStatus('Not enough balance!');
+            return;
+        }
+        
         // Deal 2 cards to player and AI
         playerHand = [deck.pop(), deck.pop()];
         aiHand = [deck.pop(), deck.pop()];
@@ -332,6 +338,12 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
     }
 
     function placeBet() {
+        // Prevent betting if balance would go negative
+        if (balance - currentBet < 0) {
+            showStatus('Not enough balance!');
+            return;
+        }
+        
         balance -= currentBet;
         pot = currentBet * 2; // Player and AI both bet
         updateBalance();

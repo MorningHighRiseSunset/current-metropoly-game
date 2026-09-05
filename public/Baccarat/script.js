@@ -179,6 +179,12 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
             return;
         }
         
+        // Prevent betting if balance would go negative
+        if (balance - currentBetAmount < 0) {
+            showStatus('Not enough balance!');
+            return;
+        }
+        
         balance -= currentBetAmount;
         bets.push({ type, amount: currentBetAmount });
         

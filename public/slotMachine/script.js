@@ -65,6 +65,12 @@ window.initSlotMachine = function(container, playerMoney, updateMainGameBalance)
             return;
         }
 
+        // Prevent betting if balance would go negative
+        if (balance - currentBet < 0) {
+            showResult('Not enough balance!');
+            return;
+        }
+
         balance -= currentBet;
         updateBalance();
         isSpinning = true;

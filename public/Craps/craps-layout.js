@@ -96,6 +96,12 @@ class CrapsGame {
       return;
     }
 
+    // Prevent betting if balance would go negative
+    if (this.balance - this.selectedChip < 0) {
+      this.updateStatus('Insufficient balance!');
+      return;
+    }
+
     const betType = area.dataset.betType;
     if (!betType) {
       console.log('No bet type found on area');

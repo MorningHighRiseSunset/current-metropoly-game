@@ -189,6 +189,12 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
             return;
         }
         
+        // Prevent betting if balance would go negative
+        if (balance - selectedBetAmount < 0) {
+            showResult('Not enough balance!');
+            return;
+        }
+        
         currentBet = selectedBetAmount;
         balance -= selectedBetAmount;
         updateBalance();

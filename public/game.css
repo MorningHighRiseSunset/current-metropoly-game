@@ -1749,6 +1749,7 @@ body {
     min-height: 800px;
     border: none;
     display: block;
+    overflow: hidden;
 }
 
 .modal-close {
