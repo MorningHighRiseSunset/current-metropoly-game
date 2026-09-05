@@ -29,7 +29,9 @@ body.iframe-mode {
   width: 100%;
   max-width: 600px;
   box-shadow: 0 0 30px rgba(0,0,0,0.9);
-  height: 220px;
+  height: 280px;
+  transform: scale(1.2);
+  transform-origin: center center;
 }
 
 .table-content {

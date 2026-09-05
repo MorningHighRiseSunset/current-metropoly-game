@@ -557,6 +557,16 @@ window.__crapsAutoPlay = function(betAmount) {
     return;
   }
   
+  // Additional safety check - verify we're actually in iframe
+  try {
+    if (window.self === window.top) {
+      console.log('[Craps] Auto-play blocked - not in iframe');
+      return;
+    }
+  } catch (e) {
+    // If we can't access window.top, we're likely in an iframe, so continue
+  }
+  
   const game = window.crapsGameInstance;
   
   // Select a chip value based on the bet amount
