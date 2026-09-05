@@ -86,31 +86,24 @@ class CrapsGame {
   }
 
   placeBet(area) {
+    console.log('[Craps] placeBet called, observerMode:', window.__isObserverMode, 'selectedChip:', this.selectedChip);
+    
     if (this.selectedChip === 0) {
       this.clearBetFromArea(area);
       return;
     }
 
-    if (this.selectedChip > this.balance) {
-      this.updateStatus('Insufficient balance!');
-      return;
-    }
-
-    // Prevent betting if balance would go negative
-    if (this.balance - this.selectedChip < 0) {
-      this.updateStatus('Insufficient balance!');
-      return;
-    }
-
     const betType = area.dataset.betType;
-    if (!betType) {
-      console.log('No bet type found on area');
+    if (!betType) return;
+    
+    if (this.balance < this.selectedChip) {
+      this.updateStatus('Insufficient balance');
       return;
     }
-
+    
     this.balance -= this.selectedChip;
     this.currentBet += this.selectedChip;
-
+    
     if (!this.bets[betType]) {
       this.bets[betType] = 0;
     }
@@ -159,12 +152,21 @@ class CrapsGame {
   }
 
   rollDice() {
-    if (this.currentBet === 0) {
-      this.updateStatus('Place a bet first!');
+    console.log('[Craps] rollDice called, observerMode:', window.__isObserverMode, 'currentBet:', this.currentBet);
+    
+    // Block auto-roll if not in observer mode
+    if (window.__isObserverMode !== true) {
+      console.log('[Craps] rollDice blocked - not in observer mode');
+      this.updateStatus('Auto-roll disabled for human players');
       return;
     }
-
-    // Animate dice
+    
+    if (this.currentBet === 0) {
+      this.updateStatus('Place a bet first');
+      return;
+    }
+    
+    this.updateStatus('Rolling...');
     this.animateDice();
 
     setTimeout(() => {
@@ -549,6 +551,8 @@ window.initCrapsMinigame = function(container, playerMoney, syncCasinoBalance) {
 
 // Auto-play function for AI integration
 window.__crapsAutoPlay = function(betAmount) {
+  console.log('[Craps] __crapsAutoPlay called with betAmount:', betAmount, 'observerMode:', window.__isObserverMode);
+  
   if (!window.crapsGameInstance) return;
   
   // Only auto-play if in observer mode (AI player)
