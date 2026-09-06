@@ -157,8 +157,10 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
                         <div class="action-buttons">
                             ${gameState === 'RESULT' ? 
                                 `<button class="btn btn-primary" onclick="window.baccaratNewBet()">New Bet</button>` :
+                                gameState === 'THIRD_CARD' ?
+                                `<button class="btn btn-primary" onclick="window.baccaratDrawThirdCards()">Draw</button>` :
                                 `<button class="btn btn-secondary" onclick="window.baccaratClearBets()" ${gameState !== 'BETTING' ? 'disabled' : ''}>Clear</button>
-                                 <button class="btn btn-primary" onclick="window.baccaratDeal()" ${Object.values(currentBets).reduce((a,b) => a+b, 0) === 0 || gameState === 'DEALING' ? 'disabled' : ''}>Deal</button>`
+                                 <button class="btn btn-primary" onclick="window.baccaratDealInitialCards()" ${Object.values(currentBets).reduce((a,b) => a+b, 0) === 0 || gameState !== 'DEALING' ? 'disabled' : ''}>Deal Cards</button>`
                             }
                         </div>
                     </div>
@@ -170,6 +172,8 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         window.baccaratPlaceBet = (position) => placeBet(position);
         window.baccaratClearBets = clearBets;
         window.baccaratDeal = dealGame;
+        window.baccaratDealInitialCards = dealInitialCards;
+        window.baccaratDrawThirdCards = drawThirdCards;
         window.baccaratNewBet = resetGame;
     }
 
@@ -310,6 +314,13 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         gameState = 'DEALING';
         playerHand = [];
         bankerHand = [];
+        commentary = "Click Deal to deal cards";
+        render();
+    }
+
+    async function dealInitialCards() {
+        if (gameState !== 'DEALING') return;
+        
         commentary = "Dealing...";
         render();
 
@@ -352,47 +363,72 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
             commentary = pScore >= 8 ? "Player has natural!" : "Banker has natural!";
             render();
             await new Promise(r => setTimeout(r, 1000));
+            await finishGame(c1, c2, c3, c4, pScore, bScore);
         } else {
-            // Third card logic
-            if (pScore <= 5) {
-                const pCard = shoe.pop();
-                playerHand.push(pCard);
-                pScore = calculateScore(playerHand);
-                commentary = "Player draws third card...";
+            // Check if third cards are needed
+            if (pScore <= 5 || bScore <= 5) {
+                commentary = "Click Draw for third cards if needed";
+                gameState = 'THIRD_CARD';
+                render();
+            } else {
+                await finishGame(c1, c2, c3, c4, pScore, bScore);
+            }
+        }
+    }
+
+    async function drawThirdCards() {
+        if (gameState !== 'THIRD_CARD') return;
+
+        let pScore = calculateScore(playerHand);
+        let bScore = calculateScore(bankerHand);
+        const c1 = playerHand[0];
+        const c2 = bankerHand[0];
+        const c3 = playerHand[1];
+        const c4 = bankerHand[1];
+
+        // Third card logic
+        if (pScore <= 5) {
+            const pCard = shoe.pop();
+            playerHand.push(pCard);
+            pScore = calculateScore(playerHand);
+            commentary = "Player draws third card...";
+            render();
+            await new Promise(r => setTimeout(r, 1200));
+
+            // Banker third card rules based on player's third card
+            const p3Val = pCard.value;
+            let bankerDraws = false;
+            
+            if (bScore <= 2) bankerDraws = true;
+            else if (bScore === 3 && p3Val !== 8) bankerDraws = true;
+            else if (bScore === 4 && [2,3,4,5,6,7].includes(p3Val)) bankerDraws = true;
+            else if (bScore === 5 && [4,5,6,7].includes(p3Val)) bankerDraws = true;
+            else if (bScore === 6 && [6,7].includes(p3Val)) bankerDraws = true;
+
+            if (bankerDraws) {
+                const bCard = shoe.pop();
+                bankerHand.push(bCard);
+                bScore = calculateScore(bankerHand);
+                commentary = "Banker draws third card...";
                 render();
                 await new Promise(r => setTimeout(r, 1200));
-
-                // Banker third card rules based on player's third card
-                const p3Val = pCard.value;
-                let bankerDraws = false;
-                
-                if (bScore <= 2) bankerDraws = true;
-                else if (bScore === 3 && p3Val !== 8) bankerDraws = true;
-                else if (bScore === 4 && [2,3,4,5,6,7].includes(p3Val)) bankerDraws = true;
-                else if (bScore === 5 && [4,5,6,7].includes(p3Val)) bankerDraws = true;
-                else if (bScore === 6 && [6,7].includes(p3Val)) bankerDraws = true;
-
-                if (bankerDraws) {
-                    const bCard = shoe.pop();
-                    bankerHand.push(bCard);
-                    bScore = calculateScore(bankerHand);
-                    commentary = "Banker draws third card...";
-                    render();
-                    await new Promise(r => setTimeout(r, 1200));
-                }
-            } else {
-                // Player stood, banker rules
-                if (bScore <= 5) {
-                    const bCard = shoe.pop();
-                    bankerHand.push(bCard);
-                    bScore = calculateScore(bankerHand);
-                    commentary = "Banker draws third card...";
-                    render();
-                    await new Promise(r => setTimeout(r, 1200));
-                }
+            }
+        } else {
+            // Player stood, banker rules
+            if (bScore <= 5) {
+                const bCard = shoe.pop();
+                bankerHand.push(bCard);
+                bScore = calculateScore(bankerHand);
+                commentary = "Banker draws third card...";
+                render();
+                await new Promise(r => setTimeout(r, 1200));
             }
         }
 
+        await finishGame(c1, c2, c3, c4, pScore, bScore);
+    }
+
+    async function finishGame(c1, c2, c3, c4, pScore, bScore) {
         // Determine winner
         const winner = determineWinner(pScore, bScore);
         const result = {
