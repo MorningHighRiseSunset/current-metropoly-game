@@ -416,7 +416,14 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
     const betSelector = q('#bet-amount-selector');
     if (betSelector) {
         betSelector.addEventListener('change', (e) => {
-            selectedBetAmount = parseInt(e.target.value) || 100;
+            let newAmount = parseInt(e.target.value) || 100;
+            // Prevent selecting bet amount higher than balance
+            if (newAmount > balance) {
+                newAmount = balance;
+                betSelector.value = balance;
+                showStatus('Bet amount adjusted to your balance');
+            }
+            selectedBetAmount = newAmount;
             window.__selectedChip = selectedBetAmount; // Sync across minigames
             updateCurrentBet();
         });

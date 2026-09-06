@@ -253,6 +253,12 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
 
     // --- Game actions ---
     window.baccaratSelectChip = (value) => {
+        // Prevent selecting chip higher than balance
+        if (value > balance) {
+            commentary = "Insufficient funds for this chip value.";
+            render();
+            return;
+        }
         selectedChip = value;
         window.__selectedChip = value; // Sync across minigames
         render();

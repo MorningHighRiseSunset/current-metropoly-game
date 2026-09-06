@@ -46,7 +46,13 @@ class CrapsGame {
     // Chip selection
     document.querySelectorAll('.chip').forEach(chip => {
       chip.addEventListener('click', () => {
-        this.selectedChip = parseInt(chip.dataset.value);
+        const chipValue = parseInt(chip.dataset.value);
+        // Prevent selecting chip higher than balance
+        if (chipValue > this.balance) {
+          this.updateStatus('Insufficient funds for this chip value');
+          return;
+        }
+        this.selectedChip = chipValue;
         window.__selectedChip = this.selectedChip; // Sync across minigames
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
