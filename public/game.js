@@ -1402,6 +1402,7 @@ function createCasinoBalanceSync(startingMoney) {
             localPlayer.money = (localPlayer.money ?? startingMoney) + moneyDiff;
             if (currentPlayer && currentPlayer.id === localPlayer.id) {
                 currentPlayer.money = localPlayer.money;
+                playerMoney = localPlayer.money; // Sync global playerMoney variable
             }
         }
 
@@ -3776,6 +3777,23 @@ socket.on('showRentPayment', (data) => {
         } else {
             console.error('[showRentPayment] Missing spaceData or owner:', { spaceData, owner, data });
         }
+    }
+});
+
+// Handle player bankruptcy
+socket.on('playerBankrupt', (data) => {
+    console.log('[playerBankrupt] Player went bankrupt:', data);
+    if (data.players) {
+        players = data.players;
+        // Update local player money if this is the current player
+        const bankruptPlayer = players.find(p => p && p.id === data.bankruptPlayerId);
+        if (bankruptPlayer && data.bankruptPlayerId === myPlayerId) {
+            playerMoney = bankruptPlayer.money;
+            if (currentPlayer && currentPlayer.id === myPlayerId) {
+                currentPlayer.money = bankruptPlayer.money;
+            }
+        }
+        updateUI();
     }
 });
 
