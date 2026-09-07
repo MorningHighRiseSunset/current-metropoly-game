@@ -35,8 +35,7 @@ const CASINO_GAMES_BY_POSITION = {
     23: 'Roulette',
     31: 'BlackJack',
     32: 'Craps',
-    36: 'Baccarat',
-    37: 'Roulette'
+    36: 'Baccarat'
 };
 
 const AI_LANDING_VIDEO_MS = 10000;
@@ -120,8 +119,8 @@ function getBoardSpaces() {
         { name: 'Luxury Tax', type: 'tax', amount: 100, position: 33 },
         { name: 'Chance', type: 'chance', position: 34 },
         { name: 'House of Blues', type: 'property', color: '#0000FF', group: 'darkBlue', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 35, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
-        { name: 'Community Cards', type: 'community-chest', position: 36 },
-        { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', group: 'special', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 37, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'Venetian', type: 'property', color: '#4B0082', group: 'special', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 36, address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', group: 'special', price: 275, rent: [31, 61, 181, 544, 770, 935], position: 37, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Las Vegas Monorail', type: 'railroad', group: 'railroad', price: 250, rent: [28, 55, 110, 220], position: 38, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Speed Vegas Off Roading', type: 'property', color: '#4B0082', group: 'special', price: 275, rent: [31, 61, 181, 544, 770, 935], position: 39, address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054 (SPEEDVEGAS)' }
     ];

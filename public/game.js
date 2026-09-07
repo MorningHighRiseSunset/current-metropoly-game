@@ -904,7 +904,7 @@ const boardConfig = [
     { name: 'Chance', type: 'chance', position: 34 },
     { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, rent: [30, 60, 180, 540, 750, 900], position: 35, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
     { name: 'Venetian', type: 'property', color: '#4B0082', price: 240, rent: [40, 80, 240, 720, 1000, 1200], position: 36, address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'Baccarat' },
-    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, rent: [35, 70, 210, 630, 875, 1050], position: 37, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'Roulette' },
+    { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, rent: [35, 70, 210, 630, 875, 1050], position: 37, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Las Vegas Monorail', type: 'railroad', price: 150, rent: [25, 50, 100, 200], position: 38, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Speed Vegas Off Roading', type: 'property', color: '#4B0082', price: 165, rent: [28, 55, 165, 495, 700, 850], position: 39, address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054 (SPEEDVEGAS)' }
 ];
@@ -4848,7 +4848,7 @@ function createMonopolyFaceTexture(spaceData, row, col) {
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#f5f8fc';
         ctx.font = '900 58px "Arial Black", "Impact", sans-serif';
-        const displayName = spaceData.isCasino ? '★ ' + spaceData.name : spaceData.name;
+        const displayName = spaceData.name;
         const bodyLines = wrapCanvasLines(ctx, displayName, inner.w - 15, 3);
         const sub = tileSubLabel(spaceData);
         const lineH = 62;
