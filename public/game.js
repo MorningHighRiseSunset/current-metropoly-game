@@ -3777,9 +3777,22 @@ socket.on('playerMoneyUpdate', (data) => {
         // Update the local player money variable for casino games
         if (data.playerId === myPlayerId) {
             playerMoney = data.money;
-            // Sync currentPlayer reference with updated players array
-            if (currentPlayer && currentPlayer.id === data.playerId) {
-                currentPlayer.money = data.money;
+        }
+        updateUI();
+    }
+});
+
+// Handle player money changes from chance/community chest cards
+socket.on('playerMoneyChanged', (data) => {
+    console.log('[playerMoneyChanged] Player money changed:', data);
+    if (data.players) {
+        players = data.players;
+        // Update local player money if this is the current player
+        const affectedPlayer = players.find(p => p && p.id === data.playerId);
+        if (affectedPlayer && data.playerId === myPlayerId) {
+            playerMoney = data.newMoney;
+            if (currentPlayer && currentPlayer.id === myPlayerId) {
+                currentPlayer.money = data.newMoney;
             }
         }
         updateUI();
