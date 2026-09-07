@@ -424,6 +424,7 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
                 showStatus('Bet amount adjusted to your balance');
             }
             selectedBetAmount = newAmount;
+            currentBet = newAmount; // Update the actual bet used in gameplay
             window.__selectedChip = selectedBetAmount; // Sync across minigames
             updateCurrentBet();
         });

@@ -30,12 +30,12 @@ const HOST = '0.0.0.0'; // Listen on all network interfaces
 const DISABLE_AI_PROPERTY_PURCHASES = false;
 
 const CASINO_GAMES_BY_POSITION = {
+    13: 'Baccarat',
     15: 'PokerFP',
+    18: 'Craps',
     21: 'slotMachine',
-    23: 'Roulette',
-    31: 'BlackJack',
-    32: 'Craps',
-    36: 'Baccarat'
+    30: 'BlackJack',
+    35: 'Roulette'
 };
 
 const AI_LANDING_VIDEO_MS = 10000;
@@ -96,32 +96,32 @@ function getBoardSpaces() {
         { name: 'JAIL', type: 'corner', position: 10, address: 'Jail Square' },
         { name: 'Brothel', type: 'property', color: '#FF69B4', group: 'pink', price: 200, rent: [22, 44, 132, 396, 550, 660], position: 11, address: 'Nevada Brothel (Fictional)' },
         { name: 'Electric Company', type: 'utility', group: 'utility', price: 180, rent: [0, 0], position: 12 },
-        { name: 'Bet MGM', type: 'property', color: '#FF69B4', group: 'pink', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 13, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'Venetian', type: 'property', color: '#FF69B4', group: 'pink', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 13, address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Las Vegas Monorail', type: 'railroad', group: 'railroad', price: 250, rent: [28, 55, 110, 220], position: 14, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Bellagio', type: 'property', color: '#FFA500', group: 'orange', price: 400, rent: [44, 88, 264, 792, 1100, 1320], position: 15, address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115' },
         { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', group: 'orange', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 16, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (Michelob ULTRA Arena)' },
         { name: 'Community Cards', type: 'community-chest', position: 17 },
-        { name: 'Horseback Riding', type: 'property', color: '#FF0000', group: 'red', price: 260, rent: [29, 57, 171, 514, 715, 858], position: 18, address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV' },
+        { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#FF0000', group: 'red', price: 260, rent: [29, 57, 171, 514, 715, 858], position: 18, address: '4949 N Rancho Dr, Las Vegas, NV 89130' },
         { name: 'Resorts World Theatre', type: 'property', color: '#FF0000', group: 'red', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 19, address: '3000 S Las Vegas Blvd, Las Vegas, NV 89109 (Resorts World)' },
         { name: 'FREE PARKING', type: 'corner', position: 20 },
         { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', group: 'yellow', price: 280, rent: [34, 67, 201, 605, 840, 1008], position: 21, address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Chance', type: 'chance', position: 22 },
-        { name: 'Wynn Las Vegas', type: 'property', color: '#FFFF00', group: 'yellow', price: 320, rent: [35, 71, 214, 638, 880, 1045], position: 23, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109' },
-        { name: 'County Fair', type: 'property', color: '#FFFF00', group: 'yellow', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 24, address: '' },
-        { name: 'Shriners Children\'s Open', type: 'property', color: '#008000', group: 'green', price: 320, rent: [35, 71, 214, 638, 880, 1045], position: 25, address: '' },
-        { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', group: 'green', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 26, address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104 (Little White Wedding Chapel)' },
-        { name: 'Community Cards', type: 'community-chest', position: 27 },
-        { name: 'Sphere', type: 'property', color: '#008000', group: 'green', price: 400, rent: [44, 88, 264, 792, 1100, 1320], position: 28, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
-        { name: 'Water Works', type: 'utility', group: 'utility', price: 200, rent: [0, 0], position: 29 },
-        { name: 'GO TO JAIL', type: 'corner', position: 30 },
-        { name: 'Caesars Palace', type: 'property', color: '#0000FF', group: 'darkBlue', price: 420, rent: [46, 92, 277, 831, 1155, 1386], position: 31, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109' },
-        { name: 'Santa Fe Hotel and Casino', type: 'property', color: '#0000FF', group: 'darkBlue', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 32, address: '4949 N Rancho Dr, Las Vegas, NV 89130' },
-        { name: 'Luxury Tax', type: 'tax', amount: 100, position: 33 },
-        { name: 'Chance', type: 'chance', position: 34 },
-        { name: 'House of Blues', type: 'property', color: '#0000FF', group: 'darkBlue', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 35, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
-        { name: 'Venetian', type: 'property', color: '#4B0082', group: 'special', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 36, address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109' },
-        { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', group: 'special', price: 275, rent: [31, 61, 181, 544, 770, 935], position: 37, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
-        { name: 'Las Vegas Monorail', type: 'railroad', group: 'railroad', price: 250, rent: [28, 55, 110, 220], position: 38, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'County Fair', type: 'property', color: '#FFFF00', group: 'yellow', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 23, address: '' },
+        { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', group: 'yellow', price: 320, rent: [35, 71, 214, 638, 880, 1045], position: 24, address: '1700 Village Center Circle Las Vegas NV 89134' },
+        { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', group: 'green', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 25, address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104 (Little White Wedding Chapel)' },
+        { name: 'Community Cards', type: 'community-chest', position: 26 },
+        { name: 'Sphere', type: 'property', color: '#008000', group: 'green', price: 400, rent: [44, 88, 264, 792, 1100, 1320], position: 27, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
+        { name: 'Water Works', type: 'utility', group: 'utility', price: 200, rent: [0, 0], position: 28 },
+        { name: 'GO TO JAIL', type: 'corner', position: 29 },
+        { name: 'Caesars Palace', type: 'property', color: '#0000FF', group: 'darkBlue', price: 420, rent: [46, 92, 277, 831, 1155, 1386], position: 30, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'Luxury Tax', type: 'tax', amount: 100, position: 31 },
+        { name: 'Chance', type: 'chance', position: 32 },
+        { name: 'House of Blues', type: 'property', color: '#0000FF', group: 'darkBlue', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
+        { name: 'Bet MGM', type: 'property', color: '#0000FF', group: 'darkBlue', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 34, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', group: 'special', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 35, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', group: 'special', price: 275, rent: [31, 61, 181, 544, 770, 935], position: 36, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'Las Vegas Monorail', type: 'railroad', group: 'railroad', price: 250, rent: [28, 55, 110, 220], position: 37, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'Horseback Riding', type: 'property', color: '#4B0082', group: 'special', price: 260, rent: [29, 57, 171, 514, 715, 858], position: 38, address: 'Red Rock Canyon National Conservation Area, Las Vegas, NV' },
         { name: 'Speed Vegas Off Roading', type: 'property', color: '#4B0082', group: 'special', price: 275, rent: [31, 61, 181, 544, 770, 935], position: 39, address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054 (SPEEDVEGAS)' }
     ];
 }
@@ -431,9 +431,6 @@ function getNextPlayerIndex(game, fromIndex) {
 
 // Helper function to roll dice with rare doubles
 function rollDiceWithRareDoubles(currentPosition = 0) {
-    const BACCARAT_POSITION = 36; // Venetian - Baccarat square
-    const CRAPS_POSITION = 32; // Santa Fe Hotel and Casino - Craps square
-
     let dice1, dice2, total, newPosition;
 
     do {
@@ -452,11 +449,6 @@ function rollDiceWithRareDoubles(currentPosition = 0) {
             dice2 = newDice2;
             total = dice1 + dice2;
             newPosition = (currentPosition + total) % 40;
-        }
-
-        // Impossible to land on Baccarat or Craps - always re-roll
-        if (newPosition === BACCARAT_POSITION || newPosition === CRAPS_POSITION) {
-            continue; // Re-roll
         }
 
         break; // Accept this roll
@@ -3111,7 +3103,13 @@ io.on('connection', (socket) => {
 
         const winnings = data.amount || 0;
         player.money += winnings;
-        
+
+        // Check if player went negative from casino losses - bankrupt immediately
+        if (player.money < 0) {
+            handleBankruptcy(game, player, null, -winnings);
+            return;
+        }
+
         checkGameWinner(game);
 
         io.to(game.id).emit('playerMoneyUpdate', {

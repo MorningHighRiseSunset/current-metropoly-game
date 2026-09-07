@@ -332,6 +332,8 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
     if (betAmountSelector) {
         betAmountSelector.addEventListener('change', (e) => {
             selectedBetAmount = parseInt(e.target.value);
+            currentBet = selectedBetAmount; // Update the actual bet used in gameplay
+            window.__selectedChip = selectedBetAmount; // Sync across minigames
             updateBalance();
         });
     }
