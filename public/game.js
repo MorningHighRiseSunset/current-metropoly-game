@@ -762,10 +762,10 @@ const boardContainer = document.querySelector('.board-container');
 const boardViewport = document.querySelector('.board-viewport');
 
 // Three.js orbit camera (degrees / distance — shared by board + token models)
-let cameraDistance = 8;
-const CAMERA_DISTANCE_MIN = 5;
+let cameraDistance = 10;
+const CAMERA_DISTANCE_MIN = 6;
 const CAMERA_DISTANCE_MAX = 55;
-const CAMERA_DISTANCE_DEFAULT = 8;
+const CAMERA_DISTANCE_DEFAULT = 10;
 let cameraPolarDeg = 90;
 let cameraAzimuthDeg = 0;
 let cameraTargetX = 0;
@@ -1054,7 +1054,7 @@ function handlePlayerLanding(playerId, newPosition, fromCard = false) {
         const isOwned = !!owner;
 
         // Show property info for properties with media, or if it's a jail space
-        // Don't show for properties without media (they'll get the buy/rent modal instead)
+        // NEVER show for owned properties (rent UI will be shown separately)
         if ((hasMedia || isJail) && !isSpecialSpace && !isOwned) {
             showPropertyInfo(spaceData);
         }
@@ -1064,7 +1064,7 @@ function handlePlayerLanding(playerId, newPosition, fromCard = false) {
     manuallyOpenedModal = false;
 
     // Show buy modal for unowned properties (this will show after property modal)
-    if (playerId === myPlayerId && !fromCard) {
+    if (playerId === myPlayerId) {
         // Check if landing on jail first - show jail UI regardless of other conditions
         if (newPosition === 10) {
             const player = players.find(p => p && p.id === playerId);
@@ -1075,20 +1075,18 @@ function handlePlayerLanding(playerId, newPosition, fromCard = false) {
         } else {
             const spaceData = boardConfig[newPosition];
             
-            // Check if landing on a casino property
-            if (spaceData && spaceData.isCasino && !currentPlayer.isAI) {
-                // Check if property is owned
-                const owner = players.find(p => p && p.properties && p.properties.includes(newPosition));
-                const isOwned = !!owner;
+            // Check if landing on an owned property (rent situation)
+            const owner = players.find(p => p && p.properties && p.properties.includes(newPosition));
+            if (owner && owner.id !== playerId) {
+                // Property owned by someone else - show rent UI
+                const rent = calculateRentAmount(spaceData, owner);
+                startPropertyDecision(spaceData, newPosition, true, owner, rent);
+            } else if (spaceData && spaceData.isCasino && !currentPlayer.isAI) {
+                // Unowned casino property - open casino game first, then offer to buy
                 const isOwnedByMe = owner && owner.id === currentPlayer.id;
-                
                 if (isOwnedByMe) {
                     // Player owns the casino property - show property info with option to play casino
                     showPropertyInfo(spaceData, { showProceedButton: true, viewerLabel: 'You own this property - Click Proceed to play casino' });
-                } else if (isOwned) {
-                    // Property owned by someone else - show rent UI first
-                    const rent = calculateRentAmount(spaceData, owner);
-                    startPropertyDecision(spaceData, newPosition, true, owner, rent);
                 } else {
                     // Unowned casino property - open casino game first, then offer to buy
                     openCasinoGame(spaceData.casinoGame);
@@ -2378,20 +2376,19 @@ function pickAlternatePropertyVideo(videos, position) {
 
     const lastVideo = lastPlayedPropertyVideos[position];
     if (!lastVideo) {
-        // First visit, return first video
-        return videos[0];
+        // First visit, return random video
+        return videos[Math.floor(Math.random() * videos.length)];
     }
 
-    // Find index of last played video
-    const lastIndex = videos.indexOf(lastVideo);
-    if (lastIndex === -1) {
-        // Last video not in list (shouldn't happen), return first
-        return videos[0];
-    }
+    // Return a random video that's different from the last one
+    let randomIndex;
+    let attempts = 0;
+    do {
+        randomIndex = Math.floor(Math.random() * videos.length);
+        attempts++;
+    } while (videos[randomIndex] === lastVideo && attempts < 10);
 
-    // Return next video in array, wrapping around to start
-    const nextIndex = (lastIndex + 1) % videos.length;
-    return videos[nextIndex];
+    return videos[randomIndex];
 }
 
 function applyMediaFrameOrientation(frame, element) {

@@ -87,6 +87,7 @@ body {
     display: flex;
     align-items: center;
     gap: 15px;
+    margin-right: 60px;
 }
 
 /* Video Chat Panel in Sidebar */
@@ -144,7 +145,7 @@ body {
 /* Settings Button */
 .settings-btn {
     position: fixed;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     left: auto;
     background: var(--card-bg);

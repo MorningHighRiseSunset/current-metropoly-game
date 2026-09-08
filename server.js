@@ -2326,12 +2326,10 @@ io.on('connection', (socket) => {
         { type: 'money', amount: -200, message: 'Pay hospital $200' },
         { type: 'money', amount: 100, message: 'You have won a competition - collect $100' },
         { type: 'money', amount: -300, message: 'Pay school tax of $300' },
-        { type: 'move', position: 5, message: 'Advance to nearest Railroad' },
         { type: 'moveRelative', delta: -3, message: 'Go back 3 spaces' },
         { type: 'money', amount: -400, message: 'Pay doctor fee $400' },
         { type: 'money', amount: 500, message: 'Receive for services $500' },
         { type: 'jail-free', message: 'Get Out of Jail Free' },
-        { type: 'move', position: 15, message: 'Advance to nearest Railroad' },
         { type: 'money', amount: 200, message: 'Interest on 7% preference shares - collect $200' },
         { type: 'money', amount: -160, message: 'Pay insurance premium $160' }
     ];
