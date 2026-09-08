@@ -623,13 +623,22 @@ function executeAIRollDice(game, aiPlayer) {
                             // Pay tax
                             if (aiPlayer.money >= landedSpace.amount) {
                                 aiPlayer.money -= landedSpace.amount;
-                                io.to(game.id).emit('taxPaid', {
-                                    playerId: aiPlayer.id,
-                                    amount: landedSpace.amount,
-                                    newMoney: aiPlayer.money,
-                                    players: game.players
-                                });
-                                checkGameWinner(game);
+                                // Safety check - ensure money didn't go negative
+                                if (aiPlayer.money < 0) {
+                                    aiPlayer.money = 0;
+                                    handleBankruptcy(game, aiPlayer, null, landedSpace.amount);
+                                } else {
+                                    io.to(game.id).emit('taxPaid', {
+                                        playerId: aiPlayer.id,
+                                        amount: landedSpace.amount,
+                                        newMoney: aiPlayer.money,
+                                        players: game.players
+                                    });
+                                    checkGameWinner(game);
+                                }
+                            } else {
+                                // AI doesn't have enough money to pay tax - they lose the game
+                                handleBankruptcy(game, aiPlayer, null, landedSpace.amount);
                             }
                             setTimeout(() => gameRuntime.advanceTurn(game), 500);
                         } else if (landedSpace.position === 30) { // Go to Jail
@@ -858,13 +867,22 @@ function executeAIRollDice(game, aiPlayer) {
                     // Pay tax
                     if (aiPlayer.money >= landedSpace.amount) {
                         aiPlayer.money -= landedSpace.amount;
-                        io.to(game.id).emit('taxPaid', {
-                            playerId: aiPlayer.id,
-                            amount: landedSpace.amount,
-                            newMoney: aiPlayer.money,
-                            players: game.players
-                        });
-                        checkGameWinner(game);
+                        // Safety check - ensure money didn't go negative
+                        if (aiPlayer.money < 0) {
+                            aiPlayer.money = 0;
+                            handleBankruptcy(game, aiPlayer, null, landedSpace.amount);
+                        } else {
+                            io.to(game.id).emit('taxPaid', {
+                                playerId: aiPlayer.id,
+                                amount: landedSpace.amount,
+                                newMoney: aiPlayer.money,
+                                players: game.players
+                            });
+                            checkGameWinner(game);
+                        }
+                    } else {
+                        // AI doesn't have enough money to pay tax - they lose the game
+                        handleBankruptcy(game, aiPlayer, null, landedSpace.amount);
                     }
                     setTimeout(() => gameRuntime.advanceTurn(game), 500);
                 } else if (landedSpace.position === 30) { // Go to Jail
@@ -1004,6 +1022,11 @@ function scheduleAiPropertyLanding(game, aiPlayer, property) {
 
 function finishAiPropertyDecision(game, aiPlayer, property, willBuy) {
     if (willBuy) {
+        if (aiPlayer.money < property.price) {
+            // AI can't afford the property - go bankrupt
+            handleBankruptcy(game, aiPlayer, null, property.price);
+            return;
+        }
         aiPlayer.money -= property.price;
         if (!aiPlayer.properties) aiPlayer.properties = [];
         aiPlayer.properties.push(aiPlayer.position);
@@ -1720,14 +1743,20 @@ io.on('connection', (socket) => {
             socket.emit('gameError', 'Property is already owned');
             return;
         }
-        
+
+        // Check if player can afford the property
+        if (player.money < property.price) {
+            socket.emit('gameError', 'Not enough money to buy this property');
+            return;
+        }
+
         // Buy property
         player.money -= property.price;
         if (!player.properties) player.properties = [];
         player.properties.push(player.position);
-        
+
         checkGameWinner(game);
-        
+
         // Update game state
         io.to(game.id).emit('propertyPurchased', {
             playerId: player.id,
@@ -1735,7 +1764,7 @@ io.on('connection', (socket) => {
             propertyName: property.name,
             newMoney: player.money
         });
-        
+
         updateGameState(game);
     });
 
@@ -1865,9 +1894,15 @@ io.on('connection', (socket) => {
                 game.auction = null;
                 return;
             }
+            if (winner.money < game.auction.currentBid) {
+                // Winner can't afford the bid - they go bankrupt
+                handleBankruptcy(game, winner, null, game.auction.currentBid);
+                game.auction = null;
+                return;
+            }
             winner.money -= game.auction.currentBid;
             winner.properties.push(game.auction.position);
-            
+
             io.to(game.id).emit('auctionEnded', {
                 winnerId: game.auction.currentBidder,
                 winnerName: winner.name,
@@ -2078,15 +2113,22 @@ io.on('connection', (socket) => {
                 } else if (landedSpace.type === 'tax') {
                     if (currentPlayer.money >= landedSpace.amount) {
                         currentPlayer.money -= landedSpace.amount;
-                        io.to(game.id).emit('taxPaid', {
-                            playerId: socket.id,
-                            amount: landedSpace.amount,
-                            taxName: landedSpace.name,
-                            newMoney: currentPlayer.money,
-                            players: game.players
-                        });
+                        // Safety check - ensure money didn't go negative
+                        if (currentPlayer.money < 0) {
+                            currentPlayer.money = 0;
+                            handleBankruptcy(game, currentPlayer, null, landedSpace.amount);
+                        } else {
+                            io.to(game.id).emit('taxPaid', {
+                                playerId: socket.id,
+                                amount: landedSpace.amount,
+                                taxName: landedSpace.name,
+                                newMoney: currentPlayer.money,
+                                players: game.players
+                            });
+                        }
                     } else {
-                        socket.emit('gameError', `Not enough money to pay ${landedSpace.name} of $${landedSpace.amount}`);
+                        // Player doesn't have enough money to pay tax - they go bankrupt
+                        handleBankruptcy(game, currentPlayer, null, landedSpace.amount);
                     }
                     // Don't auto-advance turn for human players - let them view UI first
                     if (currentPlayer.isAI) {
@@ -2535,21 +2577,27 @@ io.on('connection', (socket) => {
             case 'pay':
                 if (player.money >= 50) {
                     player.money -= 50;
-                    player.inJail = false;
-                    player.jailTurns = 0;
-                    
-                    io.to(game.id).emit('jailPaid', {
-                        playerId: player.id,
-                        newMoney: player.money,
-                        players: game.players
-                    });
-                    checkGameWinner(game);
-                    
-                    io.to(game.id).emit('playerOutOfJail', {
-                        playerId: socket.id,
-                        method: 'pay',
-                        players: game.players
-                    });
+                    // Safety check - ensure money didn't go negative
+                    if (player.money < 0) {
+                        player.money = 0;
+                        handleBankruptcy(game, player, null, 50);
+                    } else {
+                        player.inJail = false;
+                        player.jailTurns = 0;
+
+                        io.to(game.id).emit('jailPaid', {
+                            playerId: player.id,
+                            newMoney: player.money,
+                            players: game.players
+                        });
+                        checkGameWinner(game);
+
+                        io.to(game.id).emit('playerOutOfJail', {
+                            playerId: socket.id,
+                            method: 'pay',
+                            players: game.players
+                        });
+                    }
                 } else {
                     // Player doesn't have enough money to pay $50 - they lose the game
                     handleBankruptcy(game, player, null, 50);
@@ -2777,7 +2825,17 @@ io.on('connection', (socket) => {
             toPlayer.money += trade.offer.money;
             fromPlayer.money += trade.request.money;
             toPlayer.money -= trade.request.money;
-            
+
+            // Check if either player went negative after trade (shouldn't happen with validation, but safety check)
+            if (fromPlayer.money < 0) {
+                fromPlayer.money = 0;
+                handleBankruptcy(game, fromPlayer, null, Math.abs(fromPlayer.money));
+            }
+            if (toPlayer.money < 0) {
+                toPlayer.money = 0;
+                handleBankruptcy(game, toPlayer, null, Math.abs(toPlayer.money));
+            }
+
             checkGameWinner(game);
 
             // Transfer properties
