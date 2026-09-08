@@ -445,7 +445,7 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
         onComplete: () => {
             setTimeout(() => {
                 diceRolling = false;
-                // Pause for 5 seconds so players can see dice result before UI opens
+                // Pause for 2 seconds so players can see dice result before UI opens
                 const fadeTick = runDiceFadeOutAnimation(
                     [dice1Mesh, dice2Mesh],
                     150,
@@ -464,7 +464,7 @@ function roll3DDice(dice1Value, dice2Value, playerPosition, callbacks) {
                 if (callbacks && typeof callbacks.onLand === 'function') {
                     callbacks.onLand();
                 }
-            }, 5000);
+            }, 2000);
         }
     });
 
