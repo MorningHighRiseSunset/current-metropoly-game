@@ -62,9 +62,17 @@
     body.iframe-mode .craps-game {
       display: flex;
       flex-direction: row;
-      gap: 4px;
+      gap: 8px;
       max-width: 100%;
       align-items: flex-start;
+    }
+
+    body.iframe-mode .table {
+      flex: 1;
+    }
+
+    body.iframe-mode .game-controls {
+      display: none;
     }
 
     body.iframe-mode .craps-game > * {
