@@ -1645,6 +1645,11 @@ body {
     color: white;
 }
 
+.btn-info {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+}
+
 .btn-small {
     padding: 6px 12px;
     font-size: 0.8rem;

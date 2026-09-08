@@ -1068,9 +1068,15 @@ function handlePlayerLanding(playerId, newPosition, fromCard = false) {
         // Check if landing on jail first - show jail UI regardless of other conditions
         if (newPosition === 10) {
             const player = players.find(p => p && p.id === playerId);
-            // Only show proceed UI if player is not already in jail (meaning they just visited)
-            if (player && !player.inJail) {
-                showJailProceedUI(newPosition);
+            // Show jail UI if player is in jail (sent there) OR visiting (not in jail)
+            if (player) {
+                if (player.inJail) {
+                    // Player is in jail - show options to get out
+                    showPropertyInfo(boardConfig[10]);
+                } else {
+                    // Just visiting jail - show proceed button to end turn
+                    showJailProceedUI(newPosition);
+                }
             }
         } else {
             const spaceData = boardConfig[newPosition];
@@ -2546,13 +2552,20 @@ function showPropertyInfo(spaceData, options = {}) {
     const propertyPassBtn = document.getElementById('propertyPassBtn');
     const propertyPayRentBtn = document.getElementById('propertyPayRentBtn');
     const propertyProceedBtn = document.getElementById('propertyProceedBtn');
+    const jailPayBtn = document.getElementById('jailPayBtn');
+    const jailCardBtn = document.getElementById('jailCardBtn');
+    const jailRollBtn = document.getElementById('jailRollBtn');
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
 
     if (!modal || !title || !content || !mediaContainer) {
         console.error('Modal elements not found!', { modal, title, content, mediaContainer });
         return;
     }
-    
+
+    // Check if this is a jail scenario
+    const player = players.find(p => p && p.id === myPlayerId);
+    const isInJail = player && player.inJail && spaceData.position === 10;
+
     title.textContent = spaceData.name;
 
     if (subtitle) {
@@ -2568,35 +2581,69 @@ function showPropertyInfo(spaceData, options = {}) {
         if (isAI) {
             // Hide all buttons for AI - this is just a viewer mode
             propertyActions.classList.add('hidden');
+        } else if (isInJail) {
+            // Player is in jail - show jail-specific buttons
+            propertyActions.classList.remove('hidden');
+            if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
+            if (propertyPassBtn) propertyPassBtn.classList.add('hidden');
+            if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
+            if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
+            if (jailPayBtn) jailPayBtn.classList.remove('hidden');
+            if (jailCardBtn) jailCardBtn.classList.remove('hidden');
+            if (jailRollBtn) jailRollBtn.classList.remove('hidden');
+
+            // Disable jail card button if player has no jail-free cards
+            if (jailCardBtn && (!player.jailFreeCards || player.jailFreeCards.length === 0)) {
+                jailCardBtn.disabled = true;
+                jailCardBtn.textContent = 'No Jail Free Card';
+            } else if (jailCardBtn) {
+                jailCardBtn.disabled = false;
+                jailCardBtn.textContent = 'Use Jail Free Card';
+            }
         } else if (showProceedButton) {
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
             if (propertyPassBtn) propertyPassBtn.classList.add('hidden');
             if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.remove('hidden');
+            if (jailPayBtn) jailPayBtn.classList.add('hidden');
+            if (jailCardBtn) jailCardBtn.classList.add('hidden');
+            if (jailRollBtn) jailRollBtn.classList.add('hidden');
         } else if (isRent) {
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
             if (propertyPassBtn) propertyPassBtn.classList.add('hidden');
             if (propertyPayRentBtn) propertyPayRentBtn.classList.remove('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
+            if (jailPayBtn) jailPayBtn.classList.add('hidden');
+            if (jailCardBtn) jailCardBtn.classList.add('hidden');
+            if (jailRollBtn) jailRollBtn.classList.add('hidden');
         } else if (showDecisionActions) {
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.remove('hidden');
             if (propertyPassBtn) propertyPassBtn.classList.remove('hidden');
             if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
+            if (jailPayBtn) jailPayBtn.classList.add('hidden');
+            if (jailCardBtn) jailCardBtn.classList.add('hidden');
+            if (jailRollBtn) jailRollBtn.classList.add('hidden');
         } else {
             propertyActions.classList.add('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.remove('hidden');
             if (propertyPassBtn) propertyPassBtn.classList.remove('hidden');
             if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
+            if (jailPayBtn) jailPayBtn.classList.add('hidden');
+            if (jailCardBtn) jailCardBtn.classList.add('hidden');
+            if (jailRollBtn) jailRollBtn.classList.add('hidden');
         }
     }
 
     if (decisionPrompt) {
-        if (showProceedButton) {
+        if (isInJail) {
+            decisionPrompt.textContent = 'You are in jail. Choose an option to get out:';
+            decisionPrompt.classList.remove('hidden');
+        } else if (showProceedButton) {
             decisionPrompt.textContent = 'Watch the video, then click Proceed to end your turn.';
             decisionPrompt.classList.remove('hidden');
         } else if (isRent) {
@@ -3931,9 +3978,12 @@ socket.on('playerSentToJail', (data) => {
                 oldPosition,
                 newPosition,
                 () => {
-                    // Don't show jail proceed UI when sent to jail (only show for visiting jail)
+                    // Show jail UI when player is sent to jail so they can choose their options
                     if (data.playerId === myPlayerId) {
-                        // Player was sent to jail - no proceed button needed, turn is already ended by server
+                        const jailSpace = boardConfig[10];
+                        if (jailSpace) {
+                            showPropertyInfo(jailSpace);
+                        }
                     } else {
                         const jailSpace = boardConfig[10];
                         if (jailSpace) {
@@ -3947,7 +3997,10 @@ socket.on('playerSentToJail', (data) => {
             player.position = newPosition;
             update3DTokenPositions();
             if (data.playerId === myPlayerId) {
-                // Player was sent to jail - no proceed button needed, turn is already ended by server
+                const jailSpace = boardConfig[10];
+                if (jailSpace) {
+                    showPropertyInfo(jailSpace);
+                }
             } else {
                 const jailSpace = boardConfig[10];
                 if (jailSpace) {
@@ -5925,11 +5978,35 @@ function initializeModalElements() {
     settingsBtn = document.getElementById('settingsBtn');
     settingsModal = document.getElementById('settingsModal');
     settingsModalClose = document.querySelector('#settingsModal .modal-close');
-    
+
     // Setup proceed button handler
     const propertyProceedBtn = document.getElementById('propertyProceedBtn');
     if (propertyProceedBtn) {
         propertyProceedBtn.addEventListener('click', handleJailProceed);
+    }
+
+    // Setup jail button handlers
+    const jailPayBtn = document.getElementById('jailPayBtn');
+    if (jailPayBtn) {
+        jailPayBtn.addEventListener('click', () => {
+            socket.emit('getOutOfJail', { method: 'pay' });
+        });
+    }
+
+    const jailCardBtn = document.getElementById('jailCardBtn');
+    if (jailCardBtn) {
+        jailCardBtn.addEventListener('click', () => {
+            socket.emit('getOutOfJail', { method: 'card' });
+        });
+    }
+
+    const jailRollBtn = document.getElementById('jailRollBtn');
+    if (jailRollBtn) {
+        jailRollBtn.addEventListener('click', () => {
+            // Close the modal and let the player roll dice normally
+            closePropertyModal();
+            // The dice roll logic in the server will handle jail release on doubles
+        });
     }
 }
 
