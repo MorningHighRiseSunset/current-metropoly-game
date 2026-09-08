@@ -80,7 +80,7 @@ const tileMediaRaw = {
     8: { name: 'Las Vegas Golden Knights', videos: ['/Videos/LV GKnights 1.mp4', '/Videos/LV GKnights 2.mp4', '/Videos/LV Golden Knights.mp4'], images: [] },
     9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/MavHeli 2.mp4', '/Videos/MavHeli 3.mp4'], images: [] },
     10: { name: 'JAIL', videos: ['/Videos/Imgoingtojail.mp4', '/Videos/Jailclip4.mp4', '/Videos/Jailclip5.mp4', '/Videos/Jailmoment2(cropped).mp4', '/Videos/jailclip6.mp4_1743296163946.mp4', '/Videos/jailmoment3(cropped).mp4'], images: [] },
-    11: { name: 'Brothel', videos: ['/Videos/BrothelVid.mp4'], images: [] },
+    11: { name: 'Brothel', videos: ['/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.webm', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4'], images: [] },
     12: { name: 'Electric Company', videos: [], images: ['/Images/yellow_light_bulb.jpg'] },
     13: { name: 'Venetian', videos: ['/Videos/MGM 2.mp4', '/Videos/MGMBoxing 1.mp4'], images: [] },
     14: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
