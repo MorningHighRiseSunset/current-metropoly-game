@@ -30,13 +30,145 @@ body.iframe-mode {
   max-width: 600px;
   box-shadow: 0 0 30px rgba(0,0,0,0.9);
   height: 280px;
+}
+
+/* Standalone mode only - keep scale */
+body:not(.iframe-mode) .table {
   transform: scale(1.5);
   transform-origin: center center;
+}
+
+/* In iframe mode, make layout horizontal with betting board on right */
+body.iframe-mode .table {
+  flex-direction: row;
+  height: auto;
+  max-width: 100%;
+  transform: scale(1);
+  transform-origin: center center;
+}
+
+body.iframe-mode .table-content {
+  flex-direction: row;
+  width: auto;
+}
+
+body.iframe-mode .main {
+  min-width: 200px;
+}
+
+body.iframe-mode .props {
+  width: 120px;
+  min-width: 120px;
 }
 
 .table-content {
   display: flex;
   flex: 1;
+}
+
+/* In iframe mode, make layout horizontal */
+body.iframe-mode .table-content {
+  flex-direction: row;
+  gap: 0;
+}
+
+body.iframe-mode .far-left {
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  width: auto;
+  height: auto;
+  padding: 10px 5px;
+  font-size: 8px;
+  border-right: 1px solid #0a4a25;
+  border-bottom: none;
+}
+
+body.iframe-mode .no-call-bets {
+  writing-mode: horizontal-tb;
+  height: auto;
+  padding: 5px;
+  font-size: 8px;
+  border-top: none;
+  border-left: 1px solid #0a4a25;
+}
+
+/* Ensure the props (betting board) is positioned to the right in iframe mode */
+body.iframe-mode .props {
+  border-left: 1px solid #0a4a25;
+  border-top: none;
+  height: 100%;
+  min-height: 200px;
+}
+
+/* Adjust main area in iframe mode */
+body.iframe-mode .main {
+  min-width: 180px;
+}
+
+body.iframe-mode .top-row {
+  grid-template-columns: 25px repeat(6, 1fr) 30px;
+}
+
+body.iframe-mode .top-row > div {
+  font-size: 10px;
+}
+
+body.iframe-mode .come {
+  font-size: 12px;
+  height: 40px;
+}
+
+body.iframe-mode .dont-come {
+  font-size: 8px;
+  height: 18px;
+}
+
+body.iframe-mode .field {
+  height: 35px;
+}
+
+body.iframe-mode .field-nums {
+  font-size: 6px;
+  letter-spacing: 2px;
+}
+
+body.iframe-mode .field-label {
+  font-size: 10px;
+  letter-spacing: 3px;
+}
+
+body.iframe-mode .dont-pass {
+  font-size: 8px;
+  height: 20px;
+}
+
+body.iframe-mode .pass-line {
+  font-size: 11px;
+  height: 25px;
+}
+
+body.iframe-mode .prop {
+  font-size: 8px;
+  padding: 0 4px;
+}
+
+body.iframe-mode .prop.any-seven {
+  font-size: 8px;
+  height: 20px;
+}
+
+body.iframe-mode .prop.horn {
+  font-size: 8px;
+  height: 18px;
+}
+
+body.iframe-mode .prop.any-craps {
+  font-size: 8px;
+  min-height: 35px;
+}
+
+body.iframe-mode .prop.any-craps .odds {
+  font-size: 7px;
 }
 
 /* Left side "No Call Bets" */
@@ -269,6 +401,19 @@ body.iframe-mode {
   position: relative;
   width: 100%;
   max-width: 600px;
+}
+
+/* In iframe mode, move controls to the right side */
+body.iframe-mode .game-controls {
+  margin-top: 0;
+  margin-left: 8px;
+  width: auto;
+  max-width: 150px;
+  min-width: 120px;
+  border-left: 2px solid #8B4513;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
 }
 
 body.iframe-mode .game-controls {

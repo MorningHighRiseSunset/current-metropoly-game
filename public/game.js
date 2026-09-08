@@ -706,10 +706,10 @@ function executePendingRollMove(pending) {
     pending.moveStarted = true;
     pending.playerMoveData = null;
 
-    const { playerId: movePlayerId, oldPosition: moveOldPosition, newPosition: moveNewPosition, direction } = move;
+    const { playerId: movePlayerId, oldPosition: moveOldPosition, newPosition: moveNewPosition, direction, fromCard } = move;
     const player = players.find(p => p && p.id === movePlayerId);
     const afterMove = () => {
-        handlePlayerLanding(movePlayerId, moveNewPosition);
+        handlePlayerLanding(movePlayerId, moveNewPosition, fromCard);
         if (typeof pending.onComplete === 'function') {
             pending.onComplete();
         }
@@ -760,10 +760,10 @@ const boardContainer = document.querySelector('.board-container');
 const boardViewport = document.querySelector('.board-viewport');
 
 // Three.js orbit camera (degrees / distance — shared by board + token models)
-let cameraDistance = 10;
-const CAMERA_DISTANCE_MIN = 6;
+let cameraDistance = 8;
+const CAMERA_DISTANCE_MIN = 5;
 const CAMERA_DISTANCE_MAX = 55;
-const CAMERA_DISTANCE_DEFAULT = 10;
+const CAMERA_DISTANCE_DEFAULT = 8;
 let cameraPolarDeg = 90;
 let cameraAzimuthDeg = 0;
 let cameraTargetX = 0;
@@ -1033,14 +1033,15 @@ function tileHasLandingMedia(position) {
     return media.videos.length > 0 || media.images.length > 0;
 }
 
-function handlePlayerLanding(playerId, newPosition) {
+function handlePlayerLanding(playerId, newPosition, fromCard = false) {
     // console.log('[handlePlayerLanding] Called - playerId:', playerId, 'newPosition:', newPosition, 'gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
     // Show property info for spaces with media, properties, or jail (only for human player)
     // Skip chance, community chest, tax, and other special spaces that have their own UI
     // Also skip if modal was already opened manually by clicking on the square
     // Skip if property is owned (rent UI will be shown separately)
+    // Skip if movement is from a chance card (card already handled the action)
     const spaceData = boardConfig[newPosition];
-    if (spaceData && playerId === myPlayerId && !manuallyOpenedModal) {
+    if (spaceData && playerId === myPlayerId && !manuallyOpenedModal && !fromCard) {
         const hasMedia = tileHasLandingMedia(newPosition);
         const isProperty = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
         const isJail = newPosition === 10 || newPosition === 30;
@@ -1061,7 +1062,7 @@ function handlePlayerLanding(playerId, newPosition) {
     manuallyOpenedModal = false;
 
     // Show buy modal for unowned properties (this will show after property modal)
-    if (playerId === myPlayerId) {
+    if (playerId === myPlayerId && !fromCard) {
         // Check if landing on jail first - show jail UI regardless of other conditions
         if (newPosition === 10) {
             const player = players.find(p => p && p.id === playerId);
@@ -1071,10 +1072,25 @@ function handlePlayerLanding(playerId, newPosition) {
             }
         } else {
             const spaceData = boardConfig[newPosition];
-            // Check if landing on a casino property (owned or unowned) - open casino game
+            
+            // Check if landing on a casino property
             if (spaceData && spaceData.isCasino && !currentPlayer.isAI) {
-                // Open casino game for casino properties
-                openCasinoGame(spaceData.casinoGame);
+                // Check if property is owned
+                const owner = players.find(p => p && p.properties && p.properties.includes(newPosition));
+                const isOwned = !!owner;
+                const isOwnedByMe = owner && owner.id === currentPlayer.id;
+                
+                if (isOwnedByMe) {
+                    // Player owns the casino property - show property info with proceed button
+                    showPropertyInfo(spaceData, { showProceedButton: true, viewerLabel: 'You own this property - Click Proceed to play casino' });
+                } else if (isOwned) {
+                    // Property owned by someone else - show rent UI first
+                    const rent = calculateRentAmount(spaceData, owner);
+                    startPropertyDecision(spaceData, newPosition, true, owner, rent);
+                } else {
+                    // Unowned casino property - show buy UI first
+                    startPropertyDecision(spaceData, newPosition);
+                }
             } else {
                 const purchasableSpace = getUnownedPurchasableSpace(newPosition);
                 if (purchasableSpace) {
@@ -1089,6 +1105,19 @@ function handlePlayerLanding(playerId, newPosition) {
             }
         }
         // Rent payment UI is now handled by server via showRentPayment event
+    } else if (playerId === myPlayerId && fromCard) {
+        // For card-induced movements, show proceed button to end turn after any media
+        const spaceData = boardConfig[newPosition];
+        if (spaceData && tileHasLandingMedia(newPosition)) {
+            showPropertyInfo(spaceData, { showProceedButton: true, viewerLabel: 'Card movement - Click Proceed to end turn' });
+        } else {
+            // No media, just end turn
+            setTimeout(() => {
+                if (gameState && gameState.currentPlayer === myPlayerId) {
+                    endTurnNow();
+                }
+            }, 500);
+        }
     }
 }
 
@@ -1210,6 +1239,12 @@ function showJailProceedUI(position) {
 
 function handleJailProceed() {
     // console.log('[handleJailProceed] Called - gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
+    
+    // Get current position from player
+    const playerPosition = currentPlayer?.position || (currentPlayer && currentPlayer.position);
+    const currentSpaceData = boardConfig[playerPosition];
+    const isCasinoProperty = currentSpaceData?.isCasino;
+    
     // Stop any playing video/audio before proceeding
     if (currentPropertyVideo) {
         stopVideoElement(currentPropertyVideo);
@@ -1217,7 +1252,11 @@ function handleJailProceed() {
     }
     cleanupPropertyVideo();
     dismissPropertyDecisionUI();
-    if (gameState && gameState.currentPlayer === myPlayerId) {
+    
+    if (isCasinoProperty && currentSpaceData?.casinoGame) {
+        // Open casino game for owned casino properties
+        openCasinoGame(currentSpaceData.casinoGame);
+    } else if (gameState && gameState.currentPlayer === myPlayerId) {
         // Ensure we can actually end the turn
         if (canEndTurnNow()) {
             endTurnNow();
@@ -1350,12 +1389,20 @@ function updatePropertyDecisionUI() {
                 cleanupPropertyVideo();
                 socket.emit('buyProperty', { position: activePropertyDecision.position });
                 dismissPropertyDecisionUI();
-                // Auto-end turn after buying (including casino properties)
-                setTimeout(() => {
-                    if (gameState && gameState.currentPlayer === myPlayerId) {
-                        endTurnNow();
-                    }
-                }, 500);
+                
+                // For casino properties, open the casino game after purchase
+                if (spaceData.isCasino) {
+                    setTimeout(() => {
+                        openCasinoGame(spaceData.casinoGame);
+                    }, 500);
+                } else {
+                    // Auto-end turn after buying non-casino properties
+                    setTimeout(() => {
+                        if (gameState && gameState.currentPlayer === myPlayerId) {
+                            endTurnNow();
+                        }
+                    }, 500);
+                }
             } else {
                 alert(`Not enough money to buy this ${typeLabel.toLowerCase()}.`);
             }
@@ -1381,6 +1428,15 @@ function updatePropertyDecisionUI() {
             cleanupPropertyVideo();
             socket.emit('passProperty', { position: activePropertyDecision.position });
             dismissPropertyDecisionUI();
+            
+            // For casino properties, end turn after passing (don't open casino)
+            if (spaceData.isCasino) {
+                setTimeout(() => {
+                    if (gameState && gameState.currentPlayer === myPlayerId) {
+                        endTurnNow();
+                    }
+                }, 500);
+            }
         };
     }
     
@@ -1453,14 +1509,9 @@ function beginLandingDecision({ spaceData, position, isRent = false, owner = nul
     waitingForBuyResult = false;
     activePropertyDecision = { spaceData, position, isRent, owner, rentAmount, diceRoll };
 
-    if (spaceData.isCasino && !currentPlayer.isAI) {
-        // Open casino game for casino properties
-        if (propertyModal) propertyModal.classList.add('hidden');
-        cleanupPropertyVideo();
-        openCasinoGame(spaceData.casinoGame);
-    } else {
-        openLandingPropertyModal(spaceData);
-    }
+    // For casino properties, show property modal first (buy/rent decision)
+    // Casino game will be opened after property is purchased or if already owned
+    openLandingPropertyModal(spaceData);
 
     updateUI();
 }
@@ -3610,7 +3661,7 @@ socket.on('lobbyDeleted', (data) => {
 });
 
 socket.on('playerMoved', (data) => {
-    const { playerId, newPosition, message, players: serverPlayers, direction = 'forward' } = data;
+    const { playerId, newPosition, message, players: serverPlayers, direction = 'forward', fromCard = false } = data;
 
     // Don't cancel if this is the rolling player - diceRolled handler will animate
     const pending = pendingRollTokenMoves[playerId];
@@ -3622,7 +3673,8 @@ socket.on('playerMoved', (data) => {
             playerId,
             newPosition,
             direction,
-            oldPosition: data.oldPosition !== undefined ? data.oldPosition : (players.find(p => p && p.id === playerId)?.position || 0)
+            oldPosition: data.oldPosition !== undefined ? data.oldPosition : (players.find(p => p && p.id === playerId)?.position || 0),
+            fromCard: fromCard || false
         };
         // Dice already finished: run the move now. Otherwise wait for onLand.
         if (pending.diceLanded) {
@@ -3648,7 +3700,7 @@ socket.on('playerMoved', (data) => {
             loadTokenModel(player.tokenIndex, player);
         }
         const afterMove = () => {
-            handlePlayerLanding(playerId, newPosition);
+            handlePlayerLanding(playerId, newPosition, fromCard || false);
         };
 
         if (oldPosition !== newPosition) {

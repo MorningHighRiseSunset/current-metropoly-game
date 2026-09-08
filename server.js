@@ -2322,7 +2322,6 @@ io.on('connection', (socket) => {
         { type: 'money', amount: 400, message: 'Bank pays you dividend of $400' },
         { type: 'money', amount: -100, message: 'Pay poor tax of $100' },
         { type: 'move', position: 0, message: 'Advance to GO' },
-        { type: 'jail', message: 'Go to Jail' },
         { type: 'money', amount: 200, message: 'Your building loan matures - collect $200' },
         { type: 'money', amount: -200, message: 'Pay hospital $200' },
         { type: 'money', amount: 100, message: 'You have won a competition - collect $100' },
@@ -2458,7 +2457,8 @@ io.on('connection', (socket) => {
             oldPosition: oldPosition,
             newPosition: position,
             direction: 'forward',
-            players: game.players
+            players: game.players,
+            fromCard: true // Flag to indicate this movement is from a card
         });
 
         saveGames();

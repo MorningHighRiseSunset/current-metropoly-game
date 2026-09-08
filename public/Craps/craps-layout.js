@@ -161,13 +161,7 @@ class CrapsGame {
   rollDice() {
     console.log('[Craps] rollDice called, observerMode:', window.__isObserverMode, 'currentBet:', this.currentBet);
     
-    // Block auto-roll if not in observer mode
-    if (window.__isObserverMode !== true) {
-      console.log('[Craps] rollDice blocked - not in observer mode');
-      this.updateStatus('Auto-roll disabled for human players');
-      return;
-    }
-    
+    // Allow manual roll for human players, auto-roll for observer mode
     if (this.currentBet === 0) {
       this.updateStatus('Place a bet first');
       return;

@@ -58,6 +58,19 @@
       z-index: 1;
     }
 
+    /* In iframe mode, use horizontal layout */
+    body.iframe-mode .craps-game {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      max-width: 100%;
+      align-items: flex-start;
+    }
+
+    body.iframe-mode .craps-game > * {
+      flex-shrink: 0;
+    }
+
     h1 {
       font-size: 1em;
       margin-bottom: 5px;
@@ -152,7 +165,7 @@
           <div class="pass-line betting-area" data-bet-type="pass-line">P A S S &nbsp; L I N E</div>
         </div>
 
-        <!-- Right props -->
+        <!-- Right props (betting board) -->
         <div class="props">
           <div class="prop any-seven betting-area" data-bet-type="any-seven">any seven 4-1</div>
           <div class="prop split">

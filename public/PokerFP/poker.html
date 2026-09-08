@@ -409,6 +409,11 @@
     min-width: 0;
   }
 
+  .bet-row input[type="range"]::-webkit-slider-runnable-track {
+    background: rgba(168, 85, 247, 0.3);
+    border-radius: 4px;
+  }
+
   .btn {
     font-family: 'Orbitron', sans-serif;
     font-size: 0.85rem;
@@ -469,7 +474,7 @@
 <div class="game">
 
   <div class="top-bar">
-    <div class="chip-display"><span>Balance</span><span id="chips">1000</span></div>
+    <div class="chip-display"><span>Balance</span><span id="chips">2500</span></div>
     <div class="pot-display"><span>Pot</span><span id="pot">0</span></div>
   </div>
 
@@ -541,6 +546,7 @@ function syncBalanceToParent() {
     // Try to notify parent window
     if (window.parent && window.parent !== window) {
       window.parent.postMessage({ type: 'BALANCE_UPDATE', balance: state.chips }, '*');
+      console.log('[Poker] Syncing balance to parent:', state.chips);
     }
   } catch (e) {
     console.log('Could not sync balance to parent:', e);
@@ -562,7 +568,7 @@ const betSlider = $('bet-slider');
 const betInput = $('bet-input');
 
 function syncBetUI() {
-  const max = Math.max(10, state.chips);
+  const max = Math.min(1000, Math.max(10, state.chips));
   betSlider.max = max;
   betInput.max = max;
   if (+betSlider.value > max) betSlider.value = max;
