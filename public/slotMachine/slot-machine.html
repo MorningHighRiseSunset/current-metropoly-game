@@ -467,22 +467,26 @@
     function updateUI() {
       balanceEl.textContent = balance;
       betDisplay.textContent = bet;
-      
+
       // Update slider max based on balance (max 1k)
-      const maxBet = Math.min(1000, balance);
+      const maxBet = Math.min(1000, Math.max(5, balance));
       betSlider.max = maxBet;
-      if (parseInt(betSlider.value) > maxBet) {
-        betSlider.value = maxBet;
+
+      // Ensure bet doesn't exceed max or balance
+      if (bet > maxBet) {
         bet = maxBet;
-      }
-      
-      // Ensure bet is a multiple of 5 (except if balance is less than 5)
-      if (balance >= 5 && bet % 5 !== 0) {
-        bet = Math.floor(bet / 5) * 5;
         betSlider.value = bet;
         betDisplay.textContent = bet;
       }
-      
+
+      // Ensure bet is a multiple of 5 (except if balance is less than 5)
+      if (balance >= 5 && bet % 5 !== 0) {
+        bet = Math.floor(bet / 5) * 5;
+        if (bet < 5) bet = 5;
+        betSlider.value = bet;
+        betDisplay.textContent = bet;
+      }
+
       betSlider.disabled = spinning;
       spinBtn.disabled = spinning || balance < bet;
     }
@@ -525,6 +529,14 @@
 
     async function spin() {
       if (spinning || balance < bet) return;
+
+      // Ensure bet is valid before spinning
+      const maxBet = Math.min(1000, Math.max(5, balance));
+      if (bet > maxBet) {
+        bet = maxBet;
+        betSlider.value = bet;
+        betDisplay.textContent = bet;
+      }
 
       spinning = true;
       balance -= bet;
@@ -574,6 +586,14 @@
         winLine.classList.add('active');
         reels.forEach(r => r.classList.add('win'));
 
+        // Clamp bet to new balance after win
+        const maxBet = Math.min(1000, Math.max(5, balance));
+        if (bet > maxBet) {
+          bet = maxBet;
+          betSlider.value = bet;
+          betDisplay.textContent = bet;
+        }
+
         const rect = document.querySelector('.reels-container').getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
@@ -607,13 +627,16 @@
     // Slider input handler
     betSlider.addEventListener('input', (e) => {
       let newBet = parseInt(e.target.value, 10);
-      
-      // Ensure bet is a multiple of 5 (except if balance is less than 5)
-      if (balance >= 5 && newBet % 5 !== 0) {
-        newBet = Math.floor(newBet / 5) * 5;
-        betSlider.value = newBet;
-      }
-      
+
+      // Clamp to valid range
+      const maxBet = Math.min(1000, Math.max(5, balance));
+      newBet = Math.max(5, Math.min(newBet, maxBet));
+
+      // Ensure bet is a multiple of 5
+      newBet = Math.floor(newBet / 5) * 5;
+      if (newBet < 5) newBet = 5;
+
+      betSlider.value = newBet;
       bet = newBet;
       betDisplay.textContent = bet;
       updateUI();

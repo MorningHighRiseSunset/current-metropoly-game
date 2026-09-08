@@ -808,14 +808,24 @@ function next() {
     if (cmp > 0) {
       state.chips += state.pot;
       result.classList.add('win');
-      result.innerHTML = `You win +${state.pot}<span class="hand-name">${pHand.name} beats ${aHand.name}</span>`;
+      // If hand names are the same, it means same hand type but better kickers
+      if (pHand.name === aHand.name) {
+        result.innerHTML = `You win +${state.pot}<span class="hand-name">${pHand.name} (better kickers)</span>`;
+      } else {
+        result.innerHTML = `You win +${state.pot}<span class="hand-name">${pHand.name} beats ${aHand.name}</span>`;
+      }
       syncBalanceToParent();
     } else if (cmp < 0) {
       result.classList.add('lose');
-      result.innerHTML = `You lose −${state.bet}<span class="hand-name">${aHand.name} beats ${pHand.name}</span>`;
+      if (pHand.name === aHand.name) {
+        result.innerHTML = `You lose −${state.bet}<span class="hand-name">${aHand.name} (better kickers)</span>`;
+      } else {
+        result.innerHTML = `You lose −${state.bet}<span class="hand-name">${aHand.name} beats ${pHand.name}</span>`;
+      }
       syncBalanceToParent();
     } else {
-      state.chips += state.bet; // get your bet back
+      // True tie - identical hands
+      state.chips += state.bet;
       result.classList.add('tie');
       result.innerHTML = `Tie — bet returned<span class="hand-name">${pHand.name}</span>`;
       syncBalanceToParent();
