@@ -81,7 +81,7 @@ const tileMediaRaw = {
     9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/Cropped/MavHeli 2.mp4', '/Videos/Cropped/MavHeli 3.mp4'], images: [] },
     10: { name: 'JAIL', videos: ['/Videos/Cropped/Imgoingtojail.mp4', '/Videos/Cropped/Jailclip4.mp4', '/Videos/Cropped/Jailclip5.mp4', '/Videos/Cropped/Jailmoment2(cropped).mp4', '/Videos/Cropped/jailclip6.mp4_1743296163946.mp4', '/Videos/Cropped/jailmoment3(cropped).mp4'], images: [] },
     11: { name: 'Brothel', videos: ['/Videos/Cropped/Brothel1.mp4'], images: [] },
-    12: { name: 'Electric Company', videos: [], images: [] },
+    12: { name: 'Electric Company', videos: [], images: ['/Images/yellow_light_bulb.jpg'] },
     13: { name: 'Venetian', videos: [], images: [] },
     14: { name: 'Las Vegas Monorail', videos: ['/Videos/Cropped/Las Vegas Monorail1.mp4', '/Videos/Cropped/Las Vegas Monorail2.mp4'], images: [] },
     15: { name: 'Bellagio', videos: ['/Videos/Cropped/Bellagio2.mp4'], images: [] },

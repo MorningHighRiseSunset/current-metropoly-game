@@ -1034,7 +1034,7 @@ function tileHasLandingMedia(position) {
 }
 
 function handlePlayerLanding(playerId, newPosition) {
-    console.log('[handlePlayerLanding] Called - playerId:', playerId, 'newPosition:', newPosition, 'gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
+    // console.log('[handlePlayerLanding] Called - playerId:', playerId, 'newPosition:', newPosition, 'gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
     // Show property info for spaces with media, properties, or jail (only for human player)
     // Skip chance, community chest, tax, and other special spaces that have their own UI
     // Also skip if modal was already opened manually by clicking on the square
@@ -1062,26 +1062,27 @@ function handlePlayerLanding(playerId, newPosition) {
 
     // Show buy modal for unowned properties (this will show after property modal)
     if (playerId === myPlayerId) {
-        const spaceData = getUnownedPurchasableSpace(newPosition);
-        if (spaceData) {
-            startPropertyDecision(spaceData, newPosition);
+        // Check if landing on jail first - show jail UI regardless of other conditions
+        if (newPosition === 10) {
+            const player = players.find(p => p && p.id === playerId);
+            // Only show proceed UI if player is not already in jail (meaning they just visited)
+            if (player && !player.inJail) {
+                showJailProceedUI(newPosition);
+            }
         } else {
-            // Check if landing on a casino property (owned or unowned)
-            const casinoSpace = boardConfig[newPosition];
-            if (casinoSpace && casinoSpace.isCasino && !currentPlayer.isAI) {
+            const spaceData = boardConfig[newPosition];
+            // Check if landing on a casino property (owned or unowned) - open casino game
+            if (spaceData && spaceData.isCasino && !currentPlayer.isAI) {
                 // Open casino game for casino properties
-                openCasinoGame(casinoSpace.casinoGame);
+                openCasinoGame(spaceData.casinoGame);
             } else {
-                // Only show proceed button for corner spaces with no other actions
-                // GO / Free Parking have no buy/rent UI — show Proceed so the turn can end
-                if (newPosition === 0 || newPosition === 20) {
-                    showJailProceedUI(newPosition);
-                }
-                // Show jail proceed UI specifically for visiting jail (not go to jail)
-                else if (newPosition === 10) {
-                    const player = players.find(p => p && p.id === playerId);
-                    // Only show proceed UI if player is not already in jail (meaning they just visited)
-                    if (player && !player.inJail) {
+                const purchasableSpace = getUnownedPurchasableSpace(newPosition);
+                if (purchasableSpace) {
+                    startPropertyDecision(purchasableSpace, newPosition);
+                } else {
+                    // Only show proceed button for corner spaces with no other actions
+                    // GO / Free Parking have no buy/rent UI — show Proceed so the turn can end
+                    if (newPosition === 0 || newPosition === 20) {
                         showJailProceedUI(newPosition);
                     }
                 }
@@ -1208,7 +1209,7 @@ function showJailProceedUI(position) {
 }
 
 function handleJailProceed() {
-    console.log('[handleJailProceed] Called - gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
+    // console.log('[handleJailProceed] Called - gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
     // Stop any playing video/audio before proceeding
     if (currentPropertyVideo) {
         stopVideoElement(currentPropertyVideo);
@@ -1221,7 +1222,7 @@ function handleJailProceed() {
         if (canEndTurnNow()) {
             endTurnNow();
         } else {
-            console.log('[handleJailProceed] Cannot end turn - canEndTurnNow returned false');
+            // console.log('[handleJailProceed] Cannot end turn - canEndTurnNow returned false');
         }
     }
 }
@@ -1484,7 +1485,7 @@ function startRentDecision(ownedData, position) {
 function calculateRentAmount(spaceData, owner, serverRentAmount = null, diceRoll = null) {
     // If server provided rent amount (important for utilities), use it
     if (serverRentAmount !== null && serverRentAmount !== undefined) {
-        console.log('[calculateRentAmount] Using server rent amount:', serverRentAmount);
+        // console.log('[calculateRentAmount] Using server rent amount:', serverRentAmount);
         return serverRentAmount;
     }
     
@@ -1794,7 +1795,7 @@ function handleCasinoGameMessage(event) {
     if (event.data && event.data.type === 'casinoGameClose') {
         // Only auto-close if it's an AI observer, not a human player actively playing
         if (activePlayerCasinoGame) {
-            console.log('[Casino] Human player is actively playing, ignoring auto-close request');
+            // console.log('[Casino] Human player is actively playing, ignoring auto-close request');
             return;
         }
         closeCasinoGame();
@@ -2364,13 +2365,13 @@ function logVideoLoadError(video, context) {
 }
 
 function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
-    console.log(`[showPropertyImages] Called for ${media.name}, images:`, media.images);
+    // console.log(`[showPropertyImages] Called for ${media.name}, images:`, media.images);
     if (!media.images || media.images.length === 0) {
-        console.log(`[showPropertyImages] No images available for ${media.name}`);
+        // console.log(`[showPropertyImages] No images available for ${media.name}`);
         return false;
     }
     const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
-    console.log(`[Image Load] Loading image for ${media.name}:`, randomImage);
+    // console.log(`[Image Load] Loading image for ${media.name}:`, randomImage);
 
     mediaContainer.innerHTML = '';
     const img = document.createElement('img');
@@ -2381,7 +2382,7 @@ function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     img.style.objectFit = 'contain';
     mediaContainer.appendChild(img);
 
-    console.log(`[Image Load] Appended img to container for ${media.name}`);
+    // console.log(`[Image Load] Appended img to container for ${media.name}`);
     mediaCache[cacheKey] = mediaContainer.cloneNode(true);
     return true;
 }
@@ -2443,7 +2444,7 @@ function buildPropertyDetailsHtml(spaceData) {
 function showPropertyInfo(spaceData, options = {}) {
     const { showDecisionActions = false, showProceedButton = false, viewerLabel = null, isRent = false, isAI = false } = options;
 
-    console.log(`[showPropertyInfo] Called for ${spaceData.name} (position ${spaceData.position}, type ${spaceData.type})`);
+    // console.log(`[showPropertyInfo] Called for ${spaceData.name} (position ${spaceData.position}, type ${spaceData.type})`);
 
     // Force cleanup any existing videos before showing new content
     cleanupPropertyVideo();
@@ -2727,11 +2728,11 @@ function showPropertyInfo(spaceData, options = {}) {
             console.log(`[showPropertyInfo] Loading images for ${spaceData.name}`);
             showPropertyImages(media, spaceData, mediaContainer, cacheKey);
         } else {
-            console.log(`[showPropertyInfo] No media available for ${spaceData.name}`);
+            // console.log(`[showPropertyInfo] No media available for ${spaceData.name}`);
             mediaContainer.innerHTML = '';
         }
     } else {
-        console.log(`[showPropertyInfo] No tileMedia for position ${spaceData.position}`);
+        // console.log(`[showPropertyInfo] No tileMedia for position ${spaceData.position}`);
         mediaContainer.innerHTML = '';
     }
     

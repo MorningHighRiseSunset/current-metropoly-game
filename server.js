@@ -34,7 +34,7 @@ const CASINO_GAMES_BY_POSITION = {
     15: 'PokerFP',
     18: 'Craps',
     21: 'slotMachine',
-    30: 'BlackJack',
+    29: 'BlackJack',
     35: 'Roulette'
 };
 
