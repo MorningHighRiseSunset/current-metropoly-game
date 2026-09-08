@@ -89,6 +89,8 @@ let isAiVsAiGame = false;
 let activeAiLandingPlayerId = null;
 let observerCasinoStartBalance = null;
 let activePlayerCasinoGame = null; // Track if human player is actively playing casino
+let casinoOpenedFromUnownedProperty = false; // Track if casino was opened from unowned property
+let casinoUnownedPropertyPosition = null; // Track position of unowned property
 let casinoPlayCounts = {}; // Track how many times each player has played casino (max 5 for humans, 3 for AI)
 let manuallyOpenedModal = false; // Track if property modal was opened by manual click
 let aiMoves = []; // Track last 5 AI moves
@@ -167,7 +169,7 @@ const DiceRollSequenceManager = (() => {
 
     function logSequence(playerId, message) {
         const playerName = players.find(p => p && p.id === playerId)?.name || playerId;
-        // console.log(`[DiceRollSeq:${playerName}] ${message}`);
+    
     }
 
     return {
@@ -1081,15 +1083,15 @@ function handlePlayerLanding(playerId, newPosition, fromCard = false) {
                 const isOwnedByMe = owner && owner.id === currentPlayer.id;
                 
                 if (isOwnedByMe) {
-                    // Player owns the casino property - show property info with proceed button
+                    // Player owns the casino property - show property info with option to play casino
                     showPropertyInfo(spaceData, { showProceedButton: true, viewerLabel: 'You own this property - Click Proceed to play casino' });
                 } else if (isOwned) {
                     // Property owned by someone else - show rent UI first
                     const rent = calculateRentAmount(spaceData, owner);
                     startPropertyDecision(spaceData, newPosition, true, owner, rent);
                 } else {
-                    // Unowned casino property - show buy UI first
-                    startPropertyDecision(spaceData, newPosition);
+                    // Unowned casino property - open casino game first, then offer to buy
+                    openCasinoGame(spaceData.casinoGame);
                 }
             } else {
                 const purchasableSpace = getUnownedPurchasableSpace(newPosition);
@@ -1718,6 +1720,24 @@ function openCasinoGame(gameName, observerOptions = null) {
         activePlayerCasinoGame = gameName;
     }
 
+    // Track if we opened casino from an unowned property to show buy UI after
+    const playerPosition = currentPlayer?.position;
+    const currentSpaceData = boardConfig[playerPosition];
+    if (currentSpaceData?.isCasino && !isObserver) {
+        const owner = players.find(p => p && p.properties && p.properties.includes(playerPosition));
+        if (!owner) {
+            // Property is unowned - flag to show buy UI after casino closes
+            casinoOpenedFromUnownedProperty = true;
+            casinoUnownedPropertyPosition = playerPosition;
+        } else {
+            casinoOpenedFromUnownedProperty = false;
+            casinoUnownedPropertyPosition = null;
+        }
+    } else {
+        casinoOpenedFromUnownedProperty = false;
+        casinoUnownedPropertyPosition = null;
+    }
+
     // Stop hover videos immediately when casino modal opens
     if (typeof hideTileHoverImmediately === 'function') {
         hideTileHoverImmediately();
@@ -1883,7 +1903,17 @@ function closeCasinoGame() {
         casinoContainer.innerHTML = '';
     }
 
-    if (!activeAiLandingPlayerId) {
+    // Check if we need to show buy UI for unowned property
+    if (casinoOpenedFromUnownedProperty && casinoUnownedPropertyPosition !== null) {
+        const spaceData = boardConfig[casinoUnownedPropertyPosition];
+        casinoOpenedFromUnownedProperty = false;
+        casinoUnownedPropertyPosition = null;
+        
+        // Show property info with buy/pass options
+        if (spaceData) {
+            showPropertyInfo(spaceData, { showDecisionActions: true, viewerLabel: 'Play casino then buy this property' });
+        }
+    } else if (!activeAiLandingPlayerId) {
         finishLandingDecisionUI();
     }
 }
@@ -2200,7 +2230,7 @@ function loadTokenModel(tokenIndex, player) {
                 console.error(`Error loading FBX model for ${player.name} from ${path}:`, error);
                 // If CDN failed and this was CDN path, try local
                 if (path !== localPath) {
-                    console.log(`Falling back to local FBX model for ${player.name}...`);
+
                     loadModel(localPath);
                 } else {
                     console.error(`Model path: ${tokenInfo.model}`);
@@ -2273,7 +2303,7 @@ function loadTokenModel(tokenIndex, player) {
                 console.error(`Error loading GLTF model for ${player.name} from ${path}:`, error);
                 // If CDN failed and this was CDN path, try local
                 if (path !== localPath) {
-                    console.log(`Falling back to local GLTF model for ${player.name}...`);
+
                     loadModel(localPath);
                 } else {
                     delete tokenLoading[player.id];
@@ -2495,7 +2525,6 @@ function buildPropertyDetailsHtml(spaceData) {
 function showPropertyInfo(spaceData, options = {}) {
     const { showDecisionActions = false, showProceedButton = false, viewerLabel = null, isRent = false, isAI = false } = options;
 
-    // console.log(`[showPropertyInfo] Called for ${spaceData.name} (position ${spaceData.position}, type ${spaceData.type})`);
 
     // Force cleanup any existing videos before showing new content
     cleanupPropertyVideo();
@@ -2589,14 +2618,8 @@ function showPropertyInfo(spaceData, options = {}) {
     mediaContainer.innerHTML = '';
 
     // Load media from tileMedia if available
-    console.log(`[showPropertyInfo] tileMedia exists:`, !!tileMedia);
-    console.log(`[showPropertyInfo] tileMedia[${spaceData.position}]:`, tileMedia ? tileMedia[spaceData.position] : 'N/A');
-
     if (tileMedia && tileMedia[spaceData.position]) {
         const media = tileMedia[spaceData.position];
-        console.log(`[showPropertyInfo] Media object:`, media);
-        console.log(`[showPropertyInfo] Videos:`, media.videos);
-        console.log(`[showPropertyInfo] Images:`, media.images);
 
         // Video loading code
         const selectedVideo = (media.videos && media.videos.length > 0)
@@ -2605,10 +2628,6 @@ function showPropertyInfo(spaceData, options = {}) {
         const cacheKey = selectedVideo
             ? `${spaceData.position}_${selectedVideo}`
             : `${spaceData.position}_${media.name}`;
-
-        console.log(`[showPropertyInfo] Selected video:`, selectedVideo);
-        console.log(`[showPropertyInfo] media.images exists:`, !!media.images);
-        console.log(`[showPropertyInfo] media.images.length:`, media.images ? media.images.length : 'N/A');
 
         if (selectedVideo) {
             lastPlayedPropertyVideos[spaceData.position] = selectedVideo;
@@ -2719,7 +2738,6 @@ function showPropertyInfo(spaceData, options = {}) {
 
             loadVideoWithFallback(selectedVideo);
         } else if (mediaCache[cacheKey]) {
-            console.log(`[showPropertyInfo] Loading from cache for ${spaceData.name}`);
             const cloned = mediaCache[cacheKey].cloneNode(true);
 
             // Apply duration limits to cached videos
@@ -2776,7 +2794,7 @@ function showPropertyInfo(spaceData, options = {}) {
                 cachedVideo.play().catch(() => {});
             }
         } else if (media.images && media.images.length > 0) {
-            console.log(`[showPropertyInfo] Loading images for ${spaceData.name}`);
+
             showPropertyImages(media, spaceData, mediaContainer, cacheKey);
         } else {
             // console.log(`[showPropertyInfo] No media available for ${spaceData.name}`);
@@ -2959,7 +2977,7 @@ function addChatMessage(sender, message) {
 
 // Add AI move to tracker
 function addAiMove(playerName, action, details) {
-    console.log(`[AI Move] ${playerName} ${action} ${details}`);
+
     const move = {
         playerName,
         action,
@@ -3099,7 +3117,7 @@ function updateUI(options = {}) {
                 gameState.diceRolled !== undefined && !gameState.diceRolled &&
                 allHumanPlayersSelectedTokens // Can only roll if all human players have selected tokens
             );
-            console.log('[updateUI] Set canRollDice:', canRollDice, 'gameState.diceRolled:', gameState.diceRolled, 'allHumanPlayersSelectedTokens:', allHumanPlayersSelectedTokens);
+    
 
             const rollDiceBtn = document.getElementById('rollDiceBtn');
             if (rollDiceBtn) {
@@ -3216,11 +3234,6 @@ function handleDiceRolledEvent(data) {
 
     // Update game state from server
     if (data.gameState) {
-        console.log('[handleDiceRolledEvent] Updating gameState:', {
-            diceRolled: data.gameState.diceRolled,
-            currentPlayer: data.gameState.currentPlayer,
-            myPlayerId: myPlayerId
-        });
         gameState = data.gameState;
         if (gameState.diceRolled && gameState.currentPlayer === myPlayerId) {
             canRollDice = false;
@@ -3837,7 +3850,7 @@ socket.on('playerMoneyUpdate', (data) => {
 
 // Handle player money changes from chance/community chest cards
 socket.on('playerMoneyChanged', (data) => {
-    console.log('[playerMoneyChanged] Player money changed:', data);
+
     if (data.players) {
         players = data.players;
         // Update local player money if this is the current player
@@ -3854,7 +3867,7 @@ socket.on('playerMoneyChanged', (data) => {
 
 // Handle show rent payment UI
 socket.on('showRentPayment', (data) => {
-    console.log('[showRentPayment] Received rent payment event:', data);
+
     if (data.playerId === myPlayerId) {
         const spaceData = data.property;
         const owner = players.find(p => p && p.id === data.ownerId);
@@ -3875,7 +3888,7 @@ socket.on('showRentPayment', (data) => {
 
 // Handle player bankruptcy
 socket.on('playerBankrupt', (data) => {
-    console.log('[playerBankrupt] Player went bankrupt:', data);
+
     if (data.players) {
         players = data.players;
         // Update local player money if this is the current player
@@ -3956,7 +3969,7 @@ socket.on('playerSentToJail', (data) => {
 });
 
 socket.on('playerOutOfJail', (data) => {
-    console.log('[playerOutOfJail] Received - playerId:', data.playerId, 'method:', data.method, 'gameState.diceRolled:', gameState?.diceRolled);
+
     const player = players.find(p => p && p.id === data.playerId);
     if (player) {
         player.inJail = false;
@@ -3969,7 +3982,7 @@ socket.on('playerOutOfJail', (data) => {
 
         // Reset canRollDice to ensure proper state
         if (data.playerId === myPlayerId) {
-            console.log('[playerOutOfJail] Resetting canRollDice to false for current player');
+
             canRollDice = false;
         }
 
@@ -4059,7 +4072,7 @@ function showCardModal(cardType, message, action) {
     `;
     cardModal.classList.remove('hidden');
 
-    console.log('[showCardModal] Card modal shown - gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
+
 }
 
 // Show doubles notification
@@ -4187,7 +4200,7 @@ socket.on('gameWon', (data) => {
 });
 
 socket.on('aiLandingStarted', (data) => {
-    console.log('[aiLandingStarted] Received:', data);
+
     if (data.players) {
         players = data.players;
     }
@@ -4201,7 +4214,7 @@ socket.on('aiLandingStarted', (data) => {
         return;
     }
 
-    console.log('[aiLandingStarted] Showing property info for:', spaceData.name);
+
     const label = `${getPlayerDisplayName(player)} (AI) landed on ${spaceData.name}`;
     const isUtility = spaceData.type === 'utility';
     showPropertyInfo(spaceData, {
@@ -4424,6 +4437,8 @@ const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 if (closeCasinoBtn) {
     closeCasinoBtn.addEventListener('click', () => {
         activePlayerCasinoGame = null; // Clear the flag when human manually closes
+        casinoOpenedFromUnownedProperty = false; // Reset unowned property flag
+        casinoUnownedPropertyPosition = null;
         closeCasinoGame();
     });
 }
@@ -4452,7 +4467,7 @@ function setupChatListeners() {
         sendChatBtn.addEventListener('click', () => {
             const message = chatInputEl.value.trim();
             if (message) {
-                console.log('Sending chat message:', message);
+
                 socket.emit('sendChat', { message });
                 chatInputEl.value = '';
             }
@@ -4464,7 +4479,7 @@ function setupChatListeners() {
             if (e.key === 'Enter') {
                 const message = chatInputEl.value.trim();
                 if (message) {
-                    console.log('Sending chat message:', message);
+    
                     socket.emit('sendChat', { message });
                     chatInputEl.value = '';
                 }
@@ -4477,13 +4492,13 @@ function setupChatListeners() {
 const rollDiceBtn = document.getElementById('rollDiceBtn');
 if (rollDiceBtn) {
     rollDiceBtn.addEventListener('click', () => {
-        console.log('[rollDiceBtn] Clicked - canRollDice:', canRollDice, 'gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
+
         if (canRollDice && !(gameState && gameState.diceRolled)) {
             canRollDice = false;
             rollDiceBtn.disabled = true;
             socket.emit('rollDice');
         } else {
-            console.log('[rollDiceBtn] Cannot roll - canRollDice is false');
+
         }
     });
 }
@@ -5072,7 +5087,7 @@ function createPremiumBoardTile(spaceData, row, col) {
                     console.error('Error loading Ferris Wheel model from', path, ':', error);
                     // If CDN failed and this was CDN path, try local
                     if (path !== localPath) {
-                        console.log('Falling back to local Ferris Wheel model...');
+
                         loadFerrisWheel(localPath);
                     }
                 }
@@ -5257,7 +5272,7 @@ function createCenterCarousel(parentGroup) {
             console.error('Error loading initial carousel image:', error);
             // Try next image as fallback
             if (allImages.length > 1) {
-                console.log('Trying fallback image...');
+
                 const fallbackImages = allImages.slice(1);
                 createCenterCarouselWithFallback(parentGroup, fallbackImages);
             }
@@ -5615,14 +5630,14 @@ function initializePeerJS() {
     });
 
     peer.on('call', (call) => {
-        console.log('Incoming call from:', call.peer);
+
         // Answer with local stream if available
         if (localStream) {
-            console.log('Answering with existing stream');
+
             call.answer(localStream);
         } else {
             // Get stream first then answer
-            console.log('Getting stream to answer call');
+
             navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'user' },
                 audio: true
@@ -5632,7 +5647,7 @@ function initializePeerJS() {
                 if (localVideo) {
                     localVideo.srcObject = localStream;
                     localVideo.muted = true;
-                    localVideo.play().catch(e => console.log('Local video play error:', e));
+                    localVideo.play().catch(e => {});
                 }
                 call.answer(stream);
             }).catch(err => {
@@ -5651,12 +5666,12 @@ function initializePeerJS() {
 
 // Start video call
 async function startVideoCall() {
-    console.log('startVideoCall called');
+
     // Wait for peer to be ready
     if (!peer || !myPeerId) {
         updateConnectionStatus('Connecting to peer server...');
         if (!peer) {
-            console.log('Initializing PeerJS...');
+
             initializePeerJS();
         }
         // Wait a bit for peer to connect
@@ -5664,16 +5679,14 @@ async function startVideoCall() {
     }
 
     if (!myPeerId) {
-        console.log('Error: Peer not ready - myPeerId is null');
+
         updateConnectionStatus('Error: Peer not ready');
         return;
     }
 
-    console.log('Peer ready, myPeerId:', myPeerId);
-
     try {
         // Get local media stream
-        console.log('Getting user media...');
+
         localStream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: 'user' },
             audio: true
@@ -5684,7 +5697,7 @@ async function startVideoCall() {
         if (localVideo) {
             localVideo.srcObject = localStream;
             localVideo.muted = true;
-            localVideo.play().catch(e => console.log('Local video play error:', e));
+            localVideo.play().catch(e => {});
         } else {
             console.error('localVideo element not found');
         }
@@ -5692,13 +5705,13 @@ async function startVideoCall() {
         updateConnectionStatus('Calling...');
 
         // Send call request to other player with our peer ID
-        console.log('Sending video call request with peerId:', myPeerId, 'gameId:', currentGameId, 'playerId:', myPlayerId);
+
         socket.emit('videoCallRequest', {
             gameId: currentGameId,
             playerId: myPlayerId,
             peerId: myPeerId
         });
-        console.log('videoCallRequest emitted');
+
 
         document.getElementById('startVideoCall').style.display = 'none';
         document.getElementById('endVideoCall').style.display = 'block';
@@ -5824,7 +5837,7 @@ socket.on('videoCallRequest', async (data) => {
             if (localVideo) {
                 localVideo.srcObject = localStream;
                 localVideo.muted = true;
-                localVideo.play().catch(e => console.log('Local video play error:', e));
+                localVideo.play().catch(e => {});
             } else {
                 console.error('localVideo element not found');
             }

@@ -546,10 +546,9 @@ function syncBalanceToParent() {
     // Try to notify parent window
     if (window.parent && window.parent !== window) {
       window.parent.postMessage({ type: 'BALANCE_UPDATE', balance: state.chips }, '*');
-      console.log('[Poker] Syncing balance to parent:', state.chips);
     }
   } catch (e) {
-    console.log('Could not sync balance to parent:', e);
+    // Silent fail for balance sync errors
   }
 }
 

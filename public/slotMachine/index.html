@@ -31,7 +31,7 @@
       const balance = startingBalance;
       iframe.contentWindow.postMessage({ type: 'SET_BALANCE', balance }, '*');
     } catch (e) {
-      console.log('Could not communicate with iframe');
+      // Silent fail
     }
   };
   
@@ -48,7 +48,7 @@
           balanceCallback(event.data.balance);
         }
       } catch (e) {
-        console.log('Could not communicate with parent window');
+        // Silent fail
       }
     }
   });
@@ -59,8 +59,6 @@
   
   // Expose init function for main game integration
   window.initSlotsMinigame = function(container, initialBalance, callback) {
-    console.log('[Slots] initSlotsMinigame called with balance:', initialBalance);
-    
     // Set balance callback for the parent
     if (callback) {
       balanceCallback = callback;
@@ -75,7 +73,7 @@
     try {
       iframe.contentWindow.postMessage({ type: 'SET_BALANCE', balance: startingBalance }, '*');
     } catch (e) {
-      console.log('Could not communicate with iframe');
+      // Silent fail
     }
   };
 </script>

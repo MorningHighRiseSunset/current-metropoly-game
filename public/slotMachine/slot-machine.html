@@ -427,10 +427,9 @@
         // Try to notify parent window
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'BALANCE_UPDATE', balance }, '*');
-          console.log('[Slots] Syncing balance to parent:', balance);
         }
       } catch (e) {
-        console.log('Could not sync balance to parent:', e);
+        // Silent fail for balance sync errors
       }
     }
 
