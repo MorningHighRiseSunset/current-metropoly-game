@@ -415,7 +415,7 @@ window.initPokerMinigame = function(container, playerMoney, updateMainGameBalanc
 
     const betSelector = q('#bet-amount-selector');
     if (betSelector) {
-        betSelector.addEventListener('change', (e) => {
+        betSelector.addEventListener('input', (e) => {
             let newAmount = parseInt(e.target.value) || 100;
             // Prevent selecting bet amount higher than balance
             if (newAmount > balance) {

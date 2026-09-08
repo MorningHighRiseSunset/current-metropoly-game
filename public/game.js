@@ -896,8 +896,8 @@ const boardConfig = [
     { name: 'Community Cards', type: 'community-chest', position: 26 },
     { name: 'Sphere', type: 'property', color: '#008000', price: 240, rent: [40, 80, 240, 720, 1000, 1200], position: 27, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
     { name: 'Water Works', type: 'utility', price: 120, position: 28 },
-    { name: 'GO TO JAIL', type: 'corner', position: 29 },
-    { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 252, rent: [42, 84, 252, 756, 1050, 1260], position: 30, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'BlackJack' },
+    { name: 'Caesars Palace', type: 'property', color: '#0000FF', price: 252, rent: [42, 84, 252, 756, 1050, 1260], position: 29, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'BlackJack' },
+    { name: 'GO TO JAIL', type: 'corner', position: 30 },
     { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31 },
     { name: 'Chance', type: 'chance', position: 32 },
     { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, rent: [30, 60, 180, 540, 750, 900], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
@@ -1050,29 +1050,15 @@ function handlePlayerLanding(playerId, newPosition) {
         const owner = players.find(p => p && p.properties && p.properties.includes(newPosition) && p.id !== playerId);
         const isOwned = !!owner;
 
-        if ((hasMedia || isProperty || isJail) && !isSpecialSpace && !isOwned) {
+        // Show property info for properties with media, or if it's a jail space
+        // Don't show for properties without media (they'll get the buy/rent modal instead)
+        if ((hasMedia || isJail) && !isSpecialSpace && !isOwned) {
             showPropertyInfo(spaceData);
         }
     }
 
     // Reset manual flag after landing
     manuallyOpenedModal = false;
-
-    // Show jail proceed UI specifically for the current player (only for visiting jail, not go to jail)
-    // Only show if this is not a "send to jail" situation (which happens from position 30)
-    if (newPosition === 10) {
-        const player = players.find(p => p && p.id === playerId);
-        // Only show proceed UI if player is not already in jail (meaning they just visited)
-        // If they're already in jail, it means they were sent there and their turn is already handled
-        if (player && !player.inJail && playerId === myPlayerId) {
-            showJailProceedUI(newPosition);
-        }
-    }
-
-    // GO / Free Parking have no buy/rent UI — show Proceed so the turn can end
-    if ((newPosition === 0 || newPosition === 20) && playerId === myPlayerId) {
-        showJailProceedUI(newPosition);
-    }
 
     // Show buy modal for unowned properties (this will show after property modal)
     if (playerId === myPlayerId) {
@@ -1085,6 +1071,20 @@ function handlePlayerLanding(playerId, newPosition) {
             if (casinoSpace && casinoSpace.isCasino && !currentPlayer.isAI) {
                 // Open casino game for casino properties
                 openCasinoGame(casinoSpace.casinoGame);
+            } else {
+                // Only show proceed button for corner spaces with no other actions
+                // GO / Free Parking have no buy/rent UI — show Proceed so the turn can end
+                if (newPosition === 0 || newPosition === 20) {
+                    showJailProceedUI(newPosition);
+                }
+                // Show jail proceed UI specifically for visiting jail (not go to jail)
+                else if (newPosition === 10) {
+                    const player = players.find(p => p && p.id === playerId);
+                    // Only show proceed UI if player is not already in jail (meaning they just visited)
+                    if (player && !player.inJail) {
+                        showJailProceedUI(newPosition);
+                    }
+                }
             }
         }
         // Rent payment UI is now handled by server via showRentPayment event
@@ -2723,7 +2723,7 @@ function showPropertyInfo(spaceData, options = {}) {
             if (cachedVideo) {
                 cachedVideo.play().catch(() => {});
             }
-        } else if (media.images && media.images.length > 0 && spaceData.type === 'utility') {
+        } else if (media.images && media.images.length > 0) {
             console.log(`[showPropertyInfo] Loading images for ${spaceData.name}`);
             showPropertyImages(media, spaceData, mediaContainer, cacheKey);
         } else {
