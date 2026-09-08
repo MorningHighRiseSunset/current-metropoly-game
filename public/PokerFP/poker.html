@@ -824,10 +824,10 @@ function next() {
       }
       syncBalanceToParent();
     } else {
-      // True tie - identical hands
-      state.chips += state.bet;
+      // True tie - split the pot (player gets half of pot = their bet + half of AI's bet)
+      state.chips += state.pot / 2;
       result.classList.add('tie');
-      result.innerHTML = `Tie — bet returned<span class="hand-name">${pHand.name}</span>`;
+      result.innerHTML = `Tie — pot split (+${state.pot / 2})<span class="hand-name">${pHand.name}</span>`;
       syncBalanceToParent();
     }
 
