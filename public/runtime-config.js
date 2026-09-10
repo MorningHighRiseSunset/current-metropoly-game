@@ -15,6 +15,6 @@ window.USE_VIDEO_CDN = true;
 window.VIDEO_CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev';
 
 // Model CDN configuration for R2 bucket storage
-// Disabled due to SSL issues - models served from Vercel deployment
-window.USE_CDN = false;
+// Re-enabled with correct URL structure
+window.USE_CDN = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
 window.CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models';

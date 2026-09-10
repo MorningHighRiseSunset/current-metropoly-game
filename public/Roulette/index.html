@@ -146,36 +146,70 @@
       color: #d4af37;
       font-weight: 700;
     }
-    .chip-select {
+    .bet-slider-container {
       display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-    }
-    .chip {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 2px solid #fff;
-      display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      font-weight: 700;
+      gap: 4px;
+      background: rgba(0,0,0,0.3);
+      padding: 6px 10px;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 200px;
+    }
+
+    .bet-slider-container label {
       font-size: 0.65rem;
+      color: #f5e6c8;
+      font-weight: 600;
+    }
+
+    .bet-slider-container #bet-display {
+      color: #d4af37;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .bet-slider-container input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      outline: none;
+      -webkit-appearance: none;
       cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-      transition: transform 0.12s, box-shadow 0.12s;
-      user-select: none;
     }
-    .chip:hover { transform: scale(1.08); }
-    .chip.active {
-      transform: scale(1.1);
-      box-shadow: 0 0 0 2px #d4af37, 0 3px 8px rgba(0,0,0,0.5);
+
+    .bet-slider-container input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #d4af37, #b8860b);
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s;
     }
-    .chip.c1  { background: #e8e8e8; color: #222; border-color: #bbb; }
-    .chip.c5  { background: #c62828; color: #fff; border-color: #fff; }
-    .chip.c25 { background: #1565c0; color: #fff; border-color: #fff; }
-    .chip.c100{ background: #2e7d32; color: #fff; border-color: #fff; }
-    .chip.c500{ background: #6a1b9a; color: #fff; border-color: #fff; }
+
+    .bet-slider-container input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .bet-slider-container input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #d4af37, #b8860b);
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      border: none;
+      transition: transform 0.2s;
+    }
+
+    .bet-slider-container input[type="range"]::-moz-range-thumb:hover {
+      transform: scale(1.2);
+    }
 
     .actions {
       display: flex;
@@ -393,12 +427,9 @@
           <div class="label">Balance</div>
           <div class="value" id="balance">$1,000</div>
         </div>
-        <div class="chip-select" id="chipSelect">
-          <div class="chip c1 active" data-value="1">1</div>
-          <div class="chip c5" data-value="5">5</div>
-          <div class="chip c25" data-value="25">25</div>
-          <div class="chip c100" data-value="100">100</div>
-          <div class="chip c500" data-value="500">500</div>
+        <div class="bet-slider-container">
+          <label>Bet Amount: <span id="bet-display">$100</span></label>
+          <input type="range" id="bet-slider" min="1" max="1000" value="100" step="1">
         </div>
         <div class="actions">
           <button class="action-btn" id="clearBtn">Clear Bets</button>
@@ -477,7 +508,7 @@
 
     // ========== STATE ==========
     let balance = 1000;
-    let selectedChip = 1;
+    let selectedBetAmount = window.__selectedChip || 100;
     let bets = {};           // key → amount
     let lastBets = {};
     let isSpinning = false;
@@ -542,14 +573,21 @@
       }
     });
 
-    // Chip selection
-    document.querySelectorAll('.chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        selectedChip = parseInt(chip.dataset.value, 10);
+    // Bet amount slider
+    const betSlider = document.getElementById('bet-slider');
+    const betDisplay = document.getElementById('bet-display');
+    if (betSlider && betDisplay) {
+      const maxBet = Math.min(1000, Math.max(1, balance));
+      betSlider.max = maxBet;
+      betSlider.value = selectedBetAmount;
+      betDisplay.textContent = `$${selectedBetAmount}`;
+
+      betSlider.addEventListener('input', (e) => {
+        selectedBetAmount = parseInt(e.target.value);
+        window.__selectedChip = selectedBetAmount; // Sync across minigames
+        betDisplay.textContent = `$${selectedBetAmount}`;
       });
-    });
+    }
 
     clearBtn.addEventListener('click', clearBets);
     rebetBtn.addEventListener('click', rebet);
@@ -557,20 +595,21 @@
     // ========== BETTING LOGIC ==========
     function placeBet(key) {
       if (isSpinning) return;
-      if (balance < selectedChip) {
+      if (balance < selectedBetAmount) {
         messageEl.textContent = 'Insufficient balance';
         return;
       }
       // Prevent betting if balance would go negative
-      if (balance - selectedChip < 0) {
+      if (balance - selectedBetAmount < 0) {
         messageEl.textContent = 'Insufficient balance';
         return;
       }
       if (!bets[key]) bets[key] = 0;
-      bets[key] += selectedChip;
-      balance -= selectedChip;
+      bets[key] += selectedBetAmount;
+      balance -= selectedBetAmount;
       updateUI();
       renderChips();
+      updateSliderLimits();
       messageEl.textContent = '';
     }
 
@@ -581,6 +620,7 @@
       bets = {};
       updateUI();
       renderChips();
+      updateSliderLimits();
       messageEl.textContent = '';
     }
 
@@ -599,6 +639,7 @@
       balance -= totalNeeded;
       updateUI();
       renderChips();
+      updateSliderLimits();
       messageEl.textContent = 'Previous bets placed';
     }
 
@@ -616,6 +657,20 @@
         updateMainGameBalance(balance);
       } else if (typeof CustomEvent === 'function') {
         document.dispatchEvent(new CustomEvent('minigame-balance-update', {detail: {balance}}));
+      }
+    }
+
+    function updateSliderLimits() {
+      const betSlider = document.getElementById('bet-slider');
+      if (betSlider) {
+        const maxBet = Math.min(1000, Math.max(1, balance));
+        betSlider.max = maxBet;
+        if (selectedBetAmount > maxBet) {
+          selectedBetAmount = maxBet;
+          betSlider.value = selectedBetAmount;
+          const betDisplay = document.getElementById('bet-display');
+          if (betDisplay) betDisplay.textContent = `$${selectedBetAmount}`;
+        }
       }
     }
 
@@ -905,6 +960,7 @@
           bets = {};
           updateUI();
           renderChips();
+          updateSliderLimits();
 
           isSpinning = false;
           spinBtn.disabled = false;

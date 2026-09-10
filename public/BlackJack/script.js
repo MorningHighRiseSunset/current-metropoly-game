@@ -322,26 +322,32 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
     const dealBtn = q('#deal-btn');
     const hitBtn = q('#hit-btn');
     const standBtn = q('#stand-btn');
-    
+
     if (dealBtn) {
         dealBtn.addEventListener('click', () => placeBet(selectedBetAmount));
     }
 
-    // Bet amount selector
-    const betAmountSelector = q('#bet-amount-selector');
-    if (betAmountSelector) {
-        betAmountSelector.addEventListener('change', (e) => {
+    // Bet amount slider
+    const betSlider = q('#bet-slider');
+    const betDisplay = q('#bet-display');
+    if (betSlider && betDisplay) {
+        const maxBet = Math.min(1000, Math.max(10, balance));
+        betSlider.max = maxBet;
+        betSlider.value = selectedBetAmount;
+
+        betSlider.addEventListener('input', (e) => {
             selectedBetAmount = parseInt(e.target.value);
-            currentBet = selectedBetAmount; // Update the actual bet used in gameplay
-            window.__selectedChip = selectedBetAmount; // Sync across minigames
+            currentBet = selectedBetAmount;
+            window.__selectedChip = selectedBetAmount;
+            betDisplay.textContent = `$${selectedBetAmount}`;
             updateBalance();
         });
     }
-    
+
     if (hitBtn) {
         hitBtn.addEventListener('click', hit);
     }
-    
+
     if (standBtn) {
         standBtn.addEventListener('click', stand);
     }

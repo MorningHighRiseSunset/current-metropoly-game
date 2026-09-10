@@ -3,17 +3,15 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     // --- State ---
     let balance = typeof playerMoney === 'number' ? playerMoney : 2500;
     let currentBets = { PLAYER: 0, BANKER: 0, TIE: 0, PLAYER_PAIR: 0, BANKER_PAIR: 0 };
-    let betChipValues = { PLAYER: 0, BANKER: 0, TIE: 0, PLAYER_PAIR: 0, BANKER_PAIR: 0 }; // Track which chip value was used for each bet
-    let selectedChip = window.__selectedChip || 25; // Use synced chip value if available
+    let selectedBetAmount = window.__selectedChip || 100; // Use synced bet amount if available
     let playerHand = [];
     let bankerHand = [];
     let shoe = [];
     let gameState = 'IDLE'; // IDLE, BETTING, DEALING, RESULT
     let commentary = "Place your bets.";
 
-    const CHIP_VALUES = [1, 5, 25, 100, 500, 1000];
     const MIN_BET = 5;
-    const MAX_BET = 5000;
+    const MAX_BET = 1000;
     const PAYOUTS = { PLAYER: 1, BANKER: 1, TIE: 8, PAIR: 11 };
 
     // --- DOM helpers ---
@@ -151,11 +149,12 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
                         ${renderBettingTable()}
                     </div>
                     <div class="controls">
-                        <div class="chip-selector">
-                            ${CHIP_VALUES.map(val => renderChip(val)).join('')}
+                        <div class="bet-slider-container">
+                            <label>Bet Amount: <span id="bet-display">$${selectedBetAmount}</span></label>
+                            <input type="range" id="bet-slider" min="${MIN_BET}" max="${MAX_BET}" value="${selectedBetAmount}" step="5">
                         </div>
                         <div class="action-buttons">
-                            ${gameState === 'RESULT' ? 
+                            ${gameState === 'RESULT' ?
                                 `<button class="btn btn-primary" onclick="window.baccaratNewBet()">New Bet</button>` :
                                 gameState === 'THIRD_CARD' ?
                                 `<button class="btn btn-primary" onclick="window.baccaratDrawThirdCards()">Draw</button>` :
@@ -175,6 +174,9 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         window.baccaratDealInitialCards = dealInitialCards;
         window.baccaratDrawThirdCards = drawThirdCards;
         window.baccaratNewBet = resetGame;
+
+        // Setup slider after rendering
+        setupSlider();
     }
 
     function renderCard(card) {
@@ -188,24 +190,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         `;
     }
 
-    function renderChip(value) {
-        const colors = {
-            1: 'white',
-            5: 'red',
-            25: 'green',
-            100: 'blue',
-            500: 'black',
-            1000: 'yellow'
-        };
-        const color = colors[value] || 'white';
-        return `
-            <button class="chip chip-${color} ${selectedChip === value ? 'selected' : ''}" 
-                    onclick="window.baccaratSelectChip(${value})" 
-                    ${gameState === 'DEALING' ? 'disabled' : ''}>
-                ${value >= 1000 ? '1K' : value}
-            </button>
-        `;
-    }
+
 
     function renderBettingTable() {
         const spots = [
@@ -216,19 +201,10 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
             { label: 'BANKER', position: 'BANKER', color: 'red', multiplier: '1:1', wide: true }
         ];
 
-        const getChipColor = (value) => {
-            if (value < 5) return 'white';
-            if (value < 25) return 'red';
-            if (value < 100) return 'green';
-            if (value < 500) return 'blue';
-            if (value < 1000) return 'black';
-            return 'yellow';
-        };
-
-        const renderChipStack = (amount, position) => {
+        const renderChipStack = (amount) => {
             const chipCount = Math.min(Math.ceil(amount / 100), 5); // Max 5 chips in stack
-            const color = getChipColor(betChipValues[position] || selectedChip);
-            
+            const color = amount >= 500 ? 'yellow' : amount >= 100 ? 'black' : amount >= 25 ? 'blue' : amount >= 5 ? 'red' : 'white';
+
             return `
                 <div class="chip-stack">
                     ${Array(chipCount).fill(0).map((_, i) => `
@@ -248,7 +224,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
                             ${gameState === 'DEALING' || balance === 0 ? 'disabled' : ''}>
                         <span class="spot-label">${spot.label}</span>
                         <span class="spot-multiplier">${spot.multiplier}</span>
-                        ${currentBets[spot.position] > 0 ? renderChipStack(currentBets[spot.position], spot.position) : ''}
+                        ${currentBets[spot.position] > 0 ? renderChipStack(currentBets[spot.position]) : ''}
                     </button>
                 `).join('')}
             </div>
@@ -256,45 +232,66 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
     }
 
     // --- Game actions ---
-    window.baccaratSelectChip = (value) => {
-        // Prevent selecting chip higher than balance
-        if (value > balance) {
-            commentary = "Insufficient funds for this chip value.";
-            render();
-            return;
-        }
-        selectedChip = value;
-        window.__selectedChip = value; // Sync across minigames
-        render();
-    };
-
     function placeBet(position) {
         if (gameState !== 'IDLE' && gameState !== 'BETTING') return;
         if (gameState === 'IDLE') gameState = 'BETTING';
 
         const totalBet = Object.values(currentBets).reduce((a, b) => a + b, 0);
-        if (totalBet + selectedChip > balance) {
+        if (totalBet + selectedBetAmount > balance) {
             commentary = "Insufficient funds.";
             render();
             return;
         }
-        if (currentBets[position] + selectedChip > MAX_BET) return;
+        if (currentBets[position] + selectedBetAmount > MAX_BET) return;
 
-        currentBets[position] += selectedChip;
-        betChipValues[position] = selectedChip; // Track which chip value was used
-        balance -= selectedChip;
+        currentBets[position] += selectedBetAmount;
+        balance -= selectedBetAmount;
         commentary = "Place your bets.";
         render();
+        updateSliderLimits();
     }
 
     function clearBets() {
         const totalRefund = Object.values(currentBets).reduce((a, b) => a + b, 0);
         balance += totalRefund;
         currentBets = { PLAYER: 0, BANKER: 0, TIE: 0, PLAYER_PAIR: 0, BANKER_PAIR: 0 };
-        betChipValues = { PLAYER: 0, BANKER: 0, TIE: 0, PLAYER_PAIR: 0, BANKER_PAIR: 0 };
         gameState = 'IDLE';
         commentary = "Place your bets.";
         render();
+        updateSliderLimits();
+    }
+
+    // Slider event listener
+    function setupSlider() {
+        const betSlider = q('#bet-slider');
+        const betDisplay = q('#bet-display');
+        if (betSlider && betDisplay) {
+            const maxBet = Math.min(MAX_BET, Math.max(MIN_BET, balance));
+            betSlider.max = maxBet;
+            betSlider.value = Math.min(selectedBetAmount, maxBet);
+            betDisplay.textContent = `$${betSlider.value}`;
+
+            betSlider.addEventListener('input', (e) => {
+                selectedBetAmount = parseInt(e.target.value);
+                window.__selectedChip = selectedBetAmount; // Sync across minigames
+                betDisplay.textContent = `$${selectedBetAmount}`;
+            });
+        }
+    }
+
+    // Update slider limits when balance changes
+    function updateSliderLimits() {
+        const betSlider = q('#bet-slider');
+        if (betSlider) {
+            const maxBet = Math.min(MAX_BET, Math.max(MIN_BET, balance));
+            betSlider.max = maxBet;
+            if (selectedBetAmount > maxBet) {
+                selectedBetAmount = maxBet;
+                betSlider.value = selectedBetAmount;
+                const betDisplay = q('#bet-display');
+                if (betDisplay) betDisplay.textContent = `$${selectedBetAmount}`;
+            }
+        }
     }
 
     async function dealGame() {
@@ -450,13 +447,13 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
         gameState = 'RESULT';
         commentary = getDealerCommentary(result, pScore, bScore, totalPayout);
         render();
+        updateSliderLimits();
     }
 
     function resetGame() {
         playerHand = [];
         bankerHand = [];
         currentBets = { PLAYER: 0, BANKER: 0, TIE: 0, PLAYER_PAIR: 0, BANKER_PAIR: 0 };
-        betChipValues = { PLAYER: 0, BANKER: 0, TIE: 0, PLAYER_PAIR: 0, BANKER_PAIR: 0 };
         gameState = 'IDLE';
         commentary = "Place your bets.";
         render();

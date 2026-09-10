@@ -106,8 +106,8 @@ function getBoardSpaces() {
         { name: 'FREE PARKING', type: 'corner', position: 20 },
         { name: 'Hard Rock Hotel', type: 'property', color: '#FFFF00', group: 'yellow', price: 280, rent: [34, 67, 201, 605, 840, 1008], position: 21, address: '3400 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Chance', type: 'chance', position: 22 },
-        { name: 'County Fair', type: 'property', color: '#FFFF00', group: 'yellow', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 23, address: '' },
-        { name: 'Shriners Children\'s Open', type: 'property', color: '#FFFF00', group: 'yellow', price: 320, rent: [35, 71, 214, 638, 880, 1045], position: 24, address: '1700 Village Center Circle Las Vegas NV 89134' },
+        { name: 'County Fair', type: 'property', color: '#FFFF00', group: 'yellow', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 24, address: '' },
+        { name: 'Golf Course', type: 'property', color: '#008000', group: 'green', price: 320, rent: [35, 71, 214, 638, 880, 1045], position: 23, address: '1700 Village Center Circle Las Vegas NV 89134' },
         { name: 'Las Vegas Little White Wedding Chapel', type: 'property', color: '#008000', group: 'green', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 25, address: '1301 Las Vegas Blvd S, Las Vegas, NV 89104 (Little White Wedding Chapel)' },
         { name: 'Community Cards', type: 'community-chest', position: 26 },
         { name: 'Sphere', type: 'property', color: '#008000', group: 'green', price: 400, rent: [44, 88, 264, 792, 1100, 1320], position: 27, address: '255 Sands Ave, Las Vegas, NV 89169 (The Sphere)' },
@@ -432,12 +432,15 @@ function getNextPlayerIndex(game, fromIndex) {
 // Helper function to roll dice with rare doubles
 function rollDiceWithRareDoubles(currentPosition = 0) {
     let dice1, dice2, total, newPosition;
+    let attempts = 0;
+    const maxAttempts = 10; // Prevent infinite loops
 
     do {
         dice1 = Math.floor(Math.random() * 6) + 1;
         dice2 = Math.floor(Math.random() * 6) + 1;
         total = dice1 + dice2;
         newPosition = (currentPosition + total) % 40;
+        attempts++;
 
         // Only 5% chance of allowing doubles (very rare)
         if (dice1 === dice2 && Math.random() > 0.05) {
@@ -451,10 +454,29 @@ function rollDiceWithRareDoubles(currentPosition = 0) {
             newPosition = (currentPosition + total) % 40;
         }
 
-        break; // Accept this roll
-    } while (true);
+        // Prevent landing on Craps (position 18)
+        if (newPosition === 18 && attempts < maxAttempts) {
+            continue; // Reroll to avoid Craps
+        }
 
-    return { dice1, dice2, isDoubles: dice1 === dice2 };
+        // Increase chances of landing on other casino positions
+        // Casino positions: 13 (Baccarat), 15 (PokerFP), 21 (slotMachine), 29 (BlackJack), 35 (Roulette)
+        const casinoPositions = [13, 15, 21, 29, 35];
+        if (casinoPositions.includes(newPosition)) {
+            // Always accept casino positions (increased probability)
+            break;
+        }
+
+        // For non-casino positions, give some chance to reroll for casino
+        // Only reroll if we haven't exceeded max attempts
+        if (attempts < maxAttempts && Math.random() < 0.4) {
+            continue; // 40% chance to reroll for casino position
+        }
+
+        break; // Accept this roll
+    } while (attempts < maxAttempts);
+
+    return { dice1, dice2, total, newPosition, isDoubles: dice1 === dice2 };
 }
 
 function createAiPlayerForGame(game, slotIndex) {
@@ -559,7 +581,8 @@ function executeAIRollDice(game, aiPlayer) {
                 const roll = rollDiceWithRareDoubles(aiPlayer.position);
                 const dice1 = roll.dice1;
                 const dice2 = roll.dice2;
-                const total = dice1 + dice2;
+                const total = roll.total;
+                const newPosition = roll.newPosition;
                 const isDoubles = roll.isDoubles;
 
                 game.gameState.diceRolled = true;
@@ -578,7 +601,6 @@ function executeAIRollDice(game, aiPlayer) {
 
                 // Update AI player position
                 const oldPosition = aiPlayer.position;
-                const newPosition = (aiPlayer.position + total) % 40;
 
                 // Check if AI passed GO
                 if (oldPosition + total >= 40) {
@@ -666,7 +688,8 @@ function executeAIRollDice(game, aiPlayer) {
         const roll = rollDiceWithRareDoubles(aiPlayer.position);
         const dice1 = roll.dice1;
         const dice2 = roll.dice2;
-        const total = dice1 + dice2;
+        const total = roll.total;
+        const newPosition = roll.newPosition;
         const isDoubles = roll.isDoubles;
 
 
@@ -694,7 +717,7 @@ function executeAIRollDice(game, aiPlayer) {
 
             // Move AI player
             const oldPosition = aiPlayer.position;
-            aiPlayer.position = (aiPlayer.position + total) % 40;
+            aiPlayer.position = newPosition;
 
             // Check for GO bonus
             if (oldPosition > aiPlayer.position || aiPlayer.position === 0) {
@@ -736,20 +759,21 @@ function executeAIRollDice(game, aiPlayer) {
                 const newRoll = rollDiceWithRareDoubles(aiPlayer.position);
                 const newDice1 = newRoll.dice1;
                 const newDice2 = newRoll.dice2;
-                const newTotal = newDice1 + newDice2;
+                const newTotal = newRoll.total;
+                const newPosition = newRoll.newPosition;
 
                 io.to(game.id).emit('diceRolled', {
                     playerId: aiPlayer.id,
                     roll: { dice1: newDice1, dice2: newDice2, total: newTotal },
                     oldPosition: aiPlayer.position,
-                    newPosition: aiPlayer.position,
+                    newPosition: newPosition,
                     gameState: game.gameState,
                     players: game.players
                 });
 
                 // Move AI player with new roll
                 const oldPosition = aiPlayer.position;
-                aiPlayer.position = (aiPlayer.position + newTotal) % 40;
+                aiPlayer.position = newPosition;
 
                 // Check for GO bonus
                 if (oldPosition > aiPlayer.position || aiPlayer.position === 0) {
@@ -796,7 +820,8 @@ function executeAIRollDice(game, aiPlayer) {
     const roll = rollDiceWithRareDoubles(aiPlayer.position);
     const dice1 = roll.dice1;
     const dice2 = roll.dice2;
-    const total = dice1 + dice2;
+    const total = roll.total;
+    const newPosition = roll.newPosition;
     const isDoubles = roll.isDoubles;
 
     game.gameState.diceRolled = true;
@@ -815,7 +840,6 @@ function executeAIRollDice(game, aiPlayer) {
 
     // Update AI player position
     const oldPosition = aiPlayer.position;
-    const newPosition = (aiPlayer.position + total) % 40;
 
     // Check if AI passed GO
     if (oldPosition + total >= 40) {
@@ -1971,7 +1995,8 @@ io.on('connection', (socket) => {
             const roll = rollDiceWithRareDoubles(currentPlayer.position);
             const dice1 = roll.dice1;
             const dice2 = roll.dice2;
-            const total = dice1 + dice2;
+            const total = roll.total;
+            const newPosition = roll.newPosition;
             const isDoubles = roll.isDoubles;
 
             io.to(game.id).emit('jailPaid', {
@@ -2002,7 +2027,7 @@ io.on('connection', (socket) => {
 
             // Move player
             const jailOldPosition = currentPlayer.position;
-            currentPlayer.position = (currentPlayer.position + total) % 40;
+            currentPlayer.position = newPosition;
 
             // Check for GO bonus (passed or landed on GO)
             if (jailOldPosition > currentPlayer.position || currentPlayer.position === 0) {
@@ -2037,12 +2062,13 @@ io.on('connection', (socket) => {
         const roll = rollDiceWithRareDoubles(currentPlayer.position);
         const dice1 = roll.dice1;
         const dice2 = roll.dice2;
-        const total = dice1 + dice2;
+        const total = roll.total;
+        const newPosition = roll.newPosition;
         const isDoubles = roll.isDoubles;
 
         game.gameState.diceRolled = true;
         game.gameState.lastRoll = { dice1, dice2, total };
-        
+
         // Check for doubles (extra turn)
         if (isDoubles) {
             game.gameState.diceRolled = false; // Allow rolling again
@@ -2054,9 +2080,8 @@ io.on('connection', (socket) => {
             });
         }
 
-        // Update player position
+        // Update player position (the function already calculated the correct position)
         const oldPosition = currentPlayer.position;
-        const newPosition = (currentPlayer.position + total) % 40;
         
         // Check if player passed GO
         if (oldPosition + total >= 40) {
@@ -2183,7 +2208,7 @@ io.on('connection', (socket) => {
                         const roll = rollDiceWithRareDoubles(player.position);
                         const dice1 = roll.dice1;
                         const dice2 = roll.dice2;
-                        const diceTotal = dice1 + dice2;
+                        const diceTotal = roll.total;
                         rent = rent * diceTotal; // Apply multiplier to dice roll
                         diceRoll = { dice1, dice2, total: diceTotal };
                         
@@ -2215,7 +2240,7 @@ io.on('connection', (socket) => {
                         const roll = rollDiceWithRareDoubles(player.position);
                         const dice1 = roll.dice1;
                         const dice2 = roll.dice2;
-                        const diceTotal = dice1 + dice2;
+                        const diceTotal = roll.total;
                         rent = rent * diceTotal; // Apply multiplier to dice roll
                         
                         io.to(game.id).emit('utilityRentCalculated', {

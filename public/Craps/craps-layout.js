@@ -3,7 +3,7 @@ class CrapsGame {
   constructor() {
     this.balance = 1000;
     this.currentBet = 0;
-    this.selectedChip = window.__selectedChip || 0; // Use synced chip value if available
+    this.selectedBetAmount = window.__selectedChip || 100; // Use synced bet amount if available
     this.bets = {};
     this.point = null;
     this.gamePhase = 'come-out'; // 'come-out' or 'point'
@@ -11,7 +11,7 @@ class CrapsGame {
     this.dice2 = 0;
     this.totalWinLoss = 0;
     this.updateMainGameBalance = null;
-    
+
     this.init();
   }
 
@@ -43,21 +43,21 @@ class CrapsGame {
   }
 
   setupEventListeners() {
-    // Chip selection
-    document.querySelectorAll('.chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const chipValue = parseInt(chip.dataset.value);
-        // Prevent selecting chip higher than balance
-        if (chipValue > this.balance) {
-          this.updateStatus('Insufficient funds for this chip value');
-          return;
-        }
-        this.selectedChip = chipValue;
-        window.__selectedChip = this.selectedChip; // Sync across minigames
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
+    // Bet amount slider
+    const betSlider = document.getElementById('bet-slider');
+    const betDisplay = document.getElementById('bet-display');
+    if (betSlider && betDisplay) {
+      const maxBet = Math.min(1000, Math.max(5, this.balance));
+      betSlider.max = maxBet;
+      betSlider.value = this.selectedBetAmount;
+      betDisplay.textContent = `$${this.selectedBetAmount}`;
+
+      betSlider.addEventListener('input', (e) => {
+        this.selectedBetAmount = parseInt(e.target.value);
+        window.__selectedChip = this.selectedBetAmount; // Sync across minigames
+        betDisplay.textContent = `$${this.selectedBetAmount}`;
       });
-    });
+    }
 
     // Betting areas
     document.querySelectorAll('.betting-area').forEach(area => {
@@ -93,36 +93,32 @@ class CrapsGame {
   }
 
   placeBet(area) {
-    console.log('[Craps] placeBet called, observerMode:', window.__isObserverMode, 'selectedChip:', this.selectedChip);
-    
-    if (this.selectedChip === 0) {
-      this.clearBetFromArea(area);
-      return;
-    }
+    console.log('[Craps] placeBet called, observerMode:', window.__isObserverMode, 'selectedBetAmount:', this.selectedBetAmount);
 
     const betType = area.dataset.betType;
     if (!betType) return;
-    
-    if (this.balance < this.selectedChip) {
+
+    if (this.balance < this.selectedBetAmount) {
       this.updateStatus('Insufficient balance');
       return;
     }
-    
-    this.balance -= this.selectedChip;
-    this.currentBet += this.selectedChip;
-    
+
+    this.balance -= this.selectedBetAmount;
+    this.currentBet += this.selectedBetAmount;
+
     if (!this.bets[betType]) {
       this.bets[betType] = 0;
     }
-    this.bets[betType] += this.selectedChip;
+    this.bets[betType] += this.selectedBetAmount;
 
     area.classList.add('has-bet');
     area.dataset.bet = this.bets[betType];
-    area.dataset.chipValue = this.selectedChip; // Track the chip value for coloring
+    area.dataset.chipValue = this.selectedBetAmount; // Track the bet amount for coloring
 
-    console.log(`Placed bet: $${this.bets[betType]} on ${betType} with $${this.selectedChip} chip`);
+    console.log(`Placed bet: $${this.bets[betType]} on ${betType} with $${this.selectedBetAmount}`);
     this.updateUI();
-    this.updateStatus(`Bet $${this.selectedChip} on ${betType}`);
+    this.updateSliderLimits();
+    this.updateStatus(`Bet $${this.selectedBetAmount} on ${betType}`);
   }
 
   clearBetFromArea(area) {
@@ -137,6 +133,7 @@ class CrapsGame {
     area.dataset.bet = '';
 
     this.updateUI();
+    this.updateSliderLimits();
     this.updateStatus('Bet cleared');
   }
 
@@ -535,6 +532,20 @@ class CrapsGame {
   updateStatus(message) {
     document.getElementById('game-status').textContent = message;
   }
+
+  updateSliderLimits() {
+    const betSlider = document.getElementById('bet-slider');
+    if (betSlider) {
+      const maxBet = Math.min(1000, Math.max(5, this.balance));
+      betSlider.max = maxBet;
+      if (this.selectedBetAmount > maxBet) {
+        this.selectedBetAmount = maxBet;
+        betSlider.value = this.selectedBetAmount;
+        const betDisplay = document.getElementById('bet-display');
+        if (betDisplay) betDisplay.textContent = `$${this.selectedBetAmount}`;
+      }
+    }
+  }
 }
 
 // Global initialization function for main game integration
@@ -553,15 +564,15 @@ window.initCrapsMinigame = function(container, playerMoney, syncCasinoBalance) {
 // Auto-play function for AI integration
 window.__crapsAutoPlay = function(betAmount) {
   console.log('[Craps] __crapsAutoPlay called with betAmount:', betAmount, 'observerMode:', window.__isObserverMode);
-  
+
   if (!window.crapsGameInstance) return;
-  
+
   // Only auto-play if in observer mode (AI player)
   if (window.__isObserverMode !== true) {
     console.log('[Craps] Auto-play blocked - not in observer mode');
     return;
   }
-  
+
   // Additional safety check - verify we're actually in iframe
   try {
     if (window.self === window.top) {
@@ -571,24 +582,26 @@ window.__crapsAutoPlay = function(betAmount) {
   } catch (e) {
     // If we can't access window.top, we're likely in an iframe, so continue
   }
-  
+
   const game = window.crapsGameInstance;
-  
-  // Select a chip value based on the bet amount
-  let chipValue = 5;
-  if (betAmount >= 100) chipValue = 100;
-  else if (betAmount >= 25) chipValue = 25;
-  else if (betAmount >= 10) chipValue = 10;
-  
-  // Set the selected chip
-  game.selectedChip = chipValue;
-  
+
+  // Set the selected bet amount (capped at 1000)
+  game.selectedBetAmount = Math.min(betAmount, 1000);
+
+  // Update the slider UI
+  const betSlider = document.getElementById('bet-slider');
+  const betDisplay = document.getElementById('bet-display');
+  if (betSlider && betDisplay) {
+    betSlider.value = game.selectedBetAmount;
+    betDisplay.textContent = `$${game.selectedBetAmount}`;
+  }
+
   // Place a bet on Pass Line
   const passLineArea = document.querySelector('[data-bet-type="pass-line"]');
   if (passLineArea) {
     game.placeBet(passLineArea);
   }
-  
+
   // Roll the dice
   setTimeout(() => {
     game.rollDice();
