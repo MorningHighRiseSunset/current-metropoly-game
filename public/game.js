@@ -2746,6 +2746,13 @@ function showPropertyInfo(spaceData, options = {}) {
                                 video.pause();
                             }
                         });
+                    } else if (spaceData.name === 'Speed Vegas Off Roading') {
+                        // Speed Vegas Off Roading - 10 second limit
+                        video.addEventListener('timeupdate', () => {
+                            if (video.currentTime >= 10) {
+                                video.pause();
+                            }
+                        });
                     } else {
                         // General 10-second limit for all other videos
                         video.addEventListener('timeupdate', () => {
@@ -2797,6 +2804,13 @@ function showPropertyInfo(spaceData, options = {}) {
                     // Jail videos play for 12 seconds
                     cachedVideo.addEventListener('timeupdate', () => {
                         if (cachedVideo.currentTime >= 12) {
+                            cachedVideo.pause();
+                        }
+                    });
+                } else if (spaceData.name === 'Speed Vegas Off Roading') {
+                    // Speed Vegas Off Roading - 10 second limit
+                    cachedVideo.addEventListener('timeupdate', () => {
+                        if (cachedVideo.currentTime >= 10) {
                             cachedVideo.pause();
                         }
                     });
