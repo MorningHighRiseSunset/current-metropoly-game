@@ -5085,11 +5085,11 @@ function createPremiumBoardTile(spaceData, row, col) {
         
         const loader = new THREE.GLTFLoader();
         
-        // Try local repository first (more reliable), then CDN as fallback
+        // Try CDN first, then fall back to local repository
+        const cdnPath = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models/Ferris%20Wheel/scene.gltf';
         const localPath = '/Models/ferrisWheel/ferris_wheel.glb';
-        const cdnPath = getModelPath('/Models/ferrisWheel/ferris_wheel.glb');
-        console.log('Local path:', localPath);
         console.log('CDN path:', cdnPath);
+        console.log('Local fallback path:', localPath);
         
         const loadFerrisWheel = (path, isFallback = false) => {
             console.log('=== FERRIS WHEEL LOADING START ===');
@@ -5114,7 +5114,7 @@ function createPremiumBoardTile(spaceData, row, col) {
                     console.log('Original model bounds:', box);
                     
                     // Try multiple scales for visibility
-                    const scale = 0.01; // Much smaller scale
+                    const scale = 0.04; // Adjusted scale as requested
                     ferrisWheel.scale.set(scale, scale, scale);
                     ferrisWheel.position.y = tileHeight / 2 + 0.05; // Lower position
                     ferrisWheel.position.z = 0; // Center on tile
@@ -5184,10 +5184,10 @@ function createPremiumBoardTile(spaceData, row, col) {
                     console.error('Error type:', error.type);
                     console.error('Error message:', error.message);
                     
-                    // If local failed, try CDN as fallback
-                    if (path === localPath && !isFallback && path !== cdnPath) {
-                        console.log('Local load failed, trying CDN as fallback...');
-                        loadFerrisWheel(cdnPath, true);
+                    // If CDN failed, try local repository as fallback
+                    if (path === cdnPath && !isFallback && path !== localPath) {
+                        console.log('CDN load failed, trying local repository as fallback...');
+                        loadFerrisWheel(localPath, true);
                     } else {
                         console.error('=== ALL FERRIS WHEEL LOADING ATTEMPTS FAILED ===');
                         console.error('Final error: No ferris wheel could be loaded');
@@ -5196,8 +5196,8 @@ function createPremiumBoardTile(spaceData, row, col) {
             );
         };
         
-        // Start with local repository storage (more reliable)
-        loadFerrisWheel(localPath, false);
+        // Start with CDN (primary), fall back to local repository
+        loadFerrisWheel(cdnPath, false);
     }
 
     return group;

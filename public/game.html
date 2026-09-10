@@ -23,10 +23,17 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="/dice-glb-config.js"></script>
+    <script src="/runtime-config.js?v=20250812-video-debug"></script>
     <script>
-        // CDN Configuration - Disabled for Fluid Compute
-        window.USE_CDN = false;
-        window.CDN_BASE_URL = '';
+        // CDN Configuration for fallback loading
+        // This ensures CDN is available but local files take precedence
+        if (typeof window.USE_CDN === 'undefined') {
+            window.USE_CDN = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+        }
+        if (typeof window.CDN_BASE_URL === 'undefined') {
+            window.CDN_BASE_URL = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models';
+        }
+        console.log('CDN Configuration:', { USE_CDN: window.USE_CDN, CDN_BASE_URL: window.CDN_BASE_URL });
     </script>
 </head>
 <body>
@@ -253,10 +260,9 @@
         </div>
     </div>
 
-    <script src="/runtime-config.js?v=20250812-video-debug"></script>
     <script src="/tile-media.js?v=20250812-speedvegas-video"></script>
     <script src="/tile-hover.js"></script>
     <script src="/analytics.js"></script>
-    <script src="/game.js?v=20260903-roll-turn-complete"></script>
+    <script src="/game.js?v=20260909-ferris-scale-04"></script>
 </body>
 </html>
