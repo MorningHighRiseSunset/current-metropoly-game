@@ -38,12 +38,12 @@ body:not(.iframe-mode) .table {
   transform-origin: center center;
 }
 
-/* In iframe mode, make layout horizontal with betting board on right */
+/* In iframe mode, keep same view as standalone */
 body.iframe-mode .table {
-  flex-direction: row;
-  height: auto;
-  max-width: 100%;
-  transform: scale(0.9);
+  flex-direction: column;
+  height: 280px;
+  max-width: 600px;
+  transform: scale(1.5);
   transform-origin: center center;
 }
 
