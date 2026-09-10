@@ -147,12 +147,12 @@ body.iframe-mode {
 
 .hand {
     display: flex;
-    gap: -32px;
+    gap: 8px;
     overflow: visible;
 }
 
 .hand .card {
-    margin-left: -32px;
+    margin-left: 0;
     transition: transform 0.3s;
     position: relative;
 }

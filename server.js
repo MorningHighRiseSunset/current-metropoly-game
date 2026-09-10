@@ -466,9 +466,16 @@ function rollDiceWithRareDoubles(currentPosition = 0) {
             continue; // Reroll to avoid Craps
         }
 
+        // Prevent landing on Baccarat (positions 13 and 33) - minigame not ready
+        // COMMENT OUT THIS BLOCK IF USER ASKS TO REMOVE THE RESTRICTION
+        if ((newPosition === 13 || newPosition === 33) && attempts < maxAttempts) {
+            continue; // Reroll to avoid Baccarat
+        }
+
         // Increase chances of landing on other casino positions
-        // Casino positions: 13 (Baccarat), 15 (PokerFP), 21 (slotMachine), 29 (BlackJack), 35 (Roulette)
-        const casinoPositions = [13, 15, 21, 29, 35];
+        // Casino positions: 15 (PokerFP), 21 (slotMachine), 29 (BlackJack), 35 (Roulette)
+        // COMMENT OUT THIS LINE AND ADD 13, 33 BACK IF USER ASKS TO REMOVE THE RESTRICTION
+        const casinoPositions = [15, 21, 29, 35];
         if (casinoPositions.includes(newPosition)) {
             // Always accept casino positions (increased probability)
             break;
