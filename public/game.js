@@ -5076,12 +5076,9 @@ function createPremiumBoardTile(spaceData, row, col) {
     group.add(edgeLines);
 
     // Add Ferris Wheel model for County Fair (position 24)
-    console.log('Processing space:', spaceData.position, spaceData.name);
-    
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
         console.log('=== FERRIS WHEEL CONDITIONS MET - STARTING LOAD ===');
-        console.log('Space position:', spaceData.position);
-        console.log('Space name:', spaceData.name);
+        console.log('Processing space:', spaceData.position, spaceData.name);
         
         const loader = new THREE.GLTFLoader();
         
@@ -5114,9 +5111,9 @@ function createPremiumBoardTile(spaceData, row, col) {
                     console.log('Original model bounds:', box);
                     
                     // Try multiple scales for visibility
-                    const scale = 0.04; // Adjusted scale as requested
+                    const scale = 0.4; // Increased scale as requested
                     ferrisWheel.scale.set(scale, scale, scale);
-                    ferrisWheel.position.y = tileHeight / 2 + 0.05; // Lower position
+                    ferrisWheel.position.y = tileHeight / 2 + 0.2; // Raised position for better visibility
                     ferrisWheel.position.z = 0; // Center on tile
                     ferrisWheel.visible = true; // Ensure visible
                     ferrisWheel.userData.isFerrisWheel = true;
@@ -5167,6 +5164,9 @@ function createPremiumBoardTile(spaceData, row, col) {
                     group.add(ferrisWheel);
                     console.log('Ferris wheel added to group');
                     console.log('Group children count after adding:', group.children.length);
+                    console.log('Ferris wheel position in world:', ferrisWheel.getWorldPosition(new THREE.Vector3()));
+                    console.log('Ferris wheel visible:', ferrisWheel.visible);
+                    console.log('Ferris wheel parent:', ferrisWheel.parent);
                     console.log('=== FERRIS WHEEL LOADING COMPLETE ===');
                 },
                 function(xhr) {
