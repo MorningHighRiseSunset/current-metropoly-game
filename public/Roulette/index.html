@@ -18,9 +18,22 @@
       padding: 12px;
     }
 
+    body.iframe-mode {
+      background: transparent;
+      padding: 0;
+      min-height: auto;
+      overflow: hidden;
+      transform: scale(1.5);
+      transform-origin: center center;
+    }
+
     .header {
       text-align: center;
       margin-bottom: 12px;
+    }
+
+    body.iframe-mode .header {
+      display: none;
     }
     .header h1 {
       font-family: 'Playfair Display', serif;
@@ -48,6 +61,13 @@
       align-items: flex-start;
       max-width: 1100px;
       margin: 0 auto;
+    }
+
+    body.iframe-mode .main {
+      gap: 8px;
+      max-width: 100%;
+      transform: scale(1.5);
+      transform-origin: center center;
     }
 
     /* ===== WHEEL SIDE ===== */
@@ -474,6 +494,40 @@
   </div>
 
   <script>
+    // Detect if running in iframe
+    function isInIframe() {
+      try {
+        return window.self !== window.top;
+      } catch (e) {
+        return true;
+      }
+    }
+
+    // Get observer mode from URL parameter
+    function isObserverMode() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('observer') === 'true';
+    }
+
+    // Auto-initialize for standalone usage only
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add iframe mode class if needed
+      if (isInIframe()) {
+        document.body.classList.add('iframe-mode');
+      }
+
+      // Set observer mode flag for AI auto-play
+      window.__isObserverMode = isObserverMode();
+
+      // Only auto-initialize in standalone mode (not iframe)
+      if (!isInIframe()) {
+        const container = document.querySelector('.main');
+        if (container && window.initRouletteMinigame) {
+          window.initRouletteMinigame(container, 1000, null);
+        }
+      }
+    });
+
     // ========== ROULETTE MINIGAME INITIALIZATION ==========
     window.initRouletteMinigame = function(container, playerMoney, syncCasinoBalance) {
       // Update balance with main game's balance

@@ -11,21 +11,56 @@
     background: #07060c;
     overflow: hidden;
   }
+
+  body.iframe-mode {
+    background: transparent;
+  }
+
   #poker-frame {
     width: 100vw;
     height: 100vh;
     border: none;
+  }
+
+  body.iframe-mode #poker-frame {
+    width: 100%;
+    height: 100%;
+    transform: scale(1.5);
+    transform-origin: center center;
   }
 </style>
 </head>
 <body>
 <iframe id="poker-frame" src="poker.html"></iframe>
 <script>
+  // Detect if running in iframe
+  function isInIframe() {
+    try {
+      return window.self !== window.top;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  // Get observer mode from URL parameter
+  function isObserverMode() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('observer') === 'true';
+  }
+
+  // Add iframe mode class if needed
+  if (isInIframe()) {
+    document.body.classList.add('iframe-mode');
+  }
+
+  // Set observer mode flag for AI auto-play
+  window.__isObserverMode = isObserverMode();
+
   // Get balance from parent window or use default
   const iframe = document.getElementById('poker-frame');
   let balanceCallback = null;
   let startingBalance = 2500;
-  
+
   // When poker.html loads, pass the balance
   iframe.onload = function() {
     try {
@@ -35,7 +70,7 @@
       console.log('Could not communicate with parent window');
     }
   };
-  
+
   // Listen for balance updates from poker game
   window.addEventListener('message', function(event) {
     if (event.data.type === 'BALANCE_UPDATE') {
@@ -43,7 +78,7 @@
         // Update local balance
         window.__casinoBalance = event.data.balance;
         window.playerBalance = event.data.balance;
-        
+
         // Notify parent window of balance change
         if (balanceCallback) {
           balanceCallback(event.data.balance);
@@ -53,25 +88,25 @@
       }
     }
   });
-  
+
   // Expose balance for parent window to read
   window.__casinoBalance = startingBalance;
   window.playerBalance = startingBalance;
-  
+
   // Expose init function for main game integration
   window.initPokerMinigame = function(container, initialBalance, callback) {
     console.log('[Poker] initPokerMinigame called with balance:', initialBalance);
-    
+
     // Set balance callback for the parent
     if (callback) {
       balanceCallback = callback;
     }
-    
+
     // Update starting balance
     startingBalance = initialBalance || 2500;
     window.__casinoBalance = startingBalance;
     window.playerBalance = startingBalance;
-    
+
     // Send initial balance to iframe
     try {
       iframe.contentWindow.postMessage({ type: 'SET_BALANCE', balance: startingBalance }, '*');

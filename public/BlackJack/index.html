@@ -22,9 +22,17 @@
             color: #fff;
             overflow: hidden;
         }
+
+        body.iframe-mode {
+            background: transparent;
+            min-height: auto;
+            padding: 0;
+            transform: scale(1.5);
+            transform-origin: center center;
+        }
         
-        /* Animated background */
-        body::before {
+        /* Animated background - only in standalone mode */
+        body:not(.iframe-mode)::before {
             content: '';
             position: fixed;
             top: -50%;
@@ -64,6 +72,10 @@
             animation: titleGlow 2s ease-in-out infinite;
             letter-spacing: 2px;
         }
+
+        body.iframe-mode h1 {
+            display: none;
+        }
         
         @keyframes titleGlow {
             0%, 100% { filter: brightness(1); }
@@ -80,6 +92,10 @@
             border-radius: 10px;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(155, 89, 182, 0.3);
+        }
+
+        body.iframe-mode .game-info {
+            display: none;
         }
 
         .info-item {
@@ -334,14 +350,37 @@
     <script src="/runtime-config.js"></script>
     <script src="script.js"></script>
     <script>
+        // Detect if running in iframe
+        function isInIframe() {
+            try {
+                return window.self !== window.top;
+            } catch (e) {
+                return true;
+            }
+        }
+
+        // Get observer mode from URL parameter
+        function isObserverMode() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('observer') === 'true';
+        }
+
         // Get balance from URL parameter or use default
         function getBalanceFromURL() {
             const params = new URLSearchParams(window.location.search);
             return parseInt(params.get('balance')) || window.playerMoney || 2500;
         }
-        
+
         // Auto-initialize for both standalone and iframe usage
         document.addEventListener('DOMContentLoaded', function() {
+            // Add iframe mode class if needed
+            if (isInIframe()) {
+                document.body.classList.add('iframe-mode');
+            }
+
+            // Set observer mode flag for AI auto-play
+            window.__isObserverMode = isObserverMode();
+
             const container = document.querySelector('.blackjack-container');
             if (container && window.initBlackjackMinigame) {
                 const balance = getBalanceFromURL();

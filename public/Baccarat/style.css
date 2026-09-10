@@ -16,6 +16,12 @@ body {
     overflow: hidden;
 }
 
+body.iframe-mode {
+    background: transparent;
+    transform: scale(1.5);
+    transform-origin: center center;
+}
+
 .baccarat-container {
     width: 100%;
     height: 100%;
