@@ -5111,9 +5111,9 @@ function createPremiumBoardTile(spaceData, row, col) {
                     console.log('Original model bounds:', box);
                     
                     // Try multiple scales for visibility
-                    const scale = 0.4; // Increased scale as requested
+                    const scale = 0.04; // Correct scale as requested
                     ferrisWheel.scale.set(scale, scale, scale);
-                    ferrisWheel.position.y = tileHeight / 2 + 0.2; // Raised position for better visibility
+                    ferrisWheel.position.y = tileHeight / 2 + 0.05; // Lower position
                     ferrisWheel.position.z = 0; // Center on tile
                     ferrisWheel.visible = true; // Ensure visible
                     ferrisWheel.userData.isFerrisWheel = true;
