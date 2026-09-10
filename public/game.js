@@ -5082,11 +5082,11 @@ function createPremiumBoardTile(spaceData, row, col) {
         
         const loader = new THREE.GLTFLoader();
         
-        // Try CDN first, then fall back to local repository
-        const cdnPath = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models/Ferris%20Wheel/scene.gltf';
-        const localPath = '/Models/ferrisWheel/ferris_wheel.glb';
-        console.log('CDN path:', cdnPath);
-        console.log('Local fallback path:', localPath);
+        // Try local repository first (more reliable), then CDN as fallback
+        const localPath = '/Models/Ferris Wheel/ferrisWheel.glb';
+        const cdnPath = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models/ferrisWheel/ferris_wheel.glb';
+        console.log('Local path:', localPath);
+        console.log('CDN fallback path:', cdnPath);
         
         const loadFerrisWheel = (path, isFallback = false) => {
             console.log('=== FERRIS WHEEL LOADING START ===');
@@ -5184,10 +5184,10 @@ function createPremiumBoardTile(spaceData, row, col) {
                     console.error('Error type:', error.type);
                     console.error('Error message:', error.message);
                     
-                    // If CDN failed, try local repository as fallback
-                    if (path === cdnPath && !isFallback && path !== localPath) {
-                        console.log('CDN load failed, trying local repository as fallback...');
-                        loadFerrisWheel(localPath, true);
+                    // If local failed, try CDN as fallback
+                    if (path === localPath && !isFallback && path !== cdnPath) {
+                        console.log('Local load failed, trying CDN as fallback...');
+                        loadFerrisWheel(cdnPath, true);
                     } else {
                         console.error('=== ALL FERRIS WHEEL LOADING ATTEMPTS FAILED ===');
                         console.error('Final error: No ferris wheel could be loaded');
@@ -5196,8 +5196,8 @@ function createPremiumBoardTile(spaceData, row, col) {
             );
         };
         
-        // Start with CDN (primary), fall back to local repository
-        loadFerrisWheel(cdnPath, false);
+        // Start with local repository (primary), fall back to CDN
+        loadFerrisWheel(localPath, false);
     }
 
     return group;

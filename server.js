@@ -177,8 +177,15 @@ if (process.env.USE_CDN === 'true' && process.env.CDN_BASE_URL) {
     // Models served from CDN - no local static serving needed
     console.log('Models will be served from CDN:', process.env.CDN_BASE_URL);
 } else {
-    // Models moved to public/Models directory - serve from there
-    app.use('/Models', express.static(path.join(__dirname, 'public/Models')));
+    // Custom middleware to handle URL-encoded filenames with spaces
+    app.use('/Models', (req, res, next) => {
+        // Decode the URL-encoded filename
+        const originalPath = req.path;
+        const decodedPath = decodeURIComponent(originalPath);
+        req.url = decodedPath;
+        console.log(`Model request: ${originalPath} -> ${decodedPath}`);
+        next();
+    }, express.static(path.join(__dirname, 'public/Models')));
     console.log('Models will be served locally from public/Models');
 }
 
