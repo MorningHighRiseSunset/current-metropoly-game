@@ -23,12 +23,25 @@
             overflow: hidden;
         }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            overflow: hidden;
+            transform: scale(1.5);
+            transform-origin: center center;
+        }
+
         body.iframe-mode {
             background: transparent;
             min-height: auto;
             padding: 0;
-            transform: scale(1.5);
-            transform-origin: center center;
+            transform: none;
         }
         
         /* Animated background - only in standalone mode */

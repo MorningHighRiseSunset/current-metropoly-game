@@ -30,21 +30,13 @@ body.iframe-mode {
   max-width: 600px;
   box-shadow: 0 0 30px rgba(0,0,0,0.9);
   height: 280px;
-}
-
-/* Standalone mode only - keep scale */
-body:not(.iframe-mode) .table {
   transform: scale(1.5);
   transform-origin: center center;
 }
 
-/* In iframe mode, keep same view as standalone */
+/* In iframe mode, remove scale */
 body.iframe-mode .table {
-  flex-direction: column;
-  height: 280px;
-  max-width: 600px;
-  transform: scale(1.5);
-  transform-origin: center center;
+  transform: none;
 }
 
 body.iframe-mode .table-content {

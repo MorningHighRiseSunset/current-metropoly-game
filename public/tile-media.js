@@ -75,14 +75,14 @@ const tileMediaRaw = {
     3: { name: 'Las Vegas Grand Prix', videos: ['/Videos/LV Grand Prix.mp4', '/Videos/LV Grand Prix End.mp4'], images: [] },
     4: { name: 'Income Tax', videos: [], images: [] },
     5: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
-    6: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1.mp4', '/Videos/Vegas Off-Road Experience at Speed Vegas Motorsport Park.mp4'], images: [] },
+    6: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1.mp4'], images: [] },
     7: { name: 'Chance', videos: [], images: [] },
     8: { name: 'Las Vegas Golden Knights', videos: ['/Videos/LV GKnights 1.mp4', '/Videos/LV GKnights 2.mp4', '/Videos/LV Golden Knights.mp4'], images: [] },
     9: { name: 'Maverick Helicopter Rides', videos: ['/Videos/MavHeli 2.mp4', '/Videos/MavHeli 3.mp4'], images: [] },
     10: { name: 'JAIL', videos: ['/Videos/Imgoingtojail.mp4', '/Videos/Jailclip4.mp4', '/Videos/Jailclip5.mp4', '/Videos/Jailmoment2(cropped).mp4', '/Videos/jailclip6.mp4_1743296163946.mp4', '/Videos/jailmoment3(cropped).mp4'], images: [] },
     11: { name: 'Brothel', videos: ['/Videos/BrothelVid.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel2.webm', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel3.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/Brothel4.mp4'], images: [] },
     12: { name: 'Electric Company', videos: [], images: ['/Images/yellow_light_bulb.jpg'] },
-    13: { name: 'Venetian', videos: ['/Videos/MGM 2.mp4', '/Videos/MGMBoxing 1.mp4'], images: [] },
+    13: { name: 'Venetian', videos: [], images: [] },
     14: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
     15: { name: 'Bellagio', videos: ['/Videos/Cropped/Bellagio2.mp4'], images: [] },
     16: { name: 'Las Vegas Aces', videos: ['/Videos/WNBA.mp4', '/Videos/WNBAHL2.mp4', '/Videos/WNBAHL3.mp4', '/Videos/WNBAHL4.mp4'], images: [] },
@@ -92,8 +92,8 @@ const tileMediaRaw = {
     20: { name: 'FREE PARKING', videos: [], images: [] },
     21: { name: 'Hard Rock Hotel', videos: ['/Videos/Hard Rock Hotel.mp4'], images: [] },
     22: { name: 'Chance', videos: [], images: [] },
-    23: { name: 'County Fair', videos: [], images: [] },
-    24: { name: 'Shriners Children\'s Open', videos: ['/Videos/Shriners 1.mp4', '/Videos/Shriners 3.mp4', '/Videos/Shriners 4.mp4'], images: [] },
+    23: { name: 'Shriners Children\'s Open', videos: ['/Videos/Shriners 1.mp4', '/Videos/Shriners 3.mp4', '/Videos/Shriners 4.mp4'], images: [] },
+    24: { name: 'County Fair', videos: ['https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/KHAOS%20KMG%20Afterburner%20POV%20Clark%20county%20fair_35_45.mp4', 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Videos/YTDown.com_Shorts_CRAZY-carnival-ride-fun-exciting-statefa_Media_H-IcVGpmpwE_001_1080p.mp4'], images: [] },
     25: { name: 'Las Vegas Little White Wedding Chapel', videos: ['/Videos/Las Vegas Little White Wedding Chapel1.mp4', '/Videos/Las Vegas Little White Wedding Chapel2.mp4'], images: [] },
     26: { name: 'Community Cards', videos: [], images: [] },
     27: { name: 'Sphere', videos: ['/Videos/Sphere1.mp4', '/Videos/Sphere2.mp4'], images: [] },
@@ -108,7 +108,7 @@ const tileMediaRaw = {
     36: { name: 'The Cosmopolitan', videos: ['/Videos/The Cosmopolitan1.mp4', '/Videos/The Cosmopolitan2.mp4', '/Videos/The Cosmopolitan3.mp4'], images: [] },
     37: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
     38: { name: 'Horseback Riding', videos: ['/Videos/horse6.mp4'], images: [] },
-    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1.mp4', '/Videos/Vegas Off-Road Experience at Speed Vegas Motorsport Park.mp4'], images: [] }
+    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1.mp4'], images: [] }
 };
 
 // Proxy to convert URLs on access

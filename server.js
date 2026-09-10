@@ -96,7 +96,7 @@ function getBoardSpaces() {
         { name: 'JAIL', type: 'corner', position: 10, address: 'Jail Square' },
         { name: 'Brothel', type: 'property', color: '#FF69B4', group: 'pink', price: 200, rent: [22, 44, 132, 396, 550, 660], position: 11, address: 'Nevada Brothel (Fictional)' },
         { name: 'Electric Company', type: 'utility', group: 'utility', price: 180, rent: [0, 0], position: 12 },
-        { name: 'Venetian', type: 'property', color: '#FF69B4', group: 'pink', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 13, address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109' },
+        { name: 'Venetian', type: 'property', color: '#FF69B4', group: 'pink', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 13, address: '3355 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'Baccarat' },
         { name: 'Las Vegas Monorail', type: 'railroad', group: 'railroad', price: 250, rent: [28, 55, 110, 220], position: 14, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Bellagio', type: 'property', color: '#FFA500', group: 'orange', price: 400, rent: [44, 88, 264, 792, 1100, 1320], position: 15, address: '3600 S Las Vegas Blvd, Las Vegas, NV 89115' },
         { name: 'Las Vegas Aces', type: 'property', color: '#FFA500', group: 'orange', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 16, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (Michelob ULTRA Arena)' },
@@ -116,7 +116,7 @@ function getBoardSpaces() {
         { name: 'GO TO JAIL', type: 'corner', position: 30 },
         { name: 'Luxury Tax', type: 'tax', amount: 100, position: 31 },
         { name: 'Chance', type: 'chance', position: 32 },
-        { name: 'House of Blues', type: 'property', color: '#0000FF', group: 'darkBlue', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
+        { name: 'House of Blues', type: 'property', color: '#0000FF', group: 'darkBlue', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)', isCasino: true, casinoGame: 'Baccarat' },
         { name: 'Bet MGM', type: 'property', color: '#0000FF', group: 'darkBlue', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 34, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', group: 'special', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 35, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', group: 'special', price: 275, rent: [31, 61, 181, 544, 770, 935], position: 36, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
@@ -136,7 +136,7 @@ function getColorGroups() {
         red: [18, 19],
         yellow: [21, 23, 24],
         green: [25, 26, 28],
-        darkBlue: [30, 32, 35],
+        darkBlue: [30, 32, 33, 35],
         special: [37, 39],
         railroad: [5, 14, 38],
         utility: [12, 29]
@@ -466,9 +466,16 @@ function rollDiceWithRareDoubles(currentPosition = 0) {
             continue; // Reroll to avoid Craps
         }
 
+        // Prevent landing on Baccarat (positions 13 and 33) - minigame not ready
+        // COMMENT OUT THIS BLOCK IF USER ASKS TO REMOVE THE RESTRICTION
+        if ((newPosition === 13 || newPosition === 33) && attempts < maxAttempts) {
+            continue; // Reroll to avoid Baccarat
+        }
+
         // Increase chances of landing on other casino positions
-        // Casino positions: 13 (Baccarat), 15 (PokerFP), 21 (slotMachine), 29 (BlackJack), 35 (Roulette)
-        const casinoPositions = [13, 15, 21, 29, 35];
+        // Casino positions: 15 (PokerFP), 21 (slotMachine), 29 (BlackJack), 35 (Roulette)
+        // COMMENT OUT THIS LINE AND ADD 13, 33 BACK IF USER ASKS TO REMOVE THE RESTRICTION
+        const casinoPositions = [15, 21, 29, 35];
         if (casinoPositions.includes(newPosition)) {
             // Always accept casino positions (increased probability)
             break;
@@ -2403,7 +2410,6 @@ io.on('connection', (socket) => {
         { type: 'moveRelative', delta: -3, message: 'Go back 3 spaces' },
         { type: 'money', amount: -400, message: 'Pay doctor fee $400' },
         { type: 'money', amount: 500, message: 'Receive for services $500' },
-        { type: 'jail-free', message: 'Get Out of Jail Free' },
         { type: 'money', amount: 200, message: 'Interest on 7% preference shares - collect $200' },
         { type: 'money', amount: -160, message: 'Pay insurance premium $160' }
     ];
@@ -2414,7 +2420,6 @@ io.on('connection', (socket) => {
         { type: 'money', amount: 400, message: 'From sale of stock you get $400' },
         { type: 'money', amount: -200, message: 'Pay school tax of $200' },
         { type: 'money', amount: 100, message: 'You inherit $100' },
-        { type: 'jail-free', message: 'Get out of jail free - keep this card' },
         { type: 'money', amount: 500, message: 'Receive $500 consultation fee' },
         { type: 'money', amount: -800, message: 'Pay hospital $800' },
         { type: 'money', amount: 400, message: 'Bank error in your favor - collect $400' },
@@ -2495,15 +2500,6 @@ io.on('connection', (socket) => {
 
             case 'jail':
                 sendToJail(game, player, { advanceTurn: false });
-                break;
-                
-            case 'jail-free':
-                player.jailFreeCards = player.jailFreeCards || [];
-                player.jailFreeCards.push(cardType);
-                io.to(game.id).emit('jailFreeCardReceived', {
-                    playerId: player.id,
-                    cardType: cardType
-                });
                 break;
         }
     }
@@ -2603,58 +2599,35 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const { method } = data; // 'pay', 'card', 'roll'
+        const { method } = data; // 'pay'
         
-        switch (method) {
-            case 'pay':
-                if (player.money >= 50) {
-                    player.money -= 50;
-                    // Safety check - ensure money didn't go negative
-                    if (player.money < 0) {
-                        player.money = 0;
-                        handleBankruptcy(game, player, null, 50);
-                    } else {
-                        player.inJail = false;
-                        player.jailTurns = 0;
+        if (method === 'pay') {
+            if (player.money >= 50) {
+                player.money -= 50;
+                player.inJail = false;
+                player.jailTurns = 0;
 
-                        io.to(game.id).emit('jailPaid', {
-                            playerId: player.id,
-                            newMoney: player.money,
-                            players: game.players
-                        });
-                        checkGameWinner(game);
+                io.to(game.id).emit('jailPaid', {
+                    playerId: player.id,
+                    newMoney: player.money,
+                    players: game.players
+                });
+                checkGameWinner(game);
 
-                        io.to(game.id).emit('playerOutOfJail', {
-                            playerId: socket.id,
-                            method: 'pay',
-                            players: game.players
-                        });
-                    }
-                } else {
-                    // Player doesn't have enough money to pay $50 - they lose the game
-                    handleBankruptcy(game, player, null, 50);
-                }
-                break;
-                
-            case 'card':
-                if (player.jailFreeCards && player.jailFreeCards.length > 0) {
-                    player.jailFreeCards.pop();
-                    player.inJail = false;
-                    player.jailTurns = 0;
-                    
-                    io.to(game.id).emit('playerOutOfJail', {
-                        playerId: socket.id,
-                        method: 'card',
-                        players: game.players
-                    });
-                } else {
-                    socket.emit('gameError', 'You do not have a Get Out of Jail Free card');
-                }
-                break;
-                
-            case 'roll':
-                // This is handled in the dice roll logic
-                break;
+                io.to(game.id).emit('playerOutOfJail', {
+                    playerId: socket.id,
+                    method: 'pay',
+                    players: game.players
+                });
+
+                // Automatically advance turn after paying
+                setTimeout(() => {
+                    advanceTurn(game);
+                }, 500);
+            } else {
+                // Player doesn't have enough money to pay $50 - they lose the game
+                handleBankruptcy(game, player, null, 50);
+            }
         }
     });
 

@@ -18,13 +18,21 @@
       padding: 12px;
     }
 
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at center, #1a0a0a 0%, #0d0505 45%, #050202 100%);
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #f5e6c8;
+      overflow-x: hidden;
+      padding: 12px;
+    }
+
     body.iframe-mode {
       background: transparent;
       padding: 0;
       min-height: auto;
       overflow: hidden;
-      transform: scale(1.5);
-      transform-origin: center center;
     }
 
     .header {
@@ -61,13 +69,14 @@
       align-items: flex-start;
       max-width: 1100px;
       margin: 0 auto;
+      transform: scale(1.5);
+      transform-origin: center center;
     }
 
     body.iframe-mode .main {
       gap: 8px;
       max-width: 100%;
-      transform: scale(1.5);
-      transform-origin: center center;
+      transform: none;
     }
 
     /* ===== WHEEL SIDE ===== */
