@@ -42,6 +42,11 @@
   body.iframe-mode {
     background: transparent;
     transform: none;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
   }
 
   .game {
@@ -53,6 +58,12 @@
     gap: 10px;
   }
 
+  body.iframe-mode .game {
+    flex-direction: row;
+    align-items: flex-start;
+    max-width: 100%;
+  }
+
   /* CHIPS / BET BAR */
   .top-bar {
     display: flex;
@@ -60,6 +71,19 @@
     align-items: center;
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  body.iframe-mode .top-bar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    z-index: 10;
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    border-radius: 8px;
   }
 
   .chip-display {
@@ -118,6 +142,11 @@
       0 0 80px rgba(168, 85, 247, 0.15),
       inset 0 2px 4px rgba(255,255,255,0.05);
     position: relative;
+  }
+
+  body.iframe-mode .table-rail {
+    flex: 1;
+    min-width: 0;
   }
 
   .table-rail::before {
@@ -346,6 +375,7 @@
     font-size: 1rem;
     color: var(--purple-bright);
     font-weight: 500;
+    white-space: nowrap;
   }
   .result .hand-name {
     display: block;
@@ -357,6 +387,26 @@
   .result.win { color: var(--green); }
   .result.lose { color: var(--red); }
   .result.tie { color: var(--gold); }
+
+  body.iframe-mode .result {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+    min-height: auto;
+    text-align: center;
+    width: 300px;
+    white-space: normal;
+    z-index: 20;
+    background: rgba(0,0,0,0.5);
+    padding: 8px;
+    border-radius: 8px;
+  }
+  body.iframe-mode .result .hand-name {
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
 
   /* CONTROLS */
   .controls {

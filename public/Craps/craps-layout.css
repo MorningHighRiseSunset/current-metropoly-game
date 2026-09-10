@@ -19,6 +19,9 @@ body {
 /* When embedded in iframe, use transparent background */
 body.iframe-mode {
   background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .table {
@@ -585,6 +588,7 @@ body.iframe-mode .player-info {
   background: rgba(255, 255, 255, 0.2);
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
   cursor: pointer;
 }
 
