@@ -5079,11 +5079,12 @@ function createPremiumBoardTile(spaceData, row, col) {
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
         const loader = new THREE.GLTFLoader();
         
-        // Try CDN first, fall back to local if CDN fails
+        // Try local repository first, then CDN as fallback
+        const localPath = '/Models/ferrisWheel/ferris_wheel.glb';
         const cdnPath = getModelPath('/Models/ferrisWheel/ferris_wheel.glb');
-        const localPath = '/Models/ferrisWheel/ferris_wheel.glb'; // Models are now in public/Models
         
         const loadFerrisWheel = (path) => {
+            console.log('Loading ferris wheel from:', path);
             loader.load(path,
                 function(gltf) {
                     const ferrisWheel = gltf.scene;
@@ -5127,24 +5128,31 @@ function createPremiumBoardTile(spaceData, row, col) {
                     }
                     
                     group.add(ferrisWheel);
+                    console.log('Ferris wheel loaded successfully from:', path);
                 },
                 function(xhr) {
                     if (xhr.lengthComputable) {
                         const percentComplete = xhr.loaded / xhr.total * 100;
+                        if (percentComplete % 25 < 1 || percentComplete >= 100) {
+                            console.log(`Loading Ferris Wheel: ${percentComplete.toFixed(0)}%`);
+                        }
                     }
                 },
                 function(error) {
                     console.error('Error loading Ferris Wheel model from', path, ':', error);
-                    // If CDN failed and this was CDN path, try local
-                    if (path !== localPath) {
-
-                        loadFerrisWheel(localPath);
+                    // If local failed, try CDN
+                    if (path === localPath && path !== cdnPath) {
+                        console.log('Local load failed, trying CDN...');
+                        loadFerrisWheel(cdnPath);
+                    } else {
+                        console.error('All ferris wheel loading attempts failed');
                     }
                 }
             );
         };
         
-        loadFerrisWheel(cdnPath);
+        // Start with local path (repository storage)
+        loadFerrisWheel(localPath);
     }
 
     return group;
