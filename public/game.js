@@ -5082,16 +5082,13 @@ function createPremiumBoardTile(spaceData, row, col) {
         
         const loader = new THREE.GLTFLoader();
         
-        // Try local repository first (more reliable), then CDN as fallback
+        // Load from local repository only
         const localPath = '/Models/Ferris Wheel/ferrisWheel.glb';
-        const cdnPath = 'https://pub-7e0044f8048c45d0a1c328e210708508.r2.dev/Models/ferrisWheel/ferris_wheel.glb';
         console.log('Local path:', localPath);
-        console.log('CDN fallback path:', cdnPath);
         
-        const loadFerrisWheel = (path, isFallback = false) => {
+        const loadFerrisWheel = (path) => {
             console.log('=== FERRIS WHEEL LOADING START ===');
             console.log('Loading from path:', path);
-            console.log('Is fallback attempt:', isFallback);
             console.log('Board layout:', { tileSize, tileHeight });
             
             loader.load(path,
@@ -5183,21 +5180,13 @@ function createPremiumBoardTile(spaceData, row, col) {
                     console.error('Error details:', error);
                     console.error('Error type:', error.type);
                     console.error('Error message:', error.message);
-                    
-                    // If local failed, try CDN as fallback
-                    if (path === localPath && !isFallback && path !== cdnPath) {
-                        console.log('Local load failed, trying CDN as fallback...');
-                        loadFerrisWheel(cdnPath, true);
-                    } else {
-                        console.error('=== ALL FERRIS WHEEL LOADING ATTEMPTS FAILED ===');
-                        console.error('Final error: No ferris wheel could be loaded');
-                    }
+                    console.error('=== FERRIS WHEEL LOADING FAILED ===');
                 }
             );
         };
         
-        // Start with local repository (primary), fall back to CDN
-        loadFerrisWheel(localPath, false);
+        // Load from local repository only
+        loadFerrisWheel(localPath);
     }
 
     return group;
