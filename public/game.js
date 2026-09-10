@@ -1086,7 +1086,7 @@ function handlePlayerLanding(playerId, newPosition, fromCard = false) {
             if (owner && owner.id !== playerId) {
                 // Property owned by someone else - show rent UI
                 const rent = calculateRentAmount(spaceData, owner);
-                startPropertyDecision(spaceData, newPosition, true, owner, rent);
+                startRentDecision({ spaceData, owner, rentAmount: rent }, newPosition);
             } else if (spaceData && spaceData.isCasino && !currentPlayer.isAI) {
                 // Unowned casino property - open casino game first, then offer to buy
                 const isOwnedByMe = owner && owner.id === currentPlayer.id;
