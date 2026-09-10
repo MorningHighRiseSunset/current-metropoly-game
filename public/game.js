@@ -3543,6 +3543,18 @@ socket.on('gameStarted', (data) => {
         gameState.turnPhase = 'roll';
     }
 
+    // Reset video tracking for new game to ensure random start
+    Object.keys(lastPlayedPropertyVideos).forEach(key => {
+        delete lastPlayedPropertyVideos[key];
+    });
+    
+    // Reset tile hover video tracking for new game
+    if (typeof lastPlayedVideos !== 'undefined') {
+        Object.keys(lastPlayedVideos).forEach(key => {
+            delete lastPlayedVideos[key];
+        });
+    }
+
     if (!isSpectator) {
         currentPlayer = resolveLocalPlayer(players);
         if (currentPlayer) {
