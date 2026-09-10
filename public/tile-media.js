@@ -92,8 +92,8 @@ const tileMediaRaw = {
     20: { name: 'FREE PARKING', videos: [], images: [] },
     21: { name: 'Hard Rock Hotel', videos: ['/Videos/Hard Rock Hotel.mp4'], images: [] },
     22: { name: 'Chance', videos: [], images: [] },
-    23: { name: 'County Fair', videos: [], images: [] },
-    24: { name: 'Shriners Children\'s Open', videos: ['/Videos/Shriners 1.mp4', '/Videos/Shriners 3.mp4', '/Videos/Shriners 4.mp4'], images: [] },
+    23: { name: 'Shriners Children\'s Open', videos: ['/Videos/Shriners 1.mp4', '/Videos/Shriners 3.mp4', '/Videos/Shriners 4.mp4'], images: [] },
+    24: { name: 'County Fair', videos: [], images: [] },
     25: { name: 'Las Vegas Little White Wedding Chapel', videos: ['/Videos/Las Vegas Little White Wedding Chapel1.mp4', '/Videos/Las Vegas Little White Wedding Chapel2.mp4'], images: [] },
     26: { name: 'Community Cards', videos: [], images: [] },
     27: { name: 'Sphere', videos: ['/Videos/Sphere1.mp4', '/Videos/Sphere2.mp4'], images: [] },
@@ -108,7 +108,7 @@ const tileMediaRaw = {
     36: { name: 'The Cosmopolitan', videos: ['/Videos/The Cosmopolitan1.mp4', '/Videos/The Cosmopolitan2.mp4', '/Videos/The Cosmopolitan3.mp4'], images: [] },
     37: { name: 'Las Vegas Monorail', videos: ['/Videos/Las Vegas Monorail1.mp4', '/Videos/Las Vegas Monorail2.mp4'], images: [] },
     38: { name: 'Horseback Riding', videos: ['/Videos/horse6.mp4'], images: [] },
-    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1.mp4', '/Videos/Vegas Off-Road Experience at Speed Vegas Motorsport Park.mp4'], images: [] }
+    39: { name: 'Speed Vegas Off Roading', videos: ['/Videos/Offroading 1.mp4'], images: [] }
 };
 
 // Proxy to convert URLs on access
