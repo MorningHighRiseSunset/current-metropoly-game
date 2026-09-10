@@ -159,7 +159,7 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
                                 gameState === 'THIRD_CARD' ?
                                 `<button class="btn btn-primary" onclick="window.baccaratDrawThirdCards()">Draw</button>` :
                                 `<button class="btn btn-secondary" onclick="window.baccaratClearBets()" ${gameState !== 'BETTING' ? 'disabled' : ''}>Clear</button>
-                                 <button class="btn btn-primary" onclick="window.baccaratDealInitialCards()" ${Object.values(currentBets).reduce((a,b) => a+b, 0) === 0 || gameState !== 'DEALING' ? 'disabled' : ''}>Deal Cards</button>`
+                                 <button class="btn btn-primary" onclick="window.baccaratDealInitialCards()" ${Object.values(currentBets).reduce((a,b) => a+b, 0) === 0 ? 'disabled' : ''}>Deal Cards</button>`
                             }
                         </div>
                     </div>
@@ -194,9 +194,9 @@ window.initBaccaratMinigame = function(container, playerMoney, updateMainGameBal
 
     function renderBettingTable() {
         const spots = [
-            { label: 'P. PAIR', position: 'PLAYER_PAIR', color: 'blue', multiplier: '11:1' },
+            { label: 'PLAYER PAIR', position: 'PLAYER_PAIR', color: 'blue', multiplier: '11:1' },
             { label: 'TIE', position: 'TIE', color: 'green', multiplier: '8:1', wide: true },
-            { label: 'B. PAIR', position: 'BANKER_PAIR', color: 'red', multiplier: '11:1' },
+            { label: 'BANKER PAIR', position: 'BANKER_PAIR', color: 'red', multiplier: '11:1' },
             { label: 'PLAYER', position: 'PLAYER', color: 'blue', multiplier: '1:1', wide: true },
             { label: 'BANKER', position: 'BANKER', color: 'red', multiplier: '1:1', wide: true }
         ];

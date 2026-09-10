@@ -902,7 +902,7 @@ const boardConfig = [
     { name: 'GO TO JAIL', type: 'corner', position: 30 },
     { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31 },
     { name: 'Chance', type: 'chance', position: 32 },
-    { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, rent: [30, 60, 180, 540, 750, 900], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
+    { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, rent: [30, 60, 180, 540, 750, 900], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)', isCasino: true, casinoGame: 'Baccarat' },
     { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, rent: [35, 70, 210, 630, 875, 1050], position: 34, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, rent: [40, 80, 240, 720, 1000, 1200], position: 35, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'Roulette' },
     { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, rent: [35, 70, 210, 630, 875, 1050], position: 36, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
@@ -2553,8 +2553,6 @@ function showPropertyInfo(spaceData, options = {}) {
     const propertyPayRentBtn = document.getElementById('propertyPayRentBtn');
     const propertyProceedBtn = document.getElementById('propertyProceedBtn');
     const jailPayBtn = document.getElementById('jailPayBtn');
-    const jailCardBtn = document.getElementById('jailCardBtn');
-    const jailRollBtn = document.getElementById('jailRollBtn');
     const decisionPrompt = document.getElementById('propertyDecisionPrompt');
 
     if (!modal || !title || !content || !mediaContainer) {
@@ -2582,24 +2580,13 @@ function showPropertyInfo(spaceData, options = {}) {
             // Hide all buttons for AI - this is just a viewer mode
             propertyActions.classList.add('hidden');
         } else if (isInJail) {
-            // Player is in jail - show jail-specific buttons
+            // Player is in jail - show only Pay $50 button
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
             if (propertyPassBtn) propertyPassBtn.classList.add('hidden');
             if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
             if (jailPayBtn) jailPayBtn.classList.remove('hidden');
-            if (jailCardBtn) jailCardBtn.classList.remove('hidden');
-            if (jailRollBtn) jailRollBtn.classList.remove('hidden');
-
-            // Disable jail card button if player has no jail-free cards
-            if (jailCardBtn && (!player.jailFreeCards || player.jailFreeCards.length === 0)) {
-                jailCardBtn.disabled = true;
-                jailCardBtn.textContent = 'No Jail Free Card';
-            } else if (jailCardBtn) {
-                jailCardBtn.disabled = false;
-                jailCardBtn.textContent = 'Use Jail Free Card';
-            }
         } else if (showProceedButton) {
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
@@ -2607,8 +2594,6 @@ function showPropertyInfo(spaceData, options = {}) {
             if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.remove('hidden');
             if (jailPayBtn) jailPayBtn.classList.add('hidden');
-            if (jailCardBtn) jailCardBtn.classList.add('hidden');
-            if (jailRollBtn) jailRollBtn.classList.add('hidden');
         } else if (isRent) {
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.add('hidden');
@@ -2616,8 +2601,6 @@ function showPropertyInfo(spaceData, options = {}) {
             if (propertyPayRentBtn) propertyPayRentBtn.classList.remove('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
             if (jailPayBtn) jailPayBtn.classList.add('hidden');
-            if (jailCardBtn) jailCardBtn.classList.add('hidden');
-            if (jailRollBtn) jailRollBtn.classList.add('hidden');
         } else if (showDecisionActions) {
             propertyActions.classList.remove('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.remove('hidden');
@@ -2625,8 +2608,6 @@ function showPropertyInfo(spaceData, options = {}) {
             if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
             if (jailPayBtn) jailPayBtn.classList.add('hidden');
-            if (jailCardBtn) jailCardBtn.classList.add('hidden');
-            if (jailRollBtn) jailRollBtn.classList.add('hidden');
         } else {
             propertyActions.classList.add('hidden');
             if (propertyConfirmBtn) propertyConfirmBtn.classList.remove('hidden');
@@ -2634,14 +2615,12 @@ function showPropertyInfo(spaceData, options = {}) {
             if (propertyPayRentBtn) propertyPayRentBtn.classList.add('hidden');
             if (propertyProceedBtn) propertyProceedBtn.classList.add('hidden');
             if (jailPayBtn) jailPayBtn.classList.add('hidden');
-            if (jailCardBtn) jailCardBtn.classList.add('hidden');
-            if (jailRollBtn) jailRollBtn.classList.add('hidden');
         }
     }
 
     if (decisionPrompt) {
         if (isInJail) {
-            decisionPrompt.textContent = 'You are in jail. Choose an option to get out:';
+            decisionPrompt.textContent = 'You are in jail. Pay $50 to end your turn and get out.';
             decisionPrompt.classList.remove('hidden');
         } else if (showProceedButton) {
             decisionPrompt.textContent = 'Watch the video, then click Proceed to end your turn.';
@@ -2705,14 +2684,14 @@ function showPropertyInfo(spaceData, options = {}) {
                         triedVideos.push(nextVideo);
                         loadVideoWithFallback(nextVideo);
                     } else {
-                        // All videos failed, fall back to images only for utilities
+                        // All videos failed, fall back to images only for utilities (not jail)
                         logVideoLoadError(video, {
                             propertyName: media.name,
                             position: spaceData.position,
                             intendedSrc: videoUrl,
                             fromCache: false
                         });
-                        if (spaceData.type === 'utility') {
+                        if (spaceData.type === 'utility' && spaceData.position !== 10) {
                             if (!showPropertyImages(media, spaceData, mediaContainer, cacheKey) && loadingIndicator) {
                                 mediaContainer.innerHTML = '';
                                 loadingIndicator.textContent = 'Media unavailable';
@@ -2837,8 +2816,8 @@ function showPropertyInfo(spaceData, options = {}) {
             if (cachedVideo) {
                 cachedVideo.play().catch(() => {});
             }
-        } else if (media.images && media.images.length > 0) {
-
+        } else if (media.images && media.images.length > 0 && spaceData.position !== 10) {
+            // Skip images for jail (position 10) - only show videos
             showPropertyImages(media, spaceData, mediaContainer, cacheKey);
         } else {
             // console.log(`[showPropertyInfo] No media available for ${spaceData.name}`);
@@ -6032,22 +6011,6 @@ function initializeModalElements() {
     if (jailPayBtn) {
         jailPayBtn.addEventListener('click', () => {
             socket.emit('getOutOfJail', { method: 'pay' });
-        });
-    }
-
-    const jailCardBtn = document.getElementById('jailCardBtn');
-    if (jailCardBtn) {
-        jailCardBtn.addEventListener('click', () => {
-            socket.emit('getOutOfJail', { method: 'card' });
-        });
-    }
-
-    const jailRollBtn = document.getElementById('jailRollBtn');
-    if (jailRollBtn) {
-        jailRollBtn.addEventListener('click', () => {
-            // Close the modal and let the player roll dice normally
-            closePropertyModal();
-            // The dice roll logic in the server will handle jail release on doubles
         });
     }
 }

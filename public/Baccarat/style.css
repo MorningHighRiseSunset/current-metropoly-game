@@ -14,7 +14,7 @@ body {
     justify-content: center;
     color: #fff;
     overflow: hidden;
-    transform: scale(1.5);
+    transform: scale(1.0);
     transform-origin: center center;
 }
 
@@ -65,8 +65,7 @@ body.iframe-mode {
     display: flex;
     flex-direction: column;
     position: relative;
-    background: url('https://www.transparenttextures.com/patterns/felt.png');
-    background-size: cover;
+    background: linear-gradient(135deg, #0d4a2e 0%, #0a3d24 50%, #07301a 100%);
     overflow: hidden;
 }
 
