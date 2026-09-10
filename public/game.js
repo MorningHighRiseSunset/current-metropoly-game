@@ -5076,6 +5076,8 @@ function createPremiumBoardTile(spaceData, row, col) {
     group.add(edgeLines);
 
     // Add Ferris Wheel model for County Fair (position 24)
+    console.log('Processing space:', spaceData.position, spaceData.name);
+    
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
         console.log('=== FERRIS WHEEL CONDITIONS MET - STARTING LOAD ===');
         console.log('Space position:', spaceData.position);
