@@ -5076,12 +5076,22 @@ function createPremiumBoardTile(spaceData, row, col) {
     group.add(edgeLines);
 
     // Add Ferris Wheel model for County Fair (position 24)
+    console.log('=== CHECKING FERRIS WHEEL CONDITIONS ===');
+    console.log('Space position:', spaceData.position);
+    console.log('Space name:', spaceData.name);
+    console.log('Expected: position 24, name County Fair');
+    console.log('Position match:', spaceData.position === 24);
+    console.log('Name match:', spaceData.name === 'County Fair');
+    
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
+        console.log('=== FERRIS WHEEL CONDITIONS MET - STARTING LOAD ===');
         const loader = new THREE.GLTFLoader();
         
         // Try CDN first (confirmed working), fall back to local if CDN fails
         const cdnPath = getModelPath('/Models/ferrisWheel/ferris_wheel.glb');
         const localPath = '/Models/ferrisWheel/ferris_wheel.glb';
+        console.log('CDN path:', cdnPath);
+        console.log('Local path:', localPath);
         
         const loadFerrisWheel = (path) => {
             console.log('=== FERRIS WHEEL LOADING START ===');
