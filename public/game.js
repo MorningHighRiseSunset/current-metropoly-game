@@ -5079,26 +5079,50 @@ function createPremiumBoardTile(spaceData, row, col) {
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
         const loader = new THREE.GLTFLoader();
         
-        // Try local repository first, then CDN as fallback
-        const localPath = '/Models/ferrisWheel/ferris_wheel.glb';
+        // Try CDN first (confirmed working), fall back to local if CDN fails
         const cdnPath = getModelPath('/Models/ferrisWheel/ferris_wheel.glb');
+        const localPath = '/Models/ferrisWheel/ferris_wheel.glb';
         
         const loadFerrisWheel = (path) => {
-            console.log('Loading ferris wheel from:', path);
+            console.log('=== FERRIS WHEEL LOADING START ===');
+            console.log('Loading from path:', path);
+            console.log('Is CDN path:', path === cdnPath);
+            console.log('Board layout:', { tileSize, tileHeight });
+            
             loader.load(path,
                 function(gltf) {
+                    console.log('=== FERRIS WHEEL GLTF LOADED ===');
+                    console.log('GLTF object:', gltf);
+                    console.log('Scene:', gltf.scene);
+                    console.log('Animations:', gltf.animations ? gltf.animations.length : 0);
+                    
                     const ferrisWheel = gltf.scene;
-                    const scale = 0.03; // Adjusted scale
+                    
+                    // Calculate bounding box to check size
+                    const box = new THREE.Box3().setFromObject(ferrisWheel);
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+                    console.log('Original model size:', size);
+                    console.log('Original model bounds:', box);
+                    
+                    // Try multiple scales for visibility
+                    const scale = 0.01; // Much smaller scale
                     ferrisWheel.scale.set(scale, scale, scale);
-                    ferrisWheel.position.y = tileHeight / 2 + 0.22; // Raised by 0.02
-                    ferrisWheel.position.z = 0.15; // Moved forward
+                    ferrisWheel.position.y = tileHeight / 2 + 0.05; // Lower position
+                    ferrisWheel.position.z = 0; // Center on tile
                     ferrisWheel.visible = true; // Ensure visible
                     ferrisWheel.userData.isFerrisWheel = true;
                     ferrisWheel.userData.lastUpdate = 0;
                     
+                    console.log('Applied scale:', scale);
+                    console.log('Final position:', ferrisWheel.position);
+                    console.log('Final scale:', ferrisWheel.scale);
+                    
                     // Optimize model for performance but keep it visible
+                    let meshCount = 0;
                     ferrisWheel.traverse((child) => {
                         if (child.isMesh) {
+                            meshCount++;
                             child.castShadow = false;
                             child.receiveShadow = false;
                             child.visible = true; // Ensure each mesh is visible
@@ -5114,9 +5138,12 @@ function createPremiumBoardTile(spaceData, row, col) {
                             }
                         }
                     });
+                    
+                    console.log('Total meshes in model:', meshCount);
 
                     // Setup animation mixer if model has animations
                     if (gltf.animations && gltf.animations.length > 0) {
+                        console.log('Setting up animation mixer with', gltf.animations.length, 'animations');
                         const mixer = new THREE.AnimationMixer(ferrisWheel);
                         ferrisWheel.mixer = mixer;
                         ferrisWheel.animations = gltf.animations;
@@ -5125,34 +5152,43 @@ function createPremiumBoardTile(spaceData, row, col) {
                         const action = mixer.clipAction(gltf.animations[0]);
                         action.timeScale = 0.3;
                         action.play();
+                    } else {
+                        console.log('No animations found in model');
                     }
                     
                     group.add(ferrisWheel);
-                    console.log('Ferris wheel loaded successfully from:', path);
+                    console.log('Ferris wheel added to group');
+                    console.log('Group children count after adding:', group.children.length);
+                    console.log('=== FERRIS WHEEL LOADING COMPLETE ===');
                 },
                 function(xhr) {
                     if (xhr.lengthComputable) {
                         const percentComplete = xhr.loaded / xhr.total * 100;
                         if (percentComplete % 25 < 1 || percentComplete >= 100) {
-                            console.log(`Loading Ferris Wheel: ${percentComplete.toFixed(0)}%`);
+                            console.log(`Loading progress: ${percentComplete.toFixed(0)}%`);
                         }
                     }
                 },
                 function(error) {
-                    console.error('Error loading Ferris Wheel model from', path, ':', error);
-                    // If local failed, try CDN
-                    if (path === localPath && path !== cdnPath) {
-                        console.log('Local load failed, trying CDN...');
-                        loadFerrisWheel(cdnPath);
+                    console.error('=== FERRIS WHEEL LOADING ERROR ===');
+                    console.error('Error loading from path:', path);
+                    console.error('Error details:', error);
+                    console.error('Error type:', error.type);
+                    console.error('Error message:', error.message);
+                    
+                    // If CDN failed, try local
+                    if (path === cdnPath && path !== localPath) {
+                        console.log('CDN load failed, trying local as fallback...');
+                        loadFerrisWheel(localPath);
                     } else {
-                        console.error('All ferris wheel loading attempts failed');
+                        console.error('=== ALL FERRIS WHEEL LOADING ATTEMPTS FAILED ===');
                     }
                 }
             );
         };
         
-        // Start with local path (repository storage)
-        loadFerrisWheel(localPath);
+        // Start with CDN (confirmed working)
+        loadFerrisWheel(cdnPath);
     }
 
     return group;
