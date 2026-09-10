@@ -24,6 +24,13 @@
       color: #e0d0ff;
       overflow: hidden;
       padding: 20px;
+      transform: scale(1.5);
+      transform-origin: center center;
+    }
+
+    body.iframe-mode {
+      background: transparent;
+      transform: none;
     }
 
     /* Subtle animated background */
@@ -410,6 +417,20 @@
   </div>
 
   <script>
+    // Detect if running in iframe
+    function isInIframe() {
+      try {
+        return window.self !== window.top;
+      } catch (e) {
+        return true;
+      }
+    }
+
+    // Add iframe mode class if needed
+    if (isInIframe()) {
+      document.body.classList.add('iframe-mode');
+    }
+
     const symbols = ['🍒', '🍋', '🍊', '🔔', '💎', '7️⃣'];
     const weights = [28, 24, 18, 14, 10, 6];
 

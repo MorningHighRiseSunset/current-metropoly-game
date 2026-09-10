@@ -14,12 +14,13 @@ body {
     justify-content: center;
     color: #fff;
     overflow: hidden;
+    transform: scale(1.5);
+    transform-origin: center center;
 }
 
 body.iframe-mode {
     background: transparent;
-    transform: scale(1.5);
-    transform-origin: center center;
+    transform: none;
 }
 
 .baccarat-container {
