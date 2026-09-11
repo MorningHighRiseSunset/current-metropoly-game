@@ -952,6 +952,25 @@ window.playerBalance = state.chips;
 
 syncBetUI();
 render();
+
+// Initialize function for main game integration
+window.initPokerMinigame = function(container, initialBalance, balanceCallback) {
+    state.chips = initialBalance || 1000;
+    syncBetUI();
+    render();
+    
+    // Listen for balance from parent window
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'SET_BALANCE') {
+            state.chips = event.data.balance;
+            syncBetUI();
+            render();
+        }
+    });
+    
+    // Store callback for balance sync
+    window.balanceCallback = balanceCallback;
+};
 </script>
 </body>
 </html>

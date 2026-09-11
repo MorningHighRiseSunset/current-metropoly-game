@@ -24,14 +24,21 @@
       color: #e0d0ff;
       overflow: hidden;
       padding: 20px;
-      transform: scale(1.5);
-      transform-origin: center center;
     }
 
     body.iframe-mode {
+      padding: 0;
+      min-height: auto;
+      overflow: hidden;
       background: transparent;
-      transform: none;
     }
+
+    body.iframe-mode .machine {
+      max-width: 100%;
+      padding: 20px;
+    }
+
+
 
     /* Subtle animated background */
     body::before {
@@ -438,6 +445,7 @@
     let bet = 5;
     let spinning = false;
     let spinSound = null;
+    let updateMainGameBalance = null;
 
     // Balance sync with parent window
     function syncBalanceToParent() {
@@ -445,8 +453,13 @@
         // Update local balance variables first
         window.__casinoBalance = balance;
         window.playerBalance = balance;
-        
-        // Try to notify parent window
+
+        // Use the main game's sync callback if available
+        if (updateMainGameBalance) {
+          updateMainGameBalance(balance);
+        }
+
+        // Also try to notify parent window via postMessage
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'BALANCE_UPDATE', balance }, '*');
         }
@@ -682,6 +695,23 @@
     // Expose balance for parent window to read
     window.__casinoBalance = balance;
     window.playerBalance = balance;
+
+    // Minigame initialization function for main game integration
+    window.initSlotsMinigame = function(container, initialBalance, syncCasinoBalance) {
+      // Update balance with main game's balance
+      balance = typeof initialBalance === 'number' ? initialBalance : 2500;
+      updateMainGameBalance = typeof syncCasinoBalance === 'function' ? syncCasinoBalance : null;
+
+      // Expose balance for main game to read
+      window.__casinoBalance = balance;
+      window.playerBalance = balance;
+
+      // Update UI with new balance
+      updateUI();
+    };
+
+    // Alias for main game compatibility
+    window.initSlotMachine = window.initSlotsMinigame;
 
     updateUI();
   </script>

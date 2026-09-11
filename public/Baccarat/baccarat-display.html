@@ -52,4 +52,15 @@
         </div>
     </div>
 </body>
+<script>
+// Initialize function for main game integration
+window.initBaccaratMinigame = function(container, initialBalance, balanceCallback) {
+    console.log('Baccarat image display loaded with balance:', initialBalance);
+    window.__casinoBalance = initialBalance;
+    window.playerBalance = initialBalance;
+    if (balanceCallback) {
+        window.balanceCallback = balanceCallback;
+    }
+};
+</script>
 </html>

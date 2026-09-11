@@ -17,12 +17,12 @@ function getConfiguredSocketServerUrl() {
 // Console commands to load minigames directly in the same page
 // Usage in browser console: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()
 window.loadBlackjack = function() {
-    loadMinigameInOverlay('/BlackJack/index.html');
+    loadMinigameInOverlay('/Blackjack/blackjack.html');
     return 'Blackjack loading...';
 };
 
 window.loadBaccarat = function() {
-    loadMinigameInOverlay('/Baccarat/index.html');
+    loadMinigameInOverlay('/Baccarat/baccarat-display.html');
     return 'Baccarat loading...';
 };
 
@@ -42,14 +42,22 @@ window.loadSlots = function() {
 };
 
 window.loadCraps = function() {
-    loadMinigameInOverlay('/Craps/index.html');
+    loadMinigameInOverlay('/Craps/craps-game.html');
     return 'Craps loading...';
 };
 
 function loadMinigameInOverlay(url) {
-    // Extract game name from URL to use the proper casino modal
-    const gameNameMatch = url.match(/\/([^\/]+)\/index\.html/);
-    const gameName = gameNameMatch ? gameNameMatch[1] : 'BlackJack';
+    // Map URLs to game names
+    const urlToGame = {
+        '/Blackjack/blackjack.html': 'BlackJack',
+        '/Baccarat/baccarat-display.html': 'Baccarat',
+        '/Roulette/index.html': 'Roulette',
+        '/PokerFP/index.html': 'PokerFP',
+        '/slotMachine/index.html': 'slotMachine',
+        '/Craps/craps-game.html': 'Craps'
+    };
+    
+    const gameName = urlToGame[url] || 'BlackJack';
     
     // Use the same casino modal system as the actual popup
     // Don't pass observerOptions - let it default to null for human player
@@ -1581,7 +1589,7 @@ const CASINO_GAME_CONTAINERS = {
     Craps: '.craps-game',
     PokerFP: '.poker-container',
     Roulette: '.main',
-    slotMachine: '.slot-container'
+    slotMachine: '.machine'
 };
 
 function getCasinoGameContainer(doc, gameName) {
@@ -1745,7 +1753,16 @@ function openCasinoGame(gameName, observerOptions = null) {
     }
 
     // Load casino game in iframe with initialization parameters
-    const gamePath = `/${gameName}/index.html?observer=${isObserver ? 'true' : 'false'}`;
+    const gamePaths = {
+        'BlackJack': '/Blackjack/blackjack.html',
+        'Baccarat': '/Baccarat/baccarat-display.html',
+        'Roulette': '/Roulette/index.html',
+        'PokerFP': '/PokerFP/index.html',
+        'slotMachine': '/slotMachine/slot-machine.html',
+        'Craps': '/Craps/craps-game.html'
+    };
+    
+    const gamePath = `${gamePaths[gameName]}?observer=${isObserver ? 'true' : 'false'}`;
     
     // Create iframe without src first to avoid race condition
     const iframe = document.createElement('iframe');

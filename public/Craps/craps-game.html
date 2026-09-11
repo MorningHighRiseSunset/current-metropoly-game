@@ -23,8 +23,8 @@
         
         .game-container {
             position: relative;
-            width: 850px;
-            height: 550px;
+            width: 650px;
+            height: 450px;
         }
         
         .game-container svg {
@@ -551,6 +551,7 @@
             bets[areaId + '_lastChip'] = amount;
             
             updateBalance();
+            syncBalanceToParent();
             renderTableChips();
         }
         
@@ -623,6 +624,14 @@
             balanceEl.textContent = balance;
             const totalBet = Object.values(bets).reduce((sum, amount) => sum + amount, 0);
             totalBetEl.textContent = totalBet;
+        }
+
+        function syncBalanceToParent() {
+            window.__casinoBalance = balance;
+            window.playerBalance = balance;
+            if (window.balanceCallback) {
+                window.balanceCallback(balance);
+            }
         }
         
         function rollDice() {
@@ -704,6 +713,7 @@
             bets = {};
             
             updateBalance();
+            syncBalanceToParent();
             renderTableChips();
             
             if (winnings > 0) {
@@ -732,6 +742,27 @@
         initDice();
         
         updateBalance();
+
+        // Initialize function for main game integration
+        window.initCrapsMinigame = function(container, initialBalance, balanceCallback) {
+            balance = initialBalance || 1000;
+            updateBalance();
+            
+            // Listen for balance from parent window
+            window.addEventListener('message', function(event) {
+                if (event.data.type === 'SET_BALANCE') {
+                    balance = event.data.balance;
+                    updateBalance();
+                }
+            });
+            
+            // Expose balance for parent window
+            window.__casinoBalance = balance;
+            window.playerBalance = balance;
+            
+            // Store callback for balance sync
+            window.balanceCallback = balanceCallback;
+        };
     </script>
 </body>
 </html>

@@ -496,6 +496,7 @@ function deal() {
 
   balance -= currentBet;
   updateBalanceDisplay();
+  syncBalanceToParent();
   createDeck();
   playerHand = [deck.pop(), deck.pop()];
   dealerHand = [deck.pop(), deck.pop()];
@@ -592,6 +593,7 @@ function endRound(isNatural = false) {
 
   balance += payout;
   updateBalanceDisplay();
+  syncBalanceToParent();
   updateBetDisplay();
   setMessage(msg, type);
 
@@ -606,6 +608,34 @@ updateBetDisplay();
 btnDeal.addEventListener('click', deal);
 btnHit.addEventListener('click', hit);
 btnStand.addEventListener('click', stand);
-</script>
+
+function syncBalanceToParent() {
+    window.__casinoBalance = balance;
+    window.playerBalance = balance;
+    if (window.balanceCallback) {
+        window.balanceCallback(balance);
+    }
+}
+
+// Initialize function for main game integration
+window.initBlackjackMinigame = function(container, initialBalance, balanceCallback) {
+    balance = initialBalance || 1000;
+    updateBalanceDisplay();
+    
+    // Listen for balance from parent window
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'SET_BALANCE') {
+            balance = event.data.balance;
+            updateBalanceDisplay();
+        }
+    });
+    
+    // Expose balance for parent window
+    window.__casinoBalance = balance;
+    window.playerBalance = balance;
+    
+    // Store callback for balance sync
+    window.balanceCallback = balanceCallback;
+};
 </body>
 </html>
