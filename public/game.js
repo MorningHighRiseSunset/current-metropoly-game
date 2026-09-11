@@ -51,11 +51,9 @@ function loadMinigameInOverlay(url) {
     const gameNameMatch = url.match(/\/([^\/]+)\/index\.html/);
     const gameName = gameNameMatch ? gameNameMatch[1] : 'BlackJack';
     
-    // Get current player balance from game state
-    const playerBalance = window.playerMoney || 2500;
-    
     // Use the same casino modal system as the actual popup
-    openCasinoGame(gameName, playerBalance);
+    // Don't pass observerOptions - let it default to null for human player
+    openCasinoGame(gameName, null);
 }
 
 
