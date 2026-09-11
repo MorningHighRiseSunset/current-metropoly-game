@@ -12,93 +12,378 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fflate/0.8.0/fflate.min.js"></script>
     <script>
-        // Ensure fflate is globally available for FBXLoader
         if (typeof fflate !== 'undefined') {
             window.fflate = fflate;
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <link rel="stylesheet" href="style.css">
     <style>
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #ffffff;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 24px;
+        }
+
+        .lobby-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
         .main-title {
-            background: linear-gradient(90deg, #9b59b6, #8e44ad, #9b59b6);
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 30px rgba(155, 89, 182, 0.3);
-            animation: glow 2s ease-in-out infinite alternate;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
         }
-        
-        @keyframes glow {
-            from {
-                filter: drop-shadow(0 0 5px rgba(155, 89, 182, 0.5));
-            }
-            to {
-                filter: drop-shadow(0 0 20px rgba(155, 89, 182, 0.8));
-            }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 400;
         }
-        
+
+        .lobby-container {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            align-items: center;
+        }
+
         .create-game-card {
-            background: linear-gradient(145deg, rgba(155, 89, 182, 0.1), rgba(15, 52, 96, 0.3));
-            border: 1px solid rgba(155, 89, 182, 0.3);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 64px 48px;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            backdrop-filter: blur(20px);
             transition: all 0.3s ease;
         }
-        
+
         .create-game-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(155, 89, 182, 0.3);
-            border-color: rgba(155, 89, 182, 0.6);
+            border-color: rgba(102, 126, 234, 0.3);
+            transform: translateY(-4px);
         }
-        
+
         .card-icon {
-            font-size: 4rem;
-            animation: bounce 2s infinite;
+            font-size: 5rem;
+            margin-bottom: 24px;
         }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+
+        .create-game-card h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #ffffff;
         }
-        
-        .lobby-card {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
+
+        .card-description {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 32px;
+            line-height: 1.6;
         }
-        
-        .lobby-card:hover {
-            transform: scale(1.02);
-            border-color: rgba(155, 89, 182, 0.5);
-        }
-        
+
         .btn-primary {
-            background: linear-gradient(90deg, #9b59b6, #8e44ad);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
             border: none;
+            padding: 18px 48px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .game-lobby-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 48px;
+            width: 100%;
+            max-width: 500px;
+            backdrop-filter: blur(20px);
+        }
+
+        .game-lobby-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .game-code-display h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .code-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 16px;
+            word-break: break-all;
+        }
+
+        .players-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .players-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: #ffffff;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 12px;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .player-item.host {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .player-item.ai-player {
+            background: rgba(118, 75, 162, 0.1);
+            border-color: rgba(118, 75, 162, 0.2);
+        }
+
+        .player-name {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .player-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .player-item.ai-player .player-badge {
+            background: rgba(118, 75, 162, 0.2);
+            color: #764ba2;
+            border-color: rgba(118, 75, 162, 0.3);
+        }
+
+        .settings-btn {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 1.5rem;
+            padding: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 24px;
+            color: #ffffff;
+        }
+
+        .settings-section h3 {
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+        }
+
+        .theme-toggle-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border-radius: 8px;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
-        
-        .btn-primary:hover {
-            background: linear-gradient(90deg, #8e44ad, #9b59b6);
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(155, 89, 182, 0.4);
+
+        .theme-toggle-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(20px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 24px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #667eea;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .loading-subtext {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .helicopter-container {
+            display: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .ai-controls-inline {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .ai-controls-inline .btn-secondary {
+            flex: 1;
         }
     </style>
 </head>
 <body>
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Vegas Metropoly...</div>
+        <div class="loading-subtext">Setting up your casino experience</div>
+    </div>
+
     <div class="container">
-        
-        <!-- Settings Button -->
         <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
         
-        <!-- Settings Modal -->
         <div id="settingsModal" class="modal hidden">
             <div class="modal-content">
                 <span class="modal-close">&times;</span>
@@ -110,91 +395,69 @@
             </div>
         </div>
 
-        <main>
-            <div class="lobby-header">
-                <h1 class="main-title">🎰 Vegas Metropoly</h1>
-            </div>
-            
-            <!-- 3D Helicopter Container -->
-            <div id="helicopter-container" class="helicopter-container"></div>
+        <div class="lobby-header">
+            <h1 class="main-title">🎰 Vegas Metropoly</h1>
+            <p class="subtitle">The Ultimate Casino Experience</p>
+        </div>
+        
+        <div id="helicopter-container" class="helicopter-container"></div>
 
-            <div class="lobby-container">
-                <!-- Create Game Section (Left) -->
-                <div class="create-game-card">
-                    <div class="card-icon">🎲</div>
-                    <h2>Create New Game</h2>
-                    <p class="card-description">Start a new game lobby and share the code with friends</p>
-                    <button id="createGameBtn" class="btn btn-primary btn-large">
-                        <span class="btn-icon">➕</span>
-                        Create Game
-                    </button>
-                </div>
-
-                <!-- Game Lobby Section (Middle) -->
-                <div id="gameLobbySection" class="game-lobby-section hidden">
-                    <div class="game-lobby-container">
-                        <div class="game-code-display">
-                            <h3>Share this link with friends:</h3>
-                            <div class="code-box">
-                                <span id="gameLinkDisplay" class="game-code">---</span>
-                            </div>
-                            <button id="copyLinkBtn" class="btn btn-copy">📋 Copy Link</button>
-                            <div class="ai-controls-inline">
-                                <button id="addAiBtn" class="btn btn-secondary">➕ Add AI</button>
-                                <button id="removeAiBtn" class="btn btn-secondary">➖ Remove AI</button>
-                            </div>
-                        </div>
-                        <div class="players-card">
-                            <div class="card-header">
-                                <h3>Players</h3>
-                            </div>
-                            <div class="card-body">
-                                <div id="playersList" class="players-list"></div>
-                                <!-- AI controls commented out - use console command instead -->
-                                <!-- <div class="ai-controls">
-                                    <button id="addAiBtn" class="btn btn-secondary">+ Add AI</button>
-                                    <button id="removeAiBtn" class="btn btn-secondary">- Remove AI</button>
-                                </div> -->
-                                <button id="startGameBtn" class="btn btn-success hidden">Start Game</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+        <div class="lobby-container">
+            <div class="create-game-card">
+                <div class="card-icon">🎲</div>
+                <h2>Create New Game</h2>
+                <p class="card-description">Start a new game lobby and share the link with friends</p>
+                <button id="createGameBtn" class="btn-primary">
+                    Create Game
+                </button>
             </div>
 
-            <div id="lobbySection" class="hidden">
+            <div id="gameLobbySection" class="game-lobby-section hidden">
                 <div class="game-lobby-container">
+                    <div class="game-code-display">
+                        <h3>Share this link with friends:</h3>
+                        <div class="code-box">
+                            <span id="gameLinkDisplay" class="game-code">---</span>
+                        </div>
+                        <button id="copyLinkBtn" class="btn-primary">📋 Copy Link</button>
+                        <div class="ai-controls-inline">
+                            <button id="addAiBtn" class="btn-secondary">➕ Add AI</button>
+                            <button id="removeAiBtn" class="btn-secondary">➖ Remove AI</button>
+                        </div>
+                    </div>
                     <div class="players-card">
-                        <div class="card-header">
-                            <h3>Players</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="lobbyPlayersList" class="players-list"></div>
-                            <div class="lobby-status">
-                                <p id="lobbyStatus">Waiting for host to start the game...</p>
-                            </div>
-                        </div>
+                        <h3>Players</h3>
+                        <div id="playersList" class="players-list"></div>
+                        <button id="startGameBtn" class="btn-primary hidden" style="margin-top: 16px;">Start Game</button>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
 
-        <div id="messageModal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <p id="modalMessage"></p>
-                <button id="modalOkBtn" class="btn btn-primary">OK</button>
+        <div id="lobbySection" class="hidden">
+            <div class="game-lobby-container">
+                <div class="players-card">
+                    <h3>Players</h3>
+                    <div id="lobbyPlayersList" class="players-list"></div>
+                    <div class="lobby-status">
+                        <p id="lobbyStatus">Waiting for host to start the game...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <div id="messageModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modalMessage"></p>
+            <button id="modalOkBtn" class="btn-primary">OK</button>
+        </div>
+    </div>
+
     <script src="runtime-config.js?v=20250817-helicopter-cdn"></script>
-    <script src="/analytics.js"></script>
+    <script src="/analytics.js?v=20260910-lobby-v2"></script>
     <script>
-        // Console commands to load minigames directly in the same page
-        // Usage in browser console: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()
-        
         window.loadBlackjack = function() {
             console.log('Loading Blackjack minigame in overlay...');
             loadMinigameInOverlay('/BlackJack/index.html');
@@ -226,23 +489,15 @@
         };
 
         function loadMinigameInOverlay(url) {
-            // Extract game name from URL to use the proper casino modal
             const gameNameMatch = url.match(/\/([^\/]+)\/index\.html/);
             const gameName = gameNameMatch ? gameNameMatch[1] : 'BlackJack';
-            
-            // Get current player balance from game state
             const playerBalance = window.playerMoney || 2500;
-            
-            // Use the same casino modal system as the actual popup
-            // The openCasinoGame function is defined in game.js which loads after this script
             if (typeof openCasinoGame === 'function') {
                 openCasinoGame(gameName, playerBalance);
             } else {
                 console.error('openCasinoGame function not available - game.js may not have loaded yet');
             }
         }
-        
-        console.log('Minigame console commands loaded: loadBlackjack(), loadBaccarat(), loadRoulette(), loadPoker(), loadSlots(), loadCraps()');
     </script>
     <script src="lobby.js"></script>
 </body>

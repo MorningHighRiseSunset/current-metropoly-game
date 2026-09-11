@@ -192,7 +192,7 @@ const tokenData = [
     { name: 'Burger', model: getModelPath('/Models/Cheeseburger/cheeseburger.glb'), image: '/tokenimages/burger.png', scale: 0.42 },
     { name: 'Football', model: getModelPath('/Models/Football/football.glb'), image: '/tokenimages/football.png', scale: 0.03 },
     { name: 'Helicopter', model: getModelPath('/Models/Helicopter/helicopter.glb'), image: '/tokenimages/helicopter.png', scale: 0.002 },
-    { name: 'Rolls Royce', model: getModelPath('/Models/RollsRoyce/rollsRoyceCarAnim.glb'), image: '/tokenimages/rolls_royce.png', scale: 0.14, facingOffset: Math.PI / 2 },
+    { name: 'Rolls Royce', model: getModelPath('/Models/RollsRoyce/rollsRoyceCarAnim.glb'), image: '/tokenimages/rolls_royce.png', scale: 0.14, facingOffset: Math.PI },
     { name: 'Shoe', model: getModelPath('/Models/Shoe/shoe.glb'), image: '/tokenimages/shoe.png', scale: 0.25 },
     { name: 'Top Hat', model: getModelPath('/Models/TopHat/tophat.glb'), image: '/tokenimages/top_hat.png', scale: 0.22 },
     { name: 'White Girl', model: getModelPath('/Models/WhiteGirlIdle/Standing Idle.fbx'), walkModel: getModelPath('/Models/WhiteGirlWalk/Walking.fbx'), image: '/tokenimages/woman_model.png', scale: 0.06 },
@@ -2020,16 +2020,41 @@ function animateTokenMove(playerId, oldPosition, newPosition, onComplete, direct
                     return;
                 }
 
+                // Slower movement for Rolls Royce
+                const stepDuration = player.tokenIndex === 3 ? TOKEN_STEP_DURATION_MS * 2 : TOKEN_STEP_DURATION_MS;
                 const elapsed = now - startTime;
-                const rawT = Math.min(1, elapsed / TOKEN_STEP_DURATION_MS);
+                const rawT = Math.min(1, elapsed / stepDuration);
                 const t = easeOutQuad(rawT);
                 const coords = lerpCoords(fromCoords, toCoords, t);
                 model.position.set(coords.x, coords.y, coords.z);
                 model.rotation.y = lerpAngleY(startRotY, endRotY, t);
 
+                // Add drift tilt for Rolls Royce when turning
+                if (player.tokenIndex === 3) { // Rolls Royce index
+                    const rotDiff = Math.abs(endRotY - startRotY);
+                    // Normalize rotation difference
+                    let diff = rotDiff;
+                    while (diff > Math.PI) diff -= 2 * Math.PI;
+                    while (diff < -Math.PI) diff += 2 * Math.PI;
+                    
+                    // Tilt car based on turn amount and progress
+                    const maxTilt = 0.25; // Increased tilt for more dramatic drift
+                    const tiltAmount = Math.sin(t * Math.PI) * maxTilt * Math.sign(diff);
+                    model.rotation.z = tiltAmount;
+                    
+                    // Also add slight roll based on movement direction
+                    model.rotation.x = Math.sin(t * Math.PI) * 0.05;
+                }
+
                 if (rawT < 1) {
                     requestAnimationFrame(tick);
                     return;
+                }
+
+                // Reset tilt after completing the step
+                if (player.tokenIndex === 3) {
+                    model.rotation.z = 0;
+                    model.rotation.x = 0;
                 }
 
                 player.position = targetPos;

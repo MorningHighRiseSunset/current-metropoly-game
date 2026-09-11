@@ -49,6 +49,7 @@ const refreshLobbiesBtn = document.getElementById('refreshLobbiesBtn');
 const lobbiesList = document.getElementById('lobbiesList');
 const gameLinkDisplay = document.getElementById('gameLinkDisplay');
 const copyLinkBtn = document.getElementById('copyLinkBtn');
+const loadingOverlay = document.getElementById('loadingOverlay');
 
 const gameMenu = document.querySelector('.lobby-container');
 const gameLobbySection = document.getElementById('gameLobbySection');
@@ -171,6 +172,21 @@ function autoJoinFromUrlIfPresent() {
     if (!gameIdFromUrl) return;
 
     console.log('Auto-joining lobby from URL:', gameIdFromUrl);
+
+    // Show loading overlay
+    if (loadingOverlay) {
+        loadingOverlay.classList.remove('hidden');
+        const loadingText = loadingOverlay.querySelector('.loading-text');
+        const loadingSubtext = loadingOverlay.querySelector('.loading-subtext');
+        if (loadingText) loadingText.textContent = 'Joining game lobby...';
+        if (loadingSubtext) loadingSubtext.textContent = 'Connecting to the casino';
+    }
+
+    // Hide create game card
+    const createGameCard = document.querySelector('.create-game-card');
+    if (createGameCard) {
+        createGameCard.classList.add('hidden');
+    }
 
     // Generate player name and set current game ID
     const playerName = generateRandomPlayerName();
@@ -375,6 +391,15 @@ function renderLobbyCard(lobby) {
 
 // Join lobby from list
 function joinLobby(gameId) {
+    // Show loading overlay
+    if (loadingOverlay) {
+        loadingOverlay.classList.remove('hidden');
+        const loadingText = loadingOverlay.querySelector('.loading-text');
+        const loadingSubtext = loadingOverlay.querySelector('.loading-subtext');
+        if (loadingText) loadingText.textContent = 'Joining game lobby...';
+        if (loadingSubtext) loadingSubtext.textContent = 'Connecting to the casino';
+    }
+    
     const playerName = generateRandomPlayerName();
     currentGameId = gameId;
     
@@ -450,12 +475,12 @@ function updatePlayersList(players, listElement) {
             playerDiv.classList.add('ai-player');
         }
 
-        const badgeText = player.isAI ? '🤖 AI' : (player.id === socket.id ? 'You' : '');
+        const badgeText = player.isAI ? 'AI' : (player.id === socket.id ? 'You' : '');
         const playerName = player.isAI ? `AI ${playerNumber}` : `Player ${playerNumber}`;
 
         playerDiv.innerHTML = `
             <span class="player-name">${playerName}</span>
-            <span class="player-badge">${badgeText}</span>
+            ${badgeText ? `<span class="player-badge">${badgeText}</span>` : ''}
         `;
 
         listElement.appendChild(playerDiv);
@@ -464,6 +489,15 @@ function updatePlayersList(players, listElement) {
 
 // Create game
 createGameBtn.addEventListener('click', () => {
+    // Show loading overlay
+    if (loadingOverlay) {
+        loadingOverlay.classList.remove('hidden');
+        const loadingText = loadingOverlay.querySelector('.loading-text');
+        const loadingSubtext = loadingOverlay.querySelector('.loading-subtext');
+        if (loadingText) loadingText.textContent = 'Creating your game lobby...';
+        if (loadingSubtext) loadingSubtext.textContent = 'Setting up the casino experience';
+    }
+    
     const playerName = generateRandomPlayerName();
     currentGameId = generateGameId();
     
@@ -471,6 +505,16 @@ createGameBtn.addEventListener('click', () => {
         gameId: currentGameId,
         playerName: playerName
     });
+
+    // Hide loading overlay after 10 seconds if no response (server might be waking up)
+    setTimeout(() => {
+        if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+            const loadingText = loadingOverlay.querySelector('.loading-text');
+            const loadingSubtext = loadingOverlay.querySelector('.loading-subtext');
+            if (loadingText) loadingText.textContent = 'Server is waking up...';
+            if (loadingSubtext) loadingSubtext.textContent = 'Please wait a moment';
+        }
+    }, 10000);
 });
 
 
@@ -598,6 +642,11 @@ modalOkBtn.addEventListener('click', hideModal);
 socket.on('gameCreated', (data) => {
     const { gameId, players, playerUid } = data;
 
+    // Hide loading overlay
+    if (loadingOverlay) {
+        loadingOverlay.classList.add('hidden');
+    }
+
     isHost = true;
     currentGameId = gameId;
     persistLobbyIdentity(gameId, playerUid);
@@ -606,6 +655,12 @@ socket.on('gameCreated', (data) => {
     if (gameLinkDisplay) {
         const lobbyLink = `${window.location.origin}/?game=${gameId}`;
         gameLinkDisplay.textContent = lobbyLink;
+    }
+
+    // Hide create game card
+    const createGameCard = document.querySelector('.create-game-card');
+    if (createGameCard) {
+        createGameCard.classList.add('hidden');
     }
 
     // Show game lobby section in middle
@@ -623,9 +678,20 @@ socket.on('gameCreated', (data) => {
 socket.on('lobbyJoined', (data) => {
     const { gameId, playerId, playerUid, isHost: hostStatus, players } = data;
 
+    // Hide loading overlay
+    if (loadingOverlay) {
+        loadingOverlay.classList.add('hidden');
+    }
+
     isHost = hostStatus;
     currentGameId = gameId;
     persistLobbyIdentity(gameId, playerUid);
+
+    // Hide create game card
+    const createGameCard = document.querySelector('.create-game-card');
+    if (createGameCard) {
+        createGameCard.classList.add('hidden');
+    }
 
     // Show game lobby section in middle for both host and non-host
     gameLobbySection.classList.remove('hidden');
