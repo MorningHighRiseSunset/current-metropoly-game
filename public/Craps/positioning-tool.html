@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #2c2c2c;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .canvas-area {
+            position: relative;
+            width: 850px;
+            height: 550px;
+            border: 2px solid #444;
+        }
+        .canvas-area svg {
+            width: 100%;
+            height: 100%;
+        }
+        .box {
+            position: absolute;
+            border: 2px dashed #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+            cursor: move;
+            min-width: 20px;
+            min-height: 20px;
+        }
+        .box:hover {
+            background: rgba(255, 215, 0, 0.4);
+        }
+        .box.selected {
+            border: 2px solid #ff6b6b;
+            background: rgba(255, 107, 107, 0.3);
+        }
+        .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffd700;
+            right: -5px;
+            bottom: -5px;
+            cursor: se-resize;
+        }
+        .box-label {
+            position: absolute;
+            top: -20px;
+            left: 0;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .controls {
+            width: 300px;
+            background: #3a3a3a;
+            padding: 20px;
+            border-radius: 8px;
+            color: white;
+        }
+        .controls h3 {
+            margin-top: 0;
+            color: #ffd700;
+        }
+        .box-info {
+            background: #4a4a4a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        button {
+            background: #ffd700;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px 0;
+            width: 100%;
+        }
+        button:hover {
+            background: #ffed4a;
+        }
+        .delete-btn {
+            background: #ff6b6b;
+        }
+        .delete-btn:hover {
+            background: #ff8787;
+        }
+        .copy-btn {
+            background: #4CAF50;
+        }
+        .copy-btn:hover {
+            background: #66BB6A;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: #4a4a4a;
+            border: 1px solid #666;
+            color: white;
+            border-radius: 4px;
+        }
+        .output {
+            background: #4a4a4a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="canvas-area" id="canvas">
+            <img src="Craps.svg" alt="Craps Table" style="width: 100%; height: 100%;">
+        </div>
+        <div class="controls">
+            <h3>Box Positioning Tool</h3>
+            <button onclick="addBox()">+ Add New Box</button>
+            <button onclick="copySelected()" class="copy-btn">📋 Copy Selected</button>
+            <button onclick="exportPositions()">Export Positions</button>
+            <button onclick="clearAll()" class="delete-btn">Clear All</button>
+            
+            <div class="box-info" id="selected-info">
+                Select a box to edit its properties
+            </div>
+            
+            <div id="edit-controls" style="display: none;">
+                <label>Box Name:</label>
+                <input type="text" id="box-name" onchange="updateBoxName()">
+                <label>X Position:</label>
+                <input type="number" id="box-x" onchange="updateBoxPosition()">
+                <label>Y Position:</label>
+                <input type="number" id="box-y" onchange="updateBoxPosition()">
+                <label>Width:</label>
+                <input type="number" id="box-width" onchange="updateBoxSize()">
+                <label>Height:</label>
+                <input type="number" id="box-height" onchange="updateBoxSize()">
+                <button onclick="deleteSelected()" class="delete-btn">Delete Selected</button>
+            </div>
+            
+            <h4>Exported Code:</h4>
+            <div class="output" id="output"></div>
+        </div>
+    </div>
+
+    <script>
+        let boxes = [];
+        let selectedBox = null;
+        let isDragging = false;
+        let isResizing = false;
+        let startX, startY, startWidth, startHeight, startLeft, startTop;
+        let boxCounter = 0;
+
+        const canvas = document.getElementById('canvas');
+        const selectedInfo = document.getElementById('selected-info');
+        const editControls = document.getElementById('edit-controls');
+        const output = document.getElementById('output');
+
+        function addBox() {
+            boxCounter++;
+            const box = {
+                id: boxCounter,
+                name: `Box ${boxCounter}`,
+                x: 50,
+                y: 50,
+                width: 100,
+                height: 50
+            };
+            boxes.push(box);
+            renderBox(box);
+        }
+
+        function renderBox(box) {
+            const div = document.createElement('div');
+            div.className = 'box';
+            div.id = `box-${box.id}`;
+            div.style.left = box.x + 'px';
+            div.style.top = box.y + 'px';
+            div.style.width = box.width + 'px';
+            div.style.height = box.height + 'px';
+            
+            const label = document.createElement('div');
+            label.className = 'box-label';
+            label.textContent = box.name;
+            div.appendChild(label);
+            
+            const resizeHandle = document.createElement('div');
+            resizeHandle.className = 'resize-handle';
+            div.appendChild(resizeHandle);
+            
+            div.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('resize-handle')) {
+                    startResize(e, box);
+                } else {
+                    startDrag(e, box);
+                }
+            });
+            
+            canvas.appendChild(div);
+        }
+
+        function startDrag(e, box) {
+            if (e.target.classList.contains('resize-handle')) return;
+            
+            selectBox(box);
+            isDragging = true;
+            startX = e.clientX - box.x;
+            startY = e.clientY - box.y;
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function drag(e) {
+            if (!isDragging || !selectedBox) return;
+            
+            const canvasRect = canvas.getBoundingClientRect();
+            let newX = e.clientX - canvasRect.left - startX + canvas.offsetLeft;
+            let newY = e.clientY - canvasRect.top - startY + canvas.offsetTop;
+            
+            // Constrain to canvas
+            newX = Math.max(0, Math.min(newX, canvas.offsetWidth - selectedBox.width));
+            newY = Math.max(0, Math.min(newY, canvas.offsetHeight - selectedBox.height));
+            
+            selectedBox.x = newX;
+            selectedBox.y = newY;
+            
+            const div = document.getElementById(`box-${selectedBox.id}`);
+            div.style.left = newX + 'px';
+            div.style.top = newY + 'px';
+            
+            updateEditControls();
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+
+        function startResize(e, box) {
+            selectBox(box);
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = box.width;
+            startHeight = box.height;
+            
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', stopResize);
+        }
+
+        function resize(e) {
+            if (!isResizing || !selectedBox) return;
+            
+            const newWidth = Math.max(20, startWidth + (e.clientX - startX));
+            const newHeight = Math.max(20, startHeight + (e.clientY - startY));
+            
+            selectedBox.width = newWidth;
+            selectedBox.height = newHeight;
+            
+            const div = document.getElementById(`box-${selectedBox.id}`);
+            div.style.width = newWidth + 'px';
+            div.style.height = newHeight + 'px';
+            
+            updateEditControls();
+        }
+
+        function stopResize() {
+            isResizing = false;
+            document.removeEventListener('mousemove', resize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+
+        function selectBox(box) {
+            // Deselect previous
+            if (selectedBox) {
+                const prevDiv = document.getElementById(`box-${selectedBox.id}`);
+                if (prevDiv) prevDiv.classList.remove('selected');
+            }
+            
+            selectedBox = box;
+            const div = document.getElementById(`box-${box.id}`);
+            div.classList.add('selected');
+            
+            selectedInfo.style.display = 'none';
+            editControls.style.display = 'block';
+            updateEditControls();
+        }
+
+        function updateEditControls() {
+            if (!selectedBox) return;
+            
+            document.getElementById('box-name').value = selectedBox.name;
+            document.getElementById('box-x').value = Math.round(selectedBox.x);
+            document.getElementById('box-y').value = Math.round(selectedBox.y);
+            document.getElementById('box-width').value = Math.round(selectedBox.width);
+            document.getElementById('box-height').value = Math.round(selectedBox.height);
+        }
+
+        function updateBoxName() {
+            if (!selectedBox) return;
+            selectedBox.name = document.getElementById('box-name').value;
+            const div = document.getElementById(`box-${selectedBox.id}`);
+            div.querySelector('.box-label').textContent = selectedBox.name;
+        }
+
+        function updateBoxPosition() {
+            if (!selectedBox) return;
+            selectedBox.x = parseInt(document.getElementById('box-x').value);
+            selectedBox.y = parseInt(document.getElementById('box-y').value);
+            const div = document.getElementById(`box-${selectedBox.id}`);
+            div.style.left = selectedBox.x + 'px';
+            div.style.top = selectedBox.y + 'px';
+        }
+
+        function updateBoxSize() {
+            if (!selectedBox) return;
+            selectedBox.width = parseInt(document.getElementById('box-width').value);
+            selectedBox.height = parseInt(document.getElementById('box-height').value);
+            const div = document.getElementById(`box-${selectedBox.id}`);
+            div.style.width = selectedBox.width + 'px';
+            div.style.height = selectedBox.height + 'px';
+        }
+
+        function deleteSelected() {
+            if (!selectedBox) return;
+            
+            const div = document.getElementById(`box-${selectedBox.id}`);
+            if (div) div.remove();
+            
+            boxes = boxes.filter(b => b.id !== selectedBox.id);
+            selectedBox = null;
+            
+            selectedInfo.style.display = 'block';
+            editControls.style.display = 'none';
+        }
+
+        function copySelected() {
+            if (!selectedBox) {
+                alert('Please select a box to copy first');
+                return;
+            }
+            
+            boxCounter++;
+            const newBox = {
+                id: boxCounter,
+                name: selectedBox.name + ' (copy)',
+                x: selectedBox.x + 50,
+                y: selectedBox.y + 30,
+                width: selectedBox.width,
+                height: selectedBox.height
+            };
+            
+            boxes.push(newBox);
+            renderBox(newBox);
+            
+            // Auto-select the new box
+            selectBox(newBox);
+        }
+
+        function clearAll() {
+            boxes.forEach(box => {
+                const div = document.getElementById(`box-${box.id}`);
+                if (div) div.remove();
+            });
+            boxes = [];
+            selectedBox = null;
+            boxCounter = 0;
+            
+            selectedInfo.style.display = 'block';
+            editControls.style.display = 'none';
+            output.textContent = '';
+        }
+
+        function exportPositions() {
+            let code = '<!-- Betting Areas -->\n';
+            boxes.forEach(box => {
+                const cssClass = box.name.toLowerCase().replace(/\s+/g, '-').replace("'", "");
+                code += `<rect id="${cssClass}" class="betting-area" x="${Math.round(box.x)}" y="${Math.round(box.y)}" width="${Math.round(box.width)}" height="${Math.round(box.height)}" fill="gold" fill-opacity="0"/>\n`;
+            });
+            
+            code += '\n/* CSS Styles */\n';
+            boxes.forEach(box => {
+                const cssClass = box.name.toLowerCase().replace(/\s+/g, '-').replace("'", "");
+                code += `#${cssClass} { fill: gold; fill-opacity: 0; }\n`;
+                code += `#${cssClass}:hover { fill-opacity: 0.3; }\n`;
+            });
+            
+            output.textContent = code;
+        }
+
+        // Click outside to deselect
+        canvas.addEventListener('click', (e) => {
+            if (e.target === canvas || e.target.tagName === 'IMG') {
+                if (selectedBox) {
+                    const div = document.getElementById(`box-${selectedBox.id}`);
+                    if (div) div.classList.remove('selected');
+                }
+                selectedBox = null;
+                selectedInfo.style.display = 'block';
+                editControls.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -437,6 +437,7 @@
     let balance = window.parent?.playerMoney || 2500;
     let bet = 5;
     let spinning = false;
+    let spinSound = null;
 
     // Balance sync with parent window
     function syncBalanceToParent() {
@@ -567,6 +568,14 @@
       reels.forEach(r => r.classList.remove('win', 'landing'));
       setMessage('…', '');
       updateUI();
+
+      // Play spin sound
+      if (!spinSound) {
+        spinSound = new Audio('../Roulette/Sounds/spinopel-spinning-roulette-wheel-429832.mp3');
+        spinSound.volume = 0.3;
+      }
+      spinSound.currentTime = 0;
+      spinSound.play().catch(e => console.log('Audio play failed:', e));
 
       reels.forEach(r => r.classList.add('spinning'));
 

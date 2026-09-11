@@ -87,8 +87,8 @@
     }
 
     .wheel-container {
-      width: min(70vw, 320px);
-      height: min(70vw, 320px);
+      width: min(70vw, 400px);
+      height: min(70vw, 400px);
       position: relative;
     }
     canvas {
@@ -411,14 +411,6 @@
       right: 2px;
     }
 
-    .total-bet {
-      text-align: center;
-      font-size: 0.9rem;
-      opacity: 0.85;
-      margin-top: 4px;
-    }
-    .total-bet span { color: #d4af37; font-weight: 700; }
-
     .message {
       text-align: center;
       min-height: 1.4rem;
@@ -454,6 +446,10 @@
         <div>
           <div class="label">Balance</div>
           <div class="value" id="balance">$1,000</div>
+        </div>
+        <div>
+          <div class="label">Total Bet</div>
+          <div class="value" id="totalBet">$0</div>
         </div>
         <div class="bet-slider-container">
           <label>Bet Amount: <span id="bet-display">$100</span></label>
@@ -496,7 +492,6 @@
         </div>
       </div>
 
-      <div class="total-bet">Total Bet: <span id="totalBet">$0</span></div>
       <div class="message" id="message"></div>
     </div>
   </div>

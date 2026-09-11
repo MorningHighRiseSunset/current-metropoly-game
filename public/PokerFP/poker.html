@@ -77,6 +77,49 @@
     display: none;
   }
 
+  /* INFO BAR - Horizontal row above game */
+  .info-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 8px;
+    flex-wrap: nowrap;
+  }
+
+  body.iframe-mode .info-bar {
+    display: flex;
+    max-width: 100%;
+  }
+
+  .info-bar .bet-row {
+    flex: 2;
+    min-width: 0;
+  }
+
+  .info-bar .balance-pot-row {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .info-bar .bet-row {
+    padding: 8px 12px;
+  }
+
+  .info-bar .balance-box, .info-bar .pot-box {
+    padding: 4px 8px;
+    min-height: 32px;
+  }
+
+  .info-bar .balance-box span, .info-bar .pot-box span {
+    font-size: 0.6rem;
+  }
+
+  .info-bar .balance-box .value, .info-bar .pot-box .value {
+    font-size: 0.85rem;
+  }
+
   .chip-display {
     font-family: 'Orbitron', sans-serif;
     font-size: 0.8rem;
@@ -399,100 +442,6 @@
     margin-top: 4px;
   }
 
-  /* CONTROLS */
-  .controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .balance-pot-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    width: 100%;
-  }
-
-  .balance-box, .pot-box {
-    flex: 1;
-    background: 
-      linear-gradient(145deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25)),
-      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.05), transparent 70%);
-    padding: 10px 14px;
-    border-radius: 12px;
-    border: 1px solid rgba(168, 85, 247, 0.35);
-    text-align: center;
-  }
-
-  .balance-box span, .pot-box span {
-    display: block;
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-
-  .balance-box .value, .pot-box .value {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1rem;
-    color: var(--gold);
-    font-weight: bold;
-  }
-
-  .bet-row {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    background: 
-      linear-gradient(145deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25)),
-      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.05), transparent 70%);
-    padding: 12px 18px;
-    border-radius: 16px;
-    border: 1px solid rgba(168, 85, 247, 0.35);
-    box-shadow: 
-      0 4px 20px rgba(0,0,0,0.4),
-      inset 0 1px 0 rgba(255,255,255,0.05);
-  }
-
-  .bet-row-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
-
-  .bet-row label {
-    font-size: 0.8rem;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .bet-row-value {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1rem;
-    color: var(--gold);
-    font-weight: bold;
-  }
-
-  .bet-row input[type="range"] {
-    width: 100%;
-    accent-color: var(--purple);
-    cursor: pointer;
-  }
-
-  .bet-row input[type="range"]::-webkit-slider-runnable-track {
-    background: rgba(168, 85, 247, 0.3);
-    border-radius: 4px;
-  }
-
   .btn {
     font-family: 'Orbitron', sans-serif;
     font-size: 0.85rem;
@@ -512,6 +461,7 @@
       inset 0 1px 0 rgba(255,255,255,0.2);
     transition: all 0.2s;
     width: 100%;
+    max-width: 500px;
     position: relative;
     overflow: hidden;
   }
@@ -538,6 +488,113 @@
     box-shadow: none;
   }
 
+  .info-btn {
+    padding: 8px 16px !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    max-width: 100px !important;
+    border-radius: 4px !important;
+    height: 32px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+  }
+  .info-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .bet-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    background: 
+      linear-gradient(145deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25)),
+      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.05), transparent 70%);
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    box-shadow: 
+      0 4px 20px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .bet-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .bet-row label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .bet-row-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--gold);
+    font-weight: bold;
+  }
+
+  .bet-row input[type="range"] {
+    width: 100%;
+    height: 12px !important;
+    accent-color: var(--purple);
+    cursor: pointer;
+  }
+
+  .bet-row input[type="range"]::-webkit-slider-runnable-track {
+    background: rgba(168, 85, 247, 0.3);
+    border-radius: 4px;
+  }
+
+  .balance-pot-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .balance-box, .pot-box {
+    flex: 1;
+    background: 
+      linear-gradient(145deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25)),
+      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.05), transparent 70%);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    text-align: center;
+    min-height: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .balance-box span, .pot-box span {
+    display: block;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 1px;
+  }
+
+  .balance-box .value, .pot-box .value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    color: var(--gold);
+    font-weight: bold;
+  }
+
   @media (max-width: 640px) {
     .table-rail { border-radius: 16px; padding: 10px; }
     .table-felt { border-radius: 12px; padding: 24px 14px; min-height: 400px; }
@@ -551,6 +608,27 @@
 <body>
 
 <div class="game">
+
+  <div class="info-bar">
+    <div class="bet-row" id="bet-row">
+      <div class="bet-row-header">
+        <label>Bet Amount</label>
+        <span class="bet-row-value" id="bet-value-display">$50</span>
+      </div>
+      <input type="range" id="bet-slider" min="10" max="1000" value="50" step="10">
+    </div>
+    <div class="balance-pot-row">
+      <div class="balance-box">
+        <span>Balance</span>
+        <span class="value" id="chips">2500</span>
+      </div>
+      <div class="pot-box">
+        <span>Pot</span>
+        <span class="value" id="pot">0</span>
+      </div>
+    </div>
+    <button class="btn info-btn" id="btn" onclick="next()">Place Bet</button>
+  </div>
 
   <div class="table-rail">
     <div class="table-felt">
@@ -579,27 +657,6 @@
   </div>
 
   <div class="result" id="result"></div>
-
-  <div class="controls">
-    <div class="bet-row" id="bet-row">
-      <div class="bet-row-header">
-        <label>Bet Amount</label>
-        <span class="bet-row-value" id="bet-value-display">$50</span>
-      </div>
-      <input type="range" id="bet-slider" min="10" max="1000" value="50" step="10">
-    </div>
-    <button class="btn" id="btn" onclick="next()">Place Bet</button>
-    <div class="balance-pot-row">
-      <div class="balance-box">
-        <span>Balance</span>
-        <span class="value" id="chips">2500</span>
-      </div>
-      <div class="pot-box">
-        <span>Pot</span>
-        <span class="value" id="pot">0</span>
-      </div>
-    </div>
-  </div>
 
 </div>
 
@@ -821,7 +878,6 @@ function compareHands(a, b) {
 function next() {
   const btn = $('btn');
   const result = $('result');
-  const betRow = $('bet-row');
 
   // --- PLACE BET ---
   if (state.stage === 'bet' || state.stage === 'done') {
@@ -850,7 +906,7 @@ function next() {
 
     result.textContent = '';
     result.className = 'result';
-    betRow.style.display = 'none';
+    betSlider.disabled = true;
     btn.textContent = 'Flop';
     render();
     syncBalanceToParent(); // Sync bet deduction immediately
@@ -925,7 +981,7 @@ function next() {
 
     state.pot = 0;
     render();
-    betRow.style.display = 'flex';
+    betSlider.disabled = false;
     syncBetUI();
     btn.textContent = 'Place Bet';
   }
