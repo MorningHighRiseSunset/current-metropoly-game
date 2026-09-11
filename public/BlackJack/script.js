@@ -336,7 +336,13 @@ window.initBlackjackMinigame = function(container, playerMoney, updateMainGameBa
         betSlider.value = selectedBetAmount;
 
         betSlider.addEventListener('input', (e) => {
-            selectedBetAmount = parseInt(e.target.value);
+            let newBet = parseInt(e.target.value);
+            // Ensure bet doesn't exceed balance
+            if (newBet > balance) {
+                newBet = balance;
+                betSlider.value = newBet;
+            }
+            selectedBetAmount = newBet;
             currentBet = selectedBetAmount;
             window.__selectedChip = selectedBetAmount;
             betDisplay.textContent = `$${selectedBetAmount}`;
