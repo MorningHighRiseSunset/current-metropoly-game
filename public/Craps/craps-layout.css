@@ -43,9 +43,9 @@ body.iframe-mode .table {
 }
 
 body.iframe-mode .table-content {
-  flex-direction: row;
+  flex-direction: column;
   width: auto;
-  gap: 0;
+  gap: 10px;
 }
 
 body.iframe-mode .main {
@@ -54,10 +54,15 @@ body.iframe-mode .main {
 }
 
 body.iframe-mode .props {
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
-  flex-direction: column;
+  width: 100%;
+  min-width: 200px;
+  max-width: 100%;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 5px;
+  border-left: none;
+  border-top: 2px solid #0a4a25;
 }
 
 .table-content {
@@ -127,6 +132,9 @@ body.iframe-mode .pass-line {
 body.iframe-mode .prop {
   font-size: 7px;
   padding: 0 2px;
+  flex: 1;
+  min-width: 80px;
+  height: 30px;
 }
 
 body.iframe-mode .prop.any-seven {
@@ -146,6 +154,21 @@ body.iframe-mode .prop.any-craps {
 
 body.iframe-mode .prop.any-craps .odds {
   font-size: 6px;
+}
+
+body.iframe-mode .prop.split {
+  display: flex;
+  flex-direction: row;
+  min-width: 100px;
+}
+
+body.iframe-mode .prop.split > div {
+  flex: 1;
+  border-right: 1px solid #0a4a25;
+}
+
+body.iframe-mode .prop.split > div:last-child {
+  border-right: none;
 }
 
 /* Left side "No Call Bets" */
@@ -319,10 +342,11 @@ body.iframe-mode .prop.any-craps .odds {
 
 .prop.split {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: row;
   padding: 0;
   min-height: 30px;
+  min-width: 100px;
 }
 
 .prop.split > div {
