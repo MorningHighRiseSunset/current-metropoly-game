@@ -658,7 +658,7 @@ const gameBoard = document.getElementById('gameBoard');
 const tokensLayer = document.getElementById('tokens');
 const token3DScene = document.getElementById('token3DScene');
 const playerMoneyEl = document.getElementById('playerMoney');
-const playerNameEl = document.getElementById('playerName');
+
 const gameCodeEl = document.getElementById('gameCode');
 const tokenModal = document.getElementById('tokenModal');
 const tokenSelectionEl = document.getElementById('tokenSelection');
@@ -1164,7 +1164,7 @@ function persistSpectatorIdentity(gameId, uid, name) {
 function applySpectatorModeUI() {
     document.body.classList.add('spectator-mode');
     const label = spectatorName || 'Spectator';
-    if (playerNameEl) playerNameEl.textContent = `${label} (Watching)`;
+
     if (playerMoneyEl) playerMoneyEl.textContent = '—';
 
     const rollDiceBtn = document.getElementById('rollDiceBtn');
@@ -3114,11 +3114,9 @@ function updateUI(options = {}) {
             playerMoney = freshPlayer.money; // Sync global variable too
         }
         playerMoneyEl.textContent = `$${currentPlayer.money || 2500}`;
-        playerNameEl.textContent = getPlayerDisplayName(currentPlayer);
     } else {
         // Set defaults when currentPlayer is not available
         playerMoneyEl.textContent = '$2500';
-        playerNameEl.textContent = 'Player';
     }
     
     updatePlayersList();

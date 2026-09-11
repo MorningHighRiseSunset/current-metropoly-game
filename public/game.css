@@ -134,7 +134,7 @@ body {
 /* Settings Button */
 .settings-btn {
     position: fixed;
-    top: 80px;
+    top: 20px;
     right: 20px;
     left: auto;
     background: var(--card-bg);
