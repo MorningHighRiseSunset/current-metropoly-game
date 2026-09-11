@@ -43,7 +43,7 @@ body.iframe-mode .table {
 }
 
 body.iframe-mode .table-content {
-  flex-direction: column;
+  flex-direction: row;
   width: auto;
   gap: 10px;
 }
@@ -54,15 +54,14 @@ body.iframe-mode .main {
 }
 
 body.iframe-mode .props {
-  width: 100% !important;
-  min-width: 200px !important;
-  max-width: 100% !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  gap: 5px !important;
-  padding: 5px !important;
-  border-left: none !important;
-  border-top: 2px solid #0a4a25 !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  border-left: 1px solid #0a4a25 !important;
+  border-top: none !important;
 }
 
 .table-content {
@@ -132,10 +131,6 @@ body.iframe-mode .pass-line {
 body.iframe-mode .prop {
   font-size: 7px !important;
   padding: 0 2px !important;
-  flex: 1 !important;
-  min-width: 80px !important;
-  height: 30px !important;
-  border: 1px solid #0a4a25 !important;
 }
 
 body.iframe-mode .prop.any-seven {
@@ -157,21 +152,7 @@ body.iframe-mode .prop.any-craps .odds {
   font-size: 6px;
 }
 
-body.iframe-mode .prop.split {
-  display: flex !important;
-  flex-direction: row !important;
-  min-width: 100px !important;
-  border: 1px solid #0a4a25 !important;
-}
 
-body.iframe-mode .prop.split > div {
-  flex: 1 !important;
-  border-right: 1px solid #0a4a25 !important;
-}
-
-body.iframe-mode .prop.split > div:last-child {
-  border-right: none !important;
-}
 
 /* Left side "No Call Bets" */
 .far-left {
@@ -315,14 +296,10 @@ body.iframe-mode .prop.split > div:last-child {
 
 /* Right props */
 .props {
-  width: 100%;
-  border-left: none;
-  border-top: 2px solid #0a4a25;
+  width: 140px;
+  border-left: 1px solid #0a4a25;
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 5px;
+  flex-direction: column;
   flex-shrink: 0;
 }
 
@@ -330,13 +307,14 @@ body.iframe-mode .prop.split > div:last-child {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #0a4a25;
+  border-bottom: 1px solid #0a4a25;
   text-align: center;
   font-size: 9px;
   padding: 0 6px;
-  flex: 1;
-  min-width: 80px;
-  height: 30px;
+}
+
+.prop:last-child {
+  border-bottom: none;
 }
 
 .prop.any-seven {
@@ -347,11 +325,10 @@ body.iframe-mode .prop.split > div:last-child {
 
 .prop.split {
   flex: 1;
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   padding: 0;
   min-height: 30px;
-  min-width: 100px;
 }
 
 .prop.split > div {
@@ -409,19 +386,19 @@ body.iframe-mode .prop.split > div:last-child {
   max-width: 600px;
 }
 
-/* In iframe mode, move controls below the table */
+/* In iframe mode, move controls to the right side */
 body.iframe-mode .game-controls {
-  margin-top: 10px;
-  margin-left: 0;
-  width: 100%;
-  max-width: 100%;
-  min-width: auto;
+  margin-top: 0;
+  margin-left: 10px;
+  width: auto;
+  max-width: 150px;
+  min-width: 120px;
   border-left: 2px solid #8B4513;
-  border-top: 2px solid #8B4513;
-  border-right: 2px solid #8B4513;
-  border-bottom: 2px solid #8B4513;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   padding: 6px 8px;
 }
 
