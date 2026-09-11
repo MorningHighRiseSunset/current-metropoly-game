@@ -1018,13 +1018,30 @@ function on3DBoardClick(event) {
     }
 }
 
+function isPurchasableSpaceType(spaceData) {
+    return Boolean(spaceData && (
+        spaceData.type === 'property' ||
+        spaceData.type === 'railroad' ||
+        spaceData.type === 'utility'
+    ));
+}
+
+function playerOwnsPosition(player, position) {
+    if (!player || !Array.isArray(player.properties)) return false;
+    const pos = Number(position);
+    if (!Number.isFinite(pos)) return false;
+    return player.properties.some((owned) => Number(owned) === pos);
+}
+
+function findSpaceOwner(position, playersList = players) {
+    if (!Array.isArray(playersList)) return null;
+    return playersList.find((p) => p && playerOwnsPosition(p, position)) || null;
+}
+
 function getUnownedPurchasableSpace(position) {
     const spaceData = boardConfig[position];
-    if (!spaceData) return null;
-    const isPurchasable = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
-    if (!isPurchasable) return null;
-    const owner = players.find(p => p && p.properties && p.properties.includes(position));
-    return owner ? null : spaceData;
+    if (!isPurchasableSpaceType(spaceData)) return null;
+    return findSpaceOwner(position) ? null : spaceData;
 }
 
 function tileHasLandingMedia(position) {
@@ -1034,104 +1051,65 @@ function tileHasLandingMedia(position) {
 }
 
 function handlePlayerLanding(playerId, newPosition, fromCard = false) {
-    // console.log('[handlePlayerLanding] Called - playerId:', playerId, 'newPosition:', newPosition, 'gameState.diceRolled:', gameState?.diceRolled, 'currentPlayer:', gameState?.currentPlayer, 'myPlayerId:', myPlayerId);
-    // Show property info for spaces with media, properties, or jail (only for human player)
-    // Skip chance, community chest, tax, and other special spaces that have their own UI
-    // Also skip if modal was already opened manually by clicking on the square
-    // Skip if property is owned (rent UI will be shown separately)
-    // Skip if movement is from a chance card (card already handled the action)
+    manuallyOpenedModal = false;
+    if (playerId !== myPlayerId || isSpectator) return;
+
     const spaceData = boardConfig[newPosition];
-    if (spaceData && playerId === myPlayerId && !manuallyOpenedModal && !fromCard) {
-        const hasMedia = tileHasLandingMedia(newPosition);
-        const isProperty = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
-        const isJail = newPosition === 10 || newPosition === 30;
-        const isSpecialSpace = spaceData.type === 'chance' || spaceData.type === 'community-chest' || spaceData.type === 'tax';
+    if (!spaceData) return;
 
-        // Check if property is owned by another player (rent situation)
-        const owner = players.find(p => p && p.properties && p.properties.includes(newPosition) && p.id !== playerId);
-        const isOwned = !!owner;
+    const landingPlayer = players.find((p) => p && p.id === playerId);
 
-        // Show property info for properties with media, or if it's a jail space
-        // NEVER show for owned properties (rent UI will be shown separately)
-        if ((hasMedia || isJail) && !isSpecialSpace && !isOwned) {
-            showPropertyInfo(spaceData);
+    if (newPosition === 10) {
+        if (landingPlayer?.inJail) {
+            showPropertyInfo(boardConfig[10]);
+        } else {
+            showJailProceedUI(newPosition);
         }
+        return;
     }
 
-    // Reset manual flag after landing
-    manuallyOpenedModal = false;
+    if (isPurchasableSpaceType(spaceData)) {
+        const owner = findSpaceOwner(newPosition);
+        const rentAlreadyOpen = activePropertyDecision
+            && activePropertyDecision.isRent
+            && Number(activePropertyDecision.position) === Number(newPosition);
 
-    // Show buy modal for unowned properties (this will show after property modal)
-    if (playerId === myPlayerId) {
-        // Check if landing on jail first - show jail UI regardless of other conditions
-        if (newPosition === 10) {
-            const player = players.find(p => p && p.id === playerId);
-            // Show jail UI if player is in jail (sent there) OR visiting (not in jail)
-            if (player) {
-                if (player.inJail) {
-                    // Player is in jail - show options to get out
-                    showPropertyInfo(boardConfig[10]);
-                } else {
-                    // Just visiting jail - show proceed button to end turn
-                    showJailProceedUI(newPosition);
-                }
-            }
-        } else {
-            const spaceData = boardConfig[newPosition];
-            
-            // Check if landing on an owned property (rent situation)
-            const owner = players.find(p => p && p.properties && p.properties.includes(newPosition));
-            if (owner && owner.id !== playerId) {
-                // Property owned by someone else - show rent UI
+        if (rentAlreadyOpen || (owner && owner.id !== playerId)) {
+            if (!rentAlreadyOpen) {
                 const rent = calculateRentAmount(spaceData, owner);
                 startRentDecision({ spaceData, owner, rentAmount: rent }, newPosition);
-            } else if (spaceData && spaceData.isCasino && !currentPlayer.isAI) {
-                // Unowned casino property - open casino game first, then offer to buy
-                const isOwnedByMe = owner && owner.id === currentPlayer.id;
-                if (isOwnedByMe) {
-                    // Player owns the casino property - show property info with option to play casino
-                    showPropertyInfo(spaceData, { showProceedButton: true, viewerLabel: 'You own this property - Click Proceed to play casino' });
-                } else {
-                    // Unowned casino property - open casino game first, then offer to buy
-                    openCasinoGame(spaceData.casinoGame);
-                }
-            } else {
-                const purchasableSpace = getUnownedPurchasableSpace(newPosition);
-                if (purchasableSpace) {
-                    startPropertyDecision(purchasableSpace, newPosition);
-                } else {
-                    // Only show proceed button for corner spaces with no other actions
-                    // GO / Free Parking have no buy/rent UI — show Proceed so the turn can end
-                    if (newPosition === 0 || newPosition === 20) {
-                        showJailProceedUI(newPosition);
-                    }
-                }
             }
+            return;
         }
-        // Rent payment UI is now handled by server via showRentPayment event
-    } else if (playerId === myPlayerId && fromCard) {
-        // For card-induced movements, show proceed button to end turn after any media
-        const spaceData = boardConfig[newPosition];
-        if (spaceData && tileHasLandingMedia(newPosition)) {
-            showPropertyInfo(spaceData, { showProceedButton: true, viewerLabel: 'Card movement - Click Proceed to end turn' });
-        } else {
-            // No media, just end turn
-            setTimeout(() => {
-                if (gameState && gameState.currentPlayer === myPlayerId) {
-                    endTurnNow();
-                }
-            }, 500);
+        if (owner && owner.id === playerId) {
+            if (spaceData.isCasino && landingPlayer && !landingPlayer.isAI) {
+                showPropertyInfo(spaceData, {
+                    showProceedButton: true,
+                    viewerLabel: 'You own this property - Click Proceed to play casino'
+                });
+            }
+            return;
         }
+        // Unowned: one buy UI (casino tiles play first, then buy after close).
+        if (spaceData.isCasino && landingPlayer && !landingPlayer.isAI) {
+            openCasinoGame(spaceData.casinoGame);
+            return;
+        }
+        startPropertyDecision(spaceData, newPosition);
+        return;
+    }
+
+    if (newPosition === 0 || newPosition === 20) {
+        showJailProceedUI(newPosition);
     }
 }
 
 function getOwnedPropertySpace(position) {
     const spaceData = boardConfig[position];
-    if (!spaceData) return null;
-    const isPurchasable = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
-    if (!isPurchasable) return null;
-    const owner = players.find(p => p && p.properties && p.properties.includes(position) && p.id !== myPlayerId);
-    return owner ? { spaceData, owner } : null;
+    if (!isPurchasableSpaceType(spaceData)) return null;
+    const owner = findSpaceOwner(position);
+    if (!owner || owner.id === myPlayerId) return null;
+    return { spaceData, owner };
 }
 
 function clearPropertyDecisionTimer() {
@@ -1495,7 +1473,10 @@ function flushCasinoBalanceFromIframe(casinoContainer) {
 function finishLandingDecisionUI() {
     if (!activePropertyDecision) return;
 
-    showPropertyInfo(activePropertyDecision.spaceData, { showDecisionActions: true });
+    showPropertyInfo(activePropertyDecision.spaceData, {
+        showDecisionActions: !activePropertyDecision.isRent,
+        isRent: !!activePropertyDecision.isRent
+    });
     updatePropertyDecisionUI();
 }
 
@@ -1507,26 +1488,45 @@ function openLandingPropertyModal(spaceData) {
 
 function beginLandingDecision({ spaceData, position, isRent = false, owner = null, rentAmount = null, diceRoll = null }) {
     if (!spaceData || isSpectator) return;
-    if (!currentPlayer) return;
+    if (!currentPlayer && !resolveLocalPlayer(players)) return;
+
+    const sameTileOpen = activePropertyDecision
+        && Number(activePropertyDecision.position) === Number(position);
+
+    if (sameTileOpen && Boolean(activePropertyDecision.isRent) === Boolean(isRent)) {
+        if (isRent) {
+            if (rentAmount != null) activePropertyDecision.rentAmount = rentAmount;
+            if (owner) activePropertyDecision.owner = owner;
+            if (diceRoll) activePropertyDecision.diceRoll = diceRoll;
+            updatePropertyDecisionUI();
+        }
+        return;
+    }
+
+    // Never replace an open rent UI with a buy UI for the same tile.
+    if (sameTileOpen && activePropertyDecision.isRent && !isRent) {
+        return;
+    }
+
     cancelClientAutoEndTurn();
     clearPropertyDecisionTimer();
     waitingForBuyResult = false;
     activePropertyDecision = { spaceData, position, isRent, owner, rentAmount, diceRoll };
-
-    // For casino properties, show property modal first (buy/rent decision)
-    // Casino game will be opened after property is purchased or if already owned
     openLandingPropertyModal(spaceData);
-
     updateUI();
 }
 
 function startPropertyDecision(spaceData, position) {
-    if (!spaceData || !currentPlayer) return;
+    if (!spaceData || isSpectator) return;
+    if (!currentPlayer) currentPlayer = resolveLocalPlayer(players);
+    if (!currentPlayer) return;
     beginLandingDecision({ spaceData, position, isRent: false });
 }
 
 function startRentDecision(ownedData, position) {
-    if (!ownedData || !currentPlayer) return;
+    if (!ownedData || isSpectator) return;
+    if (!currentPlayer) currentPlayer = resolveLocalPlayer(players);
+    if (!currentPlayer) return;
     beginLandingDecision({
         spaceData: ownedData.spaceData,
         position,
@@ -1726,9 +1726,8 @@ function openCasinoGame(gameName, observerOptions = null) {
     const playerPosition = currentPlayer?.position;
     const currentSpaceData = boardConfig[playerPosition];
     if (currentSpaceData?.isCasino && !isObserver) {
-        const owner = players.find(p => p && p.properties && p.properties.includes(playerPosition));
+        const owner = findSpaceOwner(playerPosition);
         if (!owner) {
-            // Property is unowned - flag to show buy UI after casino closes
             casinoOpenedFromUnownedProperty = true;
             casinoUnownedPropertyPosition = playerPosition;
         } else {
@@ -1905,15 +1904,20 @@ function closeCasinoGame() {
         casinoContainer.innerHTML = '';
     }
 
-    // Check if we need to show buy UI for unowned property
     if (casinoOpenedFromUnownedProperty && casinoUnownedPropertyPosition !== null) {
-        const spaceData = boardConfig[casinoUnownedPropertyPosition];
+        const position = casinoUnownedPropertyPosition;
+        const spaceData = boardConfig[position];
         casinoOpenedFromUnownedProperty = false;
         casinoUnownedPropertyPosition = null;
-        
-        // Show property info with buy/pass options
+
         if (spaceData) {
-            showPropertyInfo(spaceData, { showDecisionActions: true, viewerLabel: 'Play casino then buy this property' });
+            const owner = findSpaceOwner(position);
+            if (owner && owner.id !== myPlayerId) {
+                const rent = calculateRentAmount(spaceData, owner);
+                startRentDecision({ spaceData, owner, rentAmount: rent }, position);
+            } else if (!owner) {
+                startPropertyDecision(spaceData, position);
+            }
         }
     } else if (!activeAiLandingPlayerId) {
         finishLandingDecisionUI();
@@ -2516,7 +2520,7 @@ function closePropertyModal() {
 }
 
 function buildPropertyDetailsHtml(spaceData) {
-    const owner = players.find(p => p && p.properties && p.properties.includes(spaceData.position));
+    const owner = findSpaceOwner(spaceData.position);
     const isPurchasable = spaceData.type === 'property' || spaceData.type === 'railroad' || spaceData.type === 'utility';
     const isRentDecision = activePropertyDecision
         && activePropertyDecision.position === spaceData.position
@@ -3645,8 +3649,8 @@ socket.on('propertyPurchased', (data) => {
         player.money = newMoney;
         if (!player.properties) player.properties = [];
         // Only add property if it doesn't already exist
-        if (!player.properties.includes(position)) {
-            player.properties.push(position);
+        if (!playerOwnsPosition(player, position)) {
+            player.properties.push(Number(position));
         }
 
         updateUI();
@@ -3937,22 +3941,19 @@ socket.on('playerMoneyChanged', (data) => {
 
 // Handle show rent payment UI
 socket.on('showRentPayment', (data) => {
+    if (data.playerId !== myPlayerId) return;
 
-    if (data.playerId === myPlayerId) {
-        const spaceData = data.property;
-        const owner = players.find(p => p && p.id === data.ownerId);
-        if (spaceData && owner) {
-            // Use the rent amount from server (important for utilities)
-            const rentData = {
-                spaceData, 
-                owner, 
-                rentAmount: data.rentAmount,
-                diceRoll: data.diceRoll
-            };
-            startRentDecision(rentData, data.position);
-        } else {
-            console.error('[showRentPayment] Missing spaceData or owner:', { spaceData, owner, data });
-        }
+    const spaceData = data.property || boardConfig[data.position];
+    const owner = players.find((p) => p && p.id === data.ownerId) || findSpaceOwner(data.position);
+    if (spaceData && owner) {
+        startRentDecision({
+            spaceData,
+            owner,
+            rentAmount: data.rentAmount,
+            diceRoll: data.diceRoll
+        }, data.position);
+    } else {
+        console.error('[showRentPayment] Missing spaceData or owner:', { spaceData, owner, data });
     }
 });
 
@@ -4705,7 +4706,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (cardModal) {
                     cardModal.classList.add('hidden');
                 }
-                // End turn after closing card modal
+                if (activePropertyDecision) return;
                 if (gameState && gameState.currentPlayer === myPlayerId) {
                     endTurnNow();
                 }

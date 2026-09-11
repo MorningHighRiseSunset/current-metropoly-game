@@ -80,6 +80,20 @@ function getLocalIPAddresses() {
     return addresses;
 }
 
+function playerOwnsPosition(player, position) {
+    if (!player || !Array.isArray(player.properties)) return false;
+    const pos = Number(position);
+    if (!Number.isFinite(pos)) return false;
+    return player.properties.some((owned) => Number(owned) === pos);
+}
+
+function findSpaceOwner(game, position, excludePlayerId = null) {
+    if (!game || !Array.isArray(game.players)) return null;
+    return game.players.find((p) => (
+        p && playerOwnsPosition(p, position) && p.id !== excludePlayerId
+    )) || null;
+}
+
 // Get board spaces configuration
 function getBoardSpaces() {
     return [
@@ -988,9 +1002,7 @@ function scheduleAiPropertyLanding(game, aiPlayer, property) {
     }
     if (!game || !aiPlayer || !property) return;
 
-    const existingOwner = game.players.find(
-        (p) => p && p.properties && p.properties.includes(aiPlayer.position)
-    );
+    const existingOwner = findSpaceOwner(game, aiPlayer.position);
     if (existingOwner) {
         setTimeout(() => gameRuntime.advanceTurn(game), 500);
         return;
@@ -1767,7 +1779,7 @@ io.on('connection', (socket) => {
         }
         
         // Check if property is already owned by another player
-        const existingOwner = game.players.find(p => p && p.id !== player.id && p.properties && p.properties.includes(player.position));
+        const existingOwner = findSpaceOwner(game, player.position);
         if (existingOwner) {
             socket.emit('gameError', 'Property is already owned');
             return;
@@ -2194,9 +2206,7 @@ io.on('connection', (socket) => {
 
         if (landedSpace.type === 'property' || landedSpace.type === 'railroad' || landedSpace.type === 'utility') {
             // Find property owner
-            const owner = game.players.find((p) => p &&
-                p.properties && p.properties.includes(newPosition) && p.id !== player.id
-            );
+            const owner = findSpaceOwner(game, newPosition, player.id);
 
             if (owner) {
                 // For human players, emit event to show rent UI (manual payment)
@@ -3198,9 +3208,7 @@ io.on('connection', (socket) => {
         const landedSpace = boardSpaces[position];
 
         if (landedSpace) {
-            const owner = game.players.find(p => p &&
-                p.properties.includes(position) && p.id !== player.id
-            );
+            const owner = findSpaceOwner(game, position, player.id);
 
             if (owner && player.money >= amount) {
                 player.money -= amount;

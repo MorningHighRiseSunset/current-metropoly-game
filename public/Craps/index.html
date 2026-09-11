@@ -61,14 +61,17 @@
     /* In iframe mode, use horizontal layout */
     body.iframe-mode .craps-game {
       display: flex;
-      flex-direction: row;
-      gap: 8px;
+      flex-direction: column;
+      gap: 10px;
       max-width: 100%;
-      align-items: flex-start;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
     }
 
     body.iframe-mode .table {
       flex: 1;
+      max-width: 100%;
     }
 
     body.iframe-mode .game-controls {
