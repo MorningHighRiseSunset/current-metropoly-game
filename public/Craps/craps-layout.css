@@ -4,6 +4,23 @@
   box-sizing: border-box;
 }
 
+.game-layout {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+body.iframe-mode .game-layout {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+body.iframe-mode .table {
+  flex: 1;
+}
+
 /* Body styling for standalone mode - overridden in iframe mode */
 body {
   background: linear-gradient(135deg, #1a0a2e 0%, #0d0015 100%);
@@ -389,7 +406,7 @@ body.iframe-mode .prop.any-craps .odds {
 /* In iframe mode, move controls to the right side */
 body.iframe-mode .game-controls {
   margin-top: 0;
-  margin-left: 10px;
+  margin-left: 0;
   width: auto;
   max-width: 150px;
   min-width: 120px;
