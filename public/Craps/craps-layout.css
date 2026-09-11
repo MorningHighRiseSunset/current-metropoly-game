@@ -54,15 +54,15 @@ body.iframe-mode .main {
 }
 
 body.iframe-mode .props {
-  width: 100%;
-  min-width: 200px;
-  max-width: 100%;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 5px;
-  border-left: none;
-  border-top: 2px solid #0a4a25;
+  width: 100% !important;
+  min-width: 200px !important;
+  max-width: 100% !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  padding: 5px !important;
+  border-left: none !important;
+  border-top: 2px solid #0a4a25 !important;
 }
 
 .table-content {
@@ -130,11 +130,12 @@ body.iframe-mode .pass-line {
 }
 
 body.iframe-mode .prop {
-  font-size: 7px;
-  padding: 0 2px;
-  flex: 1;
-  min-width: 80px;
-  height: 30px;
+  font-size: 7px !important;
+  padding: 0 2px !important;
+  flex: 1 !important;
+  min-width: 80px !important;
+  height: 30px !important;
+  border: 1px solid #0a4a25 !important;
 }
 
 body.iframe-mode .prop.any-seven {
@@ -157,18 +158,19 @@ body.iframe-mode .prop.any-craps .odds {
 }
 
 body.iframe-mode .prop.split {
-  display: flex;
-  flex-direction: row;
-  min-width: 100px;
+  display: flex !important;
+  flex-direction: row !important;
+  min-width: 100px !important;
+  border: 1px solid #0a4a25 !important;
 }
 
 body.iframe-mode .prop.split > div {
-  flex: 1;
-  border-right: 1px solid #0a4a25;
+  flex: 1 !important;
+  border-right: 1px solid #0a4a25 !important;
 }
 
 body.iframe-mode .prop.split > div:last-child {
-  border-right: none;
+  border-right: none !important;
 }
 
 /* Left side "No Call Bets" */
@@ -313,10 +315,14 @@ body.iframe-mode .prop.split > div:last-child {
 
 /* Right props */
 .props {
-  width: 140px;
-  border-left: 1px solid #0a4a25;
+  width: 100%;
+  border-left: none;
+  border-top: 2px solid #0a4a25;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 5px;
   flex-shrink: 0;
 }
 
@@ -324,14 +330,13 @@ body.iframe-mode .prop.split > div:last-child {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #0a4a25;
+  border: 1px solid #0a4a25;
   text-align: center;
   font-size: 9px;
   padding: 0 6px;
-}
-
-.prop:last-child {
-  border-bottom: none;
+  flex: 1;
+  min-width: 80px;
+  height: 30px;
 }
 
 .prop.any-seven {
