@@ -1771,40 +1771,6 @@ function openCasinoGame(gameName, observerOptions = null) {
     iframe.onload = function() {
         try {
             const iframeDoc = iframe.contentWindow.document;
-            
-            // Different scales for different games for individual sizing
-            const gameScales = {
-                'Roulette': 0.95,
-                'BlackJack': 0.75,
-                'Baccarat': 0.85,
-                'Craps': 0.8,
-                'PokerFP': 0.65,
-                'slotMachine': 0.7
-            };
-            
-            const scale = gameScales[gameName] || 0.85;
-            
-            const embedFit = iframeDoc.createElement('style');
-            embedFit.textContent = `
-                html, body {
-                    width: 100% !important;
-                    height: 100% !important;
-                    min-height: 0 !important;
-                    max-height: 100% !important;
-                    overflow: hidden !important;
-                    box-sizing: border-box !important;
-                }
-                body {
-                    margin: 0 !important;
-                    padding: 8px !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    transform-origin: center center !important;
-                    transform: scale(${scale}) !important;
-                }
-            `;
-            iframeDoc.head.appendChild(embedFit);
 
             // Get the appropriate initialization function name based on game
             const initFunctionNames = {
