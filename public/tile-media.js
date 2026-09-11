@@ -49,10 +49,8 @@ function getVideoUrl(localPath) {
 
     if (USE_VIDEO_CDN && VIDEO_CDN_BASE_URL) {
         try {
-            // CDN serves from /Videos/ - replace /Videos/Cropped/ with /Videos/
-            const pathForCDN = normalized.replace('/Videos/Cropped/', '/Videos/');
-            // Replace spaces with %20 for CDN URLs
-            const pathWithEncodedSpaces = pathForCDN.replace(/ /g, '%20');
+            // Use the full path including Cropped directory
+            const pathWithEncodedSpaces = normalized.replace(/ /g, '%20');
             return `${VIDEO_CDN_BASE_URL}${pathWithEncodedSpaces}`;
         } catch (e) {
             const parts = normalized.split('/');

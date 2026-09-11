@@ -74,16 +74,7 @@
   }
 
   body.iframe-mode .top-bar {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 5px;
-    z-index: 10;
-    background: rgba(0,0,0,0.3);
-    padding: 8px;
-    border-radius: 8px;
+    display: none;
   }
 
   .chip-display {
@@ -413,9 +404,43 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     max-width: 300px;
+  }
+
+  .balance-pot-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .balance-box, .pot-box {
+    flex: 1;
+    background: 
+      linear-gradient(145deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25)),
+      radial-gradient(ellipse at center, rgba(168, 85, 247, 0.05), transparent 70%);
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    text-align: center;
+  }
+
+  .balance-box span, .pot-box span {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .balance-box .value, .pot-box .value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    color: var(--gold);
+    font-weight: bold;
   }
 
   .bet-row {
@@ -527,11 +552,6 @@
 
 <div class="game">
 
-  <div class="top-bar">
-    <div class="chip-display"><span>Balance</span><span id="chips">2500</span></div>
-    <div class="pot-display"><span>Pot</span><span id="pot">0</span></div>
-  </div>
-
   <div class="table-rail">
     <div class="table-felt">
 
@@ -569,6 +589,16 @@
       <input type="range" id="bet-slider" min="10" max="1000" value="50" step="10">
     </div>
     <button class="btn" id="btn" onclick="next()">Place Bet</button>
+    <div class="balance-pot-row">
+      <div class="balance-box">
+        <span>Balance</span>
+        <span class="value" id="chips">2500</span>
+      </div>
+      <div class="pot-box">
+        <span>Pot</span>
+        <span class="value" id="pot">0</span>
+      </div>
+    </div>
   </div>
 
 </div>
