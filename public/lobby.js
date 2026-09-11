@@ -965,13 +965,13 @@ function initHelicopterAnimation() {
             if (animationState.type === 'flyby') {
                 // Original flyby animation
                 if (animationState.direction === 'right') {
-                    helicopterModel.position.x = -600 + t * 800;
+                    helicopterModel.position.x = -800 + t * 1600;
                     helicopterModel.position.y = 5 + t * 35;
                     helicopterModel.position.z = -120 + Math.sin(t * Math.PI) * 90;
                     helicopterModel.scale.setScalar(0.25 + Math.sin(t * Math.PI) * 0.7);
                     helicopterModel.rotation.y = t * 45 * (Math.PI / 180);
                 } else {
-                    helicopterModel.position.x = 600 - t * 800;
+                    helicopterModel.position.x = 800 - t * 1600;
                     helicopterModel.position.y = 5 + t * 35;
                     helicopterModel.position.z = -120 + Math.sin(t * Math.PI) * 90;
                     helicopterModel.scale.setScalar(0.25 + Math.sin(t * Math.PI) * 0.7);
@@ -1072,7 +1072,8 @@ socket.on('connect', () => {
 });
 
 socket.on('disconnect', () => {
-    showModal('Disconnected from server. Please refresh the page.');
+    // Don't show modal if socket is attempting to reconnect
+    // The socket.io library handles reconnection automatically
 });
 
 // Handle lobbies list
