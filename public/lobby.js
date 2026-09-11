@@ -900,6 +900,7 @@ function initHelicopterAnimation() {
     console.log('Loading helicopter model from:', helicopterModelPath);
     let helicopterModel = null;
     let mixer = null;
+    let modelLoaded = false;
 
     const loader = new THREE.GLTFLoader();
     loader.load(helicopterModelPath,
@@ -921,6 +922,9 @@ function initHelicopterAnimation() {
                     action.play();
                 });
             }
+
+            modelLoaded = true;
+            console.log('Helicopter model fully loaded and ready');
 
             // Start helicopter animation loop
             animateHelicopter();
@@ -1033,7 +1037,10 @@ function initHelicopterAnimation() {
     }
 
     function triggerHelicopter() {
-        if (!helicopterModel) return;
+        if (!helicopterModel || !modelLoaded) {
+            console.log('Helicopter model not loaded yet, skipping animation');
+            return;
+        }
 
         // Only use flyby animations
         animationState.type = 'flyby';
@@ -1048,10 +1055,17 @@ function initHelicopterAnimation() {
     // Make triggerHelicopter available globally for the initial delay
     window.triggerHelicopter = triggerHelicopter;
 
-    // Trigger initial helicopter flyby after a short delay
-    setTimeout(() => {
-        triggerHelicopter();
-    }, 2000);
+    // Trigger initial helicopter flyby after model is loaded
+    function waitForModelAndTrigger() {
+        if (modelLoaded) {
+            setTimeout(() => {
+                triggerHelicopter();
+            }, 2000);
+        } else {
+            setTimeout(waitForModelAndTrigger, 100);
+        }
+    }
+    waitForModelAndTrigger();
 
     // Handle window resize
     window.addEventListener('resize', () => {
