@@ -386,17 +386,17 @@ body.iframe-mode .prop.any-craps .odds {
   max-width: 600px;
 }
 
-/* In iframe mode, move controls below the table */
+/* In iframe mode, move controls to the right side */
 body.iframe-mode .game-controls {
-  margin-top: 15px;
-  margin-left: 0;
-  width: 100%;
-  max-width: 100%;
-  min-width: auto;
+  margin-top: 0;
+  margin-left: 10px;
+  width: auto;
+  max-width: 150px;
+  min-width: 120px;
   border-left: 2px solid #8B4513;
-  border-top: 2px solid #8B4513;
-  border-right: 2px solid #8B4513;
-  border-bottom: 2px solid #8B4513;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
   flex-direction: column;
   gap: 4px;
   padding: 6px 8px;
