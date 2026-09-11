@@ -1035,19 +1035,23 @@ function initHelicopterAnimation() {
     function triggerHelicopter() {
         if (!helicopterModel) return;
 
-        // Randomly choose animation type
-        const types = ['flyby', 'flyby', 'circle', 'figure8', 'spiral', 'hover'];
-        animationState.type = types[Math.floor(Math.random() * types.length)];
-
-        if (animationState.type === 'flyby') {
-            animationState.direction = Math.random() > 0.5 ? 'right' : 'left';
-        }
+        // Only use flyby animations
+        animationState.type = 'flyby';
+        animationState.direction = Math.random() > 0.5 ? 'right' : 'left';
 
         animationState.active = true;
         animationState.startTime = performance.now();
 
-        console.log(`Helicopter animation: ${animationState.type}${animationState.type === 'flyby' ? ' ' + animationState.direction : ''}`);
+        console.log(`Helicopter animation: ${animationState.type} ${animationState.direction}`);
     }
+
+    // Make triggerHelicopter available globally for the initial delay
+    window.triggerHelicopter = triggerHelicopter;
+
+    // Trigger initial helicopter flyby after a short delay
+    setTimeout(() => {
+        triggerHelicopter();
+    }, 2000);
 
     // Handle window resize
     window.addEventListener('resize', () => {

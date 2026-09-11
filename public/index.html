@@ -345,7 +345,13 @@
         }
 
         .helicopter-container {
-            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
         }
 
         .btn-secondary {
@@ -456,7 +462,7 @@
     </div>
 
     <script src="runtime-config.js?v=20250817-helicopter-cdn"></script>
-    <script src="/analytics.js?v=20260910-lobby-v2"></script>
+    <script src="/analytics.js?v=20260910-helicopter-fix"></script>
     <script>
         window.loadBlackjack = function() {
             console.log('Loading Blackjack minigame in overlay...');
