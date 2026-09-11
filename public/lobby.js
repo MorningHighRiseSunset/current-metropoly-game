@@ -949,6 +949,7 @@ function initHelicopterAnimation() {
         duration: 8000, // 8 seconds
         startTime: 0
     };
+    let initialTriggered = false;
 
     function animateHelicopter() {
         if (!helicopterModel) {
@@ -1042,6 +1043,12 @@ function initHelicopterAnimation() {
             return;
         }
 
+        // Don't trigger if animation is already active
+        if (animationState.active) {
+            console.log('Helicopter animation already active, skipping trigger');
+            return;
+        }
+
         // Only use flyby animations
         animationState.type = 'flyby';
         animationState.direction = Math.random() > 0.5 ? 'right' : 'left';
@@ -1057,11 +1064,12 @@ function initHelicopterAnimation() {
 
     // Trigger initial helicopter flyby after model is loaded
     function waitForModelAndTrigger() {
-        if (modelLoaded) {
+        if (modelLoaded && !initialTriggered) {
+            initialTriggered = true;
             setTimeout(() => {
                 triggerHelicopter();
             }, 2000);
-        } else {
+        } else if (!modelLoaded) {
             setTimeout(waitForModelAndTrigger, 100);
         }
     }
