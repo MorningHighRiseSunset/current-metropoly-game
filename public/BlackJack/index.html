@@ -111,7 +111,10 @@
         }
 
         body.iframe-mode .game-info {
-            display: none;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 10px;
         }
 
         .info-item {
@@ -364,7 +367,7 @@
     </div>
 
     <script src="/runtime-config.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=20260910-bet-slider-fix"></script>
     <script>
         // Detect if running in iframe
         function isInIframe() {
@@ -378,7 +381,7 @@
         // Get observer mode from URL parameter
         function isObserverMode() {
             const params = new URLSearchParams(window.location.search);
-            return params.get('observer') === 'true';
+            return params.get('observer') === 'true' || params.get('observer') === '1';
         }
 
         // Get balance from URL parameter or use default
