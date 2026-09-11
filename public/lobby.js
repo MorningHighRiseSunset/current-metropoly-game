@@ -859,15 +859,9 @@ socket.on('aiPlayerRemoved', (data) => {
     }
 });
 
-// Handle connection errors - allow reconnection attempts before showing error
-let connectionErrorCount = 0;
+// Handle connection errors - let socket.io handle reconnection automatically
 socket.on('connect_error', (error) => {
-    connectionErrorCount++;
-    console.log(`Connection attempt ${connectionErrorCount} failed:`, error.message);
-    // Only show modal after multiple failed attempts
-    if (connectionErrorCount >= 3) {
-        showModal('Failed to connect to server. Please refresh the page.');
-    }
+    console.log(`Connection error:`, error.message);
 });
 
 // Helicopter Animation
@@ -1088,7 +1082,6 @@ function initHelicopterAnimation() {
 
 // Reset error count on successful connection
 socket.on('connect', () => {
-    connectionErrorCount = 0;
     console.log('Socket connected, checking for auto-join...');
     autoJoinFromUrlIfPresent();
 });
