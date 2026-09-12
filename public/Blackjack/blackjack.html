@@ -352,17 +352,32 @@ let gameOver = true;
 let balance = 1000;
 let currentBet = 100;
 
-const dealerCardsEl = document.getElementById('dealer-cards');
-const playerCardsEl = document.getElementById('player-cards');
-const dealerScoreEl = document.getElementById('dealer-score');
-const playerScoreEl = document.getElementById('player-score');
-const messageEl = document.getElementById('message');
-const balanceEl = document.getElementById('balance');
-const betSlider = document.getElementById('bet-slider');
-const betDisplay = document.getElementById('bet-display');
-const btnDeal = document.getElementById('btn-deal');
-const btnHit = document.getElementById('btn-hit');
-const btnStand = document.getElementById('btn-stand');
+let dealerCardsEl, playerCardsEl, dealerScoreEl, playerScoreEl, messageEl, balanceEl, betSlider, betDisplay, btnDeal, btnHit, btnStand;
+
+// Initialize DOM elements
+function initDOMElements() {
+    dealerCardsEl = document.getElementById('dealer-cards');
+    playerCardsEl = document.getElementById('player-cards');
+    dealerScoreEl = document.getElementById('dealer-score');
+    playerScoreEl = document.getElementById('player-score');
+    messageEl = document.getElementById('message');
+    balanceEl = document.getElementById('balance');
+    betSlider = document.getElementById('bet-slider');
+    betDisplay = document.getElementById('bet-display');
+    btnDeal = document.getElementById('btn-deal');
+    btnHit = document.getElementById('btn-hit');
+    btnStand = document.getElementById('btn-stand');
+
+    // Initialize event listeners
+    btnDeal.addEventListener('click', deal);
+    btnHit.addEventListener('click', hit);
+    btnStand.addEventListener('click', stand);
+    betSlider.addEventListener('input', updateBetDisplay);
+
+    // Initialize UI
+    updateBalanceDisplay();
+    updateBetDisplay();
+}
 
 function updateBalanceDisplay() {
   balanceEl.textContent = '$' + balance;
@@ -379,8 +394,6 @@ function updateBetDisplay() {
     betDisplay.textContent = '$' + currentBet;
   }
 }
-
-betSlider.addEventListener('input', updateBetDisplay);
 
 function createDeck() {
   deck = [];
@@ -603,12 +616,6 @@ function endRound(isNatural = false) {
   }
 }
 
-updateBalanceDisplay();
-updateBetDisplay();
-btnDeal.addEventListener('click', deal);
-btnHit.addEventListener('click', hit);
-btnStand.addEventListener('click', stand);
-
 function syncBalanceToParent() {
     window.__casinoBalance = balance;
     window.playerBalance = balance;
@@ -617,25 +624,60 @@ function syncBalanceToParent() {
     }
 }
 
-// Initialize function for main game integration
+// Initialize function for main game integration - defined immediately
 window.initBlackjackMinigame = function(container, initialBalance, balanceCallback) {
-    balance = initialBalance || 1000;
-    updateBalanceDisplay();
-    
-    // Listen for balance from parent window
-    window.addEventListener('message', function(event) {
-        if (event.data.type === 'SET_BALANCE') {
-            balance = event.data.balance;
+    window.initBlackjackMinigameCalled = true;
+
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            initDOMElements();
+            balance = initialBalance || 1000;
             updateBalanceDisplay();
-        }
-    });
-    
-    // Expose balance for parent window
-    window.__casinoBalance = balance;
-    window.playerBalance = balance;
-    
-    // Store callback for balance sync
-    window.balanceCallback = balanceCallback;
+
+            // Listen for balance from parent window
+            window.addEventListener('message', function(event) {
+                if (event.data.type === 'SET_BALANCE') {
+                    balance = event.data.balance;
+                    updateBalanceDisplay();
+                }
+            });
+
+            // Expose balance for parent window
+            window.__casinoBalance = balance;
+            window.playerBalance = balance;
+
+            // Store callback for balance sync
+            window.balanceCallback = balanceCallback;
+        });
+    } else {
+        initDOMElements();
+        balance = initialBalance || 1000;
+        updateBalanceDisplay();
+
+        // Listen for balance from parent window
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'SET_BALANCE') {
+                balance = event.data.balance;
+                updateBalanceDisplay();
+            }
+        });
+
+        // Expose balance for parent window
+        window.__casinoBalance = balance;
+        window.playerBalance = balance;
+
+        // Store callback for balance sync
+        window.balanceCallback = balanceCallback;
+    }
 };
+
+// Standalone initialization (when not loaded by main game)
+if (!window.initBlackjackMinigameCalled) {
+    document.addEventListener('DOMContentLoaded', () => {
+        initDOMElements();
+    });
+}
+</script>
 </body>
 </html>

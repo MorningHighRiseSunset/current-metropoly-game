@@ -46,14 +46,8 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="image-container">
-            <img src="baccarat.jpg" alt="Baccarat Table">
-        </div>
-    </div>
-</body>
 <script>
-// Initialize function for main game integration
+// Initialize function for main game integration - defined immediately
 window.initBaccaratMinigame = function(container, initialBalance, balanceCallback) {
     console.log('Baccarat image display loaded with balance:', initialBalance);
     window.__casinoBalance = initialBalance;
@@ -63,4 +57,10 @@ window.initBaccaratMinigame = function(container, initialBalance, balanceCallbac
     }
 };
 </script>
+    <div class="container">
+        <div class="image-container">
+            <img src="baccarat.jpg" alt="Baccarat Table">
+        </div>
+    </div>
+</body>
 </html>

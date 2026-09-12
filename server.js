@@ -130,7 +130,7 @@ function getBoardSpaces() {
         { name: 'GO TO JAIL', type: 'corner', position: 30 },
         { name: 'Luxury Tax', type: 'tax', amount: 100, position: 31 },
         { name: 'Chance', type: 'chance', position: 32 },
-        { name: 'House of Blues', type: 'property', color: '#0000FF', group: 'darkBlue', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)', isCasino: true, casinoGame: 'Baccarat' },
+        { name: 'House of Blues', type: 'property', color: '#0000FF', group: 'darkBlue', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
         { name: 'Bet MGM', type: 'property', color: '#0000FF', group: 'darkBlue', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 34, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', group: 'special', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 35, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', group: 'special', price: 275, rent: [31, 61, 181, 544, 770, 935], position: 36, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
@@ -475,14 +475,9 @@ function rollDiceWithRareDoubles(currentPosition = 0) {
             newPosition = (currentPosition + total) % 40;
         }
 
-        // Prevent landing on Craps (position 18)
-        if (newPosition === 18 && attempts < maxAttempts) {
-            continue; // Reroll to avoid Craps
-        }
-
-        // Prevent landing on Baccarat (positions 13 and 33) - minigame not ready
+        // Prevent landing on Baccarat (position 13 - Venetian) - minigame not ready
         // COMMENT OUT THIS BLOCK IF USER ASKS TO REMOVE THE RESTRICTION
-        if ((newPosition === 13 || newPosition === 33) && attempts < maxAttempts) {
+        if (newPosition === 13 && attempts < maxAttempts) {
             continue; // Reroll to avoid Baccarat
         }
 

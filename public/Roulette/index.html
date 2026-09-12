@@ -497,6 +497,19 @@
   </div>
 
   <script>
+    // ========== ROULETTE MINIGAME INITIALIZATION ==========
+    window.initRouletteMinigame = function(container, playerMoney, syncCasinoBalance) {
+      // Update balance with main game's balance
+      balance = typeof playerMoney === 'number' ? playerMoney : 1000;
+      updateMainGameBalance = typeof syncCasinoBalance === 'function' ? syncCasinoBalance : null;
+
+      // Expose balance for main game to read
+      window.__casinoBalance = balance;
+
+      // Update UI with new balance
+      updateUI();
+    };
+
     // Detect if running in iframe
     function isInIframe() {
       try {
@@ -530,19 +543,6 @@
         }
       }
     });
-
-    // ========== ROULETTE MINIGAME INITIALIZATION ==========
-    window.initRouletteMinigame = function(container, playerMoney, syncCasinoBalance) {
-      // Update balance with main game's balance
-      balance = typeof playerMoney === 'number' ? playerMoney : 1000;
-      updateMainGameBalance = typeof syncCasinoBalance === 'function' ? syncCasinoBalance : null;
-
-      // Expose balance for main game to read
-      window.__casinoBalance = balance;
-
-      // Update UI with new balance
-      updateUI();
-    };
 
     // ========== AMERICAN ROULETTE DATA ==========
     // Clockwise sequence starting from 0

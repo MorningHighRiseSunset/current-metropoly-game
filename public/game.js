@@ -908,7 +908,7 @@ const boardConfig = [
     { name: 'GO TO JAIL', type: 'corner', position: 30 },
     { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31 },
     { name: 'Chance', type: 'chance', position: 32 },
-    { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, rent: [30, 60, 180, 540, 750, 900], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)', isCasino: true, casinoGame: 'Baccarat' },
+    { name: 'House of Blues', type: 'property', color: '#0000FF', price: 180, rent: [30, 60, 180, 540, 750, 900], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
     { name: 'Bet MGM', type: 'property', color: '#0000FF', price: 210, rent: [35, 70, 210, 630, 875, 1050], position: 34, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },
     { name: 'Wynn Las Vegas', type: 'property', color: '#4B0082', price: 240, rent: [40, 80, 240, 720, 1000, 1200], position: 35, address: '3131 S Las Vegas Blvd, Las Vegas, NV 89109', isCasino: true, casinoGame: 'Roulette' },
     { name: 'The Cosmopolitan', type: 'property', color: '#4B0082', price: 210, rent: [35, 70, 210, 630, 875, 1050], position: 36, address: '3708 S Las Vegas Blvd, Las Vegas, NV 89109' },
@@ -2314,12 +2314,12 @@ function loadTokenModel(tokenIndex, player) {
                 }
             },
             function(error) {
-                console.error(`Error loading GLTF model for ${player.name} from ${path}:`, error);
-                // If CDN failed and this was CDN path, try local
+                // If CDN failed and this was CDN path, try local silently
                 if (path !== localPath) {
-
                     loadModel(localPath);
                 } else {
+                    // Only log error if both CDN and local failed
+                    console.error(`Error loading GLTF model for ${player.name} from ${path}:`, error);
                     delete tokenLoading[player.id];
                     // Create a fallback simple geometry if model fails to load
                     const fallbackGeometry = new THREE.BoxGeometry(1, 1, 1);
@@ -2694,14 +2694,14 @@ function showPropertyInfo(spaceData, options = {}) {
                         triedVideos.push(nextVideo);
                         loadVideoWithFallback(nextVideo);
                     } else {
-                        // All videos failed, fall back to images only for utilities (not jail)
+                        // All videos failed, fall back to images only if images exist (not jail)
                         logVideoLoadError(video, {
                             propertyName: media.name,
                             position: spaceData.position,
                             intendedSrc: videoUrl,
                             fromCache: false
                         });
-                        if (spaceData.type === 'utility' && spaceData.position !== 10) {
+                        if (media.images && media.images.length > 0 && spaceData.position !== 10) {
                             if (!showPropertyImages(media, spaceData, mediaContainer, cacheKey) && loadingIndicator) {
                                 mediaContainer.innerHTML = '';
                                 loadingIndicator.textContent = 'Media unavailable';

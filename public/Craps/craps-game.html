@@ -13,6 +13,16 @@
             flex-direction: column;
             align-items: center;
         }
+
+        body.iframe-mode {
+            padding: 5px;
+            overflow: hidden;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
         
         .top-bar {
             display: flex;
@@ -20,11 +30,40 @@
             align-items: center;
             margin-bottom: 20px;
         }
+
+        body.iframe-mode .top-bar {
+            gap: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        body.iframe-mode .chip {
+            width: 40px;
+            height: 40px;
+            font-size: 10px;
+        }
+
+        body.iframe-mode .info-panel {
+            font-size: 0.85rem;
+        }
+
+        body.iframe-mode button {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
         
         .game-container {
             position: relative;
             width: 650px;
             height: 450px;
+        }
+
+        body.iframe-mode .game-container {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            aspect-ratio: 650/450;
         }
         
         .game-container svg {
@@ -305,6 +344,41 @@
     </div>
 
     <script>
+        // Initialize function for main game integration - defined immediately
+        window.initCrapsMinigame = function(container, initialBalance, balanceCallback) {
+            balance = initialBalance || 1000;
+            updateBalance();
+
+            // Listen for balance from parent window
+            window.addEventListener('message', function(event) {
+                if (event.data.type === 'SET_BALANCE') {
+                    balance = event.data.balance;
+                    updateBalance();
+                }
+            });
+
+            // Expose balance for parent window
+            window.__casinoBalance = balance;
+            window.playerBalance = balance;
+
+            // Store callback for balance sync
+            window.balanceCallback = balanceCallback;
+        };
+
+        // Detect if running in iframe
+        function isInIframe() {
+            try {
+                return window.self !== window.top;
+            } catch (e) {
+                return true;
+            }
+        }
+
+        // Add iframe mode class if needed
+        if (isInIframe()) {
+            document.body.classList.add('iframe-mode');
+        }
+
         // Override dice configuration for craps-specific behavior
         const CRAPS_DICE_CONFIG = {
             ...DICE_GLB_CONFIG,
@@ -740,29 +814,8 @@
         
         // Initialize dice system
         initDice();
-        
-        updateBalance();
 
-        // Initialize function for main game integration
-        window.initCrapsMinigame = function(container, initialBalance, balanceCallback) {
-            balance = initialBalance || 1000;
-            updateBalance();
-            
-            // Listen for balance from parent window
-            window.addEventListener('message', function(event) {
-                if (event.data.type === 'SET_BALANCE') {
-                    balance = event.data.balance;
-                    updateBalance();
-                }
-            });
-            
-            // Expose balance for parent window
-            window.__casinoBalance = balance;
-            window.playerBalance = balance;
-            
-            // Store callback for balance sync
-            window.balanceCallback = balanceCallback;
-        };
+        updateBalance();
     </script>
 </body>
 </html>
