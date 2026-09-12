@@ -766,6 +766,11 @@ function executeAIRollDice(game, aiPlayer) {
                     players: game.players
                 });
                 checkGameWinner(game);
+            } else {
+                // AI can't afford to pay - go bankrupt
+                handleBankruptcy(game, aiPlayer, null, 50);
+                return;
+            }
 
                 io.to(game.id).emit('playerOutOfJail', {
                     playerId: aiPlayer.id,
@@ -1782,7 +1787,8 @@ io.on('connection', (socket) => {
 
         // Check if player can afford the property
         if (player.money < property.price) {
-            socket.emit('gameError', 'Not enough money to buy this property');
+            // Player can't afford the property - go bankrupt
+            handleBankruptcy(game, player, null, property.price);
             return;
         }
 
@@ -2473,13 +2479,19 @@ io.on('connection', (socket) => {
         switch (card.type) {
             case 'money':
                 player.money += card.amount;
-                io.to(game.id).emit('playerMoneyChanged', {
-                    playerId: player.id,
-                    amount: card.amount,
-                    newMoney: player.money,
-                    players: game.players
-                });
-                checkGameWinner(game);
+                
+                // Handle bankruptcy if money went negative
+                if (player.money < 0) {
+                    handleBankruptcy(game, player, null, -card.amount);
+                } else {
+                    io.to(game.id).emit('playerMoneyChanged', {
+                        playerId: player.id,
+                        amount: card.amount,
+                        newMoney: player.money,
+                        players: game.players
+                    });
+                    checkGameWinner(game);
+                }
                 break;
                 
             case 'move':
@@ -2611,6 +2623,10 @@ io.on('connection', (socket) => {
                     method: 'pay',
                     players: game.players
                 });
+            } else {
+                // Player doesn't have enough money to pay $50 - they lose the game
+                handleBankruptcy(game, player, null, 50);
+            }
 
                 // Automatically advance turn after paying
                 setTimeout(() => {
@@ -3114,6 +3130,22 @@ io.on('connection', (socket) => {
         }
 
         const houseCost = Math.floor(property.price / 2);
+        
+        // Check if player can afford the house
+        if (player.money < houseCost) {
+            socket.emit('gameError', 'Not enough money to build house');
+            return;
+        }
+        
+        player.money -= houseCost;
+        player.houses[data.position] = (player.houses[data.position] || 0) + 1;
+        
+        // Handle bankruptcy if money went negative
+        if (player.money < 0) {
+            handleBankruptcy(game, player, null, houseCost);
+            return;
+        }
+        
         io.to(playerData.gameId).emit('houseBuilt', {
             playerId: socket.id,
             position: data.position,
@@ -3121,6 +3153,8 @@ io.on('connection', (socket) => {
             isHotel: player.houses[data.position] === 5,
             players: game.players
         });
+        
+        checkGameWinner(game);
     });
 
     // End turn
