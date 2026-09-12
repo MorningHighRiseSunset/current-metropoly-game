@@ -565,7 +565,7 @@ function endRound(isNatural = false) {
     type = 'push';
   } else if (playerBJ) {
     payout = currentBet + Math.floor(currentBet * 1.5);
-    msg = 'Blackjack! You win $' + Math.floor(currentBet * 1.5);
+    msg = 'Blackjack! You win $' + payout;
     type = 'blackjack';
   } else if (dealerBJ) {
     payout = 0;
@@ -580,13 +580,13 @@ function endRound(isNatural = false) {
     btnDeal.dataset.restart = 'true';
   } else if (d > 21) {
     payout = currentBet * 2;
-    msg = 'Dealer Bust — You win $' + currentBet;
+    msg = 'Dealer Bust — You win $' + payout;
     type = 'win';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
   } else if (p > d) {
     payout = currentBet * 2;
-    msg = 'You win $' + currentBet;
+    msg = 'You win $' + payout;
     type = 'win';
     btnDeal.textContent = 'Deal';
     btnDeal.dataset.restart = 'false';
