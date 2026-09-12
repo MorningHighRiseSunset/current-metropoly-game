@@ -1586,7 +1586,7 @@ function calculateRentAmount(spaceData, owner, serverRentAmount = null, diceRoll
 const CASINO_GAME_CONTAINERS = {
     Baccarat: '.baccarat-container',
     BlackJack: '.blackjack-container',
-    Craps: '.craps-game',
+    Craps: 'body',
     PokerFP: '.poker-container',
     Roulette: '.main',
     slotMachine: '.machine'
