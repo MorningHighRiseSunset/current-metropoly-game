@@ -782,18 +782,18 @@
           // We treat pays as profit; we already deducted stake, so add stake + profit = amount * 36
           win += amount * 36;
         }
-        else if (key === 'red' && typeof w === 'number' && reds.has(w)) win += amount * 2;
-        else if (key === 'black' && typeof w === 'number' && !reds.has(w) && w !== 0) win += amount * 2;
-        else if (key === 'odd' && typeof w === 'number' && w % 2 === 1) win += amount * 2;
-        else if (key === 'even' && typeof w === 'number' && w % 2 === 0 && w !== 0) win += amount * 2;
-        else if (key === '1to18' && typeof w === 'number' && w >= 1 && w <= 18) win += amount * 2;
-        else if (key === '19to36' && typeof w === 'number' && w >= 19 && w <= 36) win += amount * 2;
-        else if (key === '1st12' && typeof w === 'number' && w >= 1 && w <= 12) win += amount * 3;
-        else if (key === '2nd12' && typeof w === 'number' && w >= 13 && w <= 24) win += amount * 3;
-        else if (key === '3rd12' && typeof w === 'number' && w >= 25 && w <= 36) win += amount * 3;
-        else if (key === 'col1' && typeof w === 'number' && [1,4,7,10,13,16,19,22,25,28,31,34].includes(w)) win += amount * 3;
-        else if (key === 'col2' && typeof w === 'number' && [2,5,8,11,14,17,20,23,26,29,32,35].includes(w)) win += amount * 3;
-        else if (key === 'col3' && typeof w === 'number' && [3,6,9,12,15,18,21,24,27,30,33,36].includes(w)) win += amount * 3;
+        if (key === 'red' && typeof w === 'number' && reds.has(w)) win += amount * 2;
+        if (key === 'black' && typeof w === 'number' && !reds.has(w) && w !== 0) win += amount * 2;
+        if (key === 'odd' && typeof w === 'number' && w % 2 === 1) win += amount * 2;
+        if (key === 'even' && typeof w === 'number' && w % 2 === 0 && w !== 0) win += amount * 2;
+        if (key === '1to18' && typeof w === 'number' && w >= 1 && w <= 18) win += amount * 2;
+        if (key === '19to36' && typeof w === 'number' && w >= 19 && w <= 36) win += amount * 2;
+        if (key === '1st12' && typeof w === 'number' && w >= 1 && w <= 12) win += amount * 3;
+        if (key === '2nd12' && typeof w === 'number' && w >= 13 && w <= 24) win += amount * 3;
+        if (key === '3rd12' && typeof w === 'number' && w >= 25 && w <= 36) win += amount * 3;
+        if (key === 'col1' && typeof w === 'number' && [1,4,7,10,13,16,19,22,25,28,31,34].includes(w)) win += amount * 3;
+        if (key === 'col2' && typeof w === 'number' && [2,5,8,11,14,17,20,23,26,29,32,35].includes(w)) win += amount * 3;
+        if (key === 'col3' && typeof w === 'number' && [3,6,9,12,15,18,21,24,27,30,33,36].includes(w)) win += amount * 3;
       }
       return win;
     }
