@@ -75,6 +75,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    body.iframe-mode .wheel-container {
+      width: min(85vw, 500px);
+      height: min(85vw, 500px);
     }
 
     /* ===== WHEEL SIDE ===== */
@@ -959,7 +966,7 @@
       // Play spin sound
       const spinSound = new Audio('Sounds/spinopel-spinning-roulette-wheel-429832.mp3');
       spinSound.volume = 0.4;
-      spinSound.play().catch(e => console.log('Audio play failed:', e));
+      spinSound.play().catch(e => {});
 
       const extraWheel = 4 + Math.random() * 3;
       const extraBall = 7 + Math.random() * 4;
