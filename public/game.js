@@ -1333,7 +1333,7 @@ function updatePropertyDecisionUI() {
     let passLabel = 'Pass';
     let promptText = canAfford
         ? `Buy this ${typeLabel.toLowerCase()} or pass.`
-        : 'Not enough money to buy. Pass to continue.';
+        : 'Not enough money to buy. Pass to continue (you will go bankrupt if you cannot afford future payments).';
     let confirmHandler = null;
 
     if (isRentDecision) {
@@ -1345,9 +1345,25 @@ function updatePropertyDecisionUI() {
         
         // Update the Pay Rent button specifically
         if (propertyPayRentBtn) {
+            const canPayRent = currentPlayer && currentPlayer.money >= rent;
             propertyPayRentBtn.textContent = `Pay Rent ($${rent})`;
-            propertyPayRentBtn.onclick = () => {
-                if (currentPlayer && currentPlayer.money >= rent) {
+            propertyPayRentBtn.disabled = !canPayRent;
+            
+            if (!canPayRent) {
+                // Player can't pay rent - they will go bankrupt
+                propertyPayRentBtn.textContent = 'Cannot Pay - Bankrupt';
+                propertyPayRentBtn.onclick = () => {
+                    if (currentPropertyVideo) {
+                        stopVideoElement(currentPropertyVideo);
+                        currentPropertyVideo = null;
+                    }
+                    cleanupPropertyVideo();
+                    // Force bankruptcy by attempting to pay
+                    socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
+                    dismissPropertyDecisionUI();
+                };
+            } else {
+                propertyPayRentBtn.onclick = () => {
                     // Stop any playing video/audio before paying rent
                     if (currentPropertyVideo) {
                         stopVideoElement(currentPropertyVideo);
@@ -1357,10 +1373,8 @@ function updatePropertyDecisionUI() {
                     socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
                     dismissPropertyDecisionUI();
                     endTurnNow();
-                } else {
-                    alert('Not enough money to pay rent!');
-                }
-            };
+                };
+            }
         }
         
         // Hide the confirm button when in rent mode
@@ -1394,7 +1408,7 @@ function updatePropertyDecisionUI() {
                     }, 500);
                 }
             } else {
-                alert(`Not enough money to buy this ${typeLabel.toLowerCase()}.`);
+                alert(`Not enough money to buy this ${typeLabel.toLowerCase()}. You will go bankrupt if you cannot afford mandatory payments.`);
             }
         };
     }
@@ -3952,6 +3966,11 @@ socket.on('playerBankrupt', (data) => {
             if (currentPlayer && currentPlayer.id === myPlayerId) {
                 currentPlayer.money = bankruptPlayer.money;
             }
+            // Show bankruptcy message to the player who went bankrupt
+            addLogEntry('You have gone bankrupt! You lose the game.', 'system');
+        } else if (bankruptPlayer) {
+            // Notify other players about the bankruptcy
+            addLogEntry(`${getPlayerDisplayName(bankruptPlayer)} has gone bankrupt!`, 'system');
         }
         updateUI();
     }
@@ -6041,6 +6060,10 @@ function initializeModalElements() {
     const jailPayBtn = document.getElementById('jailPayBtn');
     if (jailPayBtn) {
         jailPayBtn.addEventListener('click', () => {
+            if (currentPlayer && currentPlayer.money < 50) {
+                alert('You cannot afford to pay $50. You will go bankrupt if you proceed.');
+                // Still allow the attempt, which will trigger bankruptcy on server
+            }
             socket.emit('getOutOfJail', { method: 'pay' });
         });
     }

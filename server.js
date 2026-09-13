@@ -1768,11 +1768,6 @@ io.on('connection', (socket) => {
             return;
         }
         
-        if (player.money < property.price) {
-            socket.emit('gameError', 'Not enough money to buy this property');
-            return;
-        }
-        
         // Check if property is already owned by another player
         const existingOwner = findSpaceOwner(game, player.position);
         if (existingOwner) {
@@ -1905,7 +1900,8 @@ io.on('connection', (socket) => {
         }
         
         if (player.money < amount) {
-            socket.emit('gameError', 'Not enough money for this bid');
+            // Player can't afford the bid - go bankrupt
+            handleBankruptcy(game, player, null, amount);
             return;
         }
         

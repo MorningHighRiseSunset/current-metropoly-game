@@ -392,17 +392,19 @@
     font-size: 0.85rem;
     color: var(--purple-bright);
     font-weight: 500;
-    white-space: nowrap;
+    white-space: normal;
     z-index: 10;
-    max-width: 150px;
+    max-width: 180px;
     pointer-events: none;
+    line-height: 1.3;
   }
   .result .hand-name {
     display: block;
     margin-top: 4px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--gold);
     font-weight: 600;
+    white-space: normal;
   }
   .result.win { color: var(--green); }
   .result.lose { color: var(--red); }
@@ -586,7 +588,7 @@
         <label>Bet Amount</label>
         <span class="bet-row-value" id="bet-value-display">$50</span>
       </div>
-      <input type="range" id="bet-slider" min="10" max="1000" value="50" step="10">
+      <input type="range" id="bet-slider" min="10" value="50" step="10">
     </div>
     <div class="balance-pot-row">
       <div class="balance-box">
@@ -717,10 +719,22 @@ const betSlider = $('bet-slider');
 const betValueDisplay = $('bet-value-display');
 
 function syncBetUI() {
-  const max = Math.min(1000, Math.max(10, state.chips));
+  // Calculate maximum allowed bet based on balance
+  const max = Math.max(10, state.chips);
   betSlider.max = max;
-  if (+betSlider.value > max) betSlider.value = max;
-  betValueDisplay.textContent = '$' + betSlider.value;
+  
+  // Ensure current value is within valid range
+  let currentValue = parseInt(betSlider.value, 10) || 10;
+  if (currentValue > max) {
+    currentValue = max;
+    betSlider.value = currentValue;
+  }
+  if (currentValue < 10) {
+    currentValue = 10;
+    betSlider.value = currentValue;
+  }
+  
+  betValueDisplay.textContent = '$' + currentValue;
 }
 
 betSlider.addEventListener('input', () => {
@@ -900,7 +914,7 @@ function next() {
     result.textContent = '';
     result.className = 'result';
     betSlider.disabled = true;
-    btn.textContent = 'Flop';
+    btn.textContent = 'Click to flop';
     render();
     syncBalanceToParent(); // Sync bet deduction immediately
     return;

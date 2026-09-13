@@ -311,7 +311,7 @@
     </div>
     <div class="slider-wrap">
       <span class="label">Bet</span>
-      <input type="range" id="bet-slider" min="100" max="1000" step="100" value="100">
+      <input type="range" id="bet-slider" min="100" step="100" value="100">
       <span class="bet-value" id="bet-display">$100</span>
     </div>
   </div>
@@ -384,15 +384,28 @@ function updateBalanceDisplay() {
 }
 
 function updateBetDisplay() {
-  currentBet = parseInt(betSlider.value, 10);
-  betDisplay.textContent = '$' + currentBet;
-  const maxAllowed = Math.min(1000, Math.max(100, Math.floor(balance / 100) * 100));
+  // Calculate maximum allowed bet based on balance (rounded down to nearest 100)
+  const maxAllowed = Math.max(100, Math.floor(balance / 100) * 100);
+  
+  // Update slider max to respect current balance
   betSlider.max = maxAllowed;
+  
+  // Get current slider value and ensure it's within valid range
+  currentBet = parseInt(betSlider.value, 10);
+  
+  // If current bet exceeds balance or maximum allowed, adjust it
   if (currentBet > maxAllowed) {
-    betSlider.value = maxAllowed;
     currentBet = maxAllowed;
-    betDisplay.textContent = '$' + currentBet;
+    betSlider.value = currentBet;
   }
+  
+  // Ensure minimum bet of 100
+  if (currentBet < 100) {
+    currentBet = 100;
+    betSlider.value = currentBet;
+  }
+  
+  betDisplay.textContent = '$' + currentBet;
 }
 
 function createDeck() {
@@ -496,14 +509,12 @@ function deal() {
     setMessage('Not enough balance', 'lose');
     return;
   }
+  
+  // Ensure bet is valid based on current balance
   updateBetDisplay();
+  
   if (currentBet > balance) {
-    currentBet = Math.floor(balance / 100) * 100 || 100;
-    betSlider.value = currentBet;
-    updateBetDisplay();
-  }
-  if (currentBet < 100 || currentBet > balance) {
-    setMessage('Invalid bet', 'lose');
+    setMessage('Invalid bet - exceeds balance', 'lose');
     return;
   }
 
