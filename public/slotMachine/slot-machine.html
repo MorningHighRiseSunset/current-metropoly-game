@@ -526,6 +526,13 @@
         betDisplay.textContent = bet;
       }
 
+      // Ensure current slider value doesn't exceed the calculated max
+      if (parseInt(betSlider.value, 10) > maxBet) {
+        betSlider.value = maxBet;
+        bet = maxBet;
+        betDisplay.textContent = bet;
+      }
+
       betSlider.disabled = spinning;
       spinBtn.disabled = spinning || balance < bet;
     }
@@ -619,6 +626,12 @@
       });
 
       await Promise.all(spinPromises);
+
+      // Stop spin sound when reels stop
+      if (spinSound) {
+        spinSound.pause();
+        spinSound.currentTime = 0;
+      }
 
       // small delay so landing animation can finish
       await new Promise(r => setTimeout(r, 200));

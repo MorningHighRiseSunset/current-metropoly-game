@@ -643,11 +643,23 @@
     if (betSlider && betDisplay) {
       const maxBet = Math.min(1000, Math.max(1, balance));
       betSlider.max = maxBet;
+      
+      // Ensure current value doesn't exceed the calculated max
+      if (selectedBetAmount > maxBet) {
+        selectedBetAmount = maxBet;
+      }
+      
       betSlider.value = selectedBetAmount;
       betDisplay.textContent = `$${selectedBetAmount}`;
 
       betSlider.addEventListener('input', (e) => {
-        selectedBetAmount = parseInt(e.target.value);
+        let newValue = parseInt(e.target.value);
+        // Ensure value doesn't exceed current max
+        if (newValue > maxBet) {
+          newValue = maxBet;
+          betSlider.value = newValue;
+        }
+        selectedBetAmount = newValue;
         window.__selectedChip = selectedBetAmount; // Sync across minigames
         betDisplay.textContent = `$${selectedBetAmount}`;
       });

@@ -1472,7 +1472,10 @@ function createCasinoBalanceSync(startingMoney) {
 
         const label = moneyDiff > 0 ? `Casino win: +$${moneyDiff}` : `Casino loss: -$${Math.abs(moneyDiff)}`;
         addLogEntry(label, 'system');
+        
+        // Update both UI displays
         updateUI();
+        updatePlayersList();
     };
 }
 
@@ -3650,7 +3653,9 @@ socket.on('propertyPurchased', (data) => {
             player.properties.push(Number(position));
         }
 
+        // Update both UI displays
         updateUI();
+        updatePlayersList();
         addLogEntry(`${getPlayerDisplayName(player)} bought ${propertyName} for $${boardConfig[position].price}`, 'property');
 
         // Track AI move
@@ -3876,7 +3881,9 @@ socket.on('taxPaid', (data) => {
     const player = players.find(p => p && p.id === data.playerId);
     if (player) {
         player.money = data.newMoney;
+        // Update both UI displays
         updateUI();
+        updatePlayersList();
         addLogEntry(`${getPlayerDisplayName(player)} paid $${data.amount} for ${data.taxName}`, 'system');
 
         // Track AI move
@@ -3893,7 +3900,9 @@ socket.on('rentPaid', (data) => {
     if (payer && owner) {
         payer.money = data.newPayerMoney;
         owner.money = data.newOwnerMoney;
+        // Update both UI displays
         updateUI();
+        updatePlayersList();
         addLogEntry(`${payer.name} paid $${data.amount} rent to ${owner.name} for ${data.property.name}`, 'system');
 
         // Track AI moves
@@ -3915,7 +3924,9 @@ socket.on('playerMoneyUpdate', (data) => {
         if (data.playerId === myPlayerId) {
             playerMoney = data.money;
         }
+        // Update both UI displays
         updateUI();
+        updatePlayersList();
     }
 });
 
@@ -3932,7 +3943,9 @@ socket.on('playerMoneyChanged', (data) => {
                 currentPlayer.money = data.newMoney;
             }
         }
+        // Update both UI displays
         updateUI();
+        updatePlayersList();
     }
 });
 
@@ -3972,7 +3985,9 @@ socket.on('playerBankrupt', (data) => {
             // Notify other players about the bankruptcy
             addLogEntry(`${getPlayerDisplayName(bankruptPlayer)} has gone bankrupt!`, 'system');
         }
+        // Update both UI displays
         updateUI();
+        updatePlayersList();
     }
 });
 
@@ -4111,7 +4126,9 @@ socket.on('passedGo', (data) => {
     const player = players.find(p => p && p.id === data.playerId);
     if (player) {
         player.money = data.newMoney;
+        // Update both UI displays
         updateUI();
+        updatePlayersList();
         addLogEntry(`${getPlayerDisplayName(player)} collected $${data.amount} for passing GO!`, 'system');
 
         // Track AI move
@@ -4331,6 +4348,10 @@ socket.on('aiCasinoComplete', (data) => {
     if (player && typeof data.newMoney === 'number') {
         player.money = data.newMoney;
     }
+
+    // Update both UI displays
+    updateUI();
+    updatePlayersList();
 
     const sign = data.winnings >= 0 ? '+' : '';
     addLogEntry(
