@@ -1584,10 +1584,10 @@ function calculateRentAmount(spaceData, owner, serverRentAmount = null, diceRoll
 
 // Root element each casino minigame expects when embedded in the main game iframe
 const CASINO_GAME_CONTAINERS = {
-    Baccarat: '.baccarat-container',
-    BlackJack: '.blackjack-container',
-    Craps: 'body',
-    PokerFP: '.poker-container',
+    Baccarat: '.container',
+    BlackJack: '.game',
+    Craps: '.game-container',
+    PokerFP: '.game',
     Roulette: '.main',
     slotMachine: '.machine'
 };
