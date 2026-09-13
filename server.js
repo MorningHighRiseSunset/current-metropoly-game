@@ -3455,17 +3455,11 @@ loadGames();
 // Run cleanup every 5 minutes
 setInterval(cleanupInactiveLobbies, 5 * 60 * 1000);
 
-// Only start server if not running in Vercel serverless environment
-if (!process.env.VERCEL) {
-    server.listen(PORT, HOST, () => {
-        const localIPs = getLocalIPAddresses();
-        const primaryIP = localIPs.length > 0 ? localIPs[0] : 'localhost';
-        
-        console.log(`🎮 Base Metropoly Server Started!`);
-        console.log(`📍 Local: http://localhost:${PORT}`);
-        console.log(`🌐 Network: http://${primaryIP}:${PORT}`);
-    });
-}
-
-// Export for Vercel serverless function
-module.exports = app;
+server.listen(PORT, HOST, () => {
+    const localIPs = getLocalIPAddresses();
+    const primaryIP = localIPs.length > 0 ? localIPs[0] : 'localhost';
+    
+    console.log(`🎮 Base Metropoly Server Started!`);
+    console.log(`📍 Local: http://localhost:${PORT}`);
+    console.log(`🌐 Network: http://${primaryIP}:${PORT}`);
+});
