@@ -2292,17 +2292,19 @@ io.on('connection', (socket) => {
     function handleBankruptcy(game, bankruptPlayer, creditor, debt) {
         bankruptPlayer.isBankrupt = true;
         
-        // Transfer all properties to creditor
-        bankruptPlayer.properties.forEach(propertyPos => {
-            creditor.properties.push(propertyPos);
-            
-            // Transfer houses too
-            if (bankruptPlayer.houses && bankruptPlayer.houses[propertyPos]) {
-                creditor.houses = creditor.houses || {};
-                creditor.houses[propertyPos] = bankruptPlayer.houses[propertyPos];
-                delete bankruptPlayer.houses[propertyPos];
-            }
-        });
+        // Transfer all properties to creditor (if creditor exists)
+        if (creditor) {
+            bankruptPlayer.properties.forEach(propertyPos => {
+                creditor.properties.push(propertyPos);
+                
+                // Transfer houses too
+                if (bankruptPlayer.houses && bankruptPlayer.houses[propertyPos]) {
+                    creditor.houses = creditor.houses || {};
+                    creditor.houses[propertyPos] = bankruptPlayer.houses[propertyPos];
+                    delete bankruptPlayer.houses[propertyPos];
+                }
+            });
+        }
         
         // Clear bankrupt player's assets
         bankruptPlayer.properties = [];
@@ -2316,7 +2318,7 @@ io.on('connection', (socket) => {
         
         io.to(game.id).emit('playerBankrupt', {
             bankruptPlayerId: bankruptPlayer.id,
-            creditorId: creditor.id,
+            creditorId: creditor ? creditor.id : null,
             debt: debt,
             players: game.players
         });
