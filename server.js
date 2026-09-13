@@ -766,11 +766,6 @@ function executeAIRollDice(game, aiPlayer) {
                     players: game.players
                 });
                 checkGameWinner(game);
-            } else {
-                // AI can't afford to pay - go bankrupt
-                handleBankruptcy(game, aiPlayer, null, 50);
-                return;
-            }
 
                 io.to(game.id).emit('playerOutOfJail', {
                     playerId: aiPlayer.id,
@@ -2625,10 +2620,6 @@ io.on('connection', (socket) => {
                     method: 'pay',
                     players: game.players
                 });
-            } else {
-                // Player doesn't have enough money to pay $50 - they lose the game
-                handleBankruptcy(game, player, null, 50);
-            }
 
                 // Automatically advance turn after paying
                 setTimeout(() => {
@@ -3449,17 +3440,28 @@ app.get('/server-info', (req, res) => {
     });
 });
 
-// Load games from disk on server start
-loadGames();
+// Load games from disk on server start (only for non-Vercel environments)
+if (!process.env.VERCEL) {
+    loadGames();
+}
 
-// Run cleanup every 5 minutes
-setInterval(cleanupInactiveLobbies, 5 * 60 * 1000);
+// Run cleanup every 5 minutes (only for non-Vercel environments)
+if (!process.env.VERCEL) {
+    setInterval(cleanupInactiveLobbies, 5 * 60 * 1000);
+}
 
-server.listen(PORT, HOST, () => {
-    const localIPs = getLocalIPAddresses();
-    const primaryIP = localIPs.length > 0 ? localIPs[0] : 'localhost';
-    
-    console.log(`🎮 Base Metropoly Server Started!`);
-    console.log(`📍 Local: http://localhost:${PORT}`);
-    console.log(`🌐 Network: http://${primaryIP}:${PORT}`);
-});
+// Only start server if not running in Vercel serverless environment
+if (process.env.VERCEL) {
+    // Vercel serverless: export app only
+    module.exports = app;
+} else {
+    // Local/other hosting: start server normally
+    server.listen(PORT, HOST, () => {
+        const localIPs = getLocalIPAddresses();
+        const primaryIP = localIPs.length > 0 ? localIPs[0] : 'localhost';
+        
+        console.log(`🎮 Base Metropoly Server Started!`);
+        console.log(`📍 Local: http://localhost:${PORT}`);
+        console.log(`🌐 Network: http://${primaryIP}:${PORT}`);
+    });
+}
