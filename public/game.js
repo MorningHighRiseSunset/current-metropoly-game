@@ -1904,6 +1904,7 @@ function closeCasinoGame() {
         casinoContainer.innerHTML = '';
     }
 
+    // Handle reopening property modal after casino closes
     if (casinoOpenedFromUnownedProperty && casinoUnownedPropertyPosition !== null) {
         const position = casinoUnownedPropertyPosition;
         const spaceData = boardConfig[position];
@@ -1920,6 +1921,7 @@ function closeCasinoGame() {
             }
         }
     } else if (!activeAiLandingPlayerId) {
+        // Show property modal for non-casino properties or owned casino properties
         finishLandingDecisionUI();
     }
 }
@@ -4257,7 +4259,14 @@ function showGameWonModal(data) {
     }
 
     const winner = players.find((p) => p && p.id === data.winnerId);
-    const winnerName = data.winnerName || (winner ? getPlayerDisplayName(winner) : 'Unknown');
+    
+    // Use simple Player 1, Player 2 naming instead of server names
+    const getPlayerSimpleNumber = (player) => {
+        const playerIndex = players.findIndex(p => p && p.id === player.id);
+        return playerIndex >= 0 ? `Player ${playerIndex + 1}` : 'Unknown';
+    };
+    
+    const winnerName = data.winnerId === myPlayerId ? 'You' : getPlayerSimpleNumber(winner);
     const title = document.getElementById('gameOverTitle');
     const content = document.getElementById('gameOverContent');
     const reason = data.winReason === 'money'
@@ -4281,7 +4290,7 @@ function showGameWonModal(data) {
             <div style="margin-top: 20px;">
                 ${finalPlayers.map((p, i) => `
                     <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                        <strong>${i + 1}. ${getPlayerDisplayName(p)}</strong> - $${(p.money ?? 0).toLocaleString()}
+                        <strong>${getPlayerSimpleNumber(p)}</strong> - $${(p.money ?? 0).toLocaleString()}
                     </div>
                 `).join('')}
             </div>

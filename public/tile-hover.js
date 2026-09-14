@@ -82,8 +82,46 @@ function showTileHover(tilePosition) {
         currentVideo = video;
         tileHoverMedia.appendChild(frame);
         
+        // Better error handling with fallback to other videos
+        let videoErrorCount = 0;
+        const maxRetries = media.videos.length;
+        
         video.addEventListener('error', (e) => {
-            console.error(`[Video Error] ${media.name} - Failed to load video`);
+            console.error(`[Video Error] ${media.name} - Failed to load video: ${randomVideo}`);
+            videoErrorCount++;
+            
+            if (videoErrorCount < maxRetries) {
+                // Try another video from the list, excluding the current failed one
+                const availableVideos = media.videos.filter(v => v !== randomVideo && v !== lastVideo);
+                if (availableVideos.length > 0) {
+                    const fallbackVideo = availableVideos[Math.floor(Math.random() * availableVideos.length)];
+                    console.log(`[Video Fallback] Trying alternative video: ${fallbackVideo}`);
+                    video.src = fallbackVideo;
+                    randomVideo = fallbackVideo;
+                    lastPlayedVideos[tilePosition] = fallbackVideo;
+                }
+            } else {
+                console.error(`[Video Error] ${media.name} - All videos failed to load`);
+                // Fall back to images if available
+                if (media.images.length > 0) {
+                    console.log(`[Video Fallback] Falling back to images for ${media.name}`);
+                    const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
+                    const img = document.createElement('img');
+                    img.src = randomImage;
+                    img.alt = media.name;
+                    img.style.width = '100%';
+                    img.style.maxHeight = '200px';
+                    img.style.objectFit = 'contain';
+                    img.style.borderRadius = '8px';
+                    tileHoverMedia.innerHTML = '';
+                    tileHoverMedia.appendChild(img);
+                    currentVideo = null;
+                }
+            }
+        });
+        
+        video.addEventListener('loadeddata', () => {
+            console.log(`[Video Success] ${media.name} - Successfully loaded: ${randomVideo}`);
         });
     } else if (media.images.length > 0) {
         const randomImage = media.images[Math.floor(Math.random() * media.images.length)];
