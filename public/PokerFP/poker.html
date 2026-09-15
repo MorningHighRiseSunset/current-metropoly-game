@@ -58,6 +58,11 @@
     padding-bottom: 60px;
   }
 
+  .game .result-button-container {
+    width: 100%;
+    max-width: 500px;
+  }
+
 
 
   /* CHIPS / BET BAR */
@@ -403,6 +408,26 @@
     background: rgba(0, 0, 0, 0.3);
     border-radius: 8px;
     border: 1px solid rgba(168, 85, 247, 0.2);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Result and button container */
+  .result-button-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    align-items: center;
+  }
+
+  .result-button-container .result {
+    margin-top: 0;
+  }
+
+  .result-button-container button {
+    flex-shrink: 0;
   }
   .result .hand-name {
     display: block;
@@ -606,7 +631,6 @@
         <span class="value" id="pot">0</span>
       </div>
     </div>
-    <button class="btn info-btn" id="btn" onclick="next()">Place Bet</button>
   </div>
 
   <div class="table-rail">
@@ -635,7 +659,10 @@
     </div>
   </div>
 
-  <div class="result" id="result"></div>
+  <div class="result-button-container">
+    <div class="result" id="result"></div>
+    <button class="btn info-btn" id="btn" onclick="next()">Place Bet</button>
+  </div>
 
 </div>
 
