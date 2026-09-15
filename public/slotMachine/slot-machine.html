@@ -566,10 +566,10 @@
     function getPayout(results) {
       const [a, b, c] = results;
       if (a === b && b === c) {
-        const multipliers = { '7️⃣': 50, '💎': 25, '🔔': 15, '🍊': 10, '🍋': 8, '🍒': 6 };
-        return bet * (multipliers[a] || 5);
+        const multipliers = { '7️⃣': 15, '💎': 10, '🔔': 8, '🍊': 6, '🍋': 5, '🍒': 4 };
+        return bet * (multipliers[a] || 3);
       }
-      if (a === b || b === c || a === c) return bet * 2;
+      if (a === b || b === c || a === c) return bet * 1.5;
       return 0;
     }
 

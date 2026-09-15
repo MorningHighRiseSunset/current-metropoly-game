@@ -97,6 +97,7 @@ let observerCasinoStartBalance = null;
 let activePlayerCasinoGame = null; // Track if human player is actively playing casino
 let casinoOpenedFromUnownedProperty = false; // Track if casino was opened from unowned property
 let casinoUnownedPropertyPosition = null; // Track position of unowned property
+let casinoManuallyClosed = false; // Track if casino was manually closed by player
 let casinoPlayCounts = {}; // Track how many times each player has played casino (max 5 for humans, 3 for AI)
 let manuallyOpenedModal = false; // Track if property modal was opened by manual click
 let aiMoves = []; // Track last 5 AI moves
@@ -1905,9 +1906,12 @@ function closeCasinoGame() {
     }
 
     // Handle reopening property modal after casino closes
-    if (casinoOpenedFromUnownedProperty && casinoUnownedPropertyPosition !== null) {
+    // Only reopen if casino wasn't manually closed by player
+    if (casinoOpenedFromUnownedProperty && casinoUnownedPropertyPosition !== null && !casinoManuallyClosed) {
         const position = casinoUnownedPropertyPosition;
         const spaceData = boardConfig[position];
+        
+        // Clear flags after using them
         casinoOpenedFromUnownedProperty = false;
         casinoUnownedPropertyPosition = null;
 
@@ -1920,7 +1924,16 @@ function closeCasinoGame() {
                 startPropertyDecision(spaceData, position);
             }
         }
-    } else if (!activeAiLandingPlayerId) {
+    } else {
+        // Clear flags regardless
+        casinoOpenedFromUnownedProperty = false;
+        casinoUnownedPropertyPosition = null;
+    }
+    
+    // Reset manual close flag
+    casinoManuallyClosed = false;
+    
+    if (!activeAiLandingPlayerId) {
         // Show property modal for non-casino properties or owned casino properties
         finishLandingDecisionUI();
     }
@@ -4546,8 +4559,7 @@ const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 if (closeCasinoBtn) {
     closeCasinoBtn.addEventListener('click', () => {
         activePlayerCasinoGame = null; // Clear the flag when human manually closes
-        casinoOpenedFromUnownedProperty = false; // Reset unowned property flag
-        casinoUnownedPropertyPosition = null;
+        casinoManuallyClosed = true; // Mark that casino was manually closed
         closeCasinoGame();
     });
 }
