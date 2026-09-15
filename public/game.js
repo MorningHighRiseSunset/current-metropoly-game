@@ -4287,7 +4287,7 @@ function showGameWonModal(data) {
     const content = document.getElementById('gameOverContent');
     const reason = data.winReason === 'money'
         ? `reached $${(data.winningAmount || 10000).toLocaleString()}`
-        : 'bankruptcy';
+        : `all other players went bankrupt${data.bankruptPlayers ? ` (${data.bankruptPlayers})` : ''}`;
 
     if (title) {
         if (isSpectator) {
@@ -4305,8 +4305,8 @@ function showGameWonModal(data) {
             <h3>${winnerName} won (${reason})!</h3>
             <div style="margin-top: 20px;">
                 ${finalPlayers.map((p, i) => `
-                    <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                        <strong>${getPlayerSimpleNumber(p)}</strong> - $${(p.money ?? 0).toLocaleString()}
+                    <div style="margin: 10px 0; padding: 10px; background: ${p.isBankrupt ? '#fee2e2' : '#f8f9fa'}; border-radius: 8px; border: ${p.isBankrupt ? '2px solid #ef4444' : 'none'}">
+                        <strong>${getPlayerSimpleNumber(p)}</strong> ${p.isBankrupt ? '(Bankrupt)' : ''} - $${(p.money ?? 0).toLocaleString()}
                     </div>
                 `).join('')}
             </div>

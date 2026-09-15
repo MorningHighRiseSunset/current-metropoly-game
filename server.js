@@ -101,7 +101,7 @@ function getBoardSpaces() {
         { name: 'Las Vegas Raiders', type: 'property', color: '#8B4513', group: 'brown', price: 350, rent: [38, 77, 220, 605, 825, 1045], position: 1, address: '3333 Al Davis Way, Las Vegas, NV 89118 (Allegiant Stadium)' },
         { name: 'Community Cards', type: 'community-chest', position: 2 },
         { name: 'Las Vegas Grand Prix', type: 'property', color: '#8B4513', group: 'brown', price: 300, rent: [33, 66, 198, 550, 770, 990], position: 3, address: '7000 Las Vegas Blvd N, Las Vegas, NV 89115 (Las Vegas Motor Speedway)' },
-        { name: 'Income Tax', type: 'tax', amount: 200, position: 4 },
+        { name: 'Income Tax', type: 'tax', amount: 150, position: 4 },
         { name: 'Las Vegas Monorail', type: 'railroad', group: 'railroad', price: 250, rent: [28, 55, 110, 220], position: 5, address: '2535 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'Speed Vegas Off Roading', type: 'property', color: '#87CEEB', group: 'lightBlue', price: 250, rent: [28, 55, 165, 495, 687, 825], position: 6, address: '14200 S Las Vegas Blvd, Las Vegas, NV 89054 (SPEEDVEGAS)' },
         { name: 'Chance', type: 'chance', position: 7 },
@@ -400,6 +400,9 @@ function checkGameWinner(game) {
 
     if (activePlayers.length === 1) {
         const winner = activePlayers[0];
+        const bankruptPlayers = game.players.filter((p) => p && p.isBankrupt);
+        const bankruptPlayerNames = bankruptPlayers.map(p => p.name).join(', ');
+        
         game.status = 'finished';
         game.winner = winner.id;
         saveGames();
@@ -407,6 +410,7 @@ function checkGameWinner(game) {
             winnerId: winner.id,
             winnerName: winner.name,
             winReason: 'bankruptcy',
+            bankruptPlayers: bankruptPlayerNames,
             players: game.players
         });
     }
