@@ -810,6 +810,12 @@ function stopVideoElement(video) {
     video._intentionalStop = true;
 
     try {
+        // Stop horse sound effect if it exists
+        if (video._horseSound) {
+            video._horseSound.pause();
+            video._horseSound.currentTime = 0;
+        }
+        
         video.pause();
         video.autoplay = false;
         video.muted = true;
@@ -2792,6 +2798,34 @@ function showPropertyInfo(spaceData, options = {}) {
                                 video.pause();
                             }
                         });
+                    } else if (spaceData.name === 'Horseback Riding') {
+                        // Play horse galloping sound effect
+                        const horseSound = new Audio('/Videos/pwlpl-horses-galloping-sound-effect-359257.mp3');
+                        horseSound.loop = true;
+                        horseSound.volume = 0.5;
+                        
+                        // Sync horse sound with video playback
+                        video.addEventListener('play', () => {
+                            horseSound.play().catch(() => {});
+                        });
+                        
+                        video.addEventListener('pause', () => {
+                            horseSound.pause();
+                        });
+                        
+                        video.addEventListener('ended', () => {
+                            horseSound.pause();
+                            horseSound.currentTime = 0;
+                        });
+                        
+                        video.addEventListener('timeupdate', () => {
+                            if (video.paused && !horseSound.paused) {
+                                horseSound.pause();
+                            }
+                        });
+                        
+                        // Store reference to stop when UI closes
+                        video._horseSound = horseSound;
                     } else if (spaceData.name === 'Speed Vegas Off Roading') {
                         // Speed Vegas Off Roading - 10 second limit
                         video.addEventListener('timeupdate', () => {
