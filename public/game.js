@@ -100,6 +100,7 @@ let casinoUnownedPropertyPosition = null; // Track position of unowned property
 let casinoManuallyClosed = false; // Track if casino was manually closed by player
 let casinoPlayCounts = {}; // Track how many times each player has played casino (max 5 for humans, 3 for AI)
 let manuallyOpenedModal = false; // Track if property modal was opened by manual click
+let isBeingSentToJail = false; // Track if player is currently being sent to jail to prevent duplicate UI
 let aiMoves = []; // Track last 5 AI moves
 let aiMovesEl = null; // DOM element for AI moves display
 
@@ -1069,10 +1070,13 @@ function handlePlayerLanding(playerId, newPosition, fromCard = false) {
     const landingPlayer = players.find((p) => p && p.id === playerId);
 
     if (newPosition === 10) {
-        if (landingPlayer?.inJail) {
-            showPropertyInfo(boardConfig[10]);
-        } else {
-            showJailProceedUI(newPosition);
+        // Only show jail UI if not already being handled by playerSentToJail event
+        if (!isBeingSentToJail) {
+            if (landingPlayer?.inJail) {
+                showPropertyInfo(boardConfig[10]);
+            } else {
+                showJailProceedUI(newPosition);
+            }
         }
         return;
     }
@@ -4024,6 +4028,9 @@ socket.on('playerSentToJail', (data) => {
         player.inJail = true;
         player.jailTurns = 0;
         revealPlayerToken(data.playerId);
+        
+        // Set flag to prevent duplicate jail UI
+        isBeingSentToJail = true;
 
         // Track AI move
         if (player.isAI) {
@@ -4038,34 +4045,30 @@ socket.on('playerSentToJail', (data) => {
                 newPosition,
                 () => {
                     // Show jail UI when player is sent to jail so they can choose their options
+                    // Only show for current player, not for AI players
                     if (data.playerId === myPlayerId) {
                         const jailSpace = boardConfig[10];
                         if (jailSpace) {
                             showPropertyInfo(jailSpace);
                         }
-                    } else {
-                        const jailSpace = boardConfig[10];
-                        if (jailSpace) {
-                            showPropertyInfo(jailSpace);
-                        }
                     }
+                    // Reset jail flag after showing UI
+                    isBeingSentToJail = false;
                 },
                 getBestMoveDirection(oldPosition, newPosition)
             );
         } else {
             player.position = newPosition;
             update3DTokenPositions();
+            // Only show jail UI for current player
             if (data.playerId === myPlayerId) {
                 const jailSpace = boardConfig[10];
                 if (jailSpace) {
                     showPropertyInfo(jailSpace);
                 }
-            } else {
-                const jailSpace = boardConfig[10];
-                if (jailSpace) {
-                    showPropertyInfo(jailSpace);
-                }
             }
+            // Reset jail flag when no animation
+            isBeingSentToJail = false;
         }
         updateTokens();
         

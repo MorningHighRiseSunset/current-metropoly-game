@@ -128,7 +128,7 @@ function getBoardSpaces() {
         { name: 'Water Works', type: 'utility', group: 'utility', price: 200, rent: [0, 0], position: 28 },
         { name: 'Caesars Palace', type: 'property', color: '#0000FF', group: 'darkBlue', price: 420, rent: [46, 92, 277, 831, 1155, 1386], position: 29, address: '3570 S Las Vegas Blvd, Las Vegas, NV 89109' },
         { name: 'GO TO JAIL', type: 'corner', position: 30 },
-        { name: 'Luxury Tax', type: 'tax', amount: 100, position: 31 },
+        { name: 'Luxury Tax', type: 'tax', amount: 75, position: 31 },
         { name: 'Chance', type: 'chance', position: 32 },
         { name: 'House of Blues', type: 'property', color: '#0000FF', group: 'darkBlue', price: 300, rent: [33, 66, 198, 594, 825, 990], position: 33, address: '3950 S Las Vegas Blvd, Las Vegas, NV 89119 (inside Mandalay Bay)' },
         { name: 'Bet MGM', type: 'property', color: '#0000FF', group: 'darkBlue', price: 350, rent: [38, 77, 231, 693, 962, 1155], position: 34, address: '3799 S Las Vegas Blvd, Las Vegas, NV 89109' },

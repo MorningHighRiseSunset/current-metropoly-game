@@ -68,7 +68,7 @@ function getVideoUrl(localPath) {
 // Store local paths, convert to CDN URLs on access
 const tileMediaRaw = {
     0: { name: 'GO', videos: [], images: [] },
-    1: { name: 'Las Vegas Raiders', videos: ['/Videos/LVRaidersVid.mp4'], images: [] },
+    1: { name: 'Las Vegas Raiders', videos: ['/Videos/LVRaidersVid.mp4', '/Videos/LVRaiders 2 (1).mp4', '/Videos/LVRaiders 3 (1).mp4', '/Videos/LVRaiders 4 (1).mp4', '/Videos/LVRaiders 5 (1).mp4'], images: [] },
     2: { name: 'Community Cards', videos: [], images: [] },
     3: { name: 'Las Vegas Grand Prix', videos: ['/Videos/LV Grand Prix.mp4', '/Videos/LV Grand Prix End.mp4'], images: [] },
     4: { name: 'Income Tax', videos: [], images: [] },
