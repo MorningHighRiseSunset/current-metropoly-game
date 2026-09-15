@@ -688,7 +688,7 @@
     betSlider.addEventListener('input', (e) => {
       let newBet = parseInt(e.target.value, 10);
 
-      // Clamp to valid range
+      // CRITICAL: Real-time balance check to prevent exceeding balance
       const maxBet = Math.min(1000, Math.max(5, balance));
       newBet = Math.max(5, Math.min(newBet, maxBet));
 

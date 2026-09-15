@@ -393,6 +393,12 @@ function updateBetDisplay() {
   // Get current slider value and ensure it's within valid range
   currentBet = parseInt(betSlider.value, 10);
   
+  // CRITICAL: Prevent betting more than balance in real-time
+  if (currentBet > balance) {
+    currentBet = maxAllowed;
+    betSlider.value = currentBet;
+  }
+  
   // If current bet exceeds balance or maximum allowed, adjust it
   if (currentBet > maxAllowed) {
     currentBet = maxAllowed;

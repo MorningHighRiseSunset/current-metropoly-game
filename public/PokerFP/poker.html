@@ -744,6 +744,20 @@ function syncBetUI() {
   betValueDisplay.textContent = '$' + currentValue;
 }
 
+// Prevent slider from exceeding balance in real-time
+betSlider.addEventListener('input', () => {
+  let currentValue = parseInt(betSlider.value, 10) || 10;
+  const max = Math.max(10, state.chips);
+  
+  // Prevent betting more than balance
+  if (currentValue > max) {
+    currentValue = max;
+    betSlider.value = currentValue;
+  }
+  
+  betValueDisplay.textContent = '$' + currentValue;
+});
+
 betSlider.addEventListener('input', () => {
   betValueDisplay.textContent = '$' + betSlider.value;
 });
@@ -905,6 +919,14 @@ function next() {
     }
 
     let bet = parseInt(betSlider.value, 10) || 10;
+    
+    // CRITICAL: Prevent betting more than balance
+    if (bet > state.chips) {
+      result.textContent = 'Insufficient balance for this bet';
+      syncBalanceToParent();
+      return;
+    }
+    
     bet = Math.max(10, Math.min(bet, state.chips));
 
     // player bet + AI matches

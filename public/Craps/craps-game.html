@@ -616,8 +616,10 @@
         });
         
         function placeBet(areaId, amount) {
-            if (balance < amount) {
-                alert('Insufficient balance');
+            // CRITICAL: Check if this bet would exceed balance
+            const totalBets = Object.values(bets).reduce((sum, val) => sum + val, 0);
+            if (balance - totalBets < amount) {
+                alert('Insufficient balance for this bet');
                 return;
             }
             

@@ -654,9 +654,10 @@
 
       betSlider.addEventListener('input', (e) => {
         let newValue = parseInt(e.target.value);
-        // Ensure value doesn't exceed current max
-        if (newValue > maxBet) {
-          newValue = maxBet;
+        // CRITICAL: Ensure value doesn't exceed current balance in real-time
+        const currentMax = Math.min(1000, Math.max(1, balance));
+        if (newValue > currentMax) {
+          newValue = currentMax;
           betSlider.value = newValue;
         }
         selectedBetAmount = newValue;
