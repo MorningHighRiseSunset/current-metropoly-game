@@ -390,6 +390,9 @@ function updateBetDisplay() {
   // Update slider max to respect current balance
   betSlider.max = maxAllowed;
   
+  // Update slider min to allow betting when balance is low
+  betSlider.min = Math.min(100, balance);
+  
   // Get current slider value and ensure it's within valid range
   currentBet = parseInt(betSlider.value, 10);
   
@@ -405,11 +408,14 @@ function updateBetDisplay() {
     betSlider.value = currentBet;
   }
   
-  // Ensure minimum bet of 100
-  if (currentBet < 100) {
-    currentBet = 100;
+  // Ensure minimum bet matches slider minimum
+  if (currentBet < betSlider.min) {
+    currentBet = betSlider.min;
     betSlider.value = currentBet;
   }
+  
+  // Enable slider if balance is sufficient for minimum bet
+  betSlider.disabled = balance < betSlider.min;
   
   betDisplay.textContent = '$' + currentBet;
 }
@@ -657,6 +663,7 @@ window.initBlackjackMinigame = function(container, initialBalance, balanceCallba
                 if (event.data.type === 'SET_BALANCE') {
                     balance = event.data.balance;
                     updateBalanceDisplay();
+                    updateBetDisplay(); // Re-enable slider if balance is sufficient
                 }
             });
 
@@ -677,6 +684,7 @@ window.initBlackjackMinigame = function(container, initialBalance, balanceCallba
             if (event.data.type === 'SET_BALANCE') {
                 balance = event.data.balance;
                 updateBalanceDisplay();
+                updateBetDisplay(); // Re-enable slider if balance is sufficient
             }
         });
 
