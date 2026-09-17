@@ -499,12 +499,12 @@ function deal() {
   // Check if this is a restart request
   if (btnDeal.dataset.restart === 'true') {
     // Reset game
-    balance = 1000;
+    balance = 0;
     playerHand = [];
     dealerHand = [];
     btnDeal.dataset.restart = 'false';
     btnDeal.textContent = 'Deal';
-    setMessage('Game restarted with $1000', 'push');
+    setMessage('Game restarted with current balance', 'push');
     updateBalanceDisplay();
     updateBetDisplay();
     renderHands();
@@ -649,7 +649,7 @@ window.initBlackjackMinigame = function(container, initialBalance, balanceCallba
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             initDOMElements();
-            balance = initialBalance || 1000;
+            balance = initialBalance || 0;
             updateBalanceDisplay();
 
             // Listen for balance from parent window
@@ -669,7 +669,7 @@ window.initBlackjackMinigame = function(container, initialBalance, balanceCallba
         });
     } else {
         initDOMElements();
-        balance = initialBalance || 1000;
+        balance = initialBalance || 0;
         updateBalanceDisplay();
 
         // Listen for balance from parent window

@@ -588,7 +588,7 @@
             rollDurationMs: 1200,  // Longer roll for more air time
             settleHoldMs: 6000,     // 6 second pause after landing
             tossHeight: 3.5,        // Higher toss for more air rolling
-            scale: 0.8              // Larger dice for better visibility
+            scale: 1.2              // Much larger dice for better visibility
         };
 
         function createDiceTexture(value) {
@@ -802,7 +802,24 @@
                 const bettingMap = {
                     'come-group': 'come',
                     'field-group': 'field',
-                    'pass-line-group': 'pass-line'
+                    'pass-line-group': 'pass-line',
+                    "don't-pass-bar": "don't-pass-bar",
+                    'dont-come-bar': 'dont-come-bar',
+                    '4': '4',
+                    '5': '5',
+                    'six': '6',
+                    '8': '8',
+                    'nine': '9',
+                    '10': '10',
+                    'big-6-8': 'big-6-8',
+                    '7-es': '7-es',
+                    '7-cs': '7-cs',
+                    '10-to-1': '10-to-1',
+                    '8-to-1': '8-to-1',
+                    '30-to-1': '30-to-1',
+                    '15-to-1': '15-to-1',
+                    'any-craps-7-to-1': 'any-craps-7-to-1',
+                    'seven-4-to-1': 'seven-4-to-1'
                 };
                 
                 // Now attach click handlers to betting areas
@@ -810,6 +827,7 @@
                     area.addEventListener('click', (e) => {
                         e.stopPropagation();
                         const betId = bettingMap[area.id] || area.id;
+                        console.log(`Clicked betting area: ${area.id}, betId: ${betId}, selectedChip: ${selectedChip}`);
                         placeBet(betId, selectedChip);
                     });
                 });

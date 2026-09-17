@@ -2269,10 +2269,15 @@ function loadTokenModel(tokenIndex, player) {
                     model.animations = fbx.animations;
                     model.currentAnim = 'idle';
                     
-                    // Play all animations with faster speed
+                    // Play animations with appropriate speed
                     fbx.animations.forEach((anim) => {
                         const action = mixer.clipAction(anim);
-                        action.timeScale = 3.0; // Spin 3x faster
+                        // Helicopter should spin slower for realistic effect
+                        if (tokenInfo.name === 'Helicopter') {
+                            action.timeScale = 1.0; // Normal speed for helicopter
+                        } else {
+                            action.timeScale = 3.0; // Spin 3x faster for other tokens
+                        }
                         action.play();
                     });
                     
@@ -2341,10 +2346,15 @@ function loadTokenModel(tokenIndex, player) {
                     model.animations = gltf.animations;
                     model.currentAnim = 'idle';
 
-                    // Play all animations with faster speed
+                    // Play animations with appropriate speed for helicopter
                     gltf.animations.forEach((anim) => {
                         const action = mixer.clipAction(anim);
-                        action.timeScale = 3.0; // Spin 3x faster
+                        // Helicopter should spin slower for realistic effect
+                        if (tokenInfo.name === 'Helicopter') {
+                            action.timeScale = 1.0; // Normal speed for helicopter
+                        } else {
+                            action.timeScale = 3.0; // Spin 3x faster for other tokens
+                        }
                         action.play();
                     });
                 }
