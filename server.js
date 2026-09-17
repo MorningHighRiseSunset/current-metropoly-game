@@ -679,6 +679,7 @@ function executeAIRollDice(game, aiPlayer) {
                                 io.to(game.id).emit('taxPaid', {
                                     playerId: aiPlayer.id,
                                     amount: landedSpace.amount,
+                                    taxName: landedSpace.name,
                                     newMoney: aiPlayer.money,
                                     players: game.players
                                 });
@@ -921,6 +922,7 @@ function executeAIRollDice(game, aiPlayer) {
                         io.to(game.id).emit('taxPaid', {
                             playerId: aiPlayer.id,
                             amount: landedSpace.amount,
+                            taxName: landedSpace.name,
                             newMoney: aiPlayer.money,
                             players: game.players
                         });

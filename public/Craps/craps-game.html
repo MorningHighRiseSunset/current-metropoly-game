@@ -835,6 +835,9 @@
                 return;
             }
             
+            // Log what we're about to bet for debugging
+            console.log(`Placing bet: areaId=${areaId}, amount=${amount}, selectedChip=${selectedChip}`);
+            
             if (!bets[areaId]) bets[areaId] = 0;
             bets[areaId] += amount;
             balance -= amount;
@@ -940,10 +943,19 @@
                 '5': 'Number 5',
                 'six': 'Number 6',
                 '7': 'Number 7',
+                '7-cs': 'Any 7 (Center Strip)',
+                '7-es': 'Any 7 (East Strip)',
                 '8': 'Number 8',
                 'nine': 'Number 9',
                 '10': 'Number 10',
-                'big-6-8': 'Big 6 & 8'
+                'big-6-8': 'Big 6 & 8',
+                '10-to-1': '10 to 1',
+                '8-to-1': '8 to 1',
+                '30-to-1': '30 to 1',
+                '15-to-1': '15 to 1',
+                'any-craps-7-to-1': 'Any Craps (7 to 1)',
+                'seven-4-to-1': 'Seven (4 to 1)',
+                'dont-come-bar': "Don't Come Bar"
             };
             return betNames[areaId] || areaId;
         }

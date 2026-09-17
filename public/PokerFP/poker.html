@@ -785,10 +785,6 @@ betSlider.addEventListener('input', () => {
   betValueDisplay.textContent = '$' + currentValue;
 });
 
-betSlider.addEventListener('input', () => {
-  betValueDisplay.textContent = '$' + betSlider.value;
-});
-
 function cardHTML(card, faceUp = true) {
   if (!faceUp) return '<div class="card back"></div>';
   const color = SUIT_COLOR[card.suit];
@@ -1035,10 +1031,11 @@ function next() {
       }
       syncBalanceToParent();
     } else {
-      // True tie - split the pot (player gets half of pot = their bet + half of AI's bet)
-      state.chips += state.pot / 2;
+      // True tie - split the pot (player gets their bet back + half of AI's bet)
+      const playerWinnings = Math.floor(state.bet + (state.bet / 2)); // Original bet + half of AI's bet
+      state.chips += playerWinnings;
       result.classList.add('tie');
-      result.innerHTML = `Tie — pot split (+${state.pot / 2})<span class="hand-name">${pHand.name}</span>`;
+      result.innerHTML = `Tie — pot split (+${playerWinnings})<span class="hand-name">${pHand.name}</span>`;
       syncBalanceToParent();
     }
 
