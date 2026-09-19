@@ -771,22 +771,6 @@ function executeAIRollDice(game, aiPlayer) {
         }
         return;
     }
-
-            setTimeout(() => {
-                gameRuntime.checkRentPayment(game, aiPlayer, oldPosition);
-                setTimeout(() => gameRuntime.advanceTurn(game), 500);
-            }, 600);
-        } else if (aiPlayer.jailTurns >= 3) {
-            // Failed 3 times, must pay $50
-            if (aiPlayer.money >= 50) {
-                aiPlayer.money -= 50;
-                aiPlayer.inJail = false;
-                aiPlayer.jailTurns = 0;
-
-                io.to(game.id).emit('jailPaid', {
-                    playerId: aiPlayer.id,
-                    newMoney: aiPlayer.money,
-                    players: game.players
                 });
                 checkGameWinner(game);
 
