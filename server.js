@@ -707,38 +707,45 @@ function executeAIRollDice(game, aiPlayer) {
             return;
         }
 
-        // No jail-free card, try rolling or paying
-        const roll = rollDiceWithRareDoubles(aiPlayer.position);
-        const dice1 = roll.dice1;
-        const dice2 = roll.dice2;
-        const total = roll.total;
-        const newPosition = roll.newPosition;
-        const isDoubles = roll.isDoubles;
-
-
-        aiPlayer.jailTurns++;
-
-        io.to(game.id).emit('diceRolled', {
-            playerId: aiPlayer.id,
-            roll: { dice1, dice2, total },
-            oldPosition: aiPlayer.position,
-            newPosition: aiPlayer.position,
-            gameState: game.gameState,
-            players: game.players
-        });
-
-        if (isDoubles) {
-            // Got out of jail with doubles
+        // No jail-free card, pay $50 immediately to get out
+        if (aiPlayer.money >= 50) {
+            aiPlayer.money -= 50;
             aiPlayer.inJail = false;
             aiPlayer.jailTurns = 0;
 
+            io.to(game.id).emit('jailPaid', {
+                playerId: aiPlayer.id,
+                newMoney: aiPlayer.money,
+                players: game.players
+            });
+            checkGameWinner(game);
+
             io.to(game.id).emit('playerOutOfJail', {
                 playerId: aiPlayer.id,
-                method: 'roll',
+                method: 'pay',
                 players: game.players
             });
 
-            // Move AI player
+            // Roll new dice after paying to get out of jail
+            const newRoll = rollDiceWithRareDoubles(aiPlayer.position);
+            const newDice1 = newRoll.dice1;
+            const newDice2 = newRoll.dice2;
+            const newTotal = newRoll.total;
+            const newPosition = newRoll.newPosition;
+
+            game.gameState.diceRolled = true;
+            game.gameState.lastRoll = { newDice1, newDice2, newTotal };
+
+            io.to(game.id).emit('diceRolled', {
+                playerId: aiPlayer.id,
+                roll: { dice1: newDice1, dice2: newDice2, total: newTotal },
+                oldPosition: aiPlayer.position,
+                newPosition: newPosition,
+                gameState: game.gameState,
+                players: game.players
+            });
+
+            // Move AI player with new roll
             const oldPosition = aiPlayer.position;
             aiPlayer.position = newPosition;
 
@@ -753,6 +760,17 @@ function executeAIRollDice(game, aiPlayer) {
                 });
                 checkGameWinner(game);
             }
+
+            setTimeout(() => {
+                gameRuntime.checkRentPayment(game, aiPlayer, oldPosition);
+                setTimeout(() => gameRuntime.advanceTurn(game), 500);
+            }, 600);
+        } else {
+            // Can't pay - AI loses the game
+            handleBankruptcy(game, aiPlayer, null, 50);
+        }
+        return;
+    }
 
             setTimeout(() => {
                 gameRuntime.checkRentPayment(game, aiPlayer, oldPosition);
@@ -2151,23 +2169,27 @@ io.on('connection', (socket) => {
                         scheduleAutoAdvanceTurn(game, socket.id, getCardEffectAnimationMs());
                     }
                 } else if (landedSpace.type === 'tax') {
-                    // Always attempt to tax, even if it puts player in debt
-                    currentPlayer.money -= landedSpace.amount;
-                    
-                    // Handle bankruptcy if money went negative
-                    if (currentPlayer.money < 0) {
-                        handleBankruptcy(game, currentPlayer, null, landedSpace.amount);
+                    // For human players, show tax UI and wait for confirmation
+                    // For AI players, process tax immediately
+                    if (!currentPlayer.isAI) {
+                        // Set diceRolled to true so player can end turn after clicking Proceed
+                        game.gameState.diceRolled = true;
                     } else {
-                        io.to(game.id).emit('taxPaid', {
-                            playerId: socket.id,
-                            amount: landedSpace.amount,
-                            taxName: landedSpace.name,
-                            newMoney: currentPlayer.money,
-                            players: game.players
-                        });
-                    }
-                    // Don't auto-advance turn for human players - let them view UI first
-                    if (currentPlayer.isAI) {
+                        // AI: Always tax, even if it puts AI in debt
+                        currentPlayer.money -= landedSpace.amount;
+                        
+                        // Handle bankruptcy if money went negative
+                        if (currentPlayer.money < 0) {
+                            handleBankruptcy(game, currentPlayer, null, landedSpace.amount);
+                        } else {
+                            io.to(game.id).emit('taxPaid', {
+                                playerId: socket.id,
+                                amount: landedSpace.amount,
+                                taxName: landedSpace.name,
+                                newMoney: currentPlayer.money,
+                                players: game.players
+                            });
+                        }
                         scheduleAutoAdvanceTurn(game, socket.id, 600);
                     }
                 } else if (landedSpace.position === 30) {
@@ -3248,6 +3270,38 @@ io.on('connection', (socket) => {
                 });
                 checkGameWinner(game);
             }
+        }
+    });
+
+    // Pay tax (manual payment from client)
+    socket.on('payTax', (data) => {
+        const playerData = players[socket.id];
+        if (!playerData) return;
+
+        const game = games[playerData.gameId];
+        if (!game) return;
+
+        const player = game.players.find(p => p && p.id === socket.id);
+        if (!player) return;
+
+        const amount = data.amount;
+        const taxName = data.taxName;
+
+        // Always attempt to tax, even if it puts player in debt
+        player.money -= amount;
+        
+        // Handle bankruptcy if money went negative
+        if (player.money < 0) {
+            handleBankruptcy(game, player, null, amount);
+        } else {
+            io.to(game.id).emit('taxPaid', {
+                playerId: socket.id,
+                amount: amount,
+                taxName: taxName,
+                newMoney: player.money,
+                players: game.players
+            });
+            checkGameWinner(game);
         }
     });
 

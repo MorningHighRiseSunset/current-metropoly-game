@@ -761,6 +761,7 @@ const BOARD_LAYOUT = {
 // Always use premium 3D card-style tiles (slab + drawn face)
 const playersListEl = document.getElementById('playersList');
 const myPropertiesEl = document.getElementById('myProperties');
+const gameLogsContainerEl = document.getElementById('gameLogsContainer');
 let chatMessagesEl = null;
 let chatInputEl = null;
 let sendChatBtn = null;
@@ -1068,10 +1069,26 @@ function tileHasLandingMedia(position) {
 
 function handlePlayerLanding(playerId, newPosition, fromCard = false) {
     manuallyOpenedModal = false;
-    if (playerId !== myPlayerId || isSpectator) return;
+    console.log('[Landing] handlePlayerLanding called:', { playerId, newPosition, fromCard, myPlayerId, isSpectator });
+    
+    if (playerId !== myPlayerId || isSpectator) {
+        console.log('[Landing] Skipping - not current player or is spectator');
+        return;
+    }
+
+    // Don't show landing UI if card modal is already open
+    if (cardModal && !cardModal.classList.contains('hidden')) {
+        console.log('[Landing] Skipping - card modal already open');
+        return;
+    }
 
     const spaceData = boardConfig[newPosition];
-    if (!spaceData) return;
+    if (!spaceData) {
+        console.error('[Landing] No space data found for position:', newPosition);
+        return;
+    }
+
+    console.log('[Landing] Space data:', spaceData.name, spaceData.type, spaceData.isCasino || false, spaceData.casinoGame || 'none', spaceData.position);
 
     const landingPlayer = players.find((p) => p && p.id === playerId);
 
@@ -1106,20 +1123,27 @@ function handlePlayerLanding(playerId, newPosition, fromCard = false) {
                     showProceedButton: true,
                     viewerLabel: 'You own this property - Click Proceed to play casino'
                 });
+            } else {
+                // For non-casino owned properties, just show info without proceed button
+                showPropertyInfo(spaceData);
             }
             return;
         }
-        // Unowned: one buy UI (casino tiles play first, then buy after close).
-        if (spaceData.isCasino && landingPlayer && !landingPlayer.isAI) {
-            openCasinoGame(spaceData.casinoGame);
-            return;
-        }
+        // Unowned: show property decision UI (casino opens after purchase/decision)
         startPropertyDecision(spaceData, newPosition);
         return;
     }
 
     if (newPosition === 0 || newPosition === 20) {
         showJailProceedUI(newPosition);
+    }
+
+    // Handle tax spaces
+    if (spaceData.type === 'tax') {
+        showPropertyInfo(spaceData, {
+            showProceedButton: true,
+            viewerLabel: `Tax: $${spaceData.amount} - Click Proceed to continue`
+        });
     }
 }
 
@@ -1245,6 +1269,22 @@ function handleJailProceed() {
     const playerPosition = currentPlayer?.position || (currentPlayer && currentPlayer.position);
     const currentSpaceData = boardConfig[playerPosition];
     const isCasinoProperty = currentSpaceData?.isCasino;
+    const isTaxSpace = currentSpaceData?.type === 'tax';
+    
+    // Handle tax payment if on tax space
+    if (isTaxSpace) {
+        socket.emit('payTax', { amount: currentSpaceData.amount, taxName: currentSpaceData.name });
+        dismissPropertyDecisionUI();
+        endTurnNow();
+        return;
+    }
+    
+    // Handle casino game for owned casino properties
+    if (isCasinoProperty && currentSpaceData?.casinoGame) {
+        console.log('[Casino] Opening casino from proceed button:', currentSpaceData.casinoGame);
+        openCasinoGame(currentSpaceData.casinoGame);
+        return;
+    }
     
     // Stop any playing video/audio before proceeding
     if (currentPropertyVideo) {
@@ -1383,7 +1423,15 @@ function updatePropertyDecisionUI() {
                     cleanupPropertyVideo();
                     socket.emit('payRent', { position: activePropertyDecision.position, amount: rent });
                     dismissPropertyDecisionUI();
-                    endTurnNow();
+                    
+                    // For casino properties, open the casino game after paying rent
+                    if (spaceData.isCasino) {
+                        setTimeout(() => {
+                            openCasinoGame(spaceData.casinoGame);
+                        }, 500);
+                    } else {
+                        endTurnNow();
+                    }
                 };
             }
         }
@@ -1405,19 +1453,12 @@ function updatePropertyDecisionUI() {
                 socket.emit('buyProperty', { position: activePropertyDecision.position });
                 dismissPropertyDecisionUI();
                 
-                // For casino properties, open the casino game after purchase
-                if (spaceData.isCasino) {
-                    setTimeout(() => {
-                        openCasinoGame(spaceData.casinoGame);
-                    }, 500);
-                } else {
-                    // Auto-end turn after buying non-casino properties
-                    setTimeout(() => {
-                        if (gameState && gameState.currentPlayer === myPlayerId) {
-                            endTurnNow();
-                        }
-                    }, 500);
-                }
+                // Auto-end turn after buying properties
+                setTimeout(() => {
+                    if (gameState && gameState.currentPlayer === myPlayerId) {
+                        endTurnNow();
+                    }
+                }, 500);
             } else {
                 alert(`Not enough money to buy this ${typeLabel.toLowerCase()}. You will go bankrupt if you cannot afford mandatory payments.`);
             }
@@ -1731,12 +1772,17 @@ function triggerObserverCasinoAutoPlay(iframe, gameName, iframeDoc) {
 
 // Open casino game modal
 function openCasinoGame(gameName, observerOptions = null) {
+    console.log('[Casino] openCasinoGame called with:', gameName, observerOptions);
+    
     const casinoModal = document.getElementById('casinoGameModal');
     const casinoTitle = document.getElementById('casinoGameTitle');
     const casinoContainer = document.getElementById('casinoGameContainer');
     const closeCasinoBtn = document.getElementById('closeCasinoBtn');
 
-    if (!casinoModal || !casinoContainer) return;
+    if (!casinoModal || !casinoContainer) {
+        console.error('[Casino] Required casino DOM elements not found:', { casinoModal, casinoContainer });
+        return;
+    }
 
     const isObserver = Boolean(observerOptions);
     const observePlayer = observerOptions?.player;
@@ -2489,6 +2535,11 @@ function bindMediaFrameOrientation(frame, element) {
 }
 
 function createMediaFrame(element) {
+    // Check if element is already wrapped in a media-frame
+    if (element.parentElement && element.parentElement.classList.contains('media-frame')) {
+        return element.parentElement;
+    }
+    
     const frame = document.createElement('div');
     frame.className = 'media-frame media-frame--landscape';
     frame.appendChild(element);
@@ -2512,6 +2563,16 @@ function logVideoLoadError(video, context) {
 
 function showPropertyImages(media, spaceData, mediaContainer, cacheKey) {
     // console.log(`[showPropertyImages] Called for ${media.name}, images:`, media.images);
+    
+    // Only show images for tax, utility properties, and properties with no videos
+    const allowedImagePositions = [4, 12, 28, 31, 38]; // Income Tax, Electric Company, Water Works, Luxury Tax, Horseback Riding
+    const hasNoVideos = !media.videos || media.videos.length === 0;
+    
+    if (!allowedImagePositions.includes(spaceData.position) && !hasNoVideos) {
+        // console.log(`[showPropertyImages] Images not allowed for position ${spaceData.position} (${spaceData.name})`);
+        return false;
+    }
+    
     if (!media.images || media.images.length === 0) {
         // console.log(`[showPropertyImages] No images available for ${media.name}`);
         return false;
@@ -2590,6 +2651,11 @@ function buildPropertyDetailsHtml(spaceData) {
 function showPropertyInfo(spaceData, options = {}) {
     const { showDecisionActions = false, showProceedButton = false, viewerLabel = null, isRent = false, isAI = false } = options;
 
+    // Don't show property modal if card modal is already open
+    if (cardModal && !cardModal.classList.contains('hidden')) {
+        console.log('[Property Info] Skipping - card modal already open');
+        return;
+    }
 
     // Force cleanup any existing videos before showing new content
     cleanupPropertyVideo();
@@ -2701,6 +2767,10 @@ function showPropertyInfo(spaceData, options = {}) {
     
     // Clear previous media
     mediaContainer.innerHTML = '';
+    
+    // Remove any leftover media-frame elements
+    const existingFrames = mediaContainer.querySelectorAll('.media-frame');
+    existingFrames.forEach(frame => frame.remove());
 
     // Load media from tileMedia if available
     if (tileMedia && tileMedia[spaceData.position]) {
@@ -2746,14 +2816,16 @@ function showPropertyInfo(spaceData, options = {}) {
                         triedVideos.push(nextVideo);
                         loadVideoWithFallback(nextVideo);
                     } else {
-                        // All videos failed, fall back to images only if images exist (not jail)
+                        // All videos failed, fall back to images only if images exist (not jail) and allowed for this position
                         logVideoLoadError(video, {
                             propertyName: media.name,
                             position: spaceData.position,
                             intendedSrc: videoUrl,
                             fromCache: false
                         });
-                        if (media.images && media.images.length > 0 && spaceData.position !== 10) {
+                        const allowedImagePositions = [4, 12, 28, 31, 38]; // Income Tax, Electric Company, Water Works, Luxury Tax, Horseback Riding
+                        const hasNoVideos = !media.videos || media.videos.length === 0;
+                        if (media.images && media.images.length > 0 && spaceData.position !== 10 && (allowedImagePositions.includes(spaceData.position) || hasNoVideos)) {
                             if (!showPropertyImages(media, spaceData, mediaContainer, cacheKey) && loadingIndicator) {
                                 mediaContainer.innerHTML = '';
                                 loadingIndicator.textContent = 'Media unavailable';
@@ -2914,18 +2986,30 @@ function showPropertyInfo(spaceData, options = {}) {
                 }
             }
 
+            // Ensure the cloned video doesn't have a media-frame wrapper
+            const clonedVideo = cloned.querySelector('video');
+            if (clonedVideo && !cloned.querySelector('.media-frame')) {
+                const newFrame = createMediaFrame(clonedVideo);
+                cloned.appendChild(newFrame);
+            }
+
             mediaContainer.appendChild(cloned);
 
             // Play the cached video after appending (for viewing, not auto-play)
             if (cachedVideo) {
                 cachedVideo.play().catch(() => {});
             }
-        } else if (media.images && media.images.length > 0 && spaceData.position !== 10) {
-            // Skip images for jail (position 10) - only show videos
-            showPropertyImages(media, spaceData, mediaContainer, cacheKey);
         } else {
-            // console.log(`[showPropertyInfo] No media available for ${spaceData.name}`);
-            mediaContainer.innerHTML = '';
+            // Only show images for tax, utility properties, and properties with no videos
+            const allowedImagePositions = [4, 12, 28, 31, 38]; // Income Tax, Electric Company, Water Works, Luxury Tax, Horseback Riding
+            const hasNoVideos = !media.videos || media.videos.length === 0;
+            if (media.images && media.images.length > 0 && spaceData.position !== 10 && (allowedImagePositions.includes(spaceData.position) || hasNoVideos)) {
+                // Skip images for jail (position 10) - only show videos
+                showPropertyImages(media, spaceData, mediaContainer, cacheKey);
+            } else {
+                // console.log(`[showPropertyInfo] No media available for ${spaceData.name}`);
+                mediaContainer.innerHTML = '';
+            }
         }
     } else {
         // console.log(`[showPropertyInfo] No tileMedia for position ${spaceData.position}`);
@@ -3085,6 +3169,39 @@ function addLogEntry(message, type = 'system') {
     }
 }
 
+// Add game log entry to the new game logs container
+function addGameLogEntry(action, details, type = 'system') {
+    const gameLogsContainer = gameLogsContainerEl || document.getElementById('gameLogsContainer');
+    if (!gameLogsContainer) {
+        console.error('[Game Logs] Container not found!', { gameLogsContainerEl, hasDOM: !!document.getElementById('gameLogsContainer') });
+        return;
+    }
+    
+    const logEntry = document.createElement('div');
+    logEntry.className = `game-log-entry ${type}`;
+    
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    logEntry.innerHTML = `
+        <span class="log-time">${timeStr}</span>
+        <span class="log-action">${action}</span>
+        ${details ? `<span class="log-amount">${details}</span>` : ''}
+    `;
+    
+    gameLogsContainer.appendChild(logEntry);
+    
+    // Auto-scroll to bottom and limit entries
+    gameLogsContainer.scrollTop = gameLogsContainer.scrollHeight;
+    
+    // Keep only last 30 entries
+    const entries = gameLogsContainer.querySelectorAll('.game-log-entry');
+    if (entries.length > 30) {
+        entries[0].remove();
+    }
+    
+    console.log('[Game Logs] Added entry:', { action, details, type, timeStr });
+}
+
 // Add chat message
 function addChatMessage(sender, message) {
     // console.log('addChatMessage called:', { sender, message, chatMessagesEl });
@@ -3143,6 +3260,7 @@ function updateAiMovesDisplay() {
         const moveEl = document.createElement('div');
         moveEl.className = 'ai-move-entry';
         moveEl.innerHTML = `
+            <span class="ai-time">${move.timestamp}</span>
             <span class="ai-player">${move.playerName}</span>
             <span class="ai-action">${move.action}</span>
             ${move.details ? `<span class="ai-details">${move.details}</span>` : ''}
@@ -3169,6 +3287,11 @@ function updateUI(options = {}) {
         if (gameCodeEl) gameCodeEl.textContent = 'Spectating';
         if (!options.skipTokenLayer) updateTokens();
         return;
+    }
+
+    // Initialize game logs container if it exists
+    if (gameLogsContainerEl && gameLogsContainerEl.children.length === 0) {
+        addGameLogEntry('Game Started', 'Welcome to Metropoly!', 'system');
     }
 
     if (currentPlayer) {
@@ -3720,6 +3843,7 @@ socket.on('propertyPurchased', (data) => {
         updateUI();
         updatePlayersList();
         addLogEntry(`${getPlayerDisplayName(player)} bought ${propertyName} for $${boardConfig[position].price}`, 'property');
+        addGameLogEntry('Bought Property', `${propertyName} (-$${boardConfig[position].price})`, 'property');
 
         // Track AI move
         if (player.isAI) {
@@ -3948,6 +4072,7 @@ socket.on('taxPaid', (data) => {
         updateUI();
         updatePlayersList();
         addLogEntry(`${getPlayerDisplayName(player)} paid $${data.amount} for ${data.taxName}`, 'system');
+        addGameLogEntry('Tax Paid', `${data.taxName} (-$${data.amount})`, 'tax');
 
         // Track AI move
         if (player.isAI) {
@@ -3967,6 +4092,14 @@ socket.on('rentPaid', (data) => {
         updateUI();
         updatePlayersList();
         addLogEntry(`${payer.name} paid $${data.amount} rent to ${owner.name} for ${data.property.name}`, 'system');
+        
+        // Add to game logs for both payer and owner if they're the current player
+        if (data.payerId === myPlayerId) {
+            addGameLogEntry('Rent Paid', `$${data.amount} to ${owner.name} (-$${data.amount})`, 'rent');
+        }
+        if (data.ownerId === myPlayerId) {
+            addGameLogEntry('Rent Received', `$${data.amount} from ${payer.name} (+$${data.amount})`, 'rent');
+        }
 
         // Track AI moves
         if (payer.isAI) {
@@ -3982,11 +4115,26 @@ socket.on('rentPaid', (data) => {
 socket.on('playerMoneyUpdate', (data) => {
     const player = players.find(p => p && p.id === data.playerId);
     if (player) {
+        const oldMoney = player.money;
         player.money = data.money;
+        
+        // Calculate winnings/losses
+        const moneyChange = data.money - oldMoney;
+        
         // Update the local player money variable for casino games
         if (data.playerId === myPlayerId) {
             playerMoney = data.money;
+            
+            // Add game log entry for casino winnings/losses
+            if (moneyChange !== 0) {
+                if (moneyChange > 0) {
+                    addGameLogEntry('Casino Win', `+$${moneyChange}`, 'casino');
+                } else {
+                    addGameLogEntry('Casino Loss', `-$${Math.abs(moneyChange)}`, 'casino');
+                }
+            }
         }
+        
         // Update both UI displays
         updateUI();
         updatePlayersList();
@@ -4205,6 +4353,12 @@ function showCardModal(cardType, message, action) {
     // Stop hover videos immediately when card modal opens
     if (typeof hideTileHoverImmediately === 'function') {
         hideTileHoverImmediately();
+    }
+
+    // Don't show card modal if property modal is already open
+    if (propertyModal && !propertyModal.classList.contains('hidden')) {
+        console.log('[Card Modal] Skipping - property modal already open');
+        return;
     }
 
     // Initialize card modal elements if not already done
@@ -5195,26 +5349,26 @@ function createPremiumBoardTile(spaceData, row, col) {
 
     // Add Ferris Wheel model for County Fair (position 24)
     if (spaceData.position === 24 && spaceData.name === 'County Fair') {
-        console.log('=== FERRIS WHEEL CONDITIONS MET - STARTING LOAD ===');
-        console.log('Processing space:', spaceData.position, spaceData.name);
+        // console.log('=== FERRIS WHEEL CONDITIONS MET - STARTING LOAD ===');
+        // console.log('Processing space:', spaceData.position, spaceData.name);
         
         const loader = new THREE.GLTFLoader();
         
         // Load from local repository only
         const localPath = '/Models/Ferris Wheel/ferrisWheel.glb';
-        console.log('Local path:', localPath);
+        // console.log('Local path:', localPath);
         
         const loadFerrisWheel = (path) => {
-            console.log('=== FERRIS WHEEL LOADING START ===');
-            console.log('Loading from path:', path);
-            console.log('Board layout:', { tileSize, tileHeight });
+            // console.log('=== FERRIS WHEEL LOADING START ===');
+            // console.log('Loading from path:', path);
+            // console.log('Board layout:', { tileSize, tileHeight });
             
             loader.load(path,
                 function(gltf) {
-                    console.log('=== FERRIS WHEEL GLTF LOADED SUCCESSFULLY ===');
-                    console.log('Loaded from:', path);
-                    console.log('Scene:', gltf.scene);
-                    console.log('Animations:', gltf.animations ? gltf.animations.length : 0);
+                    // console.log('=== FERRIS WHEEL GLTF LOADED SUCCESSFULLY ===');
+                    // console.log('Loaded from:', path);
+                    // console.log('Scene:', gltf.scene);
+                    // console.log('Animations:', gltf.animations ? gltf.animations.length : 0);
                     
                     const ferrisWheel = gltf.scene;
                     
@@ -5222,8 +5376,8 @@ function createPremiumBoardTile(spaceData, row, col) {
                     const box = new THREE.Box3().setFromObject(ferrisWheel);
                     const size = new THREE.Vector3();
                     box.getSize(size);
-                    console.log('Original model size:', size);
-                    console.log('Original model bounds:', box);
+                    // console.log('Original model size:', size);
+                    // console.log('Original model bounds:', box);
                     
                     // Try multiple scales for visibility
                     const scale = 0.04; // Correct scale as requested
@@ -5234,9 +5388,9 @@ function createPremiumBoardTile(spaceData, row, col) {
                     ferrisWheel.userData.isFerrisWheel = true;
                     ferrisWheel.userData.lastUpdate = 0;
                     
-                    console.log('Applied scale:', scale);
-                    console.log('Final position:', ferrisWheel.position);
-                    console.log('Final scale:', ferrisWheel.scale);
+                    // console.log('Applied scale:', scale);
+                    // console.log('Final position:', ferrisWheel.position);
+                    // console.log('Final scale:', ferrisWheel.scale);
                     
                     // Optimize model for performance but keep it visible
                     let meshCount = 0;
@@ -5259,11 +5413,11 @@ function createPremiumBoardTile(spaceData, row, col) {
                         }
                     });
                     
-                    console.log('Total meshes in model:', meshCount);
+                    // console.log('Total meshes in model:', meshCount);
 
                     // Setup animation mixer if model has animations
                     if (gltf.animations && gltf.animations.length > 0) {
-                        console.log('Setting up animation mixer with', gltf.animations.length, 'animations');
+                        // console.log('Setting up animation mixer with', gltf.animations.length, 'animations');
                         const mixer = new THREE.AnimationMixer(ferrisWheel);
                         ferrisWheel.mixer = mixer;
                         ferrisWheel.animations = gltf.animations;
@@ -5273,27 +5427,27 @@ function createPremiumBoardTile(spaceData, row, col) {
                         action.timeScale = 0.3;
                         action.play();
                     } else {
-                        console.log('No animations found in model');
+                        // console.log('No animations found in model');
                     }
                     
                     group.add(ferrisWheel);
-                    console.log('Ferris wheel added to group');
-                    console.log('Group children count after adding:', group.children.length);
-                    console.log('Ferris wheel position in world:', ferrisWheel.getWorldPosition(new THREE.Vector3()));
-                    console.log('Ferris wheel visible:', ferrisWheel.visible);
-                    console.log('Ferris wheel parent:', ferrisWheel.parent);
-                    console.log('=== FERRIS WHEEL LOADING COMPLETE ===');
+                    // console.log('Ferris wheel added to group');
+                    // console.log('Group children count after adding:', group.children.length);
+                    // console.log('Ferris wheel position in world:', ferrisWheel.getWorldPosition(new THREE.Vector3()));
+                    // console.log('Ferris wheel visible:', ferrisWheel.visible);
+                    // console.log('Ferris wheel parent:', ferrisWheel.parent);
+                    // console.log('=== FERRIS WHEEL LOADING COMPLETE ===');
                 },
                 function(xhr) {
                     if (xhr.lengthComputable) {
                         const percentComplete = xhr.loaded / xhr.total * 100;
                         if (percentComplete % 25 < 1 || percentComplete >= 100) {
-                            console.log(`Loading progress: ${percentComplete.toFixed(0)}%`);
+                            // console.log(`Loading progress: ${percentComplete.toFixed(0)}%`);
                         }
                     }
                 },
                 function(error) {
-                    console.error('=== FERRIS WHEEL LOADING ERROR ===');
+                    // console.error('=== FERRIS WHEEL LOADING ERROR ===');
                     console.error('Error loading from path:', path);
                     console.error('Error details:', error);
                     console.error('Error type:', error.type);

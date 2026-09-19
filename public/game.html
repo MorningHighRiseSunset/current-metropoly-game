@@ -44,11 +44,10 @@
                 <h1>🏛️ METROPOLY</h1>
                 <div class="game-id">Game: <span id="gameCode">LOADING...</span></div>
             </div>
-
+            
+            <!-- Settings Button -->
+            <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
         </header>
-        
-        <!-- Settings Button -->
-        <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
         
         <!-- Settings Modal -->
         <div id="settingsModal" class="modal hidden">
@@ -120,6 +119,11 @@
                 <div class="sidebar-panel sidebar-panel--properties">
                     <h3 class="sidebar-panel-title">My Properties</h3>
                     <div id="myProperties" class="properties-list panel-scroll"></div>
+                </div>
+
+                <div class="sidebar-panel sidebar-panel--game-logs">
+                    <h3 class="sidebar-panel-title">Game Logs</h3>
+                    <div id="gameLogsContainer" class="game-logs-container panel-scroll"></div>
                 </div>
 
                 <div class="sidebar-panel sidebar-panel--actions">
