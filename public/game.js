@@ -2241,8 +2241,11 @@ function setTokenAnimation(playerId, animType) {
     }
     
     if (animations.length > 0) {
-        const action = model.mixer.clipAction(animations[0]);
-        action.play();
+        // Play all animations (important for helicopter with multiple blade animations)
+        animations.forEach((anim) => {
+            const action = model.mixer.clipAction(anim);
+            action.play();
+        });
         model.currentAnim = animType;
     }
 }
