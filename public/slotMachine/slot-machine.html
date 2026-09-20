@@ -569,7 +569,7 @@
         const multipliers = { '7️⃣': 15, '💎': 10, '🔔': 8, '🍊': 6, '🍋': 5, '🍒': 4 };
         return bet * (multipliers[a] || 3);
       }
-      if (a === b || b === c || a === c) return bet * 1.5;
+      if (a === b || b === c || a === c) return Math.floor(bet * 1.5);
       return 0;
     }
 
